@@ -58,7 +58,7 @@ export default forwardRef(function PaymentsList(props, ref) {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -66,7 +66,7 @@ export default forwardRef(function PaymentsList(props, ref) {
   };
 
   const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString("es-ES", {
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
     });

@@ -106,7 +106,7 @@ try {
 
 ### Formatting Conventions
 - **Currency**: Use EUR (€) with Spanish locale (es-ES)
-- **Dates**: Use Spanish locale (es-ES) for consistency
+- **Dates**: Use English locale (en-US) for internationalization
 - Use `Intl.NumberFormat` and `toLocaleDateString` for localization
 
 Example currency formatting:
@@ -122,7 +122,7 @@ const formatCurrency = (amount: number) => {
 Example date formatting:
 ```typescript
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("es-ES", {
+  return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -243,7 +243,7 @@ const handleNextMonth = () => {
 };
 
 const formatMonthYear = (date: Date) => {
-  return date.toLocaleDateString("es-ES", {
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
   });
