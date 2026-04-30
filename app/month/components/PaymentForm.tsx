@@ -13,7 +13,7 @@ const PaymentForm = forwardRef(function PaymentForm(
 ) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
-    total: "",
+    concepts: [{ amount: 0 }],
     vat: "21",
     type: "income",
     tag: "",
@@ -66,6 +66,12 @@ const PaymentForm = forwardRef(function PaymentForm(
     setError(null);
 
     try {
+      // Validate that at least one concept has a non-zero amount
+      const validConcepts = formData.concepts.filter(c => c.amount > 0);
+      if (validConcepts.length === 0) {
+        throw new Error("At least one concept must have an amount greater than 0");
+      }
+
       const response = await fetch("/api/payments", {
         method: "POST",
         headers: {
@@ -84,10 +90,10 @@ const PaymentForm = forwardRef(function PaymentForm(
         setAvailableTags((prev) => [...prev, formData.tag!].sort());
       }
 
-      // Reset total amount while keeping type and date sticky
+      // Reset concepts while keeping type and date sticky
       setFormData((prev) => ({
         ...prev,
-        total: "",
+        concepts: [{ amount: 0 }],
         tag: "",
       }));
 
@@ -106,9 +112,28 @@ const PaymentForm = forwardRef(function PaymentForm(
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    conceptIndex?: number
   ) => {
     const { name, value } = e.target;
+
+    // Handle concept-specific fields
+    if (conceptIndex !== undefined) {
+      setFormData((prev) => {
+        const newConcepts = [...prev.concepts];
+        if (name === "conceptAmount") {
+          newConcepts[conceptIndex].amount = parseFloat(value) || 0;
+        } else if (name === "conceptName") {
+          newConcepts[conceptIndex].name = value || undefined;
+        } else if (name === "conceptVat") {
+          newConcepts[conceptIndex].vat = value === "" ? undefined : parseFloat(value);
+        }
+        return { ...prev, concepts: newConcepts };
+      });
+      return;
+    }
+
+    // Handle form-level fields
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Handle tag suggestions with debounce
@@ -134,17 +159,37 @@ const PaymentForm = forwardRef(function PaymentForm(
     }
   };
 
+  const calculateTotal = () => {
+    return formData.concepts.reduce((sum, c) => sum + (c.amount || 0), 0);
+  };
+
   const calculateVatAmount = () => {
-    const total = parseFloat(formData.total) || 0;
+    const total = calculateTotal();
     const vatPercentage = parseFloat(formData.vat) || 0;
     const net = total / (1 + vatPercentage / 100);
     return (total - net).toFixed(2);
   };
 
   const calculateNetAmount = () => {
-    const total = parseFloat(formData.total) || 0;
+    const total = calculateTotal();
     const vatPercentage = parseFloat(formData.vat) || 0;
     return (total / (1 + vatPercentage / 100)).toFixed(2);
+  };
+
+  const addConcept = () => {
+    setFormData((prev) => ({
+      ...prev,
+      concepts: [...prev.concepts, { amount: 0 }],
+    }));
+  };
+
+  const removeConcept = (index: number) => {
+    if (formData.concepts.length > 1) {
+      setFormData((prev) => ({
+        ...prev,
+        concepts: prev.concepts.filter((_, i) => i !== index),
+      }));
+    }
   };
 
   const handleTagSelect = (tag: string) => {
@@ -333,25 +378,112 @@ const PaymentForm = forwardRef(function PaymentForm(
           )}
         </div>
 
-        {/* Total Amount (with VAT) */}
-        <div className="space-y-2">
-          <label
-            htmlFor="total"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Total Amount (with VAT)
-          </label>
-          <input
-            type="number"
-            id="total"
-            name="total"
-            value={formData.total}
-            onChange={handleChange}
-            step="0.01"
-            placeholder="0.00"
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            required
-          />
+        {/* Concepts (Payment Components) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Payment Components
+            </label>
+            <button
+              type="button"
+              onClick={addConcept}
+              className="rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+            >
+              + Add Component
+            </button>
+          </div>
+
+          {formData.concepts.map((concept, index) => (
+            <div
+              key={index}
+              className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50 sm:grid-cols-4"
+            >
+              <div className="space-y-2">
+                <label
+                  htmlFor={`conceptName-${index}`}
+                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                >
+                  Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  id={`conceptName-${index}`}
+                  name="conceptName"
+                  value={concept.name || ""}
+                  onChange={(e) => handleChange(e, index)}
+                  placeholder="e.g., Service, Product..."
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor={`conceptAmount-${index}`}
+                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                >
+                  Amount (€)
+                </label>
+                <input
+                  type="number"
+                  id={`conceptAmount-${index}`}
+                  name="conceptAmount"
+                  value={concept.amount || ""}
+                  onChange={(e) => handleChange(e, index)}
+                  step="0.01"
+                  placeholder="0.00"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor={`conceptVat-${index}`}
+                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                >
+                  VAT % (Optional)
+                </label>
+                <input
+                  type="number"
+                  id={`conceptVat-${index}`}
+                  name="conceptVat"
+                  value={concept.vat ?? ""}
+                  onChange={(e) => handleChange(e, index)}
+                  step="0.5"
+                  min="0"
+                  max="100"
+                  placeholder="—"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+              {formData.concepts.length > 1 && (
+                <div className="flex items-end justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeConcept(index)}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                    aria-label="Remove component"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+            <p className="font-medium">Total from components: €{calculateTotal().toFixed(2)}</p>
+          </div>
         </div>
 
         {/* VAT Percentage */}

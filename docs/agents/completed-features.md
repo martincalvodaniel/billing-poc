@@ -1,5 +1,14 @@
 # Completed Features
 
+## Payment Components/Concepts
+- Payments composed of multiple named or unnamed concepts (line items)
+- Each concept has amount and optional descriptive name
+- UI supports adding/removing components with clear visual layout
+- Total payment calculated as sum of all component amounts
+- VAT applied at payment level; future enhancement supports concept-level VAT override
+- Form validates at least one component has non-zero amount
+- API supports both new concepts format and legacy single-total format (backward compatible)
+
 ## Accessibility (WCAG 2.1 A)
 - Icon-only buttons labeled; modals with dialog roles; alert/status live regions; focus rings; aria-expanded on toggles; color-scheme meta
 

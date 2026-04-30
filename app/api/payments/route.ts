@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import { Payment } from "@/lib/types";
+import { Payment, PaymentConcept } from "@/lib/types";
+
+// Type for raw concept from request body (amount may be string or number)
+interface RawPaymentConcept {
+  name?: string;
+  amount: string | number;
+  vat?: string | number;
+}
 
 export async function GET() {
   try {
@@ -25,22 +32,34 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, date, total, vat, tag } = body;
+    const { type, date, concepts, vat, tag } = body;
 
     // Validate required fields
-    if (!type || !date || total === undefined || vat === undefined) {
+    if (!type || !date) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields (type, date)" },
         { status: 400 }
       );
     }
 
-    const totalAmount = parseFloat(total);
-    const vatPercentage = parseFloat(vat);
+    // Support both new format (concepts) and legacy format (total)
+    let paymentConcepts = concepts;
+    if (!concepts && body.total !== undefined && vat !== undefined) {
+      // Legacy format: convert single total to concepts array
+      paymentConcepts = [{ amount: parseFloat(body.total) }];
+    }
 
-    if (isNaN(totalAmount) || isNaN(vatPercentage)) {
+    if (!paymentConcepts || !Array.isArray(paymentConcepts) || paymentConcepts.length === 0) {
       return NextResponse.json(
-        { error: "Invalid numeric values" },
+        { error: "At least one concept is required" },
+        { status: 400 }
+      );
+    }
+
+    const vatPercentage = parseFloat(vat);
+    if (isNaN(vatPercentage)) {
+      return NextResponse.json(
+        { error: "Invalid VAT percentage" },
         { status: 400 }
       );
     }
@@ -52,14 +71,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate and normalize concepts
+    const normalizedConcepts = paymentConcepts.map((concept: RawPaymentConcept): PaymentConcept => ({
+      name: concept.name || undefined,
+      amount: parseFloat(String(concept.amount)),
+      vat: concept.vat !== undefined ? parseFloat(String(concept.vat)) : undefined,
+    }));
+
+    // Check for invalid amounts
+    if (normalizedConcepts.some((c: PaymentConcept) => isNaN(c.amount))) {
+      return NextResponse.json(
+        { error: "Invalid concept amount" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate totals from concepts
+    const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + c.amount, 0);
     const netAmount = totalAmount / (1 + vatPercentage / 100);
     const vatAmount = totalAmount - netAmount;
+
     const payment: Omit<Payment, "_id"> = {
       type,
       date,
       tag: tag || undefined,
+      concepts: normalizedConcepts,
+      vat: vatPercentage,
       netAmount,
-      vat: vatAmount,
+      vatAmount,
       total: totalAmount,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -84,7 +123,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, date, type, tag, total, vat } = body;
+    const { id, date, type, tag, concepts, vat, total } = body;
 
     // Validate required fields
     if (!id) {
@@ -94,10 +133,26 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
+
+    const db = await getDatabase();
+
+    // Get current payment for calculations
+    let payment: Payment | null = null;
+    if (concepts !== undefined || total !== undefined || vat !== undefined) {
+      payment = await db.collection<Payment>("payments").findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!payment) {
+        return NextResponse.json(
+          { error: "Payment not found" },
+          { status: 404 }
+        );
+      }
+    }
 
     // Handle date update
     if (date !== undefined) {
@@ -123,48 +178,45 @@ export async function PUT(request: NextRequest) {
 
     // Handle tag update
     if (tag !== undefined) {
-      // Convert empty string to null for storage
       updateData.tag = tag ? tag : null;
     }
 
-    const db = await getDatabase();
-
-    // Get current payment if we need it for calculations
-    let payment: Payment | null = null;
-    if (total !== undefined || vat !== undefined) {
-      payment = await db.collection<Payment>("payments").findOne({
-        _id: new ObjectId(id),
-      });
-
-      if (!payment) {
+    // Handle concepts update
+    if (concepts !== undefined) {
+      if (!Array.isArray(concepts) || concepts.length === 0) {
         return NextResponse.json(
-          { error: "Payment not found" },
-          { status: 404 }
-        );
-      }
-    }
-
-    // Handle total update - need to recalculate VAT and net amount
-    if (total !== undefined) {
-      const totalAmount = parseFloat(total);
-      if (isNaN(totalAmount)) {
-        return NextResponse.json(
-          { error: "Invalid total amount" },
+          { error: "At least one concept is required" },
           { status: 400 }
         );
       }
 
-      // Calculate VAT percentage from current values
-      const currentVatPercentage = (payment!.vat / payment!.netAmount) * 100;
-      const newNetAmount = totalAmount / (1 + currentVatPercentage / 100);
-      const newVatAmount = totalAmount - newNetAmount;
+      const normalizedConcepts = concepts.map((concept: RawPaymentConcept): PaymentConcept => ({
+        name: concept.name || undefined,
+        amount: parseFloat(String(concept.amount)),
+        vat: concept.vat !== undefined ? parseFloat(String(concept.vat)) : undefined,
+      }));
+
+      if (normalizedConcepts.some((c: PaymentConcept) => isNaN(c.amount))) {
+        return NextResponse.json(
+          { error: "Invalid concept amount" },
+          { status: 400 }
+        );
+      }
+
+      updateData.concepts = normalizedConcepts;
+
+      // Recalculate totals
+      const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + c.amount, 0);
+      const vatPercentage = vat !== undefined ? parseFloat(vat) : payment!.vat;
+      const netAmount = totalAmount / (1 + vatPercentage / 100);
+      const vatAmount = totalAmount - netAmount;
 
       updateData.total = totalAmount;
-      updateData.vat = newVatAmount;
-      updateData.netAmount = newNetAmount;
+      updateData.netAmount = netAmount;
+      updateData.vatAmount = vatAmount;
     }
 
-    // Handle VAT percentage update - need to recalculate net amount and VAT amount
+    // Handle VAT percentage update
     if (vat !== undefined) {
       const vatPercentage = parseFloat(vat);
       if (isNaN(vatPercentage)) {
@@ -181,17 +233,45 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // Use the new total if it was provided, otherwise use current total
-      const totalAmount = total !== undefined ? parseFloat(total) : payment!.total;
-      const newNetAmount = totalAmount / (1 + vatPercentage / 100);
-      const newVatAmount = totalAmount - newNetAmount;
+      updateData.vat = vatPercentage;
 
-      updateData.vat = newVatAmount;
-      updateData.netAmount = newNetAmount;
+      // Recalculate with new VAT
+      const totalAmount = total !== undefined ? parseFloat(total) : payment!.total;
+      const netAmount = totalAmount / (1 + vatPercentage / 100);
+      const vatAmount = totalAmount - netAmount;
+
+      updateData.netAmount = netAmount;
+      updateData.vatAmount = vatAmount;
+    }
+
+    // Handle total update (legacy - convert to concepts)
+    if (total !== undefined && concepts === undefined) {
+      const totalAmount = parseFloat(total);
+      if (isNaN(totalAmount)) {
+        return NextResponse.json(
+          { error: "Invalid total amount" },
+          { status: 400 }
+        );
+      }
+
+      const vatPercentage = vat !== undefined ? parseFloat(vat) : payment!.vat;
+      const netAmount = totalAmount / (1 + vatPercentage / 100);
+      const vatAmount = totalAmount - netAmount;
+
+      updateData.total = totalAmount;
+      updateData.netAmount = netAmount;
+      updateData.vatAmount = vatAmount;
     }
 
     // Ensure at least one field is being updated
-    if (!date && !type && tag === undefined && total === undefined && vat === undefined) {
+    if (
+      date === undefined &&
+      type === undefined &&
+      tag === undefined &&
+      concepts === undefined &&
+      total === undefined &&
+      vat === undefined
+    ) {
       return NextResponse.json(
         { error: "No fields to update" },
         { status: 400 }
@@ -210,13 +290,13 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Return updated values for client-side optimistic update
     return NextResponse.json(
       {
         success: true,
         total: updateData.total,
-        vat: updateData.vat,
+        vatAmount: updateData.vatAmount,
         netAmount: updateData.netAmount,
+        vat: updateData.vat,
       },
       { status: 200 }
     );

@@ -5,8 +5,9 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View filtered transactions in a table (day, type, tag, total, VAT, net amount) with summary cards (total income with count, outcome with count, balance) and real-time updates
+- **Payment Components** - Payments can be composed of multiple named or unnamed concepts (line items). Each concept has an amount and optional name (e.g., "Consulting", "Materials"). The total payment is the sum of all component amounts
 - **Month Navigation** - Dedicated filter section at the top displays the selected month and controls. Calendar picker (closes when clicking outside) with prev/next navigation, month grid, year selection, and manual year input. Quick icon button jumps to the current month and disables when already there. Add payment button positioned adjacent to the calendar for easy access. Automatically navigates to the saved payment's month after creating a new payment. Form date field syncs with calendar selection to match the viewed month
-- **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks
+- **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Add multiple payment components with optional names and amounts. Gross/net calculation (enter component amounts with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Interactive sorting controls allow sorting by percentage or name (ascending/descending). Legend positioned on the right side of the chart for better space utilization. Tags maintain consistent colors across all sorting options. Charts appear between summary cards and payment list for quick insights
 - **Modal Payment Editing** - Click any date (shows day only since month/year are in calendar picker), type, tag, total, or VAT in the payment list to open a centered edit modal. VAT displays as `(percentage%) amount`. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
@@ -14,7 +15,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
-- **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment operations
+- **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment operations with support for payment components
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 - **Form & Server Validation** - Client and server-side validation for data integrity
 - **Accessibility Compliant** - WCAG 2.1 Level A compliant with ARIA labels, live regions, keyboard navigation, and screen reader support
@@ -54,7 +55,10 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
 {
   "type": "income" | "outcome",
   "date": "YYYY-MM-DD",
-  "total": "410.48",
+  "concepts": [
+    { "name": "Service A", "amount": 150.00 },
+    { "name": "Service B", "amount": 260.48 }
+  ],
   "vat": "21",
   "tag": "Client A"
 }
@@ -63,16 +67,24 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
 **Parameters:**
 - `type`: Payment type (required)
 - `date`: Payment date in YYYY-MM-DD format (required)  
-- `total`: Total amount including VAT (e.g., €410.48) (required)
-- `vat`: VAT percentage (e.g., 21 for 21%) (required)
+- `concepts`: Array of payment components/line items (required, at least one). Each concept has:
+  - `amount`: Numeric amount in euros (required)
+  - `name`: Optional name/description for the concept (e.g., "Consulting", "Product")
+- `vat`: VAT percentage applied to total (e.g., 21 for 21%) (required)
 - `tag`: Optional tag for categorizing payments (string)
 
 **Response:**
-The API calculates `netAmount` from total and VAT percentage using: `netAmount = total / (1 + vat/100)`
+The API calculates `netAmount` from the sum of all concept amounts and VAT percentage using: `netAmount = total / (1 + vat/100)` where `total` is the sum of all concept amounts.
+
+**Note:** Legacy format with a single `total` field is also supported for backward compatibility and will be converted to a single unnamed concept.
 
 ### `GET /api/payments` - Get All Payments
 
-Returns array of payments sorted by date (descending).
+Returns array of payments sorted by date (descending). Each payment includes:
+- `concepts`: Array of payment components with amounts and optional names
+- `total`: Sum of all concept amounts
+- `vat`: VAT percentage and VAT amount
+- `netAmount`: Net amount after VAT deduction
 
 ### `PUT /api/payments` - Update Payment
 
@@ -82,7 +94,9 @@ Returns array of payments sorted by date (descending).
   "date": "YYYY-MM-DD",
   "type": "income" | "outcome",
   "tag": "Client B",
-  "total": "450.00",
+  "concepts": [
+    { "name": "Updated Service", "amount": 500.00 }
+  ],
   "vat": "21"
 }
 ```
@@ -92,15 +106,15 @@ Returns array of payments sorted by date (descending).
 - `date`: New date for the payment (optional)
 - `type`: Payment type either "income" or "outcome" (optional)
 - `tag`: Optional tag for the payment (optional)
-- `total`: New total amount including VAT (optional)
+- `concepts`: New array of payment components (optional)
 - `vat`: New VAT percentage 0-100 (optional)
 
-At least one of `date`, `type`, `tag`, `total`, or `vat` must be provided.
+At least one of `date`, `type`, `tag`, `concepts`, or `vat` must be provided.
 
-When `total` is updated, VAT percentage is preserved and net amount is recalculated.
+When `concepts` are updated, totals are automatically recalculated.
 When `vat` is updated, net amount and VAT amount are recalculated based on total.
 
-**Response:** Success status with updated payment values (`total`, `vat`, `netAmount`)
+**Response:** Success status with updated payment values (`total`, `vatAmount`, `netAmount`, `vat`)
 
 ### `DELETE /api/payments` - Delete Payment
 

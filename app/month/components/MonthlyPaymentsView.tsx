@@ -272,7 +272,7 @@ export default forwardRef(function MonthlyPaymentsView(
     } else if (editingField === "tag") {
       payload.tag = editingTag;
     } else if (editingField === "total") {
-      if (!editingTotal) {
+      if (editingTotal.trim() === "") {
         setError("Total is required");
         return;
       }
@@ -283,7 +283,7 @@ export default forwardRef(function MonthlyPaymentsView(
       }
       payload.total = totalAmount;
     } else if (editingField === "vat") {
-      if (!editingVat) {
+      if (editingVat.trim() === "") {
         setError("VAT is required");
         return;
       }

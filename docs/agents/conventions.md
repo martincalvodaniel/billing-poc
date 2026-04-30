@@ -12,6 +12,19 @@
 - Memoize pure components with React.memo()
 - Lift state to parent for shared filter state (e.g., selectedDate in page.tsx drives PaymentsList and PaymentForm)
 
+### PaymentForm Component Pattern
+- **State**: formData with PaymentFormData type including concepts array
+- **Concepts**: Array of { name?: string, amount: number } objects
+- **Handlers for Concepts**:
+  - `handleChange(e, conceptIndex?)`: Updates form or concept by index
+  - `addConcept()`: Appends new empty concept to array
+  - `removeConcept(index)`: Removes concept (only if more than 1 exists)
+  - `calculateTotal()`: Sums all concept amounts
+  - `calculateVatAmount()` and `calculateNetAmount()`: Use calculateTotal() result
+- **Validation**: Client checks at least one concept has amount > 0 before API call
+- **API Call**: Send full formData with concepts array; API handles validation and calculations
+- **Success**: Reset concepts to [{ amount: 0 }] while keeping type/date sticky
+
 ### Component Extraction & Organization
 Extract components when they appear in multiple places or represent a cohesive UI unit:
 - **MonthlyPaymentsView**: Monthly payment list with editing, deletion, and filtering (replaces inline logic)
