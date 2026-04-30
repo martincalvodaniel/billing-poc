@@ -1,6 +1,7 @@
 import { get } from "@vercel/blob"
 import { ObjectId } from "mongodb"
 import { type NextRequest, NextResponse } from "next/server"
+import { requireAuth } from "@/lib/api-auth"
 import { getDatabase } from "@/lib/mongodb"
 import type { Payment } from "@/lib/types"
 
@@ -9,6 +10,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
     const { id } = await params
 
     if (!id) {

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 interface NavigationBarProps {
@@ -10,6 +11,7 @@ interface NavigationBarProps {
 
 export default function NavigationBar({ subtitle }: NavigationBarProps) {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
 
@@ -79,6 +81,26 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
           >
             Clients
           </Link>
+          {session?.user && (
+            <>
+              <div className="mx-1 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
+              {session.user.image && (
+                <img
+                  src={session.user.image}
+                  alt=""
+                  className="h-7 w-7 rounded-full"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900"
+              >
+                Sign out
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger button */}
@@ -173,6 +195,36 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
                 Clients
               </Link>
             </div>
+
+            {session?.user && (
+              <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                <div className="mb-3 flex items-center gap-3">
+                  {session.user.image && (
+                    <img
+                      src={session.user.image}
+                      alt=""
+                      className="h-8 w-8 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {session.user.name}
+                    </p>
+                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                      {session.user.email}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                  className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-950"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

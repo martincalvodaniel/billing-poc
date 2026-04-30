@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { MongoClientRepository } from "@/lib/adapters/repositories/mongo-client-repository"
+import { requireAuth } from "@/lib/api-auth"
 import {
   clientQuerySchema,
   createClientSchema,
@@ -12,6 +13,9 @@ const clients = new MongoClientRepository()
 
 export async function GET(request: NextRequest) {
   try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
     const params = Object.fromEntries(request.nextUrl.searchParams)
     const parsed = clientQuerySchema.safeParse(params)
     if (!parsed.success) {
@@ -38,6 +42,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
     const body = await request.json()
     const parsed = createClientSchema.safeParse(body)
     if (!parsed.success) {
@@ -65,6 +72,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
     const body = await request.json()
     const parsed = updateClientSchema.safeParse(body)
     if (!parsed.success) {
@@ -92,6 +102,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
     const body = await request.json()
     const parsed = deleteClientSchema.safeParse(body)
     if (!parsed.success) {

@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob"
 import { ObjectId } from "mongodb"
 import { type NextRequest, NextResponse } from "next/server"
+import { requireAuth } from "@/lib/api-auth"
 import { getNextInvoiceNumber } from "@/lib/invoiceCounters"
 import { generateInvoicePdf } from "@/lib/invoicePdf"
 import { getDatabase } from "@/lib/mongodb"
@@ -13,6 +14,9 @@ import type {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
     const body = await request.json()
     const { paymentId, series } = body
 

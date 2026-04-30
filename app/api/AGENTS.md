@@ -3,8 +3,23 @@
 ## Architecture — Hexagonal Pattern
 API routes are thin handlers that delegate to domain services and repository adapters:
 ```
-parse request → validate with Zod → call repository/service → return NextResponse.json
+authenticate → parse request → validate with Zod → call repository/service → return NextResponse.json
 ```
+
+## Authentication Guard
+Every API route handler (except `/api/auth/`) must call `requireAuth()` as the first line inside the `try` block:
+```ts
+import { requireAuth } from "@/lib/api-auth"
+
+export async function GET(request: NextRequest) {
+  try {
+    const denied = await requireAuth()
+    if (denied) return denied
+    // ... rest of handler
+  }
+}
+```
+Never add auth checks to `app/api/auth/[...nextauth]/route.ts`.
 
 ## Route Structure
 Each resource has `app/api/[resource]/route.ts` exporting GET, POST, PUT, DELETE handlers.

@@ -6,15 +6,30 @@ Next.js 16 (App Router), React 19, TypeScript 6 (strict), MongoDB 7, Tailwind CS
 ## Architecture — Hexagonal (Ports & Adapters)
 ```
 lib/domain/entities/     → Pure TS types (Payment, Client, InvoiceCounter)
-lib/domain/services/     → Business logic (calculators, Zod validators)
+lib/domain/services/     → Business logic (calculators, Zod validators, auth)
 lib/domain/ports/        → Interfaces (PaymentRepository, ClientRepository, etc.)
 lib/adapters/            → Infrastructure (MongoPaymentRepository, VercelBlobStorage, etc.)
+lib/auth.ts              → NextAuth config (Google provider, JWT, email allowlist)
+lib/api-auth.ts          → requireAuth() guard for API routes
 lib/formatters.ts        → Shared formatCurrency, formatDate, formatMonthYear
 lib/constants.ts         → Shared CHART_COLORS
 lib/validation.ts        → Shared zodError() helper
 app/api/                 → Thin route handlers: parse → validate → delegate → respond
+app/api/auth/            → NextAuth API handler (do NOT add auth checks here)
+app/auth/signin/         → Custom sign-in page + server action
 app/components/          → Shared UI (Toast, Modal, DonutChart, PageLayout, etc.)
+middleware.ts            → Route protection: redirects unauthenticated users to /auth/signin
 ```
+
+## Authentication
+- **NextAuth.js v5** with Google OAuth provider, JWT sessions (stateless)
+- Email allowlist via `ALLOWED_EMAILS` env var (`lib/domain/services/auth.ts`)
+- Middleware (`middleware.ts`) protects all routes except `/auth/*` and `/api/auth/*`
+- All API routes call `requireAuth()` from `lib/api-auth.ts` as first line in `try` block
+- `trustHost: true` in auth config — auto-detects host from request headers
+- For ngrok/remote testing: set `AUTH_URL` env var to the ngrok HTTPS URL
+- Sign-in uses server action (`app/auth/signin/actions.ts`), not client-side `signIn()`
+- `SessionProvider` wraps app via `app/components/Providers.tsx`
 
 ## Universal Rules
 - TypeScript strict mode everywhere; no `any` without `unknown` guard
