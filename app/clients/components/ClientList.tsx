@@ -2,18 +2,41 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Modal from "@/app/components/Modal"
+import {
+  useDeleteClient,
+  useUpdateClient,
+} from "@/lib/hooks/useClientMutations"
+import { FetchError } from "@/lib/swr-fetcher"
 import type { Client, ClientFormData } from "@/lib/types"
 import ClientForm from "./ClientForm"
 
 interface ClientListProps {
   clients: Client[]
-  onRefresh: () => Promise<void>
 }
 
-export default function ClientList({ clients, onRefresh }: ClientListProps) {
+function extractApiError(err: unknown, fallback: string): string {
+  if (
+    err instanceof FetchError &&
+    err.info &&
+    typeof err.info === "object" &&
+    "error" in err.info &&
+    typeof (err.info as { error: unknown }).error === "string"
+  ) {
+    return (err.info as { error: string }).error
+  }
+  if (err instanceof Error) {
+    return err.message
+  }
+  return fallback
+}
+
+export default function ClientList({ clients }: ClientListProps) {
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const { trigger: updateClient } = useUpdateClient()
+  const { trigger: deleteClient, isMutating: isDeleting } = useDeleteClient()
 
   const handleEdit = (clientId: string) => {
     setEditingClientId(clientId)
@@ -26,19 +49,13 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
   }, [])
 
   const handleUpdate = async (data: ClientFormData) => {
-    const response = await fetch("/api/clients", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: editingClientId, ...data }),
-    })
-
-    if (!response.ok) {
-      const result = await response.json()
-      throw new Error(result.error || "Failed to update client")
+    if (!editingClientId) return
+    try {
+      await updateClient({ id: editingClientId, ...data })
+    } catch (err) {
+      throw new Error(extractApiError(err, "Failed to update client"))
     }
-
     setEditingClientId(null)
-    await onRefresh()
   }
 
   const handleDeleteClick = (clientId: string) => {
@@ -47,22 +64,12 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
   }
 
   const handleConfirmDelete = async () => {
+    if (!deletingClientId) return
     try {
-      const response = await fetch("/api/clients", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deletingClientId }),
-      })
-
-      if (!response.ok) {
-        const result = await response.json()
-        throw new Error(result.error || "Failed to delete client")
-      }
-
+      await deleteClient({ id: deletingClientId })
       setDeletingClientId(null)
-      await onRefresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setError(extractApiError(err, "An error occurred"))
     }
   }
 
@@ -164,16 +171,18 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
             <button
               type="button"
               onClick={() => setDeletingClientId(null)}
-              className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
+              disabled={isDeleting}
+              className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleConfirmDelete}
-              className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+              disabled={isDeleting}
+              className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-zinc-900"
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
             </button>
           </div>
         }

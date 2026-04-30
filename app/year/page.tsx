@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { CHART_COLORS } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
-import type { Payment } from "@/lib/types"
+import { usePayments } from "@/lib/hooks/usePayments"
 import ChartsToggle from "../components/ChartsToggle"
 import DonutChart from "../components/DonutChart"
 import PageLayout from "../components/PageLayout"
@@ -12,54 +12,14 @@ import MonthlyBreakdown from "./components/MonthlyBreakdown"
 import YearPicker from "./components/YearPicker"
 
 export default function YearSummaryPage() {
-  const [payments, setPayments] = useState<Payment[]>([])
   const [selectedYear, setSelectedYear] = useState(() =>
     new Date().getFullYear()
   )
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [showCharts, setShowCharts] = useState(true)
 
-  useEffect(() => {
-    const abortController = new AbortController()
-
-    const fetchPayments = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const response = await fetch(`/api/payments?year=${selectedYear}`, {
-          signal: abortController.signal,
-        })
-        if (!response.ok) {
-          throw new Error("Failed to fetch payments")
-        }
-        const data = await response.json()
-        if (!abortController.signal.aborted) {
-          setPayments(data.payments || [])
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          // Request was aborted, ignore
-          return
-        }
-        const message = err instanceof Error ? err.message : "An error occurred"
-        if (!abortController.signal.aborted) {
-          setError(message)
-        }
-        console.error(`Error fetching payments: ${err}`)
-      } finally {
-        if (!abortController.signal.aborted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    fetchPayments()
-
-    return () => {
-      abortController.abort()
-    }
-  }, [selectedYear])
+  const { payments, isLoading, error } = usePayments({ year: selectedYear })
+  const errorMessage =
+    error instanceof Error ? error.message : error ? "An error occurred" : null
 
   // On mobile, hide charts by default after mount
   useEffect(() => {
@@ -217,14 +177,14 @@ export default function YearSummaryPage() {
           </div>
         )}
 
-        {error && (
+        {errorMessage && (
           <div
             className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
             role="alert"
             aria-live="polite"
             aria-atomic="true"
           >
-            {error}
+            {errorMessage}
           </div>
         )}
 

@@ -24,11 +24,6 @@ export default function MonthPageContent() {
     setFormDate: (dateString: string) => void
     submit: () => void
   }>(null)
-  const paymentsListRef = useRef<{
-    refreshPayments: () => void
-    navigateToMonth: (dateString: string) => void
-    getFilteredPaymentsCount: () => number
-  }>(null)
 
   // Initialize from URL parameters if provided
   useEffect(() => {
@@ -74,8 +69,7 @@ export default function MonthPageContent() {
 
   const handlePaymentSaved = (date: string) => {
     formRef.current?.setFormDate(date)
-    paymentsListRef.current?.refreshPayments()
-    paymentsListRef.current?.navigateToMonth(date)
+    // Payments cache invalidation is handled by the mutation hooks themselves.
     setShowPaymentModal(false)
   }
 
@@ -140,7 +134,6 @@ export default function MonthPageContent() {
     >
       <div className="space-y-2">
         <MonthlyPaymentsView
-          ref={paymentsListRef}
           onMonthChange={handleMonthChange}
           selectedDate={selectedDate}
           showCharts={showCharts}

@@ -1,7 +1,8 @@
 "use client"
 
-import type { Ref } from "react"
-import { useCallback, useEffect, useImperativeHandle, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
+import { usePayments } from "@/lib/hooks/usePayments"
 import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
 import DeletePaymentModal from "./DeletePaymentModal"
@@ -10,23 +11,27 @@ import PaymentDetailModal from "./PaymentDetailModal"
 import PaymentsSummary from "./PaymentsSummary"
 import PaymentsTable from "./PaymentsTable"
 
-export default (function MonthlyPaymentsView({
-  ref,
-  ...props
+export default function MonthlyPaymentsView({
+  onMonthChange,
+  selectedDate,
+  showCharts = true,
 }: {
-  ref?: Ref<{
-    refreshPayments: () => void
-    navigateToMonth: (dateString: string) => void
-    getFilteredPaymentsCount: () => number
-  } | null>
   onMonthChange?: (dateString: string) => void
   selectedDate: Date
   showCharts?: boolean
 }) {
-  const { onMonthChange, selectedDate, showCharts = true } = props
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const year = selectedDate.getFullYear()
+  const month = selectedDate.getMonth() + 1
+
+  const {
+    payments,
+    isLoading,
+    error: fetchError,
+  } = usePayments({ year, month })
+
+  const { trigger: deletePayment, isMutating: isDeleting } = useDeletePayment()
+
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const [showSuccess, setShowSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string>("")
@@ -35,80 +40,18 @@ export default (function MonthlyPaymentsView({
   const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<
     string | null
   >(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   // Edit modal state (full payment edit)
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null)
 
-  const fetchPayments = useCallback(
-    async (signal?: AbortSignal) => {
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        const year = selectedDate.getFullYear()
-        const month = selectedDate.getMonth() + 1
-
-        const response = await fetch(
-          `/api/payments?year=${year}&month=${month}`,
-          {
-            signal,
-          }
-        )
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch payments")
-        }
-
-        const data = await response.json()
-        if (!signal?.aborted) {
-          setPayments(data.payments || [])
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          // Request was aborted, ignore
-          return
-        }
-        const errorMessage =
-          err instanceof Error ? err.message : "An error occurred"
-        if (!signal?.aborted) {
-          setError(errorMessage)
-        }
-        console.error(`Error fetching payments: ${err}`)
-      } finally {
-        if (!signal?.aborted) {
-          setIsLoading(false)
-        }
-      }
-    },
-    [selectedDate]
-  )
-
-  useEffect(() => {
-    const abortController = new AbortController()
-    fetchPayments(abortController.signal)
-
-    return () => {
-      abortController.abort()
-    }
-  }, [fetchPayments])
-
   // Notify parent when month changes so form date can be synced
   useEffect(() => {
-    const year = selectedDate.getFullYear()
-    const month = String(selectedDate.getMonth() + 1).padStart(2, "0")
+    const yearStr = selectedDate.getFullYear()
+    const monthStr = String(selectedDate.getMonth() + 1).padStart(2, "0")
     const day = String(selectedDate.getDate()).padStart(2, "0")
-    const dateString = `${year}-${month}-${day}`
+    const dateString = `${yearStr}-${monthStr}-${day}`
     onMonthChange?.(dateString)
   }, [selectedDate, onMonthChange])
-
-  useImperativeHandle(ref, () => ({
-    refreshPayments: () => fetchPayments(),
-    navigateToMonth: () => {
-      // Month navigation is now handled by parent component via selectedDate prop
-    },
-    getFilteredPaymentsCount: () => payments.length,
-  }))
 
   const getFilteredPayments = () => {
     // No client-side filtering needed since API returns only relevant month's payments
@@ -128,14 +71,8 @@ export default (function MonthlyPaymentsView({
     setDeleteConfirmPaymentId(paymentId)
   }
 
-  const handlePaymentUpdated = (updatedPayment: Payment) => {
-    setPayments((prevPayments) =>
-      prevPayments.map((p) =>
-        p._id?.toString() === updatedPayment._id?.toString()
-          ? updatedPayment
-          : p
-      )
-    )
+  const handlePaymentUpdated = (_updatedPayment: Payment) => {
+    // useUpdatePayment invalidates the payments cache automatically.
     setSuccessMessage("Payment updated successfully")
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 4000)
@@ -144,22 +81,8 @@ export default (function MonthlyPaymentsView({
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteConfirmPaymentId) return
 
-    setIsDeleting(true)
     try {
-      const response = await fetch("/api/payments", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deleteConfirmPaymentId }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to delete payment")
-      }
-
-      // Remove payment from local state
-      setPayments((prevPayments) =>
-        prevPayments.filter((p) => p._id?.toString() !== deleteConfirmPaymentId)
-      )
+      await deletePayment({ id: deleteConfirmPaymentId })
 
       setDeleteConfirmPaymentId(null)
       setSuccessMessage("Payment deleted successfully")
@@ -167,12 +90,10 @@ export default (function MonthlyPaymentsView({
       setTimeout(() => setShowSuccess(false), 4000)
     } catch (err) {
       console.error(`Error deleting payment: ${err}`)
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setActionError(err instanceof Error ? err.message : "An error occurred")
       setDeleteConfirmPaymentId(null)
-    } finally {
-      setIsDeleting(false)
     }
-  }, [deleteConfirmPaymentId])
+  }, [deleteConfirmPaymentId, deletePayment])
 
   const handleDeleteModalKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -241,6 +162,14 @@ export default (function MonthlyPaymentsView({
     )
   }
 
+  const displayError =
+    actionError ??
+    (fetchError instanceof Error
+      ? fetchError.message
+      : fetchError
+        ? "Failed to fetch payments"
+        : null)
+
   return (
     <div className="w-full space-y-2">
       {showSuccess && (
@@ -265,7 +194,7 @@ export default (function MonthlyPaymentsView({
         payments={payments}
         filteredPayments={filteredPayments}
         selectedDate={selectedDate}
-        error={error}
+        error={displayError}
         onRowClick={handleRowClick}
         onDeleteClick={handleDeleteClick}
       />
@@ -297,4 +226,4 @@ export default (function MonthlyPaymentsView({
         })()}
     </div>
   )
-})
+}

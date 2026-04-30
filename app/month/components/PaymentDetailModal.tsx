@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react"
 import Modal from "@/app/components/Modal"
+import {
+  useGenerateInvoice,
+  useUploadInvoice,
+} from "@/lib/hooks/useInvoiceMutations"
+import { useUpdatePayment } from "@/lib/hooks/usePaymentMutations"
+import { FetchError } from "@/lib/swr-fetcher"
 import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types"
 import PaymentFormFields from "./PaymentFormFields"
 import {
@@ -51,17 +57,20 @@ export default function PaymentDetailModal({
     calculateNetAmount,
   } = usePaymentForm(initialFormData)
 
-  const [isSaving, setIsSaving] = useState(false)
+  const { trigger: updatePayment, isMutating: isSaving } = useUpdatePayment()
+  const { trigger: generateInvoice, isMutating: isGeneratingInvoice } =
+    useGenerateInvoice()
+  const { trigger: uploadInvoice, isMutating: isUploadingBill } =
+    useUploadInvoice()
+
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
 
   // Invoice generation state
   const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice")
-  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false)
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
 
   // Provider bill upload state
-  const [isUploadingBill, setIsUploadingBill] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -75,24 +84,12 @@ export default function PaymentDetailModal({
 
   const handleGenerateInvoice = async () => {
     setInvoiceError(null)
-    setIsGeneratingInvoice(true)
 
     try {
-      const response = await fetch("/api/invoices/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentId: payment._id?.toString(),
-          series: selectedSeries,
-        }),
+      const data = await generateInvoice({
+        paymentId: payment._id?.toString() ?? "",
+        series: selectedSeries,
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to generate invoice")
-      }
-
-      const data = await response.json()
 
       // Update the local payment with invoice metadata
       const updatedPayment: Payment = {
@@ -107,9 +104,19 @@ export default function PaymentDetailModal({
       window.open(data.downloadUrl, "_blank")
     } catch (err) {
       console.error(`Error generating invoice: ${err}`)
-      setInvoiceError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsGeneratingInvoice(false)
+      let errorMessage = "An error occurred"
+      if (
+        err instanceof FetchError &&
+        err.info &&
+        typeof err.info === "object" &&
+        "error" in err.info &&
+        typeof (err.info as { error: unknown }).error === "string"
+      ) {
+        errorMessage = (err.info as { error: string }).error
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+      setInvoiceError(errorMessage)
     }
   }
 
@@ -133,24 +140,12 @@ export default function PaymentDetailModal({
     }
 
     setUploadError(null)
-    setIsUploadingBill(true)
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("paymentId", payment._id?.toString() || "")
-
-      const response = await fetch("/api/invoices/upload", {
-        method: "POST",
-        body: formData,
+      const data = await uploadInvoice({
+        paymentId: payment._id?.toString() ?? "",
+        file,
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to upload provider bill")
-      }
-
-      const data = await response.json()
 
       // Update the local payment with provider bill URL
       const updatedPayment: Payment = {
@@ -168,9 +163,19 @@ export default function PaymentDetailModal({
       }
     } catch (err) {
       console.error(`Error uploading provider bill: ${err}`)
-      setUploadError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsUploadingBill(false)
+      let errorMessage = "An error occurred"
+      if (
+        err instanceof FetchError &&
+        err.info &&
+        typeof err.info === "object" &&
+        "error" in err.info &&
+        typeof (err.info as { error: unknown }).error === "string"
+      ) {
+        errorMessage = (err.info as { error: string }).error
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+      setUploadError(errorMessage)
     }
   }
 
@@ -209,30 +214,18 @@ export default function PaymentDetailModal({
       ? parseFloat(formData.surcharge || "0")
       : 0
 
-    setIsSaving(true)
     try {
-      const response = await fetch("/api/payments", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: payment._id?.toString(),
-          date: formData.date,
-          type: formData.type,
-          tag: formData.tag || undefined,
-          clientId: formData.clientId || undefined,
-          concepts: formData.concepts,
-          vat: vatNumber,
-          surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
-          deliveryNoteRef: formData.deliveryNoteRef || undefined,
-        }),
+      const responseData = await updatePayment({
+        id: payment._id?.toString() ?? "",
+        date: formData.date,
+        type: formData.type,
+        tag: formData.tag || undefined,
+        clientId: formData.clientId || undefined,
+        concepts: formData.concepts,
+        vat: vatNumber,
+        surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
+        deliveryNoteRef: formData.deliveryNoteRef || undefined,
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to update payment")
-      }
-
-      const responseData = await response.json()
 
       // Reconstruct the updated payment with response data
       const updatedPayment: Payment = {
@@ -261,9 +254,19 @@ export default function PaymentDetailModal({
       onClose()
     } catch (err) {
       console.error(`Error updating payment: ${err}`)
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsSaving(false)
+      let errorMessage = "An error occurred"
+      if (
+        err instanceof FetchError &&
+        err.info &&
+        typeof err.info === "object" &&
+        "error" in err.info &&
+        typeof (err.info as { error: unknown }).error === "string"
+      ) {
+        errorMessage = (err.info as { error: string }).error
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+      setError(errorMessage)
     }
   }
 

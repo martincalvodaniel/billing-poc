@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
+import { useClients } from "@/lib/hooks/useClients"
 import type { Client } from "@/lib/types"
 
 interface ClientSelectorProps {
@@ -13,6 +14,9 @@ interface ClientSelectorProps {
   required?: boolean
 }
 
+const SEARCH_DEBOUNCE_MS = 300
+const PAGE_SIZE = 20
+
 export default function ClientSelector({
   value,
   onChange,
@@ -21,95 +25,52 @@ export default function ClientSelector({
 }: ClientSelectorProps) {
   const id = useId()
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [clients, setClients] = useState<Client[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Fetch client by ID on mount if value is provided
+  // Inline debounce: mirror previous 300ms behavior.
   useEffect(() => {
-    const fetchClientById = async (clientId: string) => {
-      try {
-        setIsLoading(true)
-        const response = await fetch(`/api/clients?search=`)
-        if (response.ok) {
-          const data = await response.json()
-          const client = data.items.find(
-            (c: Client) => c._id?.toString() === clientId
-          )
-          if (client) {
-            setSelectedClient(client)
-            setSearchQuery(client.name)
-          }
-        }
-      } catch (err) {
-        console.error(`Error fetching client: ${err}`)
-      } finally {
-        setIsLoading(false)
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Single SWR-backed clients query: powers both the suggestions dropdown
+  // and the by-id lookup fallback for a pre-selected `value`. Replaces the
+  // previous two effects (lookup-by-id + debounced search fetch) which were
+  // a root cause of duplicate `/api/clients` calls.
+  const { clients, isLoading } = useClients({
+    search: debouncedSearch,
+    page: 1,
+    pageSize: PAGE_SIZE,
+  })
+
+  // Resolve the selected client from the cached list (preserves existing
+  // page-1-only lookup behavior; no new endpoint introduced).
+  useEffect(() => {
+    if (!value) {
+      if (selectedClient) {
+        setSelectedClient(null)
+        setSearchQuery("")
       }
-    }
-
-    if (value && !selectedClient) {
-      fetchClientById(value)
-    }
-  }, [value, selectedClient])
-
-  // Fetch clients based on search query with debounce
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current)
-    }
-
-    if (!showSuggestions) {
       return
     }
-
-    debounceTimer.current = setTimeout(async () => {
-      if (searchQuery.trim() === "") {
-        // Fetch all clients if search is empty
-        setIsLoading(true)
-        try {
-          const response = await fetch(`/api/clients?pageSize=20`)
-          if (response.ok) {
-            const data = await response.json()
-            setClients(data.items || [])
-          }
-        } catch (err) {
-          console.error(`Error fetching clients: ${err}`)
-        } finally {
-          setIsLoading(false)
-        }
-      } else {
-        // Search for clients matching query
-        setIsLoading(true)
-        try {
-          const response = await fetch(
-            `/api/clients?search=${encodeURIComponent(searchQuery)}&pageSize=20`
-          )
-          if (response.ok) {
-            const data = await response.json()
-            setClients(data.items || [])
-          }
-        } catch (err) {
-          console.error(`Error searching clients: ${err}`)
-        } finally {
-          setIsLoading(false)
-        }
-      }
-    }, 300)
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current)
-      }
+    if (selectedClient && selectedClient._id?.toString() === value) {
+      return
     }
-  }, [searchQuery, showSuggestions])
+    const match = clients.find((c) => c._id?.toString() === value)
+    if (match) {
+      setSelectedClient(match)
+      setSearchQuery(match.name)
+    }
+  }, [value, clients, selectedClient])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchQuery(value)
+    const next = e.target.value
+    setSearchQuery(next)
     setShowSuggestions(true)
 
     // Clear selection if user is typing
@@ -129,7 +90,6 @@ export default function ClientSelector({
   const handleClearSelection = () => {
     setSelectedClient(null)
     setSearchQuery("")
-    setClients([])
     onChange(undefined, undefined)
   }
 

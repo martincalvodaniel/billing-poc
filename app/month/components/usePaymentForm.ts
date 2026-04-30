@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
+import { useTags } from "@/lib/hooks/useTags"
 import type { PaymentFormData } from "@/lib/types"
 import {
   calculateNetAmount,
@@ -28,45 +29,10 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     initialData || defaultFormData
   )
 
-  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const { tags: availableTags } = useTags(formData.type)
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
   const [showTagSuggestions, setShowTagSuggestions] = useState(false)
   const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null)
-
-  // Fetch available tags on component mount and when type changes
-  useEffect(() => {
-    const fetchTagsByType = async (paymentType: string) => {
-      try {
-        const response = await fetch(`/api/tags?type=${paymentType}`)
-        if (response.ok) {
-          const data = await response.json()
-          setAvailableTags(data.tags || [])
-        }
-      } catch (err) {
-        console.error(`Error fetching tags: ${err}`)
-      }
-    }
-
-    fetchTagsByType(formData.type)
-  }, [formData.type])
-
-  // Refetch tags when window regains focus
-  useEffect(() => {
-    const handleFocus = async () => {
-      try {
-        const response = await fetch(`/api/tags?type=${formData.type}`)
-        if (response.ok) {
-          const data = await response.json()
-          setAvailableTags(data.tags || [])
-        }
-      } catch (err) {
-        console.error(`Error fetching tags: ${err}`)
-      }
-    }
-
-    window.addEventListener("focus", handleFocus)
-    return () => window.removeEventListener("focus", handleFocus)
-  }, [formData.type])
 
   const handleChange = useCallback(
     (
@@ -211,7 +177,6 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     formData,
     setFormData,
     availableTags,
-    setAvailableTags,
     suggestedTags,
     setSuggestedTags,
     showTagSuggestions,

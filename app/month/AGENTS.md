@@ -34,6 +34,12 @@ Re-exports pure functions from `lib/domain/services/payment-calculator.ts` (99 u
 - `PUT /api/payments` — edit with full recalculation
 - `DELETE /api/payments` — remove by `_id`
 
+## Data Fetching
+All month-feature components consume SWR hooks; no direct `fetch` calls in this folder.
+- GETs: `usePayments({ year, month })` from `lib/hooks/usePayments`, `useTags(type)` from `lib/hooks/useTags`.
+- Mutations: `useCreatePayment` / `useUpdatePayment` / `useDeletePayment` from `lib/hooks/usePaymentMutations`; `useGenerateInvoice` / `useUploadInvoice` from `lib/hooks/useInvoiceMutations`. Each mutation invalidates the payments cache automatically.
+- Use `isMutating` to drive submit/delete button states; do not maintain parallel local booleans.
+
 ## Key Behaviors
 - After save: type and date persist (sticky), amounts/concepts reset
 - Negative totals allowed (refunds)

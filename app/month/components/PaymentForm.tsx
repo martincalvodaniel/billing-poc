@@ -8,6 +8,9 @@ import {
   useRef,
   useState,
 } from "react"
+import { useUploadInvoice } from "@/lib/hooks/useInvoiceMutations"
+import { useCreatePayment } from "@/lib/hooks/usePaymentMutations"
+import { FetchError } from "@/lib/swr-fetcher"
 import Toast from "../../components/Toast"
 import PaymentFormFields from "./PaymentFormFields"
 import { validateConcepts } from "./paymentUtils"
@@ -50,6 +53,9 @@ const PaymentForm = function PaymentForm({
   const [showSuccess, setShowSuccess] = useState(false)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
 
+  const { trigger: createPayment } = useCreatePayment()
+  const { trigger: uploadInvoice } = useUploadInvoice()
+
   // Provider bill upload state
   const [providerBillFile, setProviderBillFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -76,47 +82,28 @@ const PaymentForm = function PaymentForm({
         throw new Error(validation.error || "Validation failed")
       }
 
-      const response = await fetch("/api/payments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to save payment")
-      }
-
-      const result = await response.json()
+      const result = await createPayment(formData)
       const paymentId = result.id
 
       // Upload provider bill if outcome payment and file is selected
       if (formData.type === "outcome" && providerBillFile) {
         try {
-          const uploadFormData = new FormData()
-          uploadFormData.append("file", providerBillFile)
-          uploadFormData.append("paymentId", paymentId)
-
-          const uploadResponse = await fetch("/api/invoices/upload", {
-            method: "POST",
-            body: uploadFormData,
-          })
-
-          if (!uploadResponse.ok) {
-            const uploadData = await uploadResponse.json()
-            throw new Error(
-              uploadData.error || "Failed to upload provider bill"
-            )
-          }
+          await uploadInvoice({ paymentId, file: providerBillFile })
         } catch (uploadErr) {
           console.error(`Error uploading provider bill: ${uploadErr}`)
-          setUploadError(
-            uploadErr instanceof Error
-              ? uploadErr.message
-              : "Failed to upload provider bill"
-          )
+          let uploadMessage = "Failed to upload provider bill"
+          if (
+            uploadErr instanceof FetchError &&
+            uploadErr.info &&
+            typeof uploadErr.info === "object" &&
+            "error" in uploadErr.info &&
+            typeof (uploadErr.info as { error: unknown }).error === "string"
+          ) {
+            uploadMessage = (uploadErr.info as { error: string }).error
+          } else if (uploadErr instanceof Error) {
+            uploadMessage = uploadErr.message
+          }
+          setUploadError(uploadMessage)
           // Continue with success since payment was created
         }
       }
@@ -141,8 +128,18 @@ const PaymentForm = function PaymentForm({
 
       onPaymentSaved?.(formData.date)
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred"
+      let errorMessage = "An error occurred"
+      if (
+        err instanceof FetchError &&
+        err.info &&
+        typeof err.info === "object" &&
+        "error" in err.info &&
+        typeof (err.info as { error: unknown }).error === "string"
+      ) {
+        errorMessage = (err.info as { error: string }).error
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
       setError(errorMessage)
       console.error(`Error saving payment: ${err}`)
     }

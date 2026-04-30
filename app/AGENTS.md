@@ -10,6 +10,13 @@
 - Use shared `formatCurrency`, `formatDate`, `formatMonthYear` from `lib/formatters.ts` — never define locally
 - Use shared `CHART_COLORS` from `lib/constants.ts` — never define color arrays locally
 
+## Data Fetching (SWR)
+- All client-side data access goes through SWR hooks in `lib/hooks/` — never call `fetch` directly from a component or `useEffect`.
+- GETs: `usePayments`, `useClients`, `useTags` (or add a new `useX` hook following the same pattern: stable tuple key, pure URL builder, `isXKey` predicate).
+- Mutations: `useCreatePayment` / `useUpdatePayment` / `useDeletePayment`, `useCreateClient` / `useUpdateClient` / `useDeleteClient`, `useGenerateInvoice` / `useUploadInvoice`. Each `trigger()` invalidates the relevant resource cache automatically.
+- Drive loading UI from `isLoading` (queries) or `isMutating` (mutations); surface errors by catching `FetchError` thrown by `trigger()`.
+- Do not add manual `mutate(isXKey)` bridges, do not register `window.focus`/`visibilitychange` listeners for re-fetching, do not expose `refresh*` methods via `useImperativeHandle`. Parents trigger revalidation via `useSWRConfig().mutate(isXKey)` if the mutation hook is unavailable in scope.
+
 ## PageLayout (Required)
 All pages must use `<PageLayout navigationSubtitle headerContent? children />`. Never manually create page structure with `min-h-screen`, `max-w-6xl`, etc.
 

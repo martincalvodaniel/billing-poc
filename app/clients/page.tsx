@@ -1,113 +1,81 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import PageLayout from "@/app/components/PageLayout"
-import type { Client, ClientFormData } from "@/lib/types"
+import { useCreateClient } from "@/lib/hooks/useClientMutations"
+import { useClients } from "@/lib/hooks/useClients"
+import { FetchError } from "@/lib/swr-fetcher"
+import type { ClientFormData } from "@/lib/types"
 import ClientForm from "./components/ClientForm"
 import ClientList from "./components/ClientList"
 import ClientSearch from "./components/ClientSearch"
 import PaginationControls from "./components/PaginationControls"
 
-interface PaginationState {
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPrevPage: boolean
-}
+const PAGE_SIZE = 10
 
-const DEFAULT_PAGINATION: PaginationState = {
-  page: 1,
-  pageSize: 10,
-  total: 0,
-  totalPages: 0,
-  hasNextPage: false,
-  hasPrevPage: false,
+function extractApiError(err: unknown, fallback: string): string {
+  if (
+    err instanceof FetchError &&
+    err.info &&
+    typeof err.info === "object" &&
+    "error" in err.info &&
+    typeof (err.info as { error: unknown }).error === "string"
+  ) {
+    return (err.info as { error: string }).error
+  }
+  if (err instanceof Error) {
+    return err.message
+  }
+  return fallback
 }
 
 export default function ClientsPage() {
-  const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [pagination, setPagination] =
-    useState<PaginationState>(DEFAULT_PAGINATION)
+  const [page, setPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  const fetchClients = useCallback(async (query?: string, pageNum?: number) => {
-    try {
-      setIsLoading(true)
-      setError(null)
+  const {
+    data,
+    clients,
+    isLoading,
+    error: fetchError,
+  } = useClients({ search: searchQuery, page, pageSize: PAGE_SIZE })
 
-      const url = new URL("/api/clients", window.location.origin)
-      if (query) {
-        url.searchParams.set("search", query)
-      }
-      url.searchParams.set("page", String(pageNum ?? 1))
-      url.searchParams.set("pageSize", String(10))
+  const { trigger: createClient } = useCreateClient()
 
-      const response = await fetch(url.toString())
+  const pagination = data?.pagination
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch clients")
-      }
-
-      const data = await response.json()
-      setFilteredClients(data.items)
-      setPagination(data.pagination)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsLoading(false)
-    }
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query)
+    setPage(1) // Reset to page 1 on search
   }, [])
 
-  // Initial load
-  useEffect(() => {
-    fetchClients()
-  }, [fetchClients])
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage)
+  }, [])
 
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearchQuery(query)
-      fetchClients(query, 1) // Reset to page 1 on search
-    },
-    [fetchClients]
-  )
-
-  const handlePageChange = useCallback(
-    (newPage: number) => {
-      fetchClients(searchQuery, newPage)
-    },
-    [fetchClients, searchQuery]
-  )
-
-  const handleCreateClient = async (data: ClientFormData) => {
-    const response = await fetch("/api/clients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      const result = await response.json()
-      throw new Error(result.error || "Failed to create client")
+  const handleCreateClient = async (formData: ClientFormData) => {
+    try {
+      await createClient(formData)
+    } catch (err) {
+      throw new Error(extractApiError(err, "Failed to create client"))
     }
-
     setShowForm(false)
-    await fetchClients(searchQuery, 1) // Reset to page 1 after create
+    setPage(1) // Reset to page 1 after create
   }
 
-  const handleRefresh = async () => {
-    await fetchClients(searchQuery, pagination.page)
-  }
+  const errorMessage =
+    fetchError instanceof Error
+      ? fetchError.message
+      : fetchError
+        ? "Failed to fetch clients"
+        : null
 
   return (
     <PageLayout navigationSubtitle="Clients">
-      {error && (
+      {errorMessage && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-          {error}
+          {errorMessage}
         </div>
       )}
 
@@ -138,15 +106,15 @@ export default function ClientsPage() {
         )}
       </div>
 
-      {isLoading && filteredClients.length === 0 ? (
+      {isLoading && clients.length === 0 ? (
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
           <p className="text-zinc-600 dark:text-zinc-400">Loading clients...</p>
         </div>
       ) : (
         <>
-          <ClientList clients={filteredClients} onRefresh={handleRefresh} />
+          <ClientList clients={clients} />
 
-          {pagination.total > 0 && (
+          {pagination && pagination.total > 0 && (
             <div className="flex justify-center">
               <PaginationControls
                 currentPage={pagination.page}
