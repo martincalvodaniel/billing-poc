@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle, useRef, useCallback } from "react";
 import { Payment } from "@/lib/types";
 import DonutChart from "../../components/DonutChart";
 import SummaryCard from "../../components/SummaryCard";
@@ -131,7 +131,7 @@ export default forwardRef(function MonthlyPaymentsView(
 
 
 
-  const closeEditModal = () => {
+  const closeEditModal = useCallback(() => {
     setEditingPaymentId(null);
     setEditingField(null);
     setEditingDate("");
@@ -144,7 +144,36 @@ export default forwardRef(function MonthlyPaymentsView(
     if (tagDebounceTimer.current) {
       clearTimeout(tagDebounceTimer.current);
     }
-  };
+  }, []);
+
+  const handleEditModalKeyDown = useCallback((e: KeyboardEvent) => {
+    if (editingPaymentId && editingField) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeEditModal();
+      } else if (e.key === "Enter" && editingField !== "tag") {
+        e.preventDefault();
+        e.stopPropagation();
+        // Find and click the Save button (the rightmost green button in the edit modal)
+        const saveBtn = document.evaluate("//button[contains(., 'Save')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as HTMLButtonElement;
+        saveBtn?.click();
+      }
+    }
+  }, [editingPaymentId, editingField, closeEditModal]);
+
+  useEffect(() => {
+    if (!editingPaymentId || !editingField) return;
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleEditModalKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleEditModalKeyDown);
+    };
+  }, [editingPaymentId, editingField, handleEditModalKeyDown]);
 
   const handleEditDate = (payment: Payment) => {
     setEditingPaymentId(payment._id?.toString() || null);
@@ -228,7 +257,35 @@ export default forwardRef(function MonthlyPaymentsView(
     setDetailPaymentId(null);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleDeleteModalKeyDown = useCallback((e: KeyboardEvent) => {
+    if (deleteConfirmPaymentId) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        setDeleteConfirmPaymentId(null);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleConfirmDelete();
+      }
+    }
+  }, [deleteConfirmPaymentId]);
+
+  // Register keyboard handler for delete modal
+  useEffect(() => {
+    if (!deleteConfirmPaymentId) return;
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleDeleteModalKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleDeleteModalKeyDown);
+    };
+  }, [deleteConfirmPaymentId, handleDeleteModalKeyDown]);
+
+  const handleConfirmDelete = useCallback(async () => {
     if (!deleteConfirmPaymentId) return;
 
     setIsDeleting(true);
@@ -259,7 +316,7 @@ export default forwardRef(function MonthlyPaymentsView(
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [deleteConfirmPaymentId]);
 
   const handleSave = async () => {
     if (!editingPaymentId || !editingField) return;

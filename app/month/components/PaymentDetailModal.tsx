@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Payment } from "@/lib/types";
 
 interface PaymentDetailModalProps {
@@ -9,6 +10,29 @@ interface PaymentDetailModalProps {
 }
 
 export default function PaymentDetailModal({ payment, onClose, formatCurrency }: PaymentDetailModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if modal is still visible before handling key
+      const modalElement = document.querySelector('[role="dialog"]');
+      if (!modalElement) return;
+      
+      if (e.key === "Escape" || e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    // Delay adding listener to ensure modal is fully mounted
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
   const currency = (amount: number) =>
     formatCurrency
       ? formatCurrency(amount)

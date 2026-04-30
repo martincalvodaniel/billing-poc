@@ -218,12 +218,28 @@ interface MonthlyPaymentsViewProps {
 - onMonthChange callback syncs PaymentForm date field
 - onPaymentsBreakdownChange callback updates filter header counter
 
+## Modal Interactions & Keyboard Shortcuts
+All modals support consistent keyboard shortcuts for improved UX:
+- **ESC**: Cancel/close any modal (same as clicking close button or clicking outside backdrop)
+- **ENTER**: Confirm action in modals (save in PaymentForm and edit modal, delete in confirmation, close in detail modal)
+- Tag dropdown handling: ENTER selects tag when dropdown is open, submits/saves otherwise
+- Implementation uses `useEffect` with keydown listeners; prevents default and propagation
+- Listeners use `setTimeout(..., 0)` to ensure DOM is ready before attaching; proper cleanup on unmount
+- Modal visibility checks prevent handling keys when modal is not rendered
+
+### Specific Modal Behaviors
+- **New Payment Form** (`PaymentForm`): ENTER submits form (skipped if tag dropdown open); ESC closes parent modal via wrapper
+- **Payment Detail Modal** (`PaymentDetailModal`): ENTER or ESC closes modal
+- **Edit Field Modal** (`MonthlyPaymentsView` edit overlay): ENTER saves field (except tag field), ESC cancels
+- **Delete Confirmation Modal** (`MonthlyPaymentsView` delete overlay): ENTER deletes payment, ESC cancels
+
 ## Modal Editing
 - Centered overlay; track editingPaymentId + editingField
 - Field-specific validation; unified save handler calling PUT /api/payments
 - Current year button (🎯) is managed by parent and positioned after year selector for consistency with month page
 - Updates trigger data refiltering based on paymentsForYear memo
 - Payment count display shown adjacent to year in header (e.g., "Overview for 2026 · 45 payments")
+- Keyboard support: ENTER key triggers save (finds Save button via XPath), ESC cancels; tag field excludes ENTER from save (allows dropdown selection)
 ## Tag Autocomplete
 - Tags are type-specific (income/outcome)
 - GET /api/tags?type=...; refetch on type change
@@ -233,6 +249,7 @@ interface MonthlyPaymentsViewProps {
 ## Delete Confirmation
 - Delete button opens confirmation modal with payment details
 - DELETE /api/payments; optimistic removal; success toast; handles errors
+- Keyboard support: ENTER key deletes payment, ESC closes modal without deleting
 
 ## Payment Detail Modal (Read-Only)
 - Triggered by an icon-only action button in the monthly payments table

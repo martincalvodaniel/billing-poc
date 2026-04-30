@@ -7,6 +7,9 @@
 ## Modals
 - Backdrop role="presentation" with click-outside close
 - Dialog role="dialog", aria-labelledby to title id, aria-modal="true"
+- Keyboard shortcuts: ESC to close, ENTER/Ctrl+ENTER to confirm
+  - Implemented via useEffect with keydown listeners in PaymentDetailModal and PaymentForm
+  - Cleanup listeners on unmount to prevent memory leaks
 
 ## Live Regions
 - Errors: role="alert", aria-live="polite", aria-atomic="true"

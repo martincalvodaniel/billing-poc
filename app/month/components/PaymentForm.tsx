@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
 import { PaymentFormData } from "@/lib/types";
 
 interface PaymentFormProps {
@@ -205,6 +205,22 @@ const PaymentForm = forwardRef(function PaymentForm(
     }, 200);
   };
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLFormElement>) => {
+    // Don't submit if tag dropdown is open (ENTER should select tag)
+    if (showTagSuggestions) {
+      return;
+    }
+    
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      const submitButton = (e.currentTarget as HTMLFormElement).querySelector(
+        'button[type="submit"]'
+      ) as HTMLButtonElement;
+      submitButton?.click();
+    }
+  }, [showTagSuggestions]);
+
   return (
     <>
       {/* Success Toast Notification */}
@@ -267,6 +283,7 @@ const PaymentForm = forwardRef(function PaymentForm(
 
       <form
         onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
         className="w-full max-w-xl space-y-6 rounded-lg border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
       <div className="space-y-2">

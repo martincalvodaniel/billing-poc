@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import PaymentForm from "./PaymentForm";
 import MonthlyPaymentsView from "./MonthlyPaymentsView";
@@ -65,9 +65,31 @@ export default function MonthPageContent() {
     setShowPaymentModal(true);
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowPaymentModal(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!showPaymentModal) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCloseModal();
+      }
+    };
+
+    // Delay adding listener to ensure modal is mounted
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showPaymentModal, handleCloseModal]);
 
   const handleCalendarMonthSelect = (year: number, month: number) => {
     setSelectedDate(new Date(year, month, 1));
