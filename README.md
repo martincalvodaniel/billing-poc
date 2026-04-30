@@ -38,8 +38,6 @@ For detailed setup instructions including MongoDB Atlas configuration, see [AGEN
 
 For detailed development guidelines, code patterns, TypeScript conventions, and architectural patterns, see [AGENTS.md](./AGENTS.md).
 
-For GitHub Copilot context and quick reference, see [.github/copilot-instructions.md](./.github/copilot-instructions.md).
-
 ## API Endpoints
 
 ### `POST /api/payments` - Create Payment
