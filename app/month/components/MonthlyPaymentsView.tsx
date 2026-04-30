@@ -351,6 +351,11 @@ export default forwardRef(function MonthlyPaymentsView(
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                     VAT
                   </th>
+                  {filteredPayments.some(p => p.surcharge && p.surcharge > 0) && (
+                    <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
+                      Surcharge
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                     Net
                   </th>
@@ -396,6 +401,15 @@ export default forwardRef(function MonthlyPaymentsView(
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                       ({payment.vat}%) {formatCurrency(payment.vatAmount)}
                     </td>
+                    {filteredPayments.some(p => p.surcharge && p.surcharge > 0) && (
+                      <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+                        {payment.surcharge && payment.surcharge > 0 ? (
+                          <span>({payment.surcharge}%) {formatCurrency(payment.surchargeAmount || 0)}</span>
+                        ) : (
+                          <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.netAmount)}
                     </td>

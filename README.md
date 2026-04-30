@@ -4,13 +4,13 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 
 ## Features
 
-- **Payment Browser** - View filtered transactions in a table (day, type, tag, total, VAT, net amount) with summary cards (total income with count, outcome with count, balance) and real-time updates
-- **Payment Components** - Payments can be composed of multiple named concepts (line items). Each concept has a required name, amount, and quantity (1 or more multiplier). Quantities are multiplied by the amount to calculate the contribution of each concept to the total. The total payment is the sum of (amount × quantity) for all components. VAT is applied uniformly at the payment level.
+- **Payment Browser** - View filtered transactions in a table (day, type, tag, total, VAT, surcharge, net amount) with summary cards (total income with count, outcome with count, balance) and real-time updates
+- **Payment Components** - Payments can be composed of multiple named concepts (line items). Each concept has a required name, amount, and quantity (1 or more multiplier). Quantities are multiplied by the amount to calculate the contribution of each concept to the total. The total payment is the sum of (amount × quantity) for all components. VAT and optional surcharge are applied uniformly at the payment level.
 - **Month Navigation** - Dedicated filter section at the top displays the selected month and controls. Calendar picker (closes when clicking outside) with prev/next navigation, month grid, year selection, and manual year input. Quick icon button jumps to the current month and disables when already there. Add payment button positioned adjacent to the calendar for easy access. Automatically navigates to the saved payment's month after creating a new payment. Form date field syncs with calendar selection to match the viewed month
-- **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Add multiple payment components with optional names and amounts. Gross/net calculation (enter component amounts with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks. Associate an optional client to each payment with searchable dropdown (similar to client page search). Keyboard shortcuts: **ENTER** to save, **ESC** to cancel
+- **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Add multiple payment components with optional names and amounts. Gross/net calculation (enter component amounts with VAT % and optional surcharge %, system calculates net) — VAT defaults to 21%. Optional surcharge field for freelancers (e.g., 5.2%). Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks. Associate an optional client to each payment with searchable dropdown (similar to client page search). Keyboard shortcuts: **ENTER** to save, **ESC** to cancel
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Interactive sorting controls allow sorting by percentage or name (ascending/descending). Legend positioned on the right side of the chart for better space utilization. Tags maintain consistent colors across all sorting options. Charts appear between summary cards and payment list for quick insights
-- **Modal Payment Editing** - Click any payment row in the monthly list to open a full edit modal with all payment fields (date, type, tag, client, payment components, VAT). Edit payment components (add, remove, modify name/amount/quantity), change dates, types, tags, and associated clients. Input controls include tag autocomplete and client search dropdown. All related fields (net amount, VAT amount, total) automatically recalculate. Keyboard shortcut: **ESC** to close
+- **Modal Payment Editing** - Click any payment row in the monthly list to open a full edit modal with all payment fields (date, type, tag, client, payment components, VAT, surcharge). Edit payment components (add, remove, modify name/amount/quantity), change dates, types, tags, and associated clients. Input controls include tag autocomplete and client search dropdown. All related fields (net amount, VAT amount, surcharge amount, total) automatically recalculate. Keyboard shortcut: **ESC** to close
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal. Keyboard shortcuts: **ENTER** to confirm deletion, **ESC** to cancel
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
 - **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), tax address, and optional phone and email. Search clients by name or tax ID with real-time filtering. Click any client row to edit in a centered modal. Create and delete client records. Support for both individual freelancers and company entities. Paginated client list with navigation controls. Keyboard shortcuts: **ESC** to close modals, **Click outside** to cancel.
@@ -62,6 +62,7 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
     { "name": "Service B", "amount": 130.24, "quantity": 2 }
   ],
   "vat": "21",
+  "surcharge": "5.2",
   "tag": "Client A",
   "clientId": "optional_client_object_id"
 }
@@ -75,11 +76,12 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
   - `amount`: Numeric amount in euros per unit (required)
   - `quantity`: Numeric quantity/multiplier (1 or more). Defaults to 1 if omitted. (optional)
 - `vat`: VAT percentage applied to total (e.g., 21 for 21%) (required)
+- `surcharge`: Surcharge percentage (e.g., 5.2 for 5.2%) (optional)
 - `tag`: Optional tag for categorizing payments (string)
 - `clientId`: Optional MongoDB ObjectId of the associated client (string)
 
 **Response:**
-The API calculates `netAmount` from the sum of all concept totals (amount × quantity) and VAT percentage using: `netAmount = total / (1 + vat/100)` where `total` is the sum of (amount × quantity) for all concepts.
+The API calculates `netAmount` from the sum of all concept totals (amount × quantity) and VAT/surcharge percentages using: `netAmount = total / (1 + vat/100 + surcharge/100)` where `total` is the sum of (amount × quantity) for all concepts. When surcharge is provided, both `vatAmount` and `surchargeAmount` are calculated proportionally.
 
 ### `GET /api/payments` - Get Payments (With Optional Year/Month Filtering)
 
@@ -93,7 +95,8 @@ Each payment includes:
 - `concepts`: Array of payment components with amounts, quantities, and optional names
 - `total`: Sum of (amount × quantity) for all concepts
 - `vat`: VAT percentage and VAT amount
-- `netAmount`: Net amount after VAT deduction
+- `surcharge`: Optional surcharge percentage and amount
+- `netAmount`: Net amount after VAT and surcharge deduction
 
 **Examples:**
 - `GET /api/payments` - All payments
@@ -112,7 +115,8 @@ Each payment includes:
   "concepts": [
     { "name": "Updated Service", "amount": 250.00, "quantity": 2 }
   ],
-  "vat": "21"
+  "vat": "21",
+  "surcharge": "5.2"
 }
 ```
 
@@ -124,13 +128,14 @@ Each payment includes:
 - `clientId`: Optional MongoDB ObjectId of the associated client, or empty string to clear (optional)
 - `concepts`: New array of payment components (optional). Each concept supports quantity field.
 - `vat`: New VAT percentage 0-100 (optional)
+- `surcharge`: New surcharge percentage 0-100 (optional)
 
-At least one of `date`, `type`, `tag`, `clientId`, `concepts`, or `vat` must be provided.
+At least one of `date`, `type`, `tag`, `clientId`, `concepts`, `vat`, or `surcharge` must be provided.
 
 When `concepts` are updated, totals are automatically recalculated using amount × quantity.
-When `vat` is updated, net amount and VAT amount are recalculated based on total.
+When `vat` or `surcharge` are updated, net amount, VAT amount, and surcharge amount are recalculated based on total.
 
-**Response:** Success status with updated payment values (`total`, `vatAmount`, `netAmount`, `vat`)
+**Response:** Success status with updated payment values (`total`, `vatAmount`, `surchargeAmount`, `netAmount`, `vat`, `surcharge`)
 
 ### `DELETE /api/payments` - Delete Payment
 

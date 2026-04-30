@@ -34,6 +34,7 @@ export default function PaymentDetailModal({
       : [{ name: "", amount: 0, quantity: 1 }]
   );
   const [vat, setVat] = useState(payment.vat.toString());
+  const [surcharge, setSurcharge] = useState(payment.surcharge?.toString() || "");
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,14 +126,23 @@ export default function PaymentDetailModal({
   const calculateVatAmount = () => {
     const total = calculateTotal();
     const vatPercentage = parseFloat(vat) || 0;
-    const net = total / (1 + vatPercentage / 100);
-    return total - net;
+    const surchargePercentage = parseFloat(surcharge || "0") || 0;
+    return total * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+  };
+
+  const calculateSurchargeAmount = () => {
+    const total = calculateTotal();
+    const vatPercentage = parseFloat(vat) || 0;
+    const surchargePercentage = parseFloat(surcharge || "0") || 0;
+    if (surchargePercentage === 0) return 0;
+    return total * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
   };
 
   const calculateNetAmount = () => {
     const total = calculateTotal();
     const vatPercentage = parseFloat(vat) || 0;
-    return total / (1 + vatPercentage / 100);
+    const surchargePercentage = parseFloat(surcharge || "0") || 0;
+    return total / (1 + vatPercentage / 100 + surchargePercentage / 100);
   };
 
   const handleSave = async () => {
@@ -161,6 +171,12 @@ export default function PaymentDetailModal({
       return;
     }
 
+    const surchargeNumber = surcharge ? parseFloat(surcharge) : 0;
+    if (surcharge && (isNaN(surchargeNumber) || surchargeNumber < 0 || surchargeNumber > 100)) {
+      setError("Surcharge must be between 0 and 100");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const response = await fetch("/api/payments", {
@@ -174,6 +190,7 @@ export default function PaymentDetailModal({
           clientId: clientId || undefined,
           concepts,
           vat: vatNumber,
+          surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
         }),
       });
 
@@ -192,8 +209,10 @@ export default function PaymentDetailModal({
         tag: tag || undefined,
         concepts,
         vat: responseData.vat ?? vatNumber,
+        surcharge: responseData.surcharge ?? (surchargeNumber > 0 ? surchargeNumber : undefined),
         total: responseData.total ?? calculateTotal(),
         vatAmount: responseData.vatAmount ?? calculateVatAmount(),
+        surchargeAmount: responseData.surchargeAmount ?? (surchargeNumber > 0 ? calculateSurchargeAmount() : undefined),
         netAmount: responseData.netAmount ?? calculateNetAmount(),
         updatedAt: new Date(),
       };
@@ -488,6 +507,27 @@ export default function PaymentDetailModal({
           />
         </div>
 
+        {/* Surcharge Percentage (Optional) */}
+        <div className="space-y-2">
+          <label
+            htmlFor="edit-surcharge"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Surcharge (%) - Optional
+          </label>
+          <input
+            type="number"
+            id="edit-surcharge"
+            value={surcharge}
+            onChange={(e) => setSurcharge(e.target.value)}
+            step="0.1"
+            min="0"
+            max="100"
+            placeholder="0"
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+
         {/* VAT Amount and Net Amount (calculated) */}
         <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
           <div className="flex items-center justify-between">
@@ -498,6 +538,16 @@ export default function PaymentDetailModal({
               {currency(calculateVatAmount())}
             </span>
           </div>
+          {parseFloat(surcharge || "0") > 0 && (
+            <div className="flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-700">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Surcharge Amount
+              </span>
+              <span className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                {currency(calculateSurchargeAmount())}
+              </span>
+            </div>
+          )}
           <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">

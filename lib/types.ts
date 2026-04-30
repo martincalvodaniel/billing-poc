@@ -18,8 +18,10 @@ export interface Payment {
   clientId?: ObjectId;
   concepts: PaymentConcept[];
   vat: number;
+  surcharge?: number;
   netAmount: number;
   vatAmount: number;
+  surchargeAmount?: number;
   total: number;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +32,7 @@ export interface PaymentFormData {
   date: string;
   concepts: PaymentConcept[];
   vat: string;
+  surcharge?: string;
   tag?: string;
   clientId?: string;
 }

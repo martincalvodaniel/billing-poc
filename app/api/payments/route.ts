@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, date, concepts, vat, tag, clientId } = body;
+    const { type, date, concepts, vat, surcharge, tag, clientId } = body;
 
     // Validate required fields
     if (!type || !date) {
@@ -122,6 +122,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate surcharge percentage (optional)
+    let surchargePercentage = 0;
+    if (surcharge !== undefined && surcharge !== null && surcharge !== "") {
+      surchargePercentage = parseFloat(surcharge);
+      if (isNaN(surchargePercentage)) {
+        return NextResponse.json(
+          { error: "Invalid surcharge percentage" },
+          { status: 400 }
+        );
+      }
+
+      if (surchargePercentage < 0 || surchargePercentage > 100) {
+        return NextResponse.json(
+          { error: "Surcharge percentage must be between 0 and 100" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate and normalize concepts
     const normalizedConcepts = paymentConcepts.map((concept: RawPaymentConcept): PaymentConcept => ({
       name: concept.name,
@@ -147,8 +166,9 @@ export async function POST(request: NextRequest) {
 
     // Calculate totals from concepts (amount × quantity per concept)
     const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + (c.amount * c.quantity), 0);
-    const netAmount = totalAmount / (1 + vatPercentage / 100);
-    const vatAmount = totalAmount - netAmount;
+    const netAmount = totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100);
+    const vatAmount = totalAmount * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+    const surchargeAmount = surchargePercentage > 0 ? totalAmount * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100) : undefined;
 
     // Validate clientId if provided
     let clientObjectId: ObjectId | undefined;
@@ -179,8 +199,10 @@ export async function POST(request: NextRequest) {
       clientId: clientObjectId,
       concepts: normalizedConcepts,
       vat: vatPercentage,
+      surcharge: surchargePercentage > 0 ? surchargePercentage : undefined,
       netAmount,
       vatAmount,
+      surchargeAmount,
       total: totalAmount,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -205,7 +227,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, date, type, tag, clientId, concepts, vat, total } = body;
+    const { id, date, type, tag, clientId, concepts, vat, surcharge, total } = body;
 
     // Validate required fields
     if (!id) {
@@ -223,7 +245,7 @@ export async function PUT(request: NextRequest) {
 
     // Get current payment for calculations
     let payment: Payment | null = null;
-    if (concepts !== undefined || total !== undefined || vat !== undefined) {
+    if (concepts !== undefined || total !== undefined || vat !== undefined || surcharge !== undefined) {
       payment = await db.collection<Payment>("payments").findOne({
         _id: new ObjectId(id),
       });
@@ -324,12 +346,15 @@ export async function PUT(request: NextRequest) {
       // Recalculate totals (amount × quantity per concept)
       const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + (c.amount * c.quantity), 0);
       const vatPercentage = vat !== undefined ? parseFloat(vat) : payment!.vat;
-      const netAmount = totalAmount / (1 + vatPercentage / 100);
-      const vatAmount = totalAmount - netAmount;
+      const surchargePercentage = surcharge !== undefined ? parseFloat(surcharge) || 0 : payment!.surcharge || 0;
+      const netAmount = totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const vatAmount = totalAmount * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const surchargeAmount = surchargePercentage > 0 ? totalAmount * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100) : undefined;
 
       updateData.total = totalAmount;
       updateData.netAmount = netAmount;
       updateData.vatAmount = vatAmount;
+      updateData.surchargeAmount = surchargeAmount;
     }
 
     // Handle VAT percentage update
@@ -353,11 +378,45 @@ export async function PUT(request: NextRequest) {
 
       // Recalculate with new VAT
       const totalAmount = total !== undefined ? parseFloat(total) : payment!.total;
-      const netAmount = totalAmount / (1 + vatPercentage / 100);
-      const vatAmount = totalAmount - netAmount;
+      const surchargePercentage = surcharge !== undefined ? parseFloat(surcharge) || 0 : payment!.surcharge || 0;
+      const netAmount = totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const vatAmount = totalAmount * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const surchargeAmount = surchargePercentage > 0 ? totalAmount * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100) : undefined;
 
       updateData.netAmount = netAmount;
       updateData.vatAmount = vatAmount;
+      updateData.surchargeAmount = surchargeAmount;
+    }
+
+    // Handle surcharge percentage update
+    if (surcharge !== undefined) {
+      const surchargePercentage = surcharge ? parseFloat(surcharge) : 0;
+      if (surcharge && isNaN(surchargePercentage)) {
+        return NextResponse.json(
+          { error: "Invalid surcharge percentage" },
+          { status: 400 }
+        );
+      }
+
+      if (surchargePercentage < 0 || surchargePercentage > 100) {
+        return NextResponse.json(
+          { error: "Surcharge percentage must be between 0 and 100" },
+          { status: 400 }
+        );
+      }
+
+      updateData.surcharge = surchargePercentage > 0 ? surchargePercentage : null;
+
+      // Recalculate with new surcharge
+      const totalAmount = total !== undefined ? parseFloat(total) : payment!.total;
+      const vatPercentage = vat !== undefined ? parseFloat(vat) : payment!.vat;
+      const netAmount = totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const vatAmount = totalAmount * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const surchargeAmount = surchargePercentage > 0 ? totalAmount * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100) : undefined;
+
+      updateData.netAmount = netAmount;
+      updateData.vatAmount = vatAmount;
+      updateData.surchargeAmount = surchargeAmount;
     }
 
     // Handle total update (legacy - convert to concepts)
@@ -371,12 +430,15 @@ export async function PUT(request: NextRequest) {
       }
 
       const vatPercentage = vat !== undefined ? parseFloat(vat) : payment!.vat;
-      const netAmount = totalAmount / (1 + vatPercentage / 100);
-      const vatAmount = totalAmount - netAmount;
+      const surchargePercentage = surcharge !== undefined ? parseFloat(surcharge) || 0 : payment!.surcharge || 0;
+      const netAmount = totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const vatAmount = totalAmount * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+      const surchargeAmount = surchargePercentage > 0 ? totalAmount * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100) : undefined;
 
       updateData.total = totalAmount;
       updateData.netAmount = netAmount;
       updateData.vatAmount = vatAmount;
+      updateData.surchargeAmount = surchargeAmount;
     }
 
     // Ensure at least one field is being updated
@@ -387,7 +449,8 @@ export async function PUT(request: NextRequest) {
       clientId === undefined &&
       concepts === undefined &&
       total === undefined &&
-      vat === undefined
+      vat === undefined &&
+      surcharge === undefined
     ) {
       return NextResponse.json(
         { error: "No fields to update" },
@@ -412,8 +475,10 @@ export async function PUT(request: NextRequest) {
         success: true,
         total: updateData.total,
         vatAmount: updateData.vatAmount,
+        surchargeAmount: updateData.surchargeAmount,
         netAmount: updateData.netAmount,
         vat: updateData.vat,
+        surcharge: updateData.surcharge,
       },
       { status: 200 }
     );

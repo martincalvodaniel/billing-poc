@@ -20,8 +20,10 @@ export interface Payment {
   tag?: string;          // Optional category tag
   concepts: PaymentConcept[]; // Array of payment components
   vat: number;           // VAT percentage applied uniformly (0-100)
-  netAmount: number;     // Calculated: total / (1 + vat/100)
-  vatAmount: number;     // Calculated: total - netAmount
+  surcharge?: number;      // Optional surcharge percentage (0-100)
+  netAmount: number;     // Calculated: total / (1 + vat/100 + surcharge/100)
+  vatAmount: number;     // Calculated: total * (vat/100) / (1 + vat/100 + surcharge/100)
+  surchargeAmount?: number; // Calculated: total * (surcharge/100) / (1 + vat/100 + surcharge/100) when surcharge > 0
   total: number;         // Calculated: sum of (concept.amount * concept.quantity) for all concepts
   createdAt: Date;
   updatedAt: Date;
@@ -34,7 +36,8 @@ export interface Payment {
 - **Quantity Support**: Each concept has a quantity multiplier (default 1)
 - **Total Calculation**: `total = sum(concept.amount * concept.quantity for all concepts)`
 - **VAT Application**: Applied uniformly at payment level to total amount; no concept-level overrides
-- **Calculated Fields**: `netAmount`, `vatAmount`, `total` are computed server-side
+- **Surcharge**: Optional secondary percentage for freelancers (e.g., 5.2%). Applied uniformly at payment level alongside VAT.
+- **Calculated Fields**: `netAmount`, `vatAmount`, `surchargeAmount`, `total` are computed server-side
 
 ## Client Entity Structure
 
@@ -48,7 +51,7 @@ export interface Client {
   clientType: ClientType;  // "individual" for persons/freelancers, "company" for businesses
   name: string;            // Full name (individual) or Business name (company)
   taxId: string;           // NIF/CIF/NIE (Tax identification number)
-  address: string;         // Domicilio Fiscal (full address with CP and city)
+  address: string;         // Registered address (full address with postal code and city)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,14 +67,14 @@ export interface ClientFormData {
 ### Client Entity Pattern
 - **Client Types**: Distinguish between individual persons/freelancers and business entities
 - **Tax ID**: Required field for all clients (NIF for individuals, CIF for companies, NIE for foreigners)
-- **Name**: Full name for individuals or business/company name (Razón Social) for companies
-- **Address**: Complete tax address including postal code and city (Domicilio Fiscal)
+- **Name**: Full name for individuals or legal business name for companies
+- **Address**: Complete registered address including postal code and city
 - **Timestamp Tracking**: Each client tracks creation and last update time for audit purposes
 
 ## Database Operations
 - Use getDatabase(); typed collections db.collection<Payment>("payments") and db.collection<Client>("clients")
 - Common ops: find/insertOne/updateOne/deleteOne; sort by date desc (payments), sort by name asc (clients)
-- Calculations: Always recompute net/vat on create/update based on concepts
+- Calculations: Always recompute net/vat/surcharge on create/update based on concepts
 
 ## Validation
 
@@ -79,9 +82,11 @@ export interface ClientFormData {
 
 #### Payment Validation
 - **Required**: type, date, concepts[] (at least one), vat
+- **Optional**: surcharge (surcharge percentage)
 - **Concepts**: Each must have name (non-empty string) and amount (number); quantity defaults to 1 if omitted
 - **Numeric**: Parse amounts and quantities with parseFloat(); check !isNaN
 - **VAT Range**: Must be 0-100; reject if outside range
+- **Surcharge Range**: Must be 0-100; reject if outside range (when provided)
 - **Concept Names**: Reject if any name is missing or empty string
 - **Concept Amounts**: Reject if any amount is NaN
 - **Legacy Support**: Single `total` field converts to single unnamed concept for backward compatibility (deprecated)
@@ -107,8 +112,11 @@ export interface ClientFormData {
 
 ### Calculation Rules
 - **Total**: `total = sum(concept.amount * concept.quantity)` for all concepts
-- **Net**: `netAmount = total / (1 + vat%/100)`
-- **VAT Amount**: `vatAmount = total - netAmount`
+- **Net (with surcharge)**: `netAmount = total / (1 + vat%/100 + surcharge%/100)`
+- **VAT Amount (with surcharge)**: `vatAmount = total * (vat%/100) / (1 + vat%/100 + surcharge%/100)`
+- **Surcharge Amount**: `surchargeAmount = total * (surcharge%/100) / (1 + vat%/100 + surcharge%/100)` (when surcharge > 0)
+- **Net (without surcharge)**: `netAmount = total / (1 + vat%/100)`
+- **VAT Amount (without surcharge)**: `vatAmount = total - netAmount`
 - All calculations done server-side on create/update
 
 ## API Patterns

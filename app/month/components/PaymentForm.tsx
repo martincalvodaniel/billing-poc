@@ -16,6 +16,7 @@ const PaymentForm = forwardRef(function PaymentForm(
     date: new Date().toISOString().split("T")[0],
     concepts: [{ name: "", amount: 0, quantity: 1 }],
     vat: "21",
+    surcharge: "",
     type: "income",
     tag: "",
     clientId: undefined,
@@ -174,14 +175,25 @@ const PaymentForm = forwardRef(function PaymentForm(
   const calculateVatAmount = () => {
     const total = calculateTotal();
     const vatPercentage = parseFloat(formData.vat) || 0;
-    const net = total / (1 + vatPercentage / 100);
-    return (total - net).toFixed(2);
+    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
+    const vatAmount = total * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+    return vatAmount.toFixed(2);
+  };
+
+  const calculateSurchargeAmount = () => {
+    const total = calculateTotal();
+    const vatPercentage = parseFloat(formData.vat) || 0;
+    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
+    if (surchargePercentage === 0) return "0.00";
+    const surchargeAmount = total * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
+    return surchargeAmount.toFixed(2);
   };
 
   const calculateNetAmount = () => {
     const total = calculateTotal();
     const vatPercentage = parseFloat(formData.vat) || 0;
-    return (total / (1 + vatPercentage / 100)).toFixed(2);
+    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
+    return (total / (1 + vatPercentage / 100 + surchargePercentage / 100)).toFixed(2);
   };
 
   const addConcept = () => {
@@ -546,6 +558,28 @@ const PaymentForm = forwardRef(function PaymentForm(
           />
         </div>
 
+        {/* Surcharge Percentage (Optional) */}
+        <div className="space-y-2">
+          <label
+            htmlFor="surcharge"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Surcharge (%) - Optional
+          </label>
+          <input
+            type="number"
+            id="surcharge"
+            name="surcharge"
+            value={formData.surcharge}
+            onChange={handleChange}
+            step="0.1"
+            min="0"
+            max="100"
+            placeholder="0"
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+
         {/* VAT Amount and Net Amount (calculated) */}
         <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
           <div className="flex items-center justify-between">
@@ -556,6 +590,16 @@ const PaymentForm = forwardRef(function PaymentForm(
               €{calculateVatAmount()}
             </span>
           </div>
+          {parseFloat(formData.surcharge || "0") > 0 && (
+            <div className="flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-700">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Surcharge Amount
+              </span>
+              <span className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                €{calculateSurchargeAmount()}
+              </span>
+            </div>
+          )}
           <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
