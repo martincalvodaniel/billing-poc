@@ -7,6 +7,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
 - **Month Navigation** - View payments from any month with calendar picker, prev/next buttons, and dynamic summary calculation per month. Automatically navigates to the saved payment's month after creating a new payment
 - **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks
+- **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Inline Payment Editing** - Click any date or type in the payment list to edit inline with a date picker or type selector
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, and PUT endpoints for payment operations
@@ -49,13 +50,17 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
   "type": "income" | "outcome",
   "date": "YYYY-MM-DD",
   "total": "410.48",
-  "vat": "21"
+  "vat": "21",
+  "tag": "Client A"
 }
 ```
 
 **Parameters:**
-- `total`: Total amount including VAT (e.g., €410.48)
-- `vat`: VAT percentage (e.g., 21 for 21%)
+- `type`: Payment type (required)
+- `date`: Payment date in YYYY-MM-DD format (required)  
+- `total`: Total amount including VAT (e.g., €410.48) (required)
+- `vat`: VAT percentage (e.g., 21 for 21%) (required)
+- `tag`: Optional tag for categorizing payments (string)
 
 **Response:**
 The API calculates `netAmount` from total and VAT percentage using: `netAmount = total / (1 + vat/100)`
@@ -69,16 +74,9 @@ Returns array of payments sorted by date (descending).
 ```json
 {
   "id": "payment_id",
-  "date": "YYYY-MM-DD"
-}
-```
-
-Or update type:
-
-```json
-{
-  "id": "payment_id",
-  "type": "income" | "outcome"
+  "date": "YYYY-MM-DD",
+  "type": "income" | "outcome",
+  "tag": "Client B"
 }
 ```
 
@@ -86,10 +84,25 @@ Or update type:
 - `id`: MongoDB ObjectId of the payment (required)
 - `date`: New date for the payment (optional)
 - `type`: Payment type either "income" or "outcome" (optional)
+- `tag`: Optional tag for the payment (optional)
 
-At least one of `date` or `type` must be provided.
+At least one of `date`, `type`, or `tag` must be provided.
 
 **Response:** Success status with updated payment
+
+### `GET /api/tags` - Get Available Tags
+
+**Query Parameters:**
+- `type`: Optional filter by payment type ("income" or "outcome")
+
+**Response:**
+```json
+{
+  "tags": ["Client A", "Rent", "Utilities"]
+}
+```
+
+When filtered by type, returns only tags used by payments of that type.
 
 ## Tech Stack
 
@@ -115,10 +128,11 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Real-time payment list updates
 - [x] Month navigation and filtering
 - [x] Inline payment editing (date & type)
+- [x] Payment tags with type-based autocomplete
 - [ ] Edit other payment fields (amount, VAT)
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
-- [ ] Add more payment fields (description, category, invoice number, etc.)
+- [ ] Add more payment fields (description, invoice number, etc.)
 - [ ] Pagination for large datasets
 - [ ] User authentication and authorization
 - [ ] Multi-user support with separate accounts

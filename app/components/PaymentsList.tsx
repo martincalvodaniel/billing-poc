@@ -387,6 +387,9 @@ export default forwardRef(function PaymentsList(props, ref) {
                   <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
                     Type
                   </th>
+                  <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
+                    Tag
+                  </th>
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                     Total
                   </th>
@@ -475,6 +478,15 @@ export default forwardRef(function PaymentsList(props, ref) {
                           {payment.type.charAt(0).toUpperCase() +
                             payment.type.slice(1)}
                         </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+                      {payment.tag ? (
+                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          {payment.tag}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">

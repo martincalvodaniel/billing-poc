@@ -442,6 +442,141 @@ const handleSaveType = async () => {
 )}
 ```
 
+### Tag Field with Autocomplete Pattern (Tags with Type-Based Filtering)
+For adding optional tags to payments with intelligent autocomplete suggestions:
+
+1. **State Management** - Track available tags, suggested tags, and display state
+2. **Fetch Tags on Mount** - Load available tags filtered by payment type using `GET /api/tags?type=paymentType`
+3. **Re-fetch on Type Change** - When payment type changes, refetch tags specific to that type
+4. **Debounced Search** - After 1 second of inactivity while typing, filter tags by user input
+5. **Case-Insensitive Matching** - Match suggestions regardless of letter case
+6. **Display Dropdown** - Show matching suggestions in a dropdown below the input field
+7. **Select Tag** - Click suggestion or use keyboard to select and auto-close dropdown
+8. **Auto-Update on Save** - Add newly created tags to the available list immediately (no page reload needed)
+9. **Type-Specific Tags** - Income and outcome tags remain completely separate
+
+Example pattern:
+```typescript
+const [availableTags, setAvailableTags] = useState<string[]>([]);
+const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+// Fetch tags for current payment type  
+const fetchTagsByType = async (paymentType: string) => {
+  try {
+    const response = await fetch(`/api/tags?type=${paymentType}`);
+    if (response.ok) {
+      const data = await response.json();
+      setAvailableTags(data.tags || []);
+    }
+  } catch (err) {
+    console.error("Error fetching tags:", err);
+  }
+};
+
+useEffect(() => {
+  fetchTagsByType(formData.type);
+}, [formData.type]); // Re-fetch when type changes
+
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({ ...prev, [name]: value }));
+
+  if (name === "tag") {
+    setShowTagSuggestions(true);
+
+    // Clear existing debounce timer
+    if (tagDebounceTimer.current) {
+      clearTimeout(tagDebounceTimer.current);
+    }
+
+    // Set 1-second debounce before showing suggestions
+    tagDebounceTimer.current = setTimeout(() => {
+      if (value.trim() === "") {
+        setSuggestedTags(availableTags);
+      } else {
+        // Case-insensitive filtering
+        const filtered = availableTags.filter((tag) =>
+          tag.toLowerCase().includes(value.toLowerCase())
+        );
+        setSuggestedTags(filtered);
+      }
+    }, 1000);
+  }
+};
+
+const handleTagSelect = (tag: string) => {
+  setFormData((prev) => ({ ...prev, tag }));
+  setShowTagSuggestions(false);
+  setSuggestedTags([]);
+};
+
+// After successful payment save, add new tag to list
+if (formData.tag && !availableTags.includes(formData.tag)) {
+  setAvailableTags((prev) => [...prev, formData.tag!].sort());
+}
+
+// In JSX - Tag input with suggestions dropdown
+<div className="relative space-y-2">
+  <label htmlFor="tag" className="block text-sm font-medium">
+    Tag (Optional)
+  </label>
+  <input
+    type="text"
+    id="tag"
+    name="tag"
+    value={formData.tag || ""}
+    onChange={handleChange}
+    onFocus={() => {
+      setShowTagSuggestions(true);
+      if (!formData.tag?.trim()) {
+        setSuggestedTags(availableTags);
+      }
+    }}
+    onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+    placeholder="e.g., Client A, Rent, etc."
+    className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 focus:ring-2"
+  />
+
+  {showTagSuggestions && suggestedTags.length > 0 && (
+    <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border bg-white shadow-lg">
+      <ul className="max-h-48 overflow-y-auto py-1">
+        {suggestedTags.map((tag) => (
+          <li key={tag}>
+            <button
+              type="button"
+              onClick={() => handleTagSelect(tag)}
+              className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100"
+            >
+              {tag}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</div>
+```
+
+**API Endpoint** - `GET /api/tags` with optional `type` query parameter:
+```typescript
+// With type filter (income-specific)
+const response = await fetch("/api/tags?type=income");
+const data = await response.json(); // { tags: ["Client A", "Salary"] }
+
+// Without filter (all tags)
+const response = await fetch("/api/tags");
+const data = await response.json(); // { tags: ["All", "tags", "combined"] }
+```
+
+**Key Features:**
+- Type-specific filtering makes income and outcome tags independent
+- 1-second debounce prevents excessive filtering operations
+- New tags immediately available after save without page reload
+- Resets tag field (but not type/date) after successful save
+- Dropdown closes automatically after selection with 200ms delay to allow click
+
 ### User Feedback (Toast Notifications)
 - Use custom toast notifications instead of browser `alert()` for better UX
 - Implement with state management for show/hide control
@@ -656,6 +791,24 @@ const vatAmount = totalAmount - netAmount;
 - Optimistic updates for better UX
 - Success toast notifications on save
 - See "Inline Editing Pattern" in Common Tasks & Patterns
+
+### Payment Tags with Type-Based Autocomplete
+✓ **Completed**: Add optional tags to categorize payments with intelligent autocomplete
+- Added optional `tag` field to `Payment` and `PaymentFormData` types
+- **POST `/api/payments`**: Accepts and stores optional tag field
+- **GET `/api/tags`**: New endpoint returning unique tags filtered by payment type
+  - Query param: `type=income` or `type=outcome` to get type-specific tags
+  - Returns all tags if no type specified
+- **PUT `/api/payments`**: Supports updating tag alongside date and type fields
+- **Frontend Autocomplete**:
+  - Fetches tags on mount and whenever payment type changes (type-based filtering)
+  - 1-second debounce before showing suggestions while typing
+  - Case-insensitive filtering of suggestions
+  - Click to select or close suggestions dropdown
+  - Selected tags immediately added to available tags list for current session
+  - Resets tag field (not type/date) after successful save for better UX
+- **Type Separation**: Income and outcome tags are completely independent - users see only relevant tags
+- See "Tag Field with Autocomplete Pattern" in Common Tasks & Patterns
 
 **Next steps**: Extend to edit amount and VAT fields using the same pattern
 

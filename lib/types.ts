@@ -6,6 +6,7 @@ export interface Payment {
   _id?: ObjectId;
   type: PaymentType;
   date: string;
+  tag?: string;
   netAmount: number;
   vat: number;
   total: number;
@@ -18,4 +19,5 @@ export interface PaymentFormData {
   date: string;
   total: string;
   vat: string;
+  tag?: string;
 }

@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, date, total, vat } = body;
+    const { type, date, total, vat, tag } = body;
 
     // Validate required fields
     if (!type || !date || total === undefined || vat === undefined) {
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     const payment: Omit<Payment, "_id"> = {
       type,
       date,
+      tag: tag || undefined,
       netAmount,
       vat: vatAmount,
       total: totalAmount,
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, date, type } = body;
+    const { id, date, type, tag } = body;
 
     // Validate required fields
     if (!id) {
@@ -120,8 +121,13 @@ export async function PUT(request: NextRequest) {
       updateData.type = type;
     }
 
+    // Handle tag update
+    if (tag !== undefined) {
+      updateData.tag = tag || undefined;
+    }
+
     // Ensure at least one field is being updated
-    if (!date && !type) {
+    if (!date && !type && tag === undefined) {
       return NextResponse.json(
         { error: "No fields to update" },
         { status: 400 }

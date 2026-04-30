@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PaymentFormData } from "@/lib/types";
 
 interface PaymentFormProps {
@@ -13,10 +13,32 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
     total: "",
     vat: "21",
     type: "income",
+    tag: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch available tags on component mount and when type changes
+  const fetchTagsByType = async (paymentType: string) => {
+    try {
+      const response = await fetch(`/api/tags?type=${paymentType}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableTags(data.tags || []);
+      }
+    } catch (err) {
+      console.error("Error fetching tags:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTagsByType(formData.type);
+  }, [formData.type]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,10 +59,16 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
         throw new Error(data.error || "Failed to save payment");
       }
 
+      // Add new tag to available tags if it's not already there
+      if (formData.tag && !availableTags.includes(formData.tag)) {
+        setAvailableTags((prev) => [...prev, formData.tag!].sort());
+      }
+
       // Reset total amount while keeping type and date sticky
       setFormData((prev) => ({
         ...prev,
         total: "",
+        tag: "",
       }));
 
       // Show success toast
@@ -62,6 +90,28 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Handle tag suggestions with debounce
+    if (name === "tag") {
+      setShowTagSuggestions(true);
+
+      // Clear existing timer
+      if (tagDebounceTimer.current) {
+        clearTimeout(tagDebounceTimer.current);
+      }
+
+      // Set new timer for 1 second delay
+      tagDebounceTimer.current = setTimeout(() => {
+        if (value.trim() === "") {
+          setSuggestedTags(availableTags);
+        } else {
+          const filtered = availableTags.filter((tag) =>
+            tag.toLowerCase().includes(value.toLowerCase())
+          );
+          setSuggestedTags(filtered);
+        }
+      }, 1000);
+    }
   };
 
   const calculateVatAmount = () => {
@@ -75,6 +125,19 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
     const total = parseFloat(formData.total) || 0;
     const vatPercentage = parseFloat(formData.vat) || 0;
     return (total / (1 + vatPercentage / 100)).toFixed(2);
+  };
+
+  const handleTagSelect = (tag: string) => {
+    setFormData((prev) => ({ ...prev, tag }));
+    setShowTagSuggestions(false);
+    setSuggestedTags([]);
+  };
+
+  const handleTagBlur = () => {
+    // Delay closing suggestions to allow click on suggestion
+    setTimeout(() => {
+      setShowTagSuggestions(false);
+    }, 200);
   };
 
   return (
@@ -188,6 +251,51 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
             className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             required
           />
+        </div>
+
+        {/* Tag with Autocomplete */}
+        <div className="relative space-y-2">
+          <label
+            htmlFor="tag"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Tag (Optional)
+          </label>
+          <input
+            type="text"
+            id="tag"
+            name="tag"
+            value={formData.tag || ""}
+            onChange={handleChange}
+            onFocus={() => {
+              setShowTagSuggestions(true);
+              if (formData.tag?.trim() === "") {
+                setSuggestedTags(availableTags);
+              }
+            }}
+            onBlur={handleTagBlur}
+            placeholder="e.g., Client A, Rent, etc."
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+
+          {/* Tag Suggestions Dropdown */}
+          {showTagSuggestions && suggestedTags.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+              <ul className="max-h-48 overflow-y-auto py-1">
+                {suggestedTags.map((tag) => (
+                  <li key={tag}>
+                    <button
+                      type="button"
+                      onClick={() => handleTagSelect(tag)}
+                      className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                    >
+                      {tag}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Total Amount (with VAT) */}
