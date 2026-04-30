@@ -15,7 +15,8 @@
 - app/: Next.js App Router
   - api/payments/route.ts: REST API
   - components/: DonutChart, PaymentForm, MonthlyPaymentsView, MonthlyBreakdown, PaymentCounter, MonthSelector, YearSelector, NavigationBar, SummaryCard
-  - page.tsx: Monthly payments list with month navigation
+  - page.tsx: Redirect to /month
+  - month/page.tsx: Monthly payments list with month navigation
   - year/page.tsx: Yearly summary with year picker
   - layout.tsx, globals.css
 - lib/: mongodb.ts (singleton), types.ts (shared types)
