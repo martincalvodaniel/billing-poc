@@ -116,45 +116,41 @@ export default function YearSummaryPage() {
           </p>
         </div>
 
-        <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Yearly Filter</p>
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <YearSelector
-                selectedYear={selectedYear}
-                onYearChange={setSelectedYear}
-                isViewingCurrentYear={isViewingCurrentYear}
-                onGoToCurrentYear={() => {
-                  if (!isViewingCurrentYear) {
-                    setSelectedYear(currentYear);
-                  }
-                }}
-              />
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Yearly Filter</p>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear}</h3>
           </div>
+          <div className="flex items-center gap-2">
+            <YearSelector
+              selectedYear={selectedYear}
+              onYearChange={setSelectedYear}
+              isViewingCurrentYear={isViewingCurrentYear}
+              onGoToCurrentYear={() => {
+                if (!isViewingCurrentYear) {
+                  setSelectedYear(currentYear);
+                }
+              }}
+            />
+          </div>
+        </div>
 
-          <div className="space-y-6 px-6 pb-6">
+        <div className="space-y-6">
              <div className="grid gap-4 sm:grid-cols-3">
                <SummaryCard
                  label="Total Income"
                  value={formatCurrency(yearlyIncome)}
                  valueClassName="text-green-600 dark:text-green-400"
-                 className="bg-gradient-to-b from-zinc-50 to-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60"
                />
                <SummaryCard
                  label="Total Outcome"
                  value={formatCurrency(yearlyOutcome)}
                  valueClassName="text-red-600 dark:text-red-400"
-                 className="bg-gradient-to-b from-zinc-50 to-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60"
                />
                <SummaryCard
                  label="Net Balance"
                  value={formatCurrency(yearlyNet)}
                  valueClassName={yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
-                 className="bg-gradient-to-b from-zinc-50 to-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60"
                />
              </div>
 
@@ -187,7 +183,7 @@ export default function YearSummaryPage() {
                       return (
                         <div
                           key={month.monthIndex}
-                          className="rounded-lg border border-zinc-200 bg-gradient-to-b from-white to-zinc-50 p-3 dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-900/50"
+                          className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{monthLabel}</span>
@@ -227,8 +223,7 @@ export default function YearSummaryPage() {
               </div>
             )}
           </div>
-        </div>
-
+        
         {error && (
           <div
             className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
