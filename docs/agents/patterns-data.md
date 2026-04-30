@@ -27,7 +27,17 @@ export interface Payment {
   vatAmount: number;     // Calculated: total * (vat/100) / (1 + vat/100 + surcharge/100)
   surchargeAmount?: number; // Calculated: total * (surcharge/100) / (1 + vat/100 + surcharge/100) when surcharge > 0
   total: number;         // Calculated: sum of (concept.amount * concept.quantity) for all concepts
+  invoice?: InvoiceMetadata; // Generated invoice (for income payments only)
+  providerBillUrl?: string;  // Uploaded provider bill URL (for outcome payments only)
+  providerBillPathname?: string; // Uploaded provider bill storage path
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InvoiceCounter {
+  _id?: ObjectId;
+  series: InvoiceSeries;     // Invoice series name
+  lastNumber: number;         // Last used sequential number
   updatedAt: Date;
 }
 ```
@@ -40,6 +50,19 @@ export interface Payment {
 - **VAT Application**: Applied uniformly at payment level to total amount; no concept-level overrides
 - **Surcharge**: Optional secondary percentage for freelancers (e.g., 5.2%). Applied uniformly at payment level alongside VAT.
 - **Calculated Fields**: `netAmount`, `vatAmount`, `surchargeAmount`, `total` are computed server-side
+
+### Invoice Generation Pattern
+- **Income Only**: Only income payments can have generated invoices
+- **Outcome Only**: Only outcome payments can have uploaded provider bills
+- **Sequential Numbering**: Each of 4 series maintains independent sequential numbers
+  - Invoice: Standard invoices (e.g., Invoice-000001)
+  - RectificativeInvoice: Corrective invoices for errors (e.g., RectificativeInvoice-000001)
+  - SimpleInvoice: Simplified invoices (e.g., SimpleInvoice-000001)
+  - RectificativeSimpleInvoice: Corrective simplified invoices (e.g., RectificativeSimpleInvoice-000001)
+- **One Per Payment**: Each payment can have only one generated invoice or one uploaded provider bill
+- **PDF Generation**: Server-side PDF generation with PDFKit; includes all payment details, line items, tax breakdown, and client info
+- **Storage**: PDFs stored in Vercel Blob with public URLs for download
+- **Atomic Counters**: MongoDB findOneAndUpdate with upsert ensures no duplicate invoice numbers within a series
 
 ## Client Entity Structure
 
@@ -485,6 +508,69 @@ const handleSearch = async (searchTerm: string, pageNum: number = 1) => {
 - Requires client ID
 - Returns success on deletion
 
+### POST /api/invoices/generate
+**Generate Invoice PDF for Income Payment:**
+```json
+{
+  "paymentId": "ObjectId",
+  "series": "Invoice" | "RectificativeInvoice" | "SimpleInvoice" | "RectificativeSimpleInvoice"
+}
+```
+- Only works for income payments
+- Gets next sequential number for chosen series
+- Generates PDF with payment details and client info
+- Uploads PDF to Vercel Blob
+- Updates payment with invoice metadata
+- Returns invoice metadata and download URL
+- Rejects if invoice already exists
+
+### POST /api/invoices/upload
+**Upload Provider Bill PDF for Outcome Payment:**
+- Use `multipart/form-data` with FormData
+- Fields: `file` (PDF file, max 10MB) and `paymentId` (ObjectId)
+- Only works for outcome payments
+- Validates file type (PDF only) and size
+- Uploads to Vercel Blob
+- Updates payment with bill URL
+- Can be uploaded multiple times (overwrites previous)
+
+**Client-Side Upload Pattern:**
+```typescript
+const handleUpload = async (file: File, paymentId: string) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("paymentId", paymentId);
+
+  const response = await fetch("/api/invoices/upload", {
+    method: "POST",
+    body: formData, // Don't set Content-Type header - browser sets it with boundary
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error);
+  }
+
+  return await response.json(); // { success: true, billUrl, pathname }
+};
+```
+
+### GET /api/invoices/[id]
+**Retrieve Invoice or Provider Bill:**
+- URL parameter: payment ID
+- Returns invoice metadata if income payment has generated invoice
+- Returns provider bill URL if outcome payment has uploaded bill
+- Returns 404 if no invoice/bill exists
+
+**Response Types:**
+```typescript
+// Income with invoice
+{ type: "invoice", url: string, series: string, number: number, generatedAt: Date }
+
+// Outcome with provider bill
+{ type: "providerBill", url: string }
+```
+
 ## Error Handling
 - Wrap DB ops in try/catch
 - Log with template literals; return friendly JSON error
@@ -494,6 +580,10 @@ const handleSearch = async (searchTerm: string, pageNum: number = 1) => {
 
 ## Environment
 - MONGODB_URI required (.env.local for dev)
+- BLOB_READ_WRITE_TOKEN required for invoice/bill PDF storage (Vercel Blob)
+  - Get from Vercel dashboard: create a Blob store in project settings
+  - Auto-configured when deployed to Vercel
+  - For local dev: copy token from Vercel to .env.local
 
 ## Performance
 - Typed queries; avoid extra libs; no external UI kits

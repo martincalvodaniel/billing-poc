@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Payment } from "@/lib/types";
+import { Payment, InvoiceSeries } from "@/lib/types";
 import Modal from "@/app/components/Modal";
 import ClientSelector from "@/app/components/ClientSelector";
 
@@ -39,6 +39,16 @@ export default function PaymentDetailModal({
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Invoice generation state
+  const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice");
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  
+  // Provider bill upload state
+  const [isUploadingBill, setIsUploadingBill] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Tag suggestions state
   const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -144,6 +154,105 @@ export default function PaymentDetailModal({
     const vatPercentage = parseFloat(vat) || 0;
     const surchargePercentage = parseFloat(surcharge || "0") || 0;
     return total / (1 + vatPercentage / 100 + surchargePercentage / 100);
+  };
+
+  const handleGenerateInvoice = async () => {
+    setInvoiceError(null);
+    setIsGeneratingInvoice(true);
+
+    try {
+      const response = await fetch("/api/invoices/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentId: payment._id?.toString(),
+          series: selectedSeries,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to generate invoice");
+      }
+
+      const data = await response.json();
+      
+      // Update the local payment with invoice metadata
+      const updatedPayment: Payment = {
+        ...payment,
+        invoice: data.invoice,
+        updatedAt: new Date(),
+      };
+      
+      onUpdate?.(updatedPayment);
+      
+      // Open the invoice in a new tab
+      window.open(data.downloadUrl, "_blank");
+    } catch (err) {
+      console.error(`Error generating invoice: ${err}`);
+      setInvoiceError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsGeneratingInvoice(false);
+    }
+  };
+
+  const handleUploadProviderBill = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (file.type !== "application/pdf") {
+      setUploadError("Only PDF files are allowed");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setUploadError("File size exceeds 10MB limit");
+      return;
+    }
+
+    setUploadError(null);
+    setIsUploadingBill(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("paymentId", payment._id?.toString() || "");
+
+      const response = await fetch("/api/invoices/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to upload provider bill");
+      }
+
+      const data = await response.json();
+      
+      // Update the local payment with provider bill URL
+      const updatedPayment: Payment = {
+        ...payment,
+        providerBillUrl: data.billUrl,
+        providerBillPathname: data.pathname,
+        updatedAt: new Date(),
+      };
+      
+      onUpdate?.(updatedPayment);
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      console.error(`Error uploading provider bill: ${err}`);
+      setUploadError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsUploadingBill(false);
+    }
   };
 
   const handleSave = async () => {
@@ -579,6 +688,173 @@ export default function PaymentDetailModal({
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Invoice/Provider Bill Section */}
+        <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            {type === "income" ? "Invoice" : "Provider Bill"}
+          </h3>
+
+          {/* Income: Invoice Generation */}
+          {type === "income" && (
+            <div className="space-y-3">
+              {payment.invoice ? (
+                <div className="space-y-2">
+                  <div className="text-sm text-zinc-700 dark:text-zinc-300">
+                    <p>
+                      <span className="font-medium">Series:</span> {payment.invoice.series}
+                    </p>
+                    <p>
+                      <span className="font-medium">Number:</span> {String(payment.invoice.number).padStart(6, "0")}
+                    </p>
+                    <p>
+                      <span className="font-medium">Generated:</span>{" "}
+                      {new Date(payment.invoice.generatedAt).toLocaleDateString("es-ES")}
+                    </p>
+                  </div>
+                  <a
+                    href={payment.invoice.blobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Download Invoice
+                  </a>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {invoiceError && (
+                    <div
+                      className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                      role="alert"
+                    >
+                      {invoiceError}
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="invoice-series"
+                      className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                    >
+                      Invoice Series
+                    </label>
+                    <select
+                      id="invoice-series"
+                      value={selectedSeries}
+                      onChange={(e) => setSelectedSeries(e.target.value as InvoiceSeries)}
+                      disabled={isGeneratingInvoice}
+                      className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    >
+                      <option value="Invoice">Invoice</option>
+                      <option value="RectificativeInvoice">Rectificative Invoice</option>
+                      <option value="SimpleInvoice">Simple Invoice</option>
+                      <option value="RectificativeSimpleInvoice">Rectificative Simple Invoice</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGenerateInvoice}
+                    disabled={isGeneratingInvoice}
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-800"
+                  >
+                    {isGeneratingInvoice ? "Generating..." : "Generate Invoice"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Outcome: Provider Bill Upload */}
+          {type === "outcome" && (
+            <div className="space-y-3">
+              {payment.providerBillUrl ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                    Provider bill uploaded
+                  </p>
+                  <a
+                    href={payment.providerBillUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Download Provider Bill
+                  </a>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {uploadError && (
+                    <div
+                      className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                      role="alert"
+                    >
+                      {uploadError}
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleUploadProviderBill}
+                      disabled={isUploadingBill}
+                      className="hidden"
+                      id="provider-bill-upload"
+                    />
+                    <label
+                      htmlFor="provider-bill-upload"
+                      className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                        />
+                      </svg>
+                      {isUploadingBill ? "Uploading..." : "Upload Provider Bill (PDF)"}
+                    </label>
+                  </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Max file size: 10MB. Only PDF files allowed.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Modal>

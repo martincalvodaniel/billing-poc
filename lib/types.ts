@@ -4,6 +4,16 @@ export type PaymentType = "income" | "outcome";
 
 export type ClientType = "individual" | "company";
 
+export type InvoiceSeries = "Invoice" | "RectificativeInvoice" | "SimpleInvoice" | "RectificativeSimpleInvoice";
+
+export interface InvoiceMetadata {
+  series: InvoiceSeries;
+  number: number; // Sequential number within the series
+  generatedAt: Date;
+  blobUrl: string; // Vercel Blob URL
+  blobPathname: string; // Storage path for retrieval
+}
+
 export interface PaymentConcept {
   name: string;
   amount: number;
@@ -24,6 +34,9 @@ export interface Payment {
   vatAmount: number;
   surchargeAmount?: number;
   total: number;
+  invoice?: InvoiceMetadata; // Generated invoice (for income payments)
+  providerBillUrl?: string; // Uploaded provider bill URL (for outcome payments)
+  providerBillPathname?: string; // Uploaded provider bill storage path
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,4 +85,11 @@ export interface PaginationMeta {
 export interface PaginatedResponse<T> {
   items: T[];
   pagination: PaginationMeta;
+}
+
+export interface InvoiceCounter {
+  _id?: ObjectId;
+  series: InvoiceSeries;
+  lastNumber: number;
+  updatedAt: Date;
 }

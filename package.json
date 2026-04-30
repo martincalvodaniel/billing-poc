@@ -11,8 +11,10 @@
     "load-data:year": "pnpm exec ts-node scripts/payments/loadRandomDataForYear.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.0.1",
     "mongodb": "^6.12.0",
     "next": "16.1.4",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
@@ -24,7 +26,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "ts-node": "^10"
+    "ts-node": "^10",
+    "typescript": "^5"
   }
 }

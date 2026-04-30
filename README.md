@@ -17,6 +17,8 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment and client operations with support for payment components
+- **Invoice Generation** - Generate professional PDF invoices for income payments with 4 sequential series (Invoice, Rectificative Invoice, Simple Invoice, Rectificative Simple Invoice). Each series maintains independent sequential numbering. PDFs stored in Vercel Blob storage with downloadable links.
+- **Provider Bill Management** - Upload and store provider bill PDFs for outcome payments. Supports PDF files up to 10MB stored in Vercel Blob.
 - **Pagination** - Client list pagination with configurable page size and full navigation controls for browsing large datasets
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 - **Form & Server Validation** - Client and server-side validation for data integrity
@@ -27,6 +29,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ### Prerequisites
 - Node.js 20+ and pnpm
 - MongoDB running locally or MongoDB Atlas account
+- Vercel Blob storage token (for invoice/bill PDF storage)
 
 ### Installation
 
@@ -34,10 +37,16 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 # 1. Install dependencies
 pnpm install
 
-# 2. Start MongoDB (if using local)
+# 2. Set up environment variables
+# Copy .env.example to .env and configure:
+# - MONGODB_URI: Your MongoDB connection string
+# - BLOB_READ_WRITE_TOKEN: Your Vercel Blob storage token
+cp .env.example .env
+
+# 3. Start MongoDB (if using local)
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 
-# 3. Run development server
+# 4. Run development server
 pnpm dev
 ```
 
@@ -287,11 +296,88 @@ At least one of `clientType`, `name`, `taxId`, `address`, `phone`, or `email` mu
 
 **Response:** Success status
 
+### `POST /api/invoices/generate` - Generate Invoice PDF
+
+```json
+{
+  "paymentId": "payment_id",
+  "series": "Invoice" | "RectificativeInvoice" | "SimpleInvoice" | "RectificativeSimpleInvoice"
+}
+```
+
+**Parameters:**
+- `paymentId`: MongoDB ObjectId of the income payment (required)
+- `series`: Invoice series to use for numbering (required)
+
+**Response:**
+```json
+{
+  "success": true,
+  "invoice": {
+    "series": "Invoice",
+    "number": 1,
+    "generatedAt": "2024-01-01T00:00:00Z",
+    "blobUrl": "https://...",
+    "blobPathname": "..."
+  },
+  "downloadUrl": "https://..."
+}
+```
+
+Each series maintains independent sequential numbering. Only income payments can have generated invoices. Each payment can only have one invoice generated.
+
+### `POST /api/invoices/upload` - Upload Provider Bill
+
+**Content-Type:** `multipart/form-data`
+
+**Form Fields:**
+- `file`: PDF file (required, max 10MB)
+- `paymentId`: MongoDB ObjectId of the outcome payment (required)
+
+**Response:**
+```json
+{
+  "success": true,
+  "billUrl": "https://...",
+  "pathname": "..."
+}
+```
+
+Only outcome payments can have provider bills uploaded. File must be PDF format and under 10MB.
+
+### `GET /api/invoices/[id]` - Retrieve Invoice or Provider Bill
+
+**URL Parameters:**
+- `id`: MongoDB ObjectId of the payment
+
+**Response (Invoice):**
+```json
+{
+  "type": "invoice",
+  "url": "https://...",
+  "series": "Invoice",
+  "number": 1,
+  "generatedAt": "2024-01-01T00:00:00Z"
+}
+```
+
+**Response (Provider Bill):**
+```json
+{
+  "type": "providerBill",
+  "url": "https://..."
+}
+```
+
+Returns 404 if no invoice or provider bill exists for the payment.
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Database:** MongoDB (via MongoDB Node.js Driver)
+- **File Storage:** Vercel Blob (for invoice and bill PDFs)
+- **PDF Generation:** pdf-lib (serverless-compatible PDF generation)
 - **Styling:** Tailwind CSS 4
 - **Fonts:** Geist Sans & Geist Mono
 - **Deployment:** Vercel-ready
@@ -300,10 +386,13 @@ At least one of `clientType`, `name`, `taxId`, `address`, `phone`, or `email` mu
 
 1. Push your code to GitHub
 2. Import your repository on [Vercel](https://vercel.com)
-3. Add your `MONGODB_URI` environment variable in Vercel project settings
-4. Deploy!
+3. Create a Vercel Blob store in your project dashboard
+4. Add environment variables in Vercel project settings:
+   - `MONGODB_URI`: Your MongoDB connection string
+   - `BLOB_READ_WRITE_TOKEN`: Your Vercel Blob storage token (auto-configured if using Vercel Blob)
+5. Deploy!
 
-Vercel will automatically detect Next.js and configure the build settings.
+Vercel will automatically detect Next.js and configure the build settings. Vercel Blob provides secure, scalable storage for invoice and bill PDFs.
 
 ## Roadmap
 
@@ -317,9 +406,14 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Edit payments via clickable table rows
 - [x] Add client management with search and filtering
 - [x] Pagination for large datasets (clients list)
+- [x] Generate PDF invoices for income payments with 4 sequential series
+- [x] Upload and store provider bills for outcome payments
+- [x] Download invoices and provider bills from payment details
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, invoice number, etc.)
+- [ ] Customize invoice templates with company branding
+- [ ] Bulk invoice generation and email delivery
 - [ ] User authentication and authorization
 - [ ] Multi-user support with separate accounts
 - [ ] Payment analytics and reporting

@@ -69,3 +69,25 @@
 - **Modal Component (Reusable)**: Extracted centralized modal wrapper from repeated overlay/dialog patterns across 5 modal instances (PaymentDetailModal, MonthlyPaymentsView edit/delete, ClientList edit/delete). Provides consistent backdrop styling (`bg-black/50`), keyboard handling (ESC/ENTER configurable), accessibility (dialog roles, aria-labelledby), and dark mode support. Reduces ~200 lines of boilerplate code and ensures future modals use the same proven pattern
 - **PageLayout Component (Shared Layout)**: Extracted shared page structure from all three main pages (month, year, clients) into a single reusable component at `/app/components/PageLayout.tsx`. Enforces consistent outer container, main wrapper, navigation bar, page header (title + subtitle), and optional headerContent for filters/selectors. Prevents layout drift, provides single source of truth for structure, and ensures uniform spacing/typography/dark mode across all pages. Migrated all existing pages to use this pattern.
 - Pure display components follow React.memo pattern; composite components encapsulate state management
+
+## Invoice Generation & Provider Bills
+- **PDF Invoice Generation**: Generate professional PDF invoices for income payments using pdf-lib (serverless-compatible)
+  - 4 independent sequential series: Invoice, RectificativeInvoice, SimpleInvoice, RectificativeSimpleInvoice
+  - Each series maintains separate sequential numbering (e.g., Invoice-000001, RectificativeInvoice-000001)
+  - Atomic counter updates using MongoDB findOneAndUpdate with upsert
+  - PDFs include payment details, line items, tax breakdown, client info, and company branding placeholders
+  - Uses pdf-lib with embedded StandardFonts (no external font files required for serverless)
+- **Provider Bill Upload**: Upload provider bill PDFs for outcome payments
+  - File validation: PDF only, max 10MB
+  - Supports replacing existing bills
+- **Vercel Blob Storage**: All PDFs stored in Vercel Blob with public download URLs
+- **UI Integration**: 
+  - PaymentDetailModal: Generate invoice button with series selector for income; file upload for outcome
+  - PaymentForm: Optional provider bill upload field for outcome payments
+  - Download links for both generated invoices and uploaded provider bills
+- **API Endpoints**: 
+  - POST /api/invoices/generate (income payments)
+  - POST /api/invoices/upload (outcome payments with FormData)
+  - GET /api/invoices/[id] (retrieve invoice/bill metadata)
+- **Type Safety**: Full TypeScript support with InvoiceSeries, InvoiceMetadata, and InvoiceCounter types
+
