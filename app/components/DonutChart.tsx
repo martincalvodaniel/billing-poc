@@ -34,7 +34,12 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
     const outerRadius = 45;
     const innerRadius = 30;
     let currentAngle = -90; // Start from top
-    const result: Array<{ tag: string; percentage: number; color: string; path: string }> = [];
+    const result: Array<{
+      tag: string;
+      percentage: number;
+      color: string;
+      path: string;
+    }> = [];
 
     entries.forEach(([tag, value]) => {
       const percentage = (value / total) * 100;
@@ -168,6 +173,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
         <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
         <div className="flex gap-1">
           <button
+            type="button"
             onClick={() => toggleSortBy("percentage")}
             aria-label={`Sort by percentage ${sortBy === "percentage" ? (sortOrder === "desc" ? "descending" : "ascending") : ""}`}
             className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
@@ -179,6 +185,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
             % {sortBy === "percentage" && (sortOrder === "desc" ? "↓" : "↑")}
           </button>
           <button
+            type="button"
             onClick={() => toggleSortBy("name")}
             aria-label={`Sort by name ${sortBy === "name" ? (sortOrder === "desc" ? "descending" : "ascending") : ""}`}
             className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
@@ -193,7 +200,13 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
       </div>
 
       <div className="flex items-center gap-6">
-        <svg width="160" height="160" viewBox="0 0 120 120" className="flex-shrink-0">
+        <svg
+          width="160"
+          height="160"
+          viewBox="0 0 120 120"
+          className="flex-shrink-0"
+          aria-hidden="true"
+        >
           {segments.map((segment) => (
             <path
               key={segment.tag}

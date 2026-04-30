@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Modal from "@/app/components/Modal";
 import type { Client, ClientFormData } from "@/lib/types";
 import ClientForm from "./ClientForm";
@@ -20,10 +20,10 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
     setError(null);
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingClientId(null);
     setError(null);
-  };
+  }, []);
 
   const handleUpdate = async (data: ClientFormData) => {
     const response = await fetch("/api/clients", {
@@ -153,12 +153,14 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
         footer={
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => setDeletingClientId(null)}
               className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleConfirmDelete}
               className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
             >
@@ -245,6 +247,7 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteClick(client._id?.toString() ?? "");

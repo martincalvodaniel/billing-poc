@@ -125,6 +125,7 @@ export default function YearSelector({
         Next →
       </NavButton>
       <button
+        type="button"
         onClick={onGoToCurrentYear}
         disabled={isViewingCurrentYear}
         aria-label="Jump to current year"

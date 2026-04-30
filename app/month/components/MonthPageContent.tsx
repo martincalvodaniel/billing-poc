@@ -18,7 +18,10 @@ export default function MonthPageContent() {
   });
   const [showCalendar, setShowCalendar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const formRef = useRef<{ setFormDate: (dateString: string) => void; submit: () => void }>(null);
+  const formRef = useRef<{
+    setFormDate: (dateString: string) => void;
+    submit: () => void;
+  }>(null);
   const paymentsListRef = useRef<{
     refreshPayments: () => void;
     navigateToMonth: (dateString: string) => void;
@@ -123,6 +126,7 @@ export default function MonthPageContent() {
                 onShowCalendarChange={setShowCalendar}
               />
               <button
+                type="button"
                 onClick={handleGoToCurrentMonth}
                 disabled={isViewingCurrentMonth}
                 aria-label="Go to current month"

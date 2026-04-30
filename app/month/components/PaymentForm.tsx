@@ -196,6 +196,7 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
       {/* Success Toast Notification */}
       {showSuccess && (
         <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
+          {/* biome-ignore lint/a11y/useSemanticElements: role="status" is the appropriate pattern for toast notifications */}
           <div
             className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
             role="status"
@@ -230,6 +231,7 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
 
             {/* Close Button */}
             <button
+              type="button"
               onClick={() => setShowSuccess(false)}
               className="ml-4 flex-shrink-0 rounded-md p-1 text-green-600 transition-colors hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-200"
               aria-label="Close notification"

@@ -1,3 +1,4 @@
+import type { Document } from "mongodb";
 import { type NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import type { Payment, PaymentType } from "@/lib/types";
@@ -10,21 +11,17 @@ export async function GET(request: NextRequest) {
     const db = await getDatabase();
 
     // Build aggregation pipeline
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pipeline: any[] = [
-      {
-        $match: {
-          tag: { $type: "string", $ne: "" },
-        },
-      },
-    ];
+    const matchStage: Document = {
+      tag: { $type: "string", $ne: "" },
+    };
 
     // Add type filter if provided
     if (type && (type === "income" || type === "outcome")) {
-      pipeline[0].$match.type = type;
+      matchStage.type = type;
     }
 
-    pipeline.push(
+    const pipeline: Document[] = [
+      { $match: matchStage },
       {
         $group: {
           _id: null,
@@ -39,7 +36,7 @@ export async function GET(request: NextRequest) {
           tags: 1,
         },
       },
-    );
+    ];
 
     const result = await db.collection<Payment>("payments").aggregate(pipeline).toArray();
 

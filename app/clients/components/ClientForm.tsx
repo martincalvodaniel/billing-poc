@@ -71,8 +71,14 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Type</label>
+          <label
+            htmlFor="clientType"
+            className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
+          >
+            Type
+          </label>
           <select
+            id="clientType"
             name="clientType"
             value={formData.clientType}
             onChange={handleChange}
@@ -86,11 +92,15 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        <label
+          htmlFor="client-name"
+          className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
+        >
           {formData.clientType === "individual" ? "Name & Surname" : "Business Name"}
         </label>
         <input
           type="text"
+          id="client-name"
           name="name"
           value={formData.name}
           onChange={handleChange}
@@ -104,11 +114,15 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        <label
+          htmlFor="client-taxId"
+          className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
+        >
           Tax ID (NIF/CIF/NIE)
         </label>
         <input
           type="text"
+          id="client-taxId"
           name="taxId"
           value={formData.taxId}
           onChange={handleChange}
@@ -120,10 +134,14 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        <label
+          htmlFor="client-address"
+          className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
+        >
           Tax Address (with postal code and city)
         </label>
         <textarea
+          id="client-address"
           name="address"
           value={formData.address}
           onChange={handleChange}
@@ -137,11 +155,15 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          <label
+            htmlFor="client-phone"
+            className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
+          >
             Phone Number
           </label>
           <input
             type="tel"
+            id="client-phone"
             name="phone"
             value={formData.phone || ""}
             onChange={handleChange}
@@ -152,11 +174,15 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          <label
+            htmlFor="client-email"
+            className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
+          >
             Email Address
           </label>
           <input
             type="email"
+            id="client-email"
             name="email"
             value={formData.email || ""}
             onChange={handleChange}

@@ -48,7 +48,12 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     yPos -= 15;
     page.drawText("City, Postal Code", { x: 50, y: yPos, size: 10, font });
     yPos -= 15;
-    page.drawText("Email: info@yourcompany.com", { x: 50, y: yPos, size: 10, font });
+    page.drawText("Email: info@yourcompany.com", {
+      x: 50,
+      y: yPos,
+      size: 10,
+      font,
+    });
     yPos -= 15;
     page.drawText("Phone: +XX XXX XXX XXX", { x: 50, y: yPos, size: 10, font });
     yPos -= 40;
@@ -103,16 +108,37 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     if (client) {
       page.drawText(client.name, { x: 50, y: yPos, size: 11, font });
       yPos -= 15;
-      page.drawText(`Tax ID: ${client.taxId}`, { x: 50, y: yPos, size: 11, font });
+      page.drawText(`Tax ID: ${client.taxId}`, {
+        x: 50,
+        y: yPos,
+        size: 11,
+        font,
+      });
       yPos -= 15;
-      page.drawText(client.address, { x: 50, y: yPos, size: 11, font, maxWidth: 300 });
+      page.drawText(client.address, {
+        x: 50,
+        y: yPos,
+        size: 11,
+        font,
+        maxWidth: 300,
+      });
       yPos -= 15;
       if (client.email) {
-        page.drawText(`Email: ${client.email}`, { x: 50, y: yPos, size: 11, font });
+        page.drawText(`Email: ${client.email}`, {
+          x: 50,
+          y: yPos,
+          size: 11,
+          font,
+        });
         yPos -= 15;
       }
       if (client.phone) {
-        page.drawText(`Phone: ${client.phone}`, { x: 50, y: yPos, size: 11, font });
+        page.drawText(`Phone: ${client.phone}`, {
+          x: 50,
+          y: yPos,
+          size: 11,
+          font,
+        });
         yPos -= 15;
       }
     } else {
@@ -142,10 +168,30 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     payment.concepts.forEach((concept) => {
       const lineTotal = concept.amount * concept.quantity;
 
-      page.drawText(concept.name.substring(0, 30), { x: 50, y: yPos, size: 10, font });
-      page.drawText(concept.quantity.toString(), { x: 290, y: yPos, size: 10, font });
-      page.drawText(`€${concept.amount.toFixed(2)}`, { x: 360, y: yPos, size: 10, font });
-      page.drawText(`€${lineTotal.toFixed(2)}`, { x: 470, y: yPos, size: 10, font });
+      page.drawText(concept.name.substring(0, 30), {
+        x: 50,
+        y: yPos,
+        size: 10,
+        font,
+      });
+      page.drawText(concept.quantity.toString(), {
+        x: 290,
+        y: yPos,
+        size: 10,
+        font,
+      });
+      page.drawText(`€${concept.amount.toFixed(2)}`, {
+        x: 360,
+        y: yPos,
+        size: 10,
+        font,
+      });
+      page.drawText(`€${lineTotal.toFixed(2)}`, {
+        x: 470,
+        y: yPos,
+        size: 10,
+        font,
+      });
 
       yPos -= 20;
     });
@@ -163,16 +209,36 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
     // Totals Section
     page.drawText("Subtotal:", { x: 350, y: yPos, size: 10, font });
-    page.drawText(`€${payment.netAmount.toFixed(2)}`, { x: 470, y: yPos, size: 10, font });
+    page.drawText(`€${payment.netAmount.toFixed(2)}`, {
+      x: 470,
+      y: yPos,
+      size: 10,
+      font,
+    });
     yPos -= 20;
 
     page.drawText(`VAT (${payment.vat}%):`, { x: 350, y: yPos, size: 10, font });
-    page.drawText(`€${payment.vatAmount.toFixed(2)}`, { x: 470, y: yPos, size: 10, font });
+    page.drawText(`€${payment.vatAmount.toFixed(2)}`, {
+      x: 470,
+      y: yPos,
+      size: 10,
+      font,
+    });
     yPos -= 20;
 
     if (payment.surcharge && payment.surchargeAmount) {
-      page.drawText(`Surcharge (${payment.surcharge}%):`, { x: 350, y: yPos, size: 10, font });
-      page.drawText(`€${payment.surchargeAmount.toFixed(2)}`, { x: 470, y: yPos, size: 10, font });
+      page.drawText(`Surcharge (${payment.surcharge}%):`, {
+        x: 350,
+        y: yPos,
+        size: 10,
+        font,
+      });
+      page.drawText(`€${payment.surchargeAmount.toFixed(2)}`, {
+        x: 470,
+        y: yPos,
+        size: 10,
+        font,
+      });
       yPos -= 20;
     }
 
@@ -187,7 +253,12 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
     // Total
     page.drawText("TOTAL:", { x: 350, y: yPos, size: 14, font: boldFont });
-    page.drawText(`€${payment.total.toFixed(2)}`, { x: 470, y: yPos, size: 14, font: boldFont });
+    page.drawText(`€${payment.total.toFixed(2)}`, {
+      x: 470,
+      y: yPos,
+      size: 14,
+      font: boldFont,
+    });
 
     // Footer
     const footerY = 50;

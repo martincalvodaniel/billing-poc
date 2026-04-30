@@ -63,6 +63,7 @@ export default function MonthSelector({
       </NavButton>
       <div className="relative">
         <button
+          type="button"
           onClick={() => onShowCalendarChange(!showCalendar)}
           aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
           aria-expanded={showCalendar}
@@ -76,6 +77,7 @@ export default function MonthSelector({
             <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <button
+                  type="button"
                   onClick={handleDayPrev}
                   className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Previous month"
@@ -92,6 +94,7 @@ export default function MonthSelector({
                   )}
                 </span>
                 <button
+                  type="button"
                   onClick={handleDayNext}
                   className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Next month"
@@ -102,7 +105,7 @@ export default function MonthSelector({
 
               {/* Month Grid */}
               <div className="grid grid-cols-4 gap-2">
-                {Array.from({ length: 12 }).map((_, monthIndex) => {
+                {Array.from({ length: 12 }, (_, i) => i).map((monthIndex) => {
                   const year = selectedDate.getFullYear();
                   const month = monthIndex;
                   const isSelected =
@@ -110,7 +113,10 @@ export default function MonthSelector({
 
                   return (
                     <button
-                      key={monthIndex}
+                      type="button"
+                      key={new Date(year, monthIndex).toLocaleDateString("en-US", {
+                        month: "short",
+                      })}
                       onClick={() => {
                         onMonthChange(year, month);
                         onShowCalendarChange(false);
@@ -132,6 +138,7 @@ export default function MonthSelector({
               {/* Year Navigation */}
               <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                 <button
+                  type="button"
                   onClick={handlePrevYear}
                   className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Previous year"
@@ -142,6 +149,7 @@ export default function MonthSelector({
                   {selectedDate.getFullYear()}
                 </span>
                 <button
+                  type="button"
                   onClick={handleNextYear}
                   className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Next year"

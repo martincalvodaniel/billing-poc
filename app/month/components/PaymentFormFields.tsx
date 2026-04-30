@@ -177,6 +177,7 @@ export default function PaymentFormFields({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -244,9 +245,9 @@ export default function PaymentFormFields({
       {/* Concepts (Payment Components) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Payment Components
-          </label>
+          </span>
           <button
             type="button"
             onClick={onAddConcept}
@@ -258,6 +259,7 @@ export default function PaymentFormFields({
 
         {formData.concepts.map((concept, index) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: concepts have no stable unique ID
             key={index}
             className="relative grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50 sm:grid-cols-12"
           >
@@ -324,7 +326,13 @@ export default function PaymentFormFields({
                 className="absolute right-2 top-2 flex h-5 w-5 flex-shrink-0 items-center justify-center text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                 aria-label="Remove component"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

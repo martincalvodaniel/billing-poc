@@ -120,6 +120,7 @@ export default function ClientsPage() {
             <ClientSearch onSearch={handleSearch} />
           </div>
           <button
+            type="button"
             onClick={() => setShowForm(!showForm)}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
           >

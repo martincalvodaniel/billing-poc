@@ -263,6 +263,7 @@ export default forwardRef(function MonthlyPaymentsView(
       {/* Success Toast */}
       {showSuccess && (
         <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
+          {/* biome-ignore lint/a11y/useSemanticElements: role="status" is the appropriate pattern for toast notifications */}
           <div
             className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
             role="status"
@@ -285,6 +286,7 @@ export default forwardRef(function MonthlyPaymentsView(
               {successMessage}
             </span>
             <button
+              type="button"
               onClick={() => setShowSuccess(false)}
               aria-label="Close notification"
               className="ml-auto rounded-md p-1 text-green-600 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-green-400 dark:hover:text-green-300"
@@ -429,6 +431,7 @@ export default forwardRef(function MonthlyPaymentsView(
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
+                        type="button"
                         onClick={(e) => handleDeleteClick(e, payment._id?.toString() || "")}
                         aria-label="Delete payment"
                         className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
@@ -459,6 +462,7 @@ export default forwardRef(function MonthlyPaymentsView(
               footer={
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => setDeleteConfirmPaymentId(null)}
                     disabled={isDeleting}
                     className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
@@ -466,6 +470,7 @@ export default forwardRef(function MonthlyPaymentsView(
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleConfirmDelete}
                     disabled={isDeleting}
                     className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"

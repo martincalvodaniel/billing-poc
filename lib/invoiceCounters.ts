@@ -55,7 +55,11 @@ export async function initializeInvoiceCounters(startNumber = 0): Promise<void> 
     updateOne: {
       filter: { series: s },
       update: {
-        $setOnInsert: { series: s, lastNumber: startNumber, updatedAt: new Date() },
+        $setOnInsert: {
+          series: s,
+          lastNumber: startNumber,
+          updatedAt: new Date(),
+        },
       },
       upsert: true,
     },
