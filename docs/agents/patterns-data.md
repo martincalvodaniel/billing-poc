@@ -521,7 +521,7 @@ const handleSearch = async (searchTerm: string, pageNum: number = 1) => {
 - Generates PDF with payment details and client info
 - Uploads PDF to Vercel Blob
 - Updates payment with invoice metadata
-- Returns invoice metadata and download URL
+- Returns invoice metadata and a proxy download URL (`/api/invoices/{paymentId}`)
 - Rejects if invoice already exists
 
 ### POST /api/invoices/upload
@@ -556,19 +556,16 @@ const handleUpload = async (file: File, paymentId: string) => {
 ```
 
 ### GET /api/invoices/[id]
-**Retrieve Invoice or Provider Bill:**
+**Retrieve Invoice or Provider Bill (server-side proxy stream):**
 - URL parameter: payment ID
-- Returns invoice metadata if income payment has generated invoice
-- Returns provider bill URL if outcome payment has uploaded bill
+- Fetches the PDF from private Vercel Blob using the server-side `BLOB_READ_WRITE_TOKEN`
+- Streams the PDF content back to the client (`Content-Type: application/pdf`)
+- The blob URL and token are never exposed to the browser
 - Returns 404 if no invoice/bill exists
 
-**Response Types:**
+**Usage from client:**
 ```typescript
-// Income with invoice
-{ type: "invoice", url: string, series: string, number: number, generatedAt: Date }
-
-// Outcome with provider bill
-{ type: "providerBill", url: string }
+window.open(`/api/invoices/${payment._id}`, "_blank"); // browser renders PDF directly
 ```
 
 ## Error Handling

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const filename = `provider-bill-${paymentId}-${Date.now()}.pdf`;
     const fileBuffer = await file.arrayBuffer();
     const blob = await put(filename, fileBuffer, {
-      access: "public",
+      access: "private",
       contentType: "application/pdf",
     });
 

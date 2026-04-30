@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     // Upload to Vercel Blob
     const filename = `${series}-${String(invoiceNumber).padStart(6, "0")}-${paymentId}.pdf`;
     const blob = await put(filename, pdfBuffer, {
-      access: "public",
+      access: "private",
       contentType: "application/pdf",
     });
 
@@ -105,11 +105,14 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    // Return a proxy URL so the client can download via the server (no direct blob token needed)
+    const downloadUrl = `/api/invoices/${paymentId}`;
+
     return NextResponse.json(
       {
         success: true,
         invoice: invoiceMetadata,
-        downloadUrl: blob.url,
+        downloadUrl,
       },
       { status: 201 }
     );

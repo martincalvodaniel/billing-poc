@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import { get } from "@vercel/blob";
 import { getDatabase } from "@/lib/mongodb";
 import { Payment } from "@/lib/types";
 
@@ -31,26 +32,41 @@ export async function GET(
       );
     }
 
-    // Check if payment has invoice or provider bill
+    // Resolve which blob URL to stream
+    let blobUrl: string | undefined;
+    let filename = "document.pdf";
+
     if (payment.type === "income" && payment.invoice) {
-      return NextResponse.json({
-        type: "invoice",
-        url: payment.invoice.blobUrl,
-        series: payment.invoice.series,
-        number: payment.invoice.number,
-        generatedAt: payment.invoice.generatedAt,
-      });
+      blobUrl = payment.invoice.blobUrl;
+      filename = `${payment.invoice.series}-${String(payment.invoice.number).padStart(6, "0")}.pdf`;
     } else if (payment.type === "outcome" && payment.providerBillUrl) {
-      return NextResponse.json({
-        type: "providerBill",
-        url: payment.providerBillUrl,
-      });
-    } else {
+      blobUrl = payment.providerBillUrl;
+      filename = "provider-bill.pdf";
+    }
+
+    if (!blobUrl) {
       return NextResponse.json(
         { error: "No invoice or provider bill found for this payment" },
         { status: 404 }
       );
     }
+
+    // Fetch private blob using server-side token and stream to client
+    const result = await get(blobUrl, { access: "private" });
+
+    if (!result || result.statusCode !== 200) {
+      return NextResponse.json(
+        { error: "Failed to retrieve file from storage" },
+        { status: 404 }
+      );
+    }
+
+    return new NextResponse(result.stream, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="${filename}"`,
+      },
+    });
   } catch (error) {
     console.error(`Error retrieving invoice: ${error}`);
     return NextResponse.json(

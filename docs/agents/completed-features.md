@@ -85,7 +85,7 @@
 - **Provider Bill Upload**: Upload provider bill PDFs for outcome payments
   - File validation: PDF only, max 10MB
   - Supports replacing existing bills
-- **Vercel Blob Storage**: All PDFs stored in Vercel Blob with public download URLs
+- **Vercel Blob Storage**: All PDFs stored in private Vercel Blob. Files are served via a server-side streaming proxy (`GET /api/invoices/[id]`) — the blob token never leaves the server.
 - **UI Integration**: 
   - PaymentDetailModal: Generate invoice button with series selector for income; file upload for outcome
   - PaymentForm: Optional provider bill upload field for outcome payments

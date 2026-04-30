@@ -17,7 +17,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment and client operations with support for payment components
-- **Invoice Generation** - Generate professional PDF invoices for income payments with 4 sequential series (Invoice, Rectificative Invoice, Simple Invoice, Rectificative Simple Invoice). Each series maintains independent sequential numbering. PDFs stored in Vercel Blob storage with downloadable links.
+- **Invoice Generation** - Generate professional PDF invoices for income payments with 4 sequential series (Invoice, Rectificative Invoice, Simple Invoice, Rectificative Simple Invoice). Each series maintains independent sequential numbering. PDFs stored in private Vercel Blob storage and served securely through a server-side proxy.
 - **Provider Bill Management** - Upload and store provider bill PDFs for outcome payments. Supports PDF files up to 10MB stored in Vercel Blob.
 - **Pagination** - Client list pagination with configurable page size and full navigation controls for browsing large datasets
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
@@ -320,11 +320,11 @@ At least one of `clientType`, `name`, `taxId`, `address`, `phone`, or `email` mu
     "blobUrl": "https://...",
     "blobPathname": "..."
   },
-  "downloadUrl": "https://..."
+  "downloadUrl": "/api/invoices/{paymentId}"
 }
 ```
 
-Each series maintains independent sequential numbering. Only income payments can have generated invoices. Each payment can only have one invoice generated.
+Each series maintains independent sequential numbering. Only income payments can have generated invoices. Each payment can only have one invoice generated. The `downloadUrl` is a server-side proxy route — the browser is opened to that URL which streams the PDF content directly (no direct blob access required).
 
 ### `POST /api/invoices/upload` - Upload Provider Bill
 
@@ -350,24 +350,7 @@ Only outcome payments can have provider bills uploaded. File must be PDF format 
 **URL Parameters:**
 - `id`: MongoDB ObjectId of the payment
 
-**Response (Invoice):**
-```json
-{
-  "type": "invoice",
-  "url": "https://...",
-  "series": "Invoice",
-  "number": 1,
-  "generatedAt": "2024-01-01T00:00:00Z"
-}
-```
-
-**Response (Provider Bill):**
-```json
-{
-  "type": "providerBill",
-  "url": "https://..."
-}
-```
+**Response:** Streams the PDF file directly (`Content-Type: application/pdf`). The server fetches the file from private Vercel Blob storage using its token and proxies it to the browser. No blob token is exposed to the client.
 
 Returns 404 if no invoice or provider bill exists for the payment.
 

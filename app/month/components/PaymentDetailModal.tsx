@@ -64,6 +64,14 @@ export default function PaymentDetailModal({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const handleDownloadInvoice = () => {
+    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank");
+  };
+
+  const handleDownloadProviderBill = () => {
+    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank");
+  };
+
   const handleGenerateInvoice = async () => {
     setInvoiceError(null);
     setIsGeneratingInvoice(true);
@@ -352,10 +360,9 @@ export default function PaymentDetailModal({
                       {new Date(payment.invoice.generatedAt).toLocaleDateString("es-ES")}
                     </p>
                   </div>
-                  <a
-                    href={payment.invoice.blobUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={handleDownloadInvoice}
                     className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
                   >
                     <svg
@@ -372,7 +379,7 @@ export default function PaymentDetailModal({
                       />
                     </svg>
                     Download Invoice
-                  </a>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -425,10 +432,9 @@ export default function PaymentDetailModal({
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">
                     Provider bill uploaded
                   </p>
-                  <a
-                    href={payment.providerBillUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={handleDownloadProviderBill}
                     className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
                   >
                     <svg
@@ -445,7 +451,7 @@ export default function PaymentDetailModal({
                       />
                     </svg>
                     Download Provider Bill
-                  </a>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
