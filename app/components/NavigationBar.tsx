@@ -2,9 +2,9 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { signOut, useSession } from "@/lib/auth-client"
 
 interface NavigationBarProps {
   subtitle: string
@@ -12,9 +12,18 @@ interface NavigationBarProps {
 
 export default function NavigationBar({ subtitle }: NavigationBarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
+
+  const handleSignOut = useCallback(() => {
+    signOut({
+      fetchOptions: {
+        onSuccess: () => router.push("/auth/signin"),
+      },
+    })
+  }, [router])
 
   const buildLinkClass = (isActive: boolean) => {
     const base =
@@ -105,7 +114,7 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
               )}
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                onClick={handleSignOut}
                 className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900"
               >
                 Sign out
@@ -238,7 +247,7 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                  onClick={handleSignOut}
                   className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-950"
                 >
                   Sign out

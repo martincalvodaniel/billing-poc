@@ -1,16 +1,28 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSessionCookie } from "better-auth/cookies"
+import { type NextRequest, NextResponse } from "next/server"
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl
-  const isAuthRoute =
-    pathname.startsWith("/auth") || pathname.startsWith("/api/auth")
+export function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl
 
-  if (!req.auth && !isAuthRoute) {
-    return NextResponse.redirect(new URL("/auth/signin", req.url))
+  // Public auth routes
+  if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
+    return NextResponse.next()
   }
-})
+
+  // Edge-runtime safe: only check cookie presence, not validity.
+  // Full validation happens in API routes via requireAuth().
+  const sessionCookie = getSessionCookie(request)
+  if (sessionCookie) {
+    return NextResponse.next()
+  }
+
+  const signInUrl = new URL("/auth/signin", request.url)
+  if (pathname !== "/") {
+    signInUrl.searchParams.set("callbackUrl", `${pathname}${search}`)
+  }
+  return NextResponse.redirect(signInUrl)
+}
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next|favicon.ico|public|.*\\..*).*)"],
 }
