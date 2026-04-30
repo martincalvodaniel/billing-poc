@@ -6,7 +6,8 @@ import DonutChart from "./DonutChart";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
-export default forwardRef(function PaymentsList(props, ref) {
+export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateString: string) => void }, ref) {
+  const { onMonthChange } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +45,15 @@ export default forwardRef(function PaymentsList(props, ref) {
   useEffect(() => {
     fetchPayments();
   }, []);
+
+  // Notify parent when month changes so form date can be synced
+  useEffect(() => {
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+    onMonthChange?.(dateString);
+  }, [selectedDate, onMonthChange]);
 
   useEffect(() => {
     if (!showCalendar) return;
@@ -595,7 +605,7 @@ export default forwardRef(function PaymentsList(props, ref) {
                     VAT
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    Net Amount
+                    Net
                   </th>
                 </tr>
               </thead>
@@ -804,7 +814,7 @@ export default forwardRef(function PaymentsList(props, ref) {
                       onBlur={() =>
                         setTimeout(() => setShowTagSuggestions(false), 200)
                       }
-                      placeholder="e.g., Client A, Rent, etc."
+                      placeholder={editingType === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
                       className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                     />
 

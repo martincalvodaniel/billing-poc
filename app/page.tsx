@@ -5,11 +5,17 @@ import PaymentForm from "./components/PaymentForm";
 import PaymentsList from "./components/PaymentsList";
 
 export default function Home() {
+  const formRef = useRef<{ setFormDate: (dateString: string) => void }>(null);
   const paymentsListRef = useRef<{ refreshPayments: () => void; navigateToMonth: (dateString: string) => void }>(null);
 
   const handlePaymentSaved = (date: string) => {
+    formRef.current?.setFormDate(date);
     paymentsListRef.current?.refreshPayments();
     paymentsListRef.current?.navigateToMonth(date);
+  };
+
+  const handleMonthChange = (dateString: string) => {
+    formRef.current?.setFormDate(dateString);
   };
 
   return (
@@ -27,12 +33,12 @@ export default function Home() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Form Section */}
           <div className="lg:col-span-1">
-            <PaymentForm onPaymentSaved={handlePaymentSaved} />
+            <PaymentForm ref={formRef} onPaymentSaved={handlePaymentSaved} />
           </div>
 
           {/* Payments List Section */}
           <div className="lg:col-span-2">
-            <PaymentsList ref={paymentsListRef} />
+            <PaymentsList ref={paymentsListRef} onMonthChange={handleMonthChange} />
           </div>
         </div>
       </main>

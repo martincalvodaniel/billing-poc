@@ -411,6 +411,45 @@ Apply `ref={calendarRef}` to the div wrapping both the button and rendered calen
 
 **Summary recalculation** - Use `filteredPayments` instead of all `payments` when calculating totals
 
+**Form Date Synchronization** - When form and list exist in same component tree, sync form date with calendar selection:
+```typescript
+// In parent component (page.tsx)
+const formRef = useRef<{ setFormDate: (dateString: string) => void }>(null);
+
+const handleMonthChange = (dateString: string) => {
+  formRef.current?.setFormDate(dateString);
+};
+
+// Pass to PaymentsList
+<PaymentsList ref={paymentsListRef} onMonthChange={handleMonthChange} />
+
+// In PaymentsList - emit month change event
+useEffect(() => {
+  const year = selectedDate.getFullYear();
+  const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(selectedDate.getDate()).padStart(2, "0");
+  const dateString = `${year}-${month}-${day}`;
+  onMonthChange?.(dateString);
+}, [selectedDate, onMonthChange]);
+
+// In PaymentForm - expose setFormDate method via forwardRef
+const PaymentForm = forwardRef(function PaymentForm({ ... }, ref) {
+  const [formData, setFormData] = useState<PaymentFormData>({ ... });
+  
+  useImperativeHandle(ref, () => ({
+    setFormDate: (dateString: string) => {
+      setFormData((prev) => ({ ...prev, date: dateString }));
+    },
+  }));
+  
+  // ... rest of component
+});
+```
+**Key points**:
+- Use local timezone for date string formatting (not `toISOString()` which converts to UTC and can shift date backward)
+- Format as `YYYY-MM-DD` to match HTML date input expectations
+- Form date updates whenever `selectedDate` changes in the calendar
+
 ### Modal Editing Pattern (Edit Payment Fields)
 For editing individual payment fields using a centered overlay modal:
 
@@ -1108,6 +1147,12 @@ const vatAmount = totalAmount - netAmount;
   - `PaymentForm` passes date to `onPaymentSaved` callback
   - `PaymentsList` exposes `navigateToMonth(dateString)` via ref for parent component
   - Parent component (`page.tsx`) calls both `refreshPayments()` and `navigateToMonth(date)` on save
+- **Form Date Sync**: Form date field automatically updates to the 1st of the selected month
+  - `PaymentsList` accepts optional `onMonthChange` callback prop
+  - When calendar month/year changes, `PaymentsList` calls `onMonthChange` with new date in YYYY-MM-01 format
+  - Parent (`page.tsx`) handler calls `PaymentForm.setFormDate()` via ref to sync form date
+  - `PaymentForm` is a `forwardRef` exposing `setFormDate(dateString)` method via `useImperativeHandle`
+  - Improves UX by keeping form date aligned with the month being viewed
 - See "Month Navigation Pattern" in Common Tasks & Patterns
 
 ### Modal Payment Editing (Date, Type, Tag, Total & VAT)

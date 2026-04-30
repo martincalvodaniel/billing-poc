@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { PaymentFormData } from "@/lib/types";
 
 interface PaymentFormProps {
   onPaymentSaved?: (date: string) => void;
 }
 
-export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
+const PaymentForm = forwardRef(function PaymentForm(
+  { onPaymentSaved }: PaymentFormProps,
+  ref
+) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
     total: "",
@@ -22,6 +25,13 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Expose method to sync date from parent when month changes
+  useImperativeHandle(ref, () => ({
+    setFormDate: (dateString: string) => {
+      setFormData((prev) => ({ ...prev, date: dateString }));
+    },
+  }));
 
   // Fetch available tags on component mount and when type changes
   const fetchTagsByType = async (paymentType: string) => {
@@ -284,7 +294,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
               }
             }}
             onBlur={handleTagBlur}
-            placeholder="e.g., Client A, Rent, etc."
+            placeholder={formData.type === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
             className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
 
@@ -385,4 +395,6 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
     </form>
     </>
   );
-}
+});
+
+export default PaymentForm;
