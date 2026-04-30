@@ -12,6 +12,14 @@
 - Memoize pure components with React.memo()
 - Lift state to parent for shared filter state (e.g., selectedDate in page.tsx drives PaymentsList and PaymentForm)
 
+### Component Extraction
+Extract components when they appear in multiple places or represent a cohesive UI unit:
+- **PaymentCounter**: Shows payment count breakdown by type (used in both monthly and yearly views)
+- **MonthSelector**: Calendar picker reused across pages
+- **YearSelector**: Year navigation reused across pages
+- **DonutChart**: Visualization reused for income/outcome tag breakdowns
+- Document extracted components in [patterns-ui.md](./patterns-ui.md) with Props, Features, and Integration Notes
+
 ## API Routes
 - Return NextResponse.json()
 - Support GET/POST/PUT; validate all inputs

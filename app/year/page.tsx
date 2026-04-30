@@ -6,6 +6,7 @@ import { Payment } from "@/lib/types";
 import NavigationBar from "../components/NavigationBar";
 import SummaryCard from "../components/SummaryCard";
 import YearSelector from "../components/YearSelector";
+import PaymentCounter from "../components/PaymentCounter";
 
 export default function YearSummaryPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -119,7 +120,7 @@ export default function YearSummaryPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Yearly Filter</p>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear} · {paymentsForYear.length} payments</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear} · <PaymentCounter payments={paymentsForYear} /></h3>
           </div>
           <div className="flex items-center gap-2">
             <YearSelector

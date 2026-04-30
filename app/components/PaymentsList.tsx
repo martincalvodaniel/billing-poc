@@ -8,10 +8,10 @@ import SummaryCard from "./SummaryCard";
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
 export default forwardRef(function PaymentsList(
-  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date; onPaymentsCountChange?: (count: number) => void },
+  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date; onPaymentsBreakdownChange?: (breakdown: { incomeCount: number; outcomeCount: number }) => void },
   ref
 ) {
-  const { onMonthChange, selectedDate, onPaymentsCountChange } = props;
+  const { onMonthChange, selectedDate, onPaymentsBreakdownChange } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +52,11 @@ export default forwardRef(function PaymentsList(
         paymentDate.getMonth() === month
       );
     });
-    onPaymentsCountChange?.(filtered.length);
-  }, [payments, selectedDate, onPaymentsCountChange]);
+    
+    const incomeCount = filtered.filter((p) => p.type === "income").length;
+    const outcomeCount = filtered.filter((p) => p.type === "outcome").length;
+    onPaymentsBreakdownChange?.({ incomeCount, outcomeCount });
+  }, [payments, selectedDate, onPaymentsBreakdownChange]);
 
   // Notify parent when month changes so form date can be synced
   useEffect(() => {

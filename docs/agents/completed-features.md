@@ -19,6 +19,7 @@
 - Date column shows day-only; VAT displays as `(percent%) amount`
 - Form date syncs via onMonthChange callback with PaymentForm ref
 - Add-payment button integrated in filter header for consistent UX
+- **PaymentCounter component**: Displays breakdown of Outcome and Income payment counts in filter header
 
 ## Modal Editing
 - Edit date/type/tag/total/vat via overlay modal
@@ -32,3 +33,8 @@
 
 ## VAT & Total Editing
 - Total and VAT editable; server recalculates net/vat amounts; optimistic updates
+
+## Year Summary View
+- Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry)
+- **PaymentCounter component**: Displays breakdown of Outcome and Income payment counts in filter header
+- Yearly totals, tag donuts, monthly breakdown cards; top navigation links between monthly list and yearly summary

@@ -14,7 +14,7 @@
 ## Architecture
 - app/: Next.js App Router
   - api/payments/route.ts: REST API
-  - components/: DonutChart, PaymentForm, PaymentsList
+  - components/: DonutChart, PaymentForm, PaymentsList, PaymentCounter, MonthSelector, YearSelector, NavigationBar, SummaryCard
   - page.tsx: Monthly payments list with month navigation
   - year/page.tsx: Yearly summary with year picker
   - layout.tsx, globals.css

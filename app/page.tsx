@@ -5,6 +5,7 @@ import PaymentForm from "./components/PaymentForm";
 import PaymentsList from "./components/PaymentsList";
 import NavigationBar from "./components/NavigationBar";
 import MonthSelector from "./components/MonthSelector";
+import PaymentCounter from "./components/PaymentCounter";
 
 export default function Home() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -13,7 +14,7 @@ export default function Home() {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [showCalendar, setShowCalendar] = useState(false);
-  const [paymentsCount, setPaymentsCount] = useState(0);
+  const [paymentBreakdown, setPaymentBreakdown] = useState({ incomeCount: 0, outcomeCount: 0 });
   const formRef = useRef<{ setFormDate: (dateString: string) => void }>(null);
   const paymentsListRef = useRef<{ refreshPayments: () => void; navigateToMonth: (dateString: string) => void; getFilteredPaymentsCount: () => number }>(null);
 
@@ -77,7 +78,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Monthly Filter</p>
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {formatMonthYear(selectedDate)} · {paymentsCount} payments</h3>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {formatMonthYear(selectedDate)} · <PaymentCounter incomeCount={paymentBreakdown.incomeCount} outcomeCount={paymentBreakdown.outcomeCount} /></h3>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -111,7 +112,7 @@ export default function Home() {
             ref={paymentsListRef}
             onMonthChange={handleMonthChange}
             selectedDate={selectedDate}
-            onPaymentsCountChange={setPaymentsCount}
+            onPaymentsBreakdownChange={setPaymentBreakdown}
           />
         </div>
       </main>
