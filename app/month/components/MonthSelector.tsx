@@ -56,7 +56,14 @@ export default function MonthSelector({
   };
 
   return (
-    <div className="flex items-center gap-3" ref={calendarRef}>
+    <div className="flex items-center gap-2" ref={calendarRef}>
+      <button
+        onClick={handleDayPrev}
+        aria-label="View previous month"
+        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+      >
+        ← Prev
+      </button>
       <div className="relative">
         <button
           onClick={() => onShowCalendarChange(!showCalendar)}
@@ -146,6 +153,13 @@ export default function MonthSelector({
           </div>
         )}
       </div>
+      <button
+        onClick={handleDayNext}
+        aria-label="View next month"
+        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+      >
+        Next →
+      </button>
     </div>
   );
 }

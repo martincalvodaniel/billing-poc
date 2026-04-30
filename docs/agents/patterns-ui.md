@@ -114,10 +114,11 @@ interface MonthSelectorProps {
 ```
 
 ### Features
+- **Prev/Next buttons flanking the picker** — external `← Prev` / `Next →` buttons for single-month step navigation (mirrors YearSelector pattern)
 - Dedicated calendar picker button with 12-month grid
 - Month/year navigation within the picker
 - Manual month selection from grid (closes picker on select)
-- Year navigation (prev/next buttons)
+- Year navigation (prev/next buttons inside picker)
 - Click-outside detection for closing picker
 - Dark mode support with consistent styling
 - Full keyboard/screen reader accessibility
