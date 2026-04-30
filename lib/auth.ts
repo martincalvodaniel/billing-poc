@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth"
+import { getAuthBaseURL } from "./auth-base-url"
 import { isEmailAllowed } from "./domain/services/auth"
 
 const secret = process.env.BETTER_AUTH_SECRET
@@ -6,8 +7,7 @@ if (!secret) {
   throw new Error("BETTER_AUTH_SECRET environment variable is required")
 }
 
-const baseURL =
-  process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "http://localhost:3000"
+const baseURL = getAuthBaseURL()
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET

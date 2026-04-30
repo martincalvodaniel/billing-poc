@@ -1,9 +1,8 @@
 import { createAuthClient } from "better-auth/react"
+import { getAuthBaseURL } from "./auth-base-url"
 
 const baseURL =
-  typeof window !== "undefined"
-    ? window.location.origin
-    : (process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL) || "http://localhost:3000"
+  typeof window !== "undefined" ? window.location.origin : getAuthBaseURL()
 
 export const authClient = createAuthClient({ baseURL })
 
