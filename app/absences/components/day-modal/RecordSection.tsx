@@ -1,6 +1,6 @@
 import type { Absence } from "@/lib/domain/entities/absence"
-import { PlusIcon } from "../icons"
 import RecordRowActions from "../RecordRowActions"
+import AddRecordButton from "../shared/AddRecordButton"
 
 interface RecordSectionProps {
   title: string
@@ -36,14 +36,11 @@ export default function RecordSection({
             ({records.length})
           </span>
         </h4>
-        <button
-          type="button"
+        <AddRecordButton
           onClick={onAddNew}
-          aria-label={addAriaLabel}
-          className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800"
-        >
-          <PlusIcon />
-        </button>
+          ariaLabel={addAriaLabel}
+          title={addAriaLabel}
+        />
       </div>
       {records.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">None.</p>

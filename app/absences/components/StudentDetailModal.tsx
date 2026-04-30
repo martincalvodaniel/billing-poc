@@ -7,8 +7,10 @@ import type { Absence, AbsenceFormData } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
 import AbsenceForm from "./AbsenceForm"
 import useAbsenceMutationHandlers from "./hooks/useAbsenceMutationHandlers"
+import useInlineFormController from "./hooks/useInlineFormController"
 import useToast from "./hooks/useToast"
 import { TrashIcon } from "./icons"
+import AddRecordButton from "./shared/AddRecordButton"
 import ConfirmDeleteModal from "./shared/ConfirmDeleteModal"
 import { groupStudentRecords } from "./student-modal/groupStudentRecords"
 import StudentRecordsList from "./student-modal/StudentRecordsList"
@@ -38,9 +40,10 @@ export default function StudentDetailModal({
     clear: clearToast,
   } = useToast()
 
-  // Best-effort focus restoration after closing the inline form on a
-  // successful edit — mirrors the iter9 Cancel UX in DayDetailModal.
-  const lastTriggerRef = useRef<HTMLElement | null>(null)
+  // iter14: inline form is hidden by default; revealed via the new
+  // `+` button next to "Records (N)" or via the row-pencil edit
+  // action. Owns visibility, focus capture, and focus-restore.
+  const inlineForm = useInlineFormController()
   // Forward ref so `useAbsenceMutationHandlers` callbacks can reach
   // `handleCloseEditForm` defined below without a TDZ error.
   const handleCloseEditFormRef = useRef<() => void>(() => {})
@@ -60,6 +63,7 @@ export default function StudentDetailModal({
   const mutations = useAbsenceMutationHandlers({
     onSuccess: showToast,
     onAfterEditSuccess: () => handleCloseEditFormRef.current(),
+    onAfterAddSuccess: () => handleCloseEditFormRef.current(),
     onAfterDeleteAll: () => {
       setDeleteAllConfirmOpen(false)
       onClose()
@@ -78,14 +82,15 @@ export default function StudentDetailModal({
   const handleCloseEditForm = () => {
     mutations.clearFormError()
     setFormState({ mode: "create" })
-    requestAnimationFrame(() => {
-      const trigger = lastTriggerRef.current
-      if (trigger?.isConnected) {
-        trigger.focus()
-      }
-    })
+    inlineForm.hide('button[aria-label^="Add record for"]')
   }
   handleCloseEditFormRef.current = handleCloseEditForm
+
+  const handleAddNew = () => {
+    mutations.clearFormError()
+    setFormState({ mode: "create" })
+    inlineForm.show()
+  }
 
   const handleSubmit = (data: AbsenceFormData) =>
     mutations.submit(
@@ -127,20 +132,27 @@ export default function StudentDetailModal({
                   ({records.length})
                 </span>
               </h3>
-              {records.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    mutations.clearDeleteAllError()
-                    setDeleteAllConfirmOpen(true)
-                  }}
-                  aria-label={`Delete all records for ${studentName}`}
-                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                >
-                  <TrashIcon />
-                  Delete all
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                <AddRecordButton
+                  onClick={handleAddNew}
+                  ariaLabel={`Add record for ${studentName}`}
+                  title={`Add record for ${studentName}`}
+                />
+                {records.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      mutations.clearDeleteAllError()
+                      setDeleteAllConfirmOpen(true)
+                    }}
+                    aria-label={`Delete all records for ${studentName}`}
+                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                  >
+                    <TrashIcon />
+                    Delete all
+                  </button>
+                )}
+              </div>
             </div>
             {groupedRecords.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -153,12 +165,9 @@ export default function StudentDetailModal({
                   formState.mode === "edit" ? formState.target?._id : undefined
                 }
                 onEdit={(record) => {
-                  lastTriggerRef.current =
-                    typeof document !== "undefined"
-                      ? (document.activeElement as HTMLElement | null)
-                      : null
                   mutations.clearFormError()
                   setFormState({ mode: "edit", target: record })
+                  inlineForm.show()
                 }}
                 onDelete={(record) => {
                   mutations.clearDeleteError()
@@ -168,38 +177,38 @@ export default function StudentDetailModal({
             )}
           </section>
 
-          <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <AbsenceForm
-              key={
-                formState.mode === "edit"
-                  ? `edit-${formState.target?._id}`
-                  : "create"
-              }
-              title={
-                formState.mode === "edit"
-                  ? `Edit record for ${studentName}`
-                  : `Add record for ${studentName}`
-              }
-              submitTooltip={
-                formState.mode === "edit" ? "Save changes" : "Add record"
-              }
-              initialStudentName={studentName}
-              hideStudentName
-              initial={formState.mode === "edit" ? formState.target : undefined}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              onCancel={
-                formState.mode === "edit"
-                  ? () => {
-                      mutations.clearFormError()
-                      setFormState({ mode: "create" })
-                    }
-                  : undefined
-              }
-              errorMessage={formError}
-              shakeKey={shakeKey}
-            />
-          </div>
+          {inlineForm.visible && (
+            <div
+              ref={inlineForm.containerRef}
+              className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800"
+            >
+              <AbsenceForm
+                key={
+                  formState.mode === "edit"
+                    ? `edit-${formState.target?._id}`
+                    : "create"
+                }
+                title={
+                  formState.mode === "edit"
+                    ? `Edit record for ${studentName}`
+                    : `Add record for ${studentName}`
+                }
+                submitTooltip={
+                  formState.mode === "edit" ? "Save changes" : "Add record"
+                }
+                initialStudentName={studentName}
+                hideStudentName
+                initial={
+                  formState.mode === "edit" ? formState.target : undefined
+                }
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                onCancel={handleCloseEditForm}
+                errorMessage={formError}
+                shakeKey={shakeKey}
+              />
+            </div>
+          )}
         </div>
       </Modal>
 

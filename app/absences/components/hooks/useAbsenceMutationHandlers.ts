@@ -15,9 +15,13 @@ interface UseAbsenceMutationHandlersOptions {
   onSuccess: (message: string) => void
   /**
    * Called after a successful EDIT submit (iter12 hide-form-on-edit-success).
-   * Add success deliberately does NOT trigger this callback.
    */
   onAfterEditSuccess?: () => void
+  /**
+   * Called after a successful ADD/CREATE submit (iter14 hide-form-on-add-success).
+   * Reverses iter9's "stay open after add" decision.
+   */
+  onAfterAddSuccess?: () => void
   /** Called after a successful delete-all for a student. */
   onAfterDeleteAll?: () => void
 }
@@ -61,7 +65,8 @@ interface UseAbsenceMutationHandlersResult {
 export default function useAbsenceMutationHandlers(
   opts: UseAbsenceMutationHandlersOptions
 ): UseAbsenceMutationHandlersResult {
-  const { onSuccess, onAfterEditSuccess, onAfterDeleteAll } = opts
+  const { onSuccess, onAfterEditSuccess, onAfterAddSuccess, onAfterDeleteAll } =
+    opts
 
   const { trigger: createAbsence, isMutating: isCreating } = useCreateAbsence()
   const { trigger: updateAbsence, isMutating: isUpdating } = useUpdateAbsence()
@@ -104,6 +109,9 @@ export default function useAbsenceMutationHandlers(
             comment: data.comment,
           })
           onSuccess("Absence saved successfully!")
+          // iter14: hide the inline form on successful ADD too (mirrors
+          // edit-success path). Reverses iter9's "stay open after add".
+          onAfterAddSuccess?.()
         }
       } catch (err) {
         console.error(`Error saving absence: ${err}`)
@@ -118,7 +126,13 @@ export default function useAbsenceMutationHandlers(
         setFormError(extractAbsenceErrorMessage(err))
       }
     },
-    [createAbsence, updateAbsence, onSuccess, onAfterEditSuccess]
+    [
+      createAbsence,
+      updateAbsence,
+      onSuccess,
+      onAfterEditSuccess,
+      onAfterAddSuccess,
+    ]
   )
 
   const deleteOne = useCallback(

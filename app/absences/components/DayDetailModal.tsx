@@ -51,6 +51,7 @@ export default function DayDetailModal({
   const mutations = useAbsenceMutationHandlers({
     onSuccess: showToast,
     onAfterEditSuccess: () => handleCancelFormRef.current(),
+    onAfterAddSuccess: () => handleCancelFormRef.current(),
   })
 
   const { isSubmitting, isDeleting, formError, deleteError, shakeKey } =
