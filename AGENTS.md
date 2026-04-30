@@ -20,8 +20,9 @@ This document provides best practices and guidelines for AI agents working with 
 app/                          # Next.js App Router directory
 ├── api/payments/route.ts      # RESTful API endpoints
 ├── components/                # React components
+│   ├── DonutChart.tsx         # Reusable donut chart visualization
 │   ├── PaymentForm.tsx        # Controlled form component
-│   └── PaymentsList.tsx       # Payment display with summary
+│   └── PaymentsList.tsx       # Payment display with summary and charts
 ├── page.tsx                   # Home page (main layout)
 ├── layout.tsx                 # Root layout
 └── globals.css                # Global styles
@@ -35,7 +36,8 @@ lib/                          # Shared utilities
 1. **User Input** → `PaymentForm.tsx` (client-side validation)
 2. **API Request** → `app/api/payments/route.ts` (server-side validation)
 3. **Database** → MongoDB collection `payments`
-4. **Display** → `PaymentsList.tsx` (fetches all payments, filters by selected month, renders in real-time)
+4. **Display** → `PaymentsList.tsx` (fetches all payments, filters by selected month, calculates summaries)
+5. **Visualization** → `DonutChart.tsx` (renders tag-based breakdown as donut charts)
 
 ## Code Style & Conventions
 
@@ -161,6 +163,22 @@ const formatDate = (dateString: string) => {
 3. Use `'use client'` if component needs interactivity
 4. Export as default
 5. Import and use in `page.tsx` or other components
+
+### Creating Reusable Visualization Components
+For charts and visualizations that are used in multiple places or are complex:
+
+1. Extract rendering logic into separate component file
+2. Accept data and configuration as props (data, title, colors, etc.)
+3. Keep component self-contained with all SVG/DOM generation inside
+4. Use TypeScript interfaces for props contract
+5. Apply styling through Tailwind classes (no CSS files)
+6. Export as default and import where needed
+
+Example - DonutChart component:
+- **Props**: `data` (Record of tag→amount), `title`, `colors` (string array)
+- **Handles**: Full circle (100%) edge case with semicircle rendering
+- **Returns**: No-data state or styled donut chart with legend
+- **Used in**: `PaymentsList.tsx` for income/outcome breakdown by tag
 
 ### Database Operations
 - Always use `getDatabase()` from `lib/mongodb.ts`
@@ -786,13 +804,16 @@ const vatAmount = totalAmount - netAmount;
 
 ## Completed Features & Patterns
 
-### Payment List View with Summary Cards
-✓ **Completed**: Display all payments with real-time summary calculations
+### Payment List View with Summary Cards & Donut Charts
+✓ **Completed**: Display all payments with real-time summary calculations and tag-based breakdown visualization
 - Summary cards show total income, total outcome, and net balance
+- Donut charts visualize income and outcome distribution by tag
+- Charts include percentage legends and color-coded segments
+- Handles edge case of 100% single tag using semicircle SVG rendering
 - Amounts formatted as EUR currency with Spanish locale (es-ES)
 - Responsive grid layout (1 column mobile, 3 columns desktop)
 - Dynamic calculation based on filtered month selection
-- Components: `PaymentsList.tsx` handles display and calculations
+- Components: `PaymentsList.tsx` handles display and calculations, `DonutChart.tsx` handles visualization
 - See "Month Navigation Pattern" for filtered payment calculations
 
 ### Real-Time Payment List Updates
@@ -859,6 +880,18 @@ const vatAmount = totalAmount - netAmount;
 - See "Tag Field with Autocomplete Pattern" and inline editing implementation in Common Tasks & Patterns
 
 **Next steps**: Extend to edit amount and VAT fields using the same pattern
+
+### Donut Chart Visualization by Tag
+✓ **Completed**: Visualize payment distribution across tags with donut charts
+- Two charts: one for income by tag, one for outcome by tag
+- Uses SVG path-based rendering for accurate pie/donut segments
+- Special handling for 100% single-tag cases (renders as two semicircles)
+- Color palette with 10 distinct colors cycling through tags
+- Displays percentage distribution with legend below chart
+- Shows "No data" state when no payments exist for category
+- Used in `PaymentsList.tsx` between summary cards and payment table
+- Reusable `DonutChart.tsx` component accepts data, title, and colors
+- Responsive design matches summary cards layout (1 col mobile, 2 cols desktop)
 
 ## Future Development Guidelines
 

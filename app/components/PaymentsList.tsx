@@ -2,6 +2,7 @@
 
 import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { Payment } from "@/lib/types";
+import DonutChart from "./DonutChart";
 
 export default forwardRef(function PaymentsList(props, ref) {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -382,6 +383,29 @@ export default forwardRef(function PaymentsList(props, ref) {
 
   const netBalance = totalIncome - totalOutcome;
 
+  // Calculate data grouped by tag
+  const incomeByTag = filteredPayments
+    .filter((p) => p.type === "income")
+    .reduce((acc, p) => {
+      const tag = p.tag || "Untagged";
+      acc[tag] = (acc[tag] || 0) + p.total;
+      return acc;
+    }, {} as Record<string, number>);
+
+  const outcomeByTag = filteredPayments
+    .filter((p) => p.type === "outcome")
+    .reduce((acc, p) => {
+      const tag = p.tag || "Untagged";
+      acc[tag] = (acc[tag] || 0) + p.total;
+      return acc;
+    }, {} as Record<string, number>);
+
+  // Generate colors for chart segments
+  const colors = [
+    "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
+    "#ec4899", "#06b6d4", "#f97316", "#6366f1", "#14b8a6"
+  ];
+
   if (isLoading) {
     return (
       <div className="w-full space-y-4">
@@ -449,6 +473,12 @@ export default forwardRef(function PaymentsList(props, ref) {
             {formatCurrency(netBalance)}
           </p>
         </div>
+      </div>
+
+      {/* Donut Charts */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DonutChart data={incomeByTag} title="Income by Tag" colors={colors} />
+        <DonutChart data={outcomeByTag} title="Outcome by Tag" colors={colors} />
       </div>
 
       {/* Payments Table */}
