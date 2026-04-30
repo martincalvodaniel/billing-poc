@@ -45,7 +45,7 @@ Every page includes a consistent navigation bar:
 
 ## MonthSelector Component
 
-Reusable component for selecting and navigating between months. Used in the Monthly Payments page to provide a unified interface for date filtering.
+Reusable component for selecting and navigating between months. Used in the Monthly Payments page to provide a calendar picker for date filtering.
 
 ### Props
 ```typescript
@@ -54,17 +54,14 @@ interface MonthSelectorProps {
   onMonthChange: (year: number, month: number) => void;  // Called when month/year changes
   showCalendar: boolean;                 // Whether calendar picker is open
   onShowCalendarChange: (show: boolean) => void;  // Toggle calendar visibility
-  isViewingCurrentMonth: boolean;        // Whether currently viewing this month
-  onGoToCurrentMonth: () => void;        // Jump to current month callback
 }
 ```
 
 ### Features
-- Dedicated calendar picker with 12-month grid
+- Dedicated calendar picker button with 12-month grid
 - Month/year navigation within the picker
 - Manual month selection from grid (closes picker on select)
 - Year navigation (prev/next buttons)
-- Current month jump button (disables when already viewing current month)
 - Click-outside detection for closing picker
 - Dark mode support with consistent styling
 - Full keyboard/screen reader accessibility
@@ -78,19 +75,12 @@ const [selectedDate, setSelectedDate] = useState(() => {
 const [showCalendar, setShowCalendar] = useState(false);
 
 const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-const isViewingCurrentMonth = 
-  selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
-  selectedDate.getMonth() === currentMonthStart.getMonth();
-
 return (
   <MonthSelector
     selectedDate={selectedDate}
     onMonthChange={(year, month) => setSelectedDate(new Date(year, month, 1))}
     showCalendar={showCalendar}
-    onShowCalendarChange={setShowCalendar}
-    isViewingCurrentMonth={isViewingCurrentMonth}
-    onGoToCurrentMonth={() => setSelectedDate(currentMonthStart)}
-  />
+    onShowCalendarChange={setShowCalendar
 );
 ```
 
@@ -104,9 +94,10 @@ return (
 
 Reusable component for selecting and navigating between years. Used in the Yearly Summary page to provide year filtering with manual input.
 
-### Props
-```typescript
-interface YearSelectorProps {
+### Props and showCalendar state
+- onMonthChange callback syncs PaymentForm date field via ref callback
+- Current month button and add payment button are managed separately by parent (not part of MonthSelector)
+- Layout order: Add button (➕) → Current month button (🎯) → Month picker (📅
   selectedYear: number;                  // Currently selected year
   onYearChange: (year: number) => void;  // Called when year changes
   isViewingCurrentYear: boolean;         // Whether currently viewing this year
@@ -149,8 +140,9 @@ return (
 ## Modal Editing
 - Centered overlay; track editingPaymentId + editingField
 - Field-specific validation; unified save handler calling PUT /api/payments
-- Optimistic update; success toast; close resets state
-
+- Current year button (🎯) is managed by parent and positioned after year selector for consistency with month page
+- Updates trigger data refiltering based on paymentsForYear memo
+- Payment count display shown adjacent to year in header (e.g., "Overview for 2026 · 45 payments")
 ## Tag Autocomplete
 - Tags are type-specific (income/outcome)
 - GET /api/tags?type=...; refetch on type change
