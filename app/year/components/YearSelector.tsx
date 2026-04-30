@@ -77,7 +77,7 @@ export default function YearSelector({
             <div
               role="dialog"
               aria-modal="true"
-              className="absolute left-0 top-full z-40 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg sm:left-auto sm:right-0 dark:border-zinc-700 dark:bg-zinc-900"
+              className="fixed left-1/2 top-1/2 z-40 w-64 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:translate-x-0 sm:translate-y-0 dark:border-zinc-700 dark:bg-zinc-900"
             >
               <div className="flex items-center gap-2">
                 <label

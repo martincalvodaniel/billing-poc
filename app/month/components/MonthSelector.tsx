@@ -86,7 +86,7 @@ export default function MonthSelector({
             {formatMonthYear(selectedDate)}
           </button>
           {showCalendar && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white shadow-lg sm:left-auto sm:right-0 dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="fixed left-1/2 top-1/2 z-50 w-72 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:translate-x-0 sm:translate-y-0 dark:border-zinc-700 dark:bg-zinc-900">
               {/* Calendar Header */}
               <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
                 <div className="mb-4 flex items-center justify-between gap-2">
