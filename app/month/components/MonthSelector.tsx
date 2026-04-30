@@ -72,7 +72,7 @@ export default function MonthSelector({
           aria-expanded={showCalendar}
           className="min-h-11 whitespace-nowrap rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
         >
-          📅 {formatMonthYear(selectedDate)}
+          {formatMonthYear(selectedDate)}
         </button>
         {showCalendar && (
           <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white shadow-lg sm:left-auto sm:right-0 dark:border-zinc-700 dark:bg-zinc-900">
