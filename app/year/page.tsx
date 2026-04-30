@@ -5,14 +5,13 @@ import DonutChart from "../components/DonutChart";
 import { Payment } from "@/lib/types";
 import NavigationBar from "../components/NavigationBar";
 import SummaryCard from "../components/SummaryCard";
+import YearSelector from "../components/YearSelector";
 
 export default function YearSummaryPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showYearPicker, setShowYearPicker] = useState(false);
-  const [yearInput, setYearInput] = useState(() => new Date().getFullYear().toString());
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -57,10 +56,6 @@ export default function YearSummaryPage() {
   const currentYear = useMemo(() => new Date().getFullYear(), []);
   const isViewingCurrentYear = selectedYear === currentYear;
 
-  useEffect(() => {
-    setYearInput(selectedYear.toString());
-  }, [selectedYear]);
-
   const paymentsForYear = useMemo(
     () =>
       payments.filter((payment) => {
@@ -102,34 +97,6 @@ export default function YearSummaryPage() {
   const incomeByTagYear = groupPaymentsByTag(paymentsForYear, "income");
   const outcomeByTagYear = groupPaymentsByTag(paymentsForYear, "outcome");
 
-  const handleYearChange = (direction: "prev" | "next") => {
-    setSelectedYear((year) => (direction === "prev" ? year - 1 : year + 1));
-    setShowYearPicker(false);
-  };
-
-  const handleGoToCurrentYear = () => {
-    if (isViewingCurrentYear) return;
-    setSelectedYear(currentYear);
-    setShowYearPicker(false);
-  };
-
-  const handleYearSelect = (year: number) => {
-    if (Number.isNaN(year)) return;
-    setSelectedYear(year);
-    setShowYearPicker(false);
-  };
-
-  const handleYearInputSubmit = () => {
-    const parsed = parseInt(yearInput, 10);
-    if (Number.isNaN(parsed)) return;
-    handleYearSelect(parsed);
-  };
-
-  const candidateYears = useMemo(() => {
-    const base = selectedYear;
-    return Array.from({ length: 12 }, (_, idx) => base - 6 + idx);
-  }, [selectedYear]);
-
   const colors = [
     "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
     "#ec4899", "#06b6d4", "#f97316", "#6366f1", "#14b8a6",
@@ -156,95 +123,16 @@ export default function YearSummaryPage() {
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear}</h3>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleYearChange("prev")}
-                aria-label="View previous year"
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-              >
-                ← Prev
-              </button>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowYearPicker((open) => !open)}
-                  aria-haspopup="dialog"
-                  aria-expanded={showYearPicker}
-                  className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-                >
-                  {selectedYear}
-                </button>
-
-                {showYearPicker && (
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    className="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-                  >
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="year-input" className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Year
-                      </label>
-                      <input
-                        id="year-input"
-                        type="number"
-                        inputMode="numeric"
-                        value={yearInput}
-                        onChange={(e) => setYearInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleYearInputSubmit();
-                          }
-                        }}
-                        className="w-24 rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                        aria-label="Enter year manually"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleYearInputSubmit}
-                        className="rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-zinc-900"
-                      >
-                        Go
-                      </button>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      {candidateYears.map((year) => {
-                        const isActive = year === selectedYear;
-                        return (
-                          <button
-                            key={year}
-                            type="button"
-                            onClick={() => handleYearSelect(year)}
-                            className={`rounded-md px-2 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
-                              isActive
-                                ? "bg-blue-600 text-white shadow-sm dark:bg-blue-700"
-                                : "border border-zinc-200 text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-800"
-                            }`}
-                          >
-                            {year}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => handleYearChange("next")}
-                aria-label="View next year"
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-              >
-                Next →
-              </button>
-              <button
-                onClick={handleGoToCurrentYear}
-                disabled={isViewingCurrentYear}
-                aria-label="Jump to current year"
-                className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
-              >
-                🎯
-              </button>
+              <YearSelector
+                selectedYear={selectedYear}
+                onYearChange={setSelectedYear}
+                isViewingCurrentYear={isViewingCurrentYear}
+                onGoToCurrentYear={() => {
+                  if (!isViewingCurrentYear) {
+                    setSelectedYear(currentYear);
+                  }
+                }}
+              />
             </div>
           </div>
 

@@ -43,25 +43,108 @@ Every page includes a consistent navigation bar:
 - Props for data/title/colors; no external UI libs
 - Memoize pure visual components; stable color mapping
 
-## Month Navigation
-Month selector appears as a dedicated filter section at the top of the page (similar to year filter in yearly view):
-- **Container**: Same bordered card style as other filter sections with header containing label and controls
-- **State Management**: selectedDate (1st of month) and showCalendar flag managed in parent (page.tsx); paymentsCount state tracks filtered payment count
-- **Header Display**: Shows "Overview for {MONTH YEAR} · {count} payments" to display the filtered payment count at the top
-- **Calendar Picker**: 12-month grid, prev/next month buttons, year navigation with prev/next year, year display
-- **Functionality**: Click-outside closes calendar; current-month shortcut button disables when viewing current month
-- **Data Filtering**: PaymentsList receives selectedDate prop and onPaymentsCountChange callback; filters payments by month/year; summaries use filtered set
-- **Count Tracking**: PaymentsList calls onPaymentsCountChange whenever filtered payments change (date/month change or payment updates)
-- **Date Display**: Payment date column header is "Day" and shows day-only (e.g., "15"); VAT displays as `(percent%) amount`
-- **List Header**: Removed the dedicated "Payments (X)" header above the table; count is now in the month filter header
-- **Form Sync**: onMonthChange callback syncs form date (YYYY-MM-01) when month changes
-- **Add Payment Button**: Located in the month filter header beside calendar and current-month button; shares same button styles, focus ring, and disabled state semantics as navigation buttons
-- **PaymentsList Props**: Receives selectedDate and onPaymentsCountChange props; no longer manages month state internally
+## MonthSelector Component
 
-## Year Navigation
-- selectedYear state; prev/next buttons; jump-to-current shortcut
-- Year picker dialog: manual input + nearby-year grid; closes on select
-- Sync yearInput with selectedYear via useEffect
+Reusable component for selecting and navigating between months. Used in the Monthly Payments page to provide a unified interface for date filtering.
+
+### Props
+```typescript
+interface MonthSelectorProps {
+  selectedDate: Date;                    // Currently selected date (1st of month)
+  onMonthChange: (year: number, month: number) => void;  // Called when month/year changes
+  showCalendar: boolean;                 // Whether calendar picker is open
+  onShowCalendarChange: (show: boolean) => void;  // Toggle calendar visibility
+  isViewingCurrentMonth: boolean;        // Whether currently viewing this month
+  onGoToCurrentMonth: () => void;        // Jump to current month callback
+}
+```
+
+### Features
+- Dedicated calendar picker with 12-month grid
+- Month/year navigation within the picker
+- Manual month selection from grid (closes picker on select)
+- Year navigation (prev/next buttons)
+- Current month jump button (disables when already viewing current month)
+- Click-outside detection for closing picker
+- Dark mode support with consistent styling
+- Full keyboard/screen reader accessibility
+
+### Usage Example
+```typescript
+const [selectedDate, setSelectedDate] = useState(() => {
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), 1);
+});
+const [showCalendar, setShowCalendar] = useState(false);
+
+const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+const isViewingCurrentMonth = 
+  selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
+  selectedDate.getMonth() === currentMonthStart.getMonth();
+
+return (
+  <MonthSelector
+    selectedDate={selectedDate}
+    onMonthChange={(year, month) => setSelectedDate(new Date(year, month, 1))}
+    showCalendar={showCalendar}
+    onShowCalendarChange={setShowCalendar}
+    isViewingCurrentMonth={isViewingCurrentMonth}
+    onGoToCurrentMonth={() => setSelectedDate(currentMonthStart)}
+  />
+);
+```
+
+### Integration Notes
+- Used in filter section header of monthly view (app/page.tsx)
+- Parent manages selectedDate, showCalendar, and isViewingCurrentMonth state
+- onMonthChange callback syncs PaymentForm date field via ref callback
+- Place in layout with other filter controls (alongside add-payment button)
+
+## YearSelector Component
+
+Reusable component for selecting and navigating between years. Used in the Yearly Summary page to provide year filtering with manual input.
+
+### Props
+```typescript
+interface YearSelectorProps {
+  selectedYear: number;                  // Currently selected year
+  onYearChange: (year: number) => void;  // Called when year changes
+  isViewingCurrentYear: boolean;         // Whether currently viewing this year
+  onGoToCurrentYear: () => void;         // Jump to current year callback
+}
+```
+
+### Features
+- Prev/next year navigation buttons
+- Year picker dropdown (shows 12-year window centered on selected year)
+- Manual year input field with Enter key support
+- Year grid with active state highlighting
+- Current year jump button (disables when already viewing current year)
+- Dark mode support with consistent styling
+- Full keyboard/screen reader accessibility
+
+### Usage Example
+```typescript
+const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+
+const currentYear = useMemo(() => new Date().getFullYear(), []);
+const isViewingCurrentYear = selectedYear === currentYear;
+
+return (
+  <YearSelector
+    selectedYear={selectedYear}
+    onYearChange={setSelectedYear}
+    isViewingCurrentYear={isViewingCurrentYear}
+    onGoToCurrentYear={() => setSelectedYear(currentYear)}
+  />
+);
+```
+
+### Integration Notes
+- Used in filter section header of yearly summary view (app/year/page.tsx)
+- Parent manages selectedYear and isViewingCurrentYear state
+- Updates trigger data refiltering based on paymentsForYear memo
+- Place year selector in layout with consistent button styling
 
 ## Modal Editing
 - Centered overlay; track editingPaymentId + editingField
