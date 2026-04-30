@@ -35,7 +35,7 @@ lib/                          # Shared utilities
 1. **User Input** → `PaymentForm.tsx` (client-side validation)
 2. **API Request** → `app/api/payments/route.ts` (server-side validation)
 3. **Database** → MongoDB collection `payments`
-4. **Display** → `PaymentsList.tsx` (fetches via API, renders in real-time)
+4. **Display** → `PaymentsList.tsx` (fetches all payments, filters by selected month, renders in real-time)
 
 ## Code Style & Conventions
 
@@ -199,6 +199,72 @@ VAT Amount: 410.48 - 339.24 = €71.24
 ```
 
 This reflects real-world salary/invoice scenarios where you know the total amount and need to extract the deductions.
+
+### Month Navigation Pattern (Filter by Month)
+For displaying payments filtered by month with navigation controls:
+
+1. **State Management** - Track selected month with `selectedDate` state (set to 1st of current month)
+2. **Filter Logic** - Create `getFilteredPayments()` to match payment dates against selected month/year
+3. **Month Navigation** - Implement `handlePreviousMonth()` and `handleNextMonth()` to change month
+4. **Display Current Month** - Show formatted month/year using Spanish locale
+5. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
+6. **Empty State** - Show custom message when no payments in selected month
+
+Example pattern:
+```typescript
+const [selectedDate, setSelectedDate] = useState(() => {
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), 1);
+});
+
+const getFilteredPayments = () => {
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
+  
+  return payments.filter((payment) => {
+    const paymentDate = new Date(payment.date);
+    return (
+      paymentDate.getFullYear() === year &&
+      paymentDate.getMonth() === month
+    );
+  });
+};
+
+const handlePreviousMonth = () => {
+  setSelectedDate(
+    new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1)
+  );
+};
+
+const handleNextMonth = () => {
+  setSelectedDate(
+    new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1)
+  );
+};
+
+const formatMonthYear = (date: Date) => {
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+  });
+};
+
+const filteredPayments = getFilteredPayments();
+```
+
+**In JSX - Month selector header:**
+```tsx
+<div className="flex items-center justify-between">
+  <h2>Payments ({filteredPayments.length})</h2>
+  <div className="flex items-center gap-4">
+    <button onClick={handlePreviousMonth}>← Prev</button>
+    <span>{formatMonthYear(selectedDate)}</span>
+    <button onClick={handleNextMonth}>Next →</button>
+  </div>
+</div>
+```
+
+**Summary recalculation** - Use `filteredPayments` instead of all `payments` when calculating totals
 
 ### Inline Editing Pattern (Edit Payment Fields)
 For editing individual payment fields inline in a list:
@@ -485,6 +551,15 @@ const vatAmount = totalAmount - netAmount;
 - **Environment variables**: Never expose `MONGODB_URI` client-side
 
 ## Completed Features & Patterns
+
+### Month Navigation & Filtering
+✓ **Completed**: View payments filtered by month with prev/next navigation
+- Displays current month by default (1st of current month)
+- Navigation buttons to move between months
+- Payment summaries (income, outcome, balance) calculated per month
+- Formatted month/year display in Spanish locale
+- Empty state message when no payments in selected month
+- See "Month Navigation Pattern" in Common Tasks & Patterns
 
 ### Inline Payment Editing (Date & Type)
 ✓ **Completed**: Edit date and type via inline editors in payment list

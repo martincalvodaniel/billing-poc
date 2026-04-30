@@ -14,6 +14,12 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
+  
+  // Month selection state (initialized to current month)
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
 
   useEffect(() => {
     fetchPayments();
@@ -57,6 +63,38 @@ export default forwardRef(function PaymentsList(props, ref) {
       month: "short",
       day: "numeric",
     });
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+    });
+  };
+
+  const getFilteredPayments = () => {
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    
+    return payments.filter((payment) => {
+      const paymentDate = new Date(payment.date);
+      return (
+        paymentDate.getFullYear() === year &&
+        paymentDate.getMonth() === month
+      );
+    });
+  };
+
+  const handlePreviousMonth = () => {
+    setSelectedDate(
+      new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1)
+    );
+  };
+
+  const handleNextMonth = () => {
+    setSelectedDate(
+      new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1)
+    );
   };
 
   const handleEditDate = (payment: Payment) => {
@@ -151,11 +189,13 @@ export default forwardRef(function PaymentsList(props, ref) {
     setEditingType("");
   };
 
-  const totalIncome = payments
+  const filteredPayments = getFilteredPayments();
+
+  const totalIncome = filteredPayments
     .filter((p) => p.type === "income")
     .reduce((sum, p) => sum + p.total, 0);
 
-  const totalOutcome = payments
+  const totalOutcome = filteredPayments
     .filter((p) => p.type === "outcome")
     .reduce((sum, p) => sum + p.total, 0);
 
@@ -233,9 +273,28 @@ export default forwardRef(function PaymentsList(props, ref) {
       {/* Payments Table */}
       <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Payments ({payments.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Payments ({filteredPayments.length})
+            </h2>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handlePreviousMonth}
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                ← Prev
+              </button>
+              <span className="min-w-48 text-center text-sm font-medium text-zinc-900 capitalize dark:text-zinc-100">
+                {formatMonthYear(selectedDate)}
+              </span>
+              <button
+                onClick={handleNextMonth}
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -247,6 +306,10 @@ export default forwardRef(function PaymentsList(props, ref) {
         {payments.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <p className="text-zinc-600 dark:text-zinc-400">No payments yet</p>
+          </div>
+        ) : filteredPayments.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <p className="text-zinc-600 dark:text-zinc-400">No payments in {formatMonthYear(selectedDate)}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -271,7 +334,7 @@ export default forwardRef(function PaymentsList(props, ref) {
                 </tr>
               </thead>
               <tbody>
-                {payments.map((payment) => (
+                {filteredPayments.map((payment) => (
                   <tr
                     key={payment._id?.toString()}
                     className="border-b border-zinc-100 dark:border-zinc-800"
