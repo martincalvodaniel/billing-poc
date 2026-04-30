@@ -37,13 +37,11 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
         throw new Error(data.error || "Failed to save payment");
       }
 
-      // Reset form on success
-      setFormData({
-        date: new Date().toISOString().split("T")[0],
+      // Reset total amount while keeping type and date sticky
+      setFormData((prev) => ({
+        ...prev,
         total: "",
-        vat: "21",
-        type: "income",
-      });
+      }));
 
       // Show success toast
       setShowSuccess(true);

@@ -175,6 +175,7 @@ const payments = await db
 - Disable form submission while processing
 - Provide user feedback via toast notifications (see User Feedback pattern below)
 - Display calculated amounts in real-time (VAT amount and net amount)
+- **Sticky form fields**: After successful save, keep `type` and `date` fields unchanged (sticky), reset only `total` field to empty. VAT remains at 21%. This improves UX when entering multiple payments of the same type on the same date
 
 #### Payment Calculation Pattern
 
