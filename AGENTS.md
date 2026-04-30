@@ -333,10 +333,12 @@ For charts and visualizations that are used in multiple places or are complex:
 
 Example - DonutChart component:
 - **Props**: `data` (Record of tag→amount), `title`, `colors` (string array)
+- **State**: `sortBy` (percentage/name), `sortOrder` (asc/desc) for user-controlled sorting
 - **Handles**: Full circle (100%) edge case with semicircle rendering
-- **Returns**: No-data state or styled donut chart with legend
+- **Returns**: No-data state or styled donut chart with horizontal layout (chart left, legend right)
+- **Features**: Interactive sorting buttons (% and AZ), stable color mapping across sorts, scrollable legend
 - **Used in**: `PaymentsList.tsx` for income/outcome breakdown by tag
-- **Optimization**: Memoized to prevent re-renders when props unchanged
+- **Optimization**: Memoized to prevent re-renders when props unchanged; `useMemo` for sorting and color mapping
 
 ### Optimizing Component Re-renders
 Use `React.memo()` for pure presentational components:
@@ -1550,11 +1552,21 @@ const vatAmount = totalAmount - netAmount;
 - Uses SVG path-based rendering for accurate pie/donut segments
 - Special handling for 100% single-tag cases (renders as two semicircles)
 - Color palette with 10 distinct colors cycling through tags
-- Displays percentage distribution with legend below chart
+- **Interactive Sorting Controls**:
+  - Two toggle buttons: **%** (sort by percentage), **AZ** (sort by name)
+  - Click active button to toggle ascending (↑) / descending (↓)
+  - Switching sort type defaults to descending order
+  - Default: sorted by percentage descending
+  - Active button highlighted in blue with proper accessibility labels
+- **Horizontal Layout**: Chart on left (160x160px), legend on right side
+- **Stable Colors**: Tags maintain consistent colors across all sorting options using `useMemo` color mapping
+- **Scrollable Legend**: Legend scrolls if more tags than fit in 160px height
+- Displays percentage distribution with tag color indicators
 - Shows "No data" state when no payments exist for category
 - Used in `PaymentsList.tsx` between summary cards and payment table
 - Reusable `DonutChart.tsx` component accepts data, title, and colors
 - Responsive design matches summary cards layout (1 col mobile, 2 cols desktop)
+- Fully accessible with ARIA labels and keyboard-friendly focus states
 
 ### Edit Payment Amount and VAT Fields
 ✓ **Completed**: Modal editing for total and VAT percentage with automatic recalculation

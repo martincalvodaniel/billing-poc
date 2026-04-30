@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState, useMemo } from 'react';
 
 interface DonutChartProps {
   data: Record<string, number>;
@@ -8,9 +8,58 @@ interface DonutChartProps {
   colors: string[];
 }
 
+type SortBy = 'percentage' | 'name';
+type SortOrder = 'asc' | 'desc';
+
 const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartProps) {
+  const [sortBy, setSortBy] = useState<SortBy>('percentage');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
   const entries = Object.entries(data);
   const total = entries.reduce((sum, [, value]) => sum + value, 0);
+
+  // Create stable color mapping based on original order to maintain consistent colors
+  const colorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    entries.forEach(([tag], index) => {
+      map.set(tag, colors[index % colors.length]);
+    });
+    return map;
+  }, [entries.length, colors]);
+
+  // Sort entries based on current sort settings
+  const sortedEntries = useMemo(() => {
+    const sorted = [...entries];
+    
+    if (sortBy === 'percentage') {
+      sorted.sort((a, b) => {
+        const percentageA = (a[1] / total) * 100;
+        const percentageB = (b[1] / total) * 100;
+        return sortOrder === 'desc' 
+          ? percentageB - percentageA 
+          : percentageA - percentageB;
+      });
+    } else {
+      // Sort by name
+      sorted.sort((a, b) => {
+        const comparison = a[0].localeCompare(b[0]);
+        return sortOrder === 'desc' ? -comparison : comparison;
+      });
+    }
+    
+    return sorted;
+  }, [entries, total, sortBy, sortOrder]);
+
+  const toggleSortBy = (newSortBy: SortBy) => {
+    if (sortBy === newSortBy) {
+      // Toggle order if clicking the same sort option
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      // Switch to new sort option with descending as default
+      setSortBy(newSortBy);
+      setSortOrder('desc');
+    }
+  };
 
   if (total === 0) {
     return (
@@ -29,9 +78,10 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
   let currentAngle = -90; // Start from top
   const segments: Array<{ tag: string; percentage: number; color: string; path: string }> = [];
 
-  entries.forEach(([tag, value], index) => {
+  sortedEntries.forEach(([tag, value]) => {
     const percentage = (value / total) * 100;
     const sliceAngle = (percentage / 100) * 360;
+    const color = colorMap.get(tag) || colors[0];
 
     if (sliceAngle === 360) {
       // Handle full circle case - draw as two semicircles
@@ -68,7 +118,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
       segments.push({
         tag,
         percentage,
-        color: colors[index % colors.length],
+        color: color,
         path: pathData,
       });
     } else {
@@ -104,7 +154,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
       segments.push({
         tag,
         percentage,
-        color: colors[index % colors.length],
+        color: color,
         path: pathData,
       });
 
@@ -113,35 +163,65 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
   });
 
   return (
-    <div className="flex flex-col items-center justify-start rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
-      <svg width="160" height="160" viewBox="0 0 120 120" className="mt-4">
-        {segments.map((segment) => (
-          <path
-            key={segment.tag}
-            d={segment.path}
-            fill={segment.color}
-            className="hover:opacity-80 transition-opacity"
-          />
-        ))}
-      </svg>
-      <div className="mt-6 w-full space-y-2">
-        {segments.map((segment) => (
-          <div key={segment.tag} className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: segment.color }}
-              ></div>
-              <span className="truncate text-zinc-700 dark:text-zinc-300">
-                {segment.tag}
+    <div className="flex flex-col rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
+        <div className="flex gap-1">
+          <button
+            onClick={() => toggleSortBy('percentage')}
+            aria-label={`Sort by percentage ${sortBy === 'percentage' ? (sortOrder === 'desc' ? 'descending' : 'ascending') : ''}`}
+            className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
+              sortBy === 'percentage'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            }`}
+          >
+            % {sortBy === 'percentage' && (sortOrder === 'desc' ? '↓' : '↑')}
+          </button>
+          <button
+            onClick={() => toggleSortBy('name')}
+            aria-label={`Sort by name ${sortBy === 'name' ? (sortOrder === 'desc' ? 'descending' : 'ascending') : ''}`}
+            className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
+              sortBy === 'name'
+                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            }`}
+          >
+            AZ {sortBy === 'name' && (sortOrder === 'desc' ? '↓' : '↑')}
+          </button>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-6">
+        <svg width="160" height="160" viewBox="0 0 120 120" className="flex-shrink-0">
+          {segments.map((segment) => (
+            <path
+              key={segment.tag}
+              d={segment.path}
+              fill={segment.color}
+              className="hover:opacity-80 transition-opacity"
+            />
+          ))}
+        </svg>
+        
+        <div className="flex-1 space-y-2 overflow-y-auto" style={{ maxHeight: '160px' }}>
+          {segments.map((segment) => (
+            <div key={segment.tag} className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div
+                  className="h-2 w-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: segment.color }}
+                ></div>
+                <span className="truncate text-zinc-700 dark:text-zinc-300">
+                  {segment.tag}
+                </span>
+              </div>
+              <span className="ml-2 flex-shrink-0 font-medium text-zinc-900 dark:text-zinc-100">
+                {segment.percentage.toFixed(1)}%
               </span>
             </div>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {segment.percentage.toFixed(1)}%
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
