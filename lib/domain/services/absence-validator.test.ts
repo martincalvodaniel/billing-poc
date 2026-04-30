@@ -12,6 +12,7 @@ describe("createAbsenceSchema", () => {
     type: "absence",
     studentName: "Alice",
     date: "2026-04-29",
+    partOfDay: "morning",
   }
 
   test("accepts valid absence", () => {
@@ -81,6 +82,36 @@ describe("createAbsenceSchema", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  test("rejects missing partOfDay", () => {
+    const { partOfDay: _p, ...rest } = valid
+    const result = createAbsenceSchema.safeParse(rest)
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts partOfDay morning", () => {
+    const result = createAbsenceSchema.safeParse({
+      ...valid,
+      partOfDay: "morning",
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("accepts partOfDay evening", () => {
+    const result = createAbsenceSchema.safeParse({
+      ...valid,
+      partOfDay: "evening",
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("rejects invalid partOfDay", () => {
+    const result = createAbsenceSchema.safeParse({
+      ...valid,
+      partOfDay: "afternoon",
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe("updateAbsenceSchema", () => {
@@ -117,21 +148,88 @@ describe("updateAbsenceSchema", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  test("accepts id with partOfDay only", () => {
+    const result = updateAbsenceSchema.safeParse({
+      id: "abc",
+      partOfDay: "evening",
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("rejects invalid partOfDay", () => {
+    const result = updateAbsenceSchema.safeParse({
+      id: "abc",
+      partOfDay: "afternoon",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts empty comment (clearing existing comment)", () => {
+    const result = updateAbsenceSchema.safeParse({
+      id: "abc",
+      comment: "",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.comment).toBe("")
+    }
+  })
+
+  test("accepts whitespace-only comment as empty (clears comment)", () => {
+    const result = updateAbsenceSchema.safeParse({
+      id: "abc",
+      comment: "   ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.comment).toBe("")
+    }
+  })
 })
 
 describe("deleteAbsenceSchema", () => {
-  test("accepts valid id", () => {
+  test("accepts id only", () => {
     const result = deleteAbsenceSchema.safeParse({ id: "abc" })
     expect(result.success).toBe(true)
   })
 
-  test("rejects missing id", () => {
+  test("accepts studentName only", () => {
+    const result = deleteAbsenceSchema.safeParse({ studentName: "Alice" })
+    expect(result.success).toBe(true)
+    if (result.success && "studentName" in result.data) {
+      expect(result.data.studentName).toBe("Alice")
+    }
+  })
+
+  test("trims studentName", () => {
+    const result = deleteAbsenceSchema.safeParse({ studentName: "  Bob  " })
+    expect(result.success).toBe(true)
+    if (result.success && "studentName" in result.data) {
+      expect(result.data.studentName).toBe("Bob")
+    }
+  })
+
+  test("rejects empty object", () => {
     const result = deleteAbsenceSchema.safeParse({})
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects both id and studentName", () => {
+    const result = deleteAbsenceSchema.safeParse({
+      id: "abc",
+      studentName: "Alice",
+    })
     expect(result.success).toBe(false)
   })
 
   test("rejects empty id", () => {
     const result = deleteAbsenceSchema.safeParse({ id: "" })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects empty studentName", () => {
+    const result = deleteAbsenceSchema.safeParse({ studentName: "   " })
     expect(result.success).toBe(false)
   })
 })

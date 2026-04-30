@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { MongoAbsenceRepository } from "@/lib/adapters/repositories/mongo-absence-repository"
+import {
+  DuplicateAbsenceError,
+  MongoAbsenceRepository,
+} from "@/lib/adapters/repositories/mongo-absence-repository"
 import { requireAuth } from "@/lib/api-auth"
 import {
   absenceQuerySchema,
@@ -58,16 +61,26 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date()
-    const id = await absences.create({
-      type: parsed.data.type,
-      studentName: parsed.data.studentName,
-      date: parsed.data.date,
-      comment: parsed.data.comment,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    return NextResponse.json({ success: true, id }, { status: 201 })
+    try {
+      const id = await absences.create({
+        type: parsed.data.type,
+        studentName: parsed.data.studentName,
+        date: parsed.data.date,
+        partOfDay: parsed.data.partOfDay,
+        comment: parsed.data.comment,
+        createdAt: now,
+        updatedAt: now,
+      })
+      return NextResponse.json({ success: true, id }, { status: 201 })
+    } catch (err) {
+      if (err instanceof DuplicateAbsenceError) {
+        return NextResponse.json(
+          { error: err.message, code: "duplicate_part_of_day" },
+          { status: 409 }
+        )
+      }
+      throw err
+    }
   } catch (error) {
     console.error(`Error in POST /api/absences: ${error}`)
     return NextResponse.json(
@@ -92,12 +105,24 @@ export async function PUT(request: NextRequest) {
     }
 
     const { id, ...data } = parsed.data
-    const updated = await absences.update(id, data)
-    if (!updated) {
-      return NextResponse.json({ error: "Absence not found" }, { status: 404 })
+    try {
+      const updated = await absences.update(id, data)
+      if (!updated) {
+        return NextResponse.json(
+          { error: "Absence not found" },
+          { status: 404 }
+        )
+      }
+      return NextResponse.json({ success: true }, { status: 200 })
+    } catch (err) {
+      if (err instanceof DuplicateAbsenceError) {
+        return NextResponse.json(
+          { error: err.message, code: "duplicate_part_of_day" },
+          { status: 409 }
+        )
+      }
+      throw err
     }
-
-    return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {
     console.error(`Error in PUT /api/absences: ${error}`)
     return NextResponse.json(
@@ -121,12 +146,24 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const deleted = await absences.delete(parsed.data.id)
-    if (!deleted) {
-      return NextResponse.json({ error: "Absence not found" }, { status: 404 })
+    if ("id" in parsed.data) {
+      const deleted = await absences.delete(parsed.data.id)
+      if (!deleted) {
+        return NextResponse.json(
+          { error: "Absence not found" },
+          { status: 404 }
+        )
+      }
+      return NextResponse.json(
+        { success: true, deletedCount: 1 },
+        { status: 200 }
+      )
     }
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    const deletedCount = await absences.deleteByStudentName(
+      parsed.data.studentName
+    )
+    return NextResponse.json({ success: true, deletedCount }, { status: 200 })
   } catch (error) {
     console.error(`Error in DELETE /api/absences: ${error}`)
     return NextResponse.json(

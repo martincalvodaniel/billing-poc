@@ -9,6 +9,7 @@ function absence(
     studentName: partial.studentName,
     date: partial.date,
     type: partial.type,
+    partOfDay: partial.partOfDay ?? "morning",
     comment: partial.comment,
     createdAt: partial.createdAt ?? new Date("2026-01-01T00:00:00Z"),
     updatedAt: partial.updatedAt ?? new Date("2026-01-01T00:00:00Z"),

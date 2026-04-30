@@ -1,4 +1,4 @@
-BASE=doc/agent-iterations
+BASE=agent-iterations
 TOPIC=$BASE/03-docker-compose-for-it-and-at
 SUBTOPIC=02-fix-its-and-ats
 PROMPT=main

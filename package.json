@@ -13,7 +13,8 @@
     "test:watch": "bun test --watch",
     "load-data:absences": "bun run scripts/absences/loadSampleAbsences.ts",
     "load-data:month": "bun run scripts/payments/loadRandomDataForMonth.ts",
-    "load-data:year": "bun run scripts/payments/loadRandomDataForYear.ts"
+    "load-data:year": "bun run scripts/payments/loadRandomDataForYear.ts",
+    "migrate:absences:partOfDay": "bun run scripts/absences/migrateBackfillPartOfDay.ts"
   },
   "dependencies": {
     "@vercel/blob": "2.3.3",

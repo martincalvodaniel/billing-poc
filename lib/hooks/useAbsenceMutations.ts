@@ -2,7 +2,7 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
-import type { AbsenceType } from "@/lib/domain/entities/absence"
+import type { AbsenceType, PartOfDay } from "@/lib/domain/entities/absence"
 import { FetchError } from "../swr-fetcher"
 import { isAbsenceStudentsKey } from "./useAbsenceStudents"
 import { isAbsenceSummaryKey } from "./useAbsenceSummary"
@@ -12,6 +12,7 @@ export interface CreateAbsenceInput {
   type: AbsenceType
   studentName: string
   date: string
+  partOfDay: PartOfDay
   comment?: string
 }
 
@@ -20,12 +21,11 @@ export interface UpdateAbsenceInput {
   type?: AbsenceType
   studentName?: string
   date?: string
+  partOfDay?: PartOfDay
   comment?: string
 }
 
-export interface DeleteAbsenceInput {
-  id: string
-}
+export type DeleteAbsenceInput = { id: string } | { studentName: string }
 
 export interface CreateAbsenceResponse {
   success: boolean
@@ -38,6 +38,11 @@ export interface UpdateAbsenceResponse {
 
 export interface DeleteAbsenceResponse {
   success: boolean
+  deletedCount: number
+}
+
+export function isConflictError(err: unknown): err is FetchError {
+  return err instanceof FetchError && err.status === 409
 }
 
 const ABSENCES_URL = "/api/absences"

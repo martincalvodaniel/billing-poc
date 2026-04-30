@@ -8,7 +8,6 @@ import MonthPicker from "../../month/components/MonthPicker"
 import AbsencesMonthCalendar from "./AbsencesMonthCalendar"
 import AbsencesSummaryTable from "./AbsencesSummaryTable"
 import AbsencesViewToggle, { type AbsencesView } from "./AbsencesViewToggle"
-import AbsencesWeekCalendar from "./AbsencesWeekCalendar"
 import DayDetailModal from "./DayDetailModal"
 import StudentDetailModal from "./StudentDetailModal"
 
@@ -97,14 +96,6 @@ export default function AbsencesPageContent() {
             records={absences}
             selectedDate={selectedDate}
             onDayClick={setDayModalDate}
-          />
-        )}
-        {view === "week" && (
-          <AbsencesWeekCalendar
-            records={absences}
-            selectedDate={selectedDate}
-            onDayClick={setDayModalDate}
-            onWeekChange={setSelectedDate}
           />
         )}
         {view === "summary" && (

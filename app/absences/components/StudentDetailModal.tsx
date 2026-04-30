@@ -3,9 +3,14 @@
 import { useMemo, useState } from "react"
 import Modal from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
-import type { Absence, AbsenceType } from "@/lib/domain/entities/absence"
+import type {
+  Absence,
+  AbsenceType,
+  PartOfDay,
+} from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
 import {
+  isConflictError,
   useCreateAbsence,
   useDeleteAbsence,
   useUpdateAbsence,
@@ -23,6 +28,14 @@ interface FormState {
   mode: "create" | "edit"
   target?: Absence
 }
+
+const PART_OF_DAY_LABEL: Record<PartOfDay, string> = {
+  morning: "Morning",
+  evening: "Evening",
+}
+
+const PART_OF_DAY_ORDER: PartOfDay[] = ["morning", "evening"]
+const TYPE_ORDER: AbsenceType[] = ["absence", "recovery"]
 
 function extractErrorMessage(err: unknown): string {
   if (
@@ -55,8 +68,11 @@ export default function StudentDetailModal({
 }: StudentDetailModalProps) {
   const [formState, setFormState] = useState<FormState>({ mode: "create" })
   const [pendingDelete, setPendingDelete] = useState<Absence | null>(null)
+  const [deleteAllConfirmOpen, setDeleteAllConfirmOpen] = useState(false)
+  const [deleteAllError, setDeleteAllError] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [shakeKey, setShakeKey] = useState(0)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { trigger: createAbsence, isMutating: isCreating } = useCreateAbsence()
@@ -65,14 +81,39 @@ export default function StudentDetailModal({
 
   const isSubmitting = isCreating || isUpdating
 
-  const sortedRecords = useMemo(
-    () =>
-      [...records].sort((a, b) => {
-        if (a.date === b.date) return 0
-        return a.date < b.date ? 1 : -1
-      }),
+  const absenceCount = useMemo(
+    () => records.filter((r) => r.type === "absence").length,
     [records]
   )
+  const recoveryCount = useMemo(
+    () => records.filter((r) => r.type === "recovery").length,
+    [records]
+  )
+
+  // Group records by date desc → partOfDay (Morning, Evening) → type (Absence, Recovery)
+  const groupedRecords = useMemo(() => {
+    const byDate = new Map<string, Absence[]>()
+    for (const r of records) {
+      const list = byDate.get(r.date)
+      if (list) list.push(r)
+      else byDate.set(r.date, [r])
+    }
+    const dates = Array.from(byDate.keys()).sort((a, b) =>
+      a < b ? 1 : a > b ? -1 : 0
+    )
+    return dates.map((date) => {
+      const dayRecords = byDate.get(date) ?? []
+      const parts = PART_OF_DAY_ORDER.map((part) => {
+        const partRecords = dayRecords.filter((r) => r.partOfDay === part)
+        const types = TYPE_ORDER.map((t) => ({
+          type: t,
+          items: partRecords.filter((r) => r.type === t),
+        })).filter((g) => g.items.length > 0)
+        return { partOfDay: part, types }
+      }).filter((p) => p.types.length > 0)
+      return { date, parts }
+    })
+  }, [records])
 
   const showToast = (message: string) => {
     setToastMessage(message)
@@ -83,6 +124,7 @@ export default function StudentDetailModal({
     type: Absence["type"]
     studentName: string
     date: string
+    partOfDay: PartOfDay
     comment?: string
   }) => {
     setFormError(null)
@@ -93,6 +135,7 @@ export default function StudentDetailModal({
           type: data.type,
           studentName: data.studentName,
           date: data.date,
+          partOfDay: data.partOfDay,
           comment: data.comment,
         })
         showToast("Absence updated successfully!")
@@ -102,6 +145,7 @@ export default function StudentDetailModal({
           type: data.type,
           studentName: data.studentName,
           date: data.date,
+          partOfDay: data.partOfDay,
           comment: data.comment,
         })
         showToast("Absence saved successfully!")
@@ -109,6 +153,9 @@ export default function StudentDetailModal({
     } catch (err) {
       console.error(`Error saving absence: ${err}`)
       setFormError(extractErrorMessage(err))
+      if (isConflictError(err)) {
+        setShakeKey((k) => k + 1)
+      }
     }
   }
 
@@ -128,6 +175,19 @@ export default function StudentDetailModal({
     }
   }
 
+  const handleConfirmDeleteAll = async () => {
+    setDeleteAllError(null)
+    try {
+      const result = await deleteAbsence({ studentName })
+      showToast(`Deleted ${result.deletedCount} records`)
+      setDeleteAllConfirmOpen(false)
+      onClose()
+    } catch (err) {
+      console.error(`Error deleting all records: ${err}`)
+      setDeleteAllError(extractErrorMessage(err))
+    }
+  }
+
   return (
     <>
       {toastMessage && (
@@ -144,100 +204,163 @@ export default function StudentDetailModal({
       >
         <div className="space-y-6">
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Records
-              <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-                ({sortedRecords.length})
-              </span>
-            </h3>
-            {sortedRecords.length === 0 ? (
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Records
+                <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                  ({records.length})
+                </span>
+              </h3>
+              {records.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteAllError(null)
+                    setDeleteAllConfirmOpen(true)
+                  }}
+                  aria-label={`Delete all records for ${studentName}`}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
+                    />
+                  </svg>
+                  Delete all
+                </button>
+              )}
+            </div>
+            {groupedRecords.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 No records yet.
               </p>
             ) : (
-              <ul className="space-y-2">
-                {sortedRecords.map((record) => (
-                  <li
-                    key={record._id ?? `${record.date}-${record.type}`}
-                    className={`flex items-start gap-2 rounded-md border p-3 ${
-                      formState.mode === "edit" &&
-                      formState.target?._id === record._id
-                        ? "border-blue-400 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20"
-                        : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          {formatDate(record.date)}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200">
-                          <span
-                            aria-hidden="true"
-                            className={`inline-block h-2 w-2 rounded-full ${TYPE_DOT[record.type]}`}
-                          />
-                          {TYPE_LABEL[record.type]}
-                        </span>
-                      </div>
-                      {record.comment && (
-                        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 break-words">
-                          {record.comment}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormError(null)
-                          setFormState({ mode: "edit", target: record })
-                        }}
-                        aria-label={`Edit ${record.type} on ${formatDate(record.date)}`}
-                        className="rounded-md p-1.5 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
+              <div className="space-y-4">
+                {groupedRecords.map((dateGroup) => (
+                  <div key={dateGroup.date} className="space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-300">
+                      {formatDate(dateGroup.date)}
+                    </h4>
+                    <div className="space-y-3 pl-2">
+                      {dateGroup.parts.map((partGroup) => (
+                        <div
+                          key={`${dateGroup.date}-${partGroup.partOfDay}`}
+                          className="space-y-2"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDeleteError(null)
-                          setPendingDelete(record)
-                        }}
-                        aria-label={`Delete ${record.type} on ${formatDate(record.date)}`}
-                        className="rounded-md p-1.5 text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
-                          />
-                        </svg>
-                      </button>
+                          <h5 className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                            {PART_OF_DAY_LABEL[partGroup.partOfDay]}
+                          </h5>
+                          {partGroup.types.map((typeGroup) => (
+                            <div
+                              key={`${dateGroup.date}-${partGroup.partOfDay}-${typeGroup.type}`}
+                              className="space-y-1"
+                            >
+                              <h6 className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                                {TYPE_LABEL[typeGroup.type]}
+                              </h6>
+                              <ul className="space-y-2">
+                                {typeGroup.items.map((record) => (
+                                  <li
+                                    key={
+                                      record._id ??
+                                      `${record.date}-${record.partOfDay}-${record.type}`
+                                    }
+                                    className={`flex items-start gap-2 rounded-md border p-3 ${
+                                      formState.mode === "edit" &&
+                                      formState.target?._id === record._id
+                                        ? "border-blue-400 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20"
+                                        : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50"
+                                    }`}
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200">
+                                          <span
+                                            aria-hidden="true"
+                                            className={`inline-block h-2 w-2 rounded-full ${TYPE_DOT[record.type]}`}
+                                          />
+                                          {TYPE_LABEL[record.type]}
+                                        </span>
+                                      </div>
+                                      {record.comment && (
+                                        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 break-words">
+                                          {record.comment}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="flex shrink-0 gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setFormError(null)
+                                          setFormState({
+                                            mode: "edit",
+                                            target: record,
+                                          })
+                                        }}
+                                        aria-label={`Edit ${record.type} on ${formatDate(record.date)}`}
+                                        className="rounded-md p-1.5 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+                                      >
+                                        <svg
+                                          className="h-4 w-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          aria-hidden="true"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                          />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDeleteError(null)
+                                          setPendingDelete(record)
+                                        }}
+                                        aria-label={`Delete ${record.type} on ${formatDate(record.date)}`}
+                                        className="rounded-md p-1.5 text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                                      >
+                                        <svg
+                                          className="h-4 w-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          aria-hidden="true"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
 
@@ -265,6 +388,7 @@ export default function StudentDetailModal({
                   : undefined
               }
               errorMessage={formError}
+              shakeKey={shakeKey}
             />
           </div>
         </div>
@@ -319,6 +443,58 @@ export default function StudentDetailModal({
             </p>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
               This action cannot be undone.
+            </p>
+          </div>
+        </Modal>
+      )}
+
+      {deleteAllConfirmOpen && (
+        <Modal
+          isOpen
+          onClose={() => {
+            if (!isDeleting) setDeleteAllConfirmOpen(false)
+          }}
+          title="Delete all records?"
+          maxWidth="sm"
+          footer={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteAllConfirmOpen(false)}
+                disabled={isDeleting}
+                className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteAll}
+                disabled={isDeleting}
+                className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
+              >
+                {isDeleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            {deleteAllError && (
+              <div
+                className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                role="alert"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {deleteAllError}
+              </div>
+            )}
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
+              Delete {records.length} records ({absenceCount} absences,{" "}
+              {recoveryCount} recoveries) for{" "}
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                &quot;{studentName}&quot;
+              </span>
+              ? This cannot be undone.
             </p>
           </div>
         </Modal>

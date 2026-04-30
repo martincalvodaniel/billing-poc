@@ -1,6 +1,7 @@
 import type {
   AbsenceFormData,
   AbsenceType,
+  PartOfDay,
 } from "../../lib/domain/entities/absence"
 
 export const STUDENT_NAMES = [
@@ -75,12 +76,35 @@ export function generateAbsenceRecords({
   count,
 }: GenerateAbsenceRecordsArgs): AbsenceFormData[] {
   const records: AbsenceFormData[] = []
+  const seen = new Set<string>()
+  const MAX_RETRIES = 5
+
   for (let i = 0; i < count; i++) {
+    let studentName = randomPick(STUDENT_NAMES)
+    let date = generateDateInMonth(year, month)
+    let partOfDay: PartOfDay = Math.random() < 0.5 ? "morning" : "evening"
+    let key = `${studentName}|${date}|${partOfDay}`
+    let attempts = 0
+
+    while (seen.has(key) && attempts < MAX_RETRIES) {
+      studentName = randomPick(STUDENT_NAMES)
+      date = generateDateInMonth(year, month)
+      partOfDay = Math.random() < 0.5 ? "morning" : "evening"
+      key = `${studentName}|${date}|${partOfDay}`
+      attempts++
+    }
+
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+
     const type: AbsenceType = Math.random() < 0.6 ? "absence" : "recovery"
     const record: AbsenceFormData = {
       type,
-      studentName: randomPick(STUDENT_NAMES),
-      date: generateDateInMonth(year, month),
+      studentName,
+      date,
+      partOfDay,
     }
     if (Math.random() < 0.3) {
       record.comment = randomPick(COMMENT_POOL)

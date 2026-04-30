@@ -7,6 +7,15 @@ import type {
 import { getDatabase } from "../../mongodb"
 import type { Absence as MongoAbsence } from "../../types"
 
+export class DuplicateAbsenceError extends Error {
+  readonly code = "duplicate_part_of_day" as const
+
+  constructor(message: string) {
+    super(message)
+    this.name = "DuplicateAbsenceError"
+  }
+}
+
 function toObjectId(id: string): ObjectId {
   return new ObjectId(id)
 }
@@ -25,10 +34,17 @@ function toDomain(doc: MongoAbsence): Absence {
     type: doc.type,
     studentName: doc.studentName,
     date: doc.date,
+    partOfDay: doc.partOfDay,
     comment: doc.comment,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
+}
+
+function isDuplicateKeyError(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false
+  const e = err as { code?: unknown; name?: unknown }
+  return e.code === 11000 || (e.name === "MongoServerError" && e.code === 11000)
 }
 
 function pad2(n: number): string {
@@ -40,12 +56,50 @@ function lastDayOfMonth(year: number, month: number): number {
 }
 
 export class MongoAbsenceRepository implements AbsenceRepository {
+  private indexesReady?: Promise<void>
+
   private async collection() {
     const db = await getDatabase()
     return db.collection<MongoAbsence>("absences")
   }
 
+  private async ensureIndexes(): Promise<void> {
+    if (!this.indexesReady) {
+      this.indexesReady = (async () => {
+        const db = await getDatabase()
+        const col = db.collection<MongoAbsence>("absences")
+        const specs: Array<{
+          keys: Record<string, 1 | -1>
+          options?: Record<string, unknown>
+        }> = [
+          {
+            keys: {
+              studentNameLower: 1,
+              date: 1,
+              partOfDay: 1,
+            },
+            options: { unique: true, name: "uniq_student_date_part" },
+          },
+          { keys: { date: 1 } },
+          { keys: { studentName: 1 } },
+          { keys: { type: 1 } },
+        ]
+        for (const spec of specs) {
+          try {
+            await col.createIndex(spec.keys, spec.options)
+          } catch (err) {
+            console.error(
+              `MongoAbsenceRepository.ensureIndexes: failed to create index ${JSON.stringify(spec.keys)}: ${err}`
+            )
+          }
+        }
+      })()
+    }
+    return this.indexesReady
+  }
+
   async findAll(filter: AbsenceFilter): Promise<Absence[]> {
+    await this.ensureIndexes()
     const col = await this.collection()
     const query: Record<string, unknown> = {}
 
@@ -79,52 +133,104 @@ export class MongoAbsenceRepository implements AbsenceRepository {
 
   async findById(id: string): Promise<Absence | null> {
     if (!isValidObjectId(id)) return null
+    await this.ensureIndexes()
     const col = await this.collection()
     const doc = await col.findOne({ _id: toObjectId(id) })
     return doc ? toDomain(doc) : null
   }
 
   async create(absence: Omit<Absence, "_id">): Promise<string> {
+    await this.ensureIndexes()
     const col = await this.collection()
     const now = new Date()
+    // Preserve historical doc shape: empty/undefined comment is omitted from
+    // the inserted document (matches optional `comment?: string` entity).
+    const hasComment = absence.comment !== undefined && absence.comment !== ""
     const doc: Omit<MongoAbsence, "_id"> = {
       type: absence.type,
       studentName: absence.studentName,
+      studentNameLower: absence.studentName.trim().toLowerCase(),
       date: absence.date,
-      comment: absence.comment,
+      partOfDay: absence.partOfDay,
+      ...(hasComment ? { comment: absence.comment } : {}),
       createdAt: absence.createdAt ?? now,
       updatedAt: absence.updatedAt ?? now,
     }
-    const result = await col.insertOne(doc as MongoAbsence)
-    return result.insertedId.toString()
+    try {
+      const result = await col.insertOne(doc as MongoAbsence)
+      return result.insertedId.toString()
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        throw new DuplicateAbsenceError(
+          "A record already exists for this student, date, and part of day."
+        )
+      }
+      throw err
+    }
   }
 
   async update(id: string, data: Partial<Absence>): Promise<boolean> {
+    await this.ensureIndexes()
     const col = await this.collection()
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     }
+    const unsetData: Record<string, ""> = {}
 
     if (data.type !== undefined) updateData.type = data.type
-    if (data.studentName !== undefined)
+    if (data.studentName !== undefined) {
       updateData.studentName = data.studentName
+      updateData.studentNameLower = data.studentName.trim().toLowerCase()
+    }
     if (data.date !== undefined) updateData.date = data.date
-    if (data.comment !== undefined) updateData.comment = data.comment
+    if (data.partOfDay !== undefined) updateData.partOfDay = data.partOfDay
+    // Treat empty string as a request to clear the comment: $unset removes
+    // the field so the stored doc matches the optional `comment?: string`
+    // entity shape.
+    if (data.comment !== undefined) {
+      if (data.comment === "") {
+        unsetData.comment = ""
+      } else {
+        updateData.comment = data.comment
+      }
+    }
 
-    const result = await col.updateOne(
-      { _id: toObjectId(id) },
-      { $set: updateData }
-    )
-    return result.modifiedCount > 0
+    const updateOps: Record<string, unknown> = { $set: updateData }
+    if (Object.keys(unsetData).length > 0) {
+      updateOps.$unset = unsetData
+    }
+
+    try {
+      const result = await col.updateOne({ _id: toObjectId(id) }, updateOps)
+      return result.modifiedCount > 0
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        throw new DuplicateAbsenceError(
+          "A record already exists for this student, date, and part of day."
+        )
+      }
+      throw err
+    }
   }
 
   async delete(id: string): Promise<boolean> {
+    await this.ensureIndexes()
     const col = await this.collection()
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0
   }
 
+  async deleteByStudentName(name: string): Promise<number> {
+    await this.ensureIndexes()
+    const col = await this.collection()
+    const result = await col.deleteMany({
+      studentNameLower: name.trim().toLowerCase(),
+    })
+    return result.deletedCount ?? 0
+  }
+
   async findDistinctStudentNames(query?: string): Promise<string[]> {
+    await this.ensureIndexes()
     const col = await this.collection()
     const pipeline: Record<string, unknown>[] = []
 
@@ -145,6 +251,7 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async aggregateSummary(): Promise<AbsenceSummaryRow[]> {
+    await this.ensureIndexes()
     const col = await this.collection()
     const docs = await col
       .aggregate<AbsenceSummaryRow>(

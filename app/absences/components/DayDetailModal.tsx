@@ -1,11 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Modal from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
-import type { Absence } from "@/lib/domain/entities/absence"
+import type {
+  Absence,
+  AbsenceType,
+  PartOfDay,
+} from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
 import {
+  isConflictError,
   useCreateAbsence,
   useDeleteAbsence,
   useUpdateAbsence,
@@ -22,6 +27,11 @@ interface DayDetailModalProps {
 interface FormState {
   mode: "create" | "edit"
   target?: Absence
+}
+
+const PART_LABEL: Record<PartOfDay, string> = {
+  morning: "Morning",
+  evening: "Evening",
 }
 
 function extractErrorMessage(err: unknown): string {
@@ -48,6 +58,26 @@ export default function DayDetailModal({
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [formPartOfDay, setFormPartOfDay] = useState<PartOfDay>("morning")
+  const [formType, setFormType] = useState<AbsenceType>("absence")
+  const [shakeKey, setShakeKey] = useState<number>(0)
+  const [formVisible, setFormVisible] = useState<boolean>(false)
+
+  const formContainerRef = useRef<HTMLDivElement>(null)
+  const lastTriggerRef = useRef<HTMLElement | null>(null)
+
+  // When the form becomes visible, scroll it into view and focus the
+  // student-name input as a best-effort accessibility nicety.
+  useEffect(() => {
+    if (!formVisible) return
+    const container = formContainerRef.current
+    if (!container) return
+    container.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="studentName"]'
+    )
+    input?.focus()
+  }, [formVisible])
 
   const { trigger: createAbsence, isMutating: isCreating } = useCreateAbsence()
   const { trigger: updateAbsence, isMutating: isUpdating } = useUpdateAbsence()
@@ -60,10 +90,43 @@ export default function DayDetailModal({
     setTimeout(() => setToastMessage(null), 4000)
   }
 
+  const handleAddInPart = (part: PartOfDay, type: AbsenceType) => {
+    lastTriggerRef.current =
+      typeof document !== "undefined"
+        ? (document.activeElement as HTMLElement | null)
+        : null
+    setFormError(null)
+    setFormState({ mode: "create" })
+    setFormPartOfDay(part)
+    setFormType(type)
+    setFormVisible(true)
+  }
+
+  const handleCancelForm = () => {
+    setFormError(null)
+    setFormState({ mode: "create" })
+    setFormVisible(false)
+    // Best-effort focus restoration: return focus to the trigger that
+    // opened the form. If it's no longer in the DOM, fall back to the
+    // first focusable + Add button inside the modal body.
+    requestAnimationFrame(() => {
+      const trigger = lastTriggerRef.current
+      if (trigger?.isConnected) {
+        trigger.focus()
+        return
+      }
+      const fallback = document.querySelector<HTMLButtonElement>(
+        'button[aria-label^="Add absence"]'
+      )
+      fallback?.focus()
+    })
+  }
+
   const handleSubmit = async (data: {
     type: Absence["type"]
     studentName: string
     date: string
+    partOfDay: PartOfDay
     comment?: string
   }) => {
     setFormError(null)
@@ -74,6 +137,7 @@ export default function DayDetailModal({
           type: data.type,
           studentName: data.studentName,
           date: data.date,
+          partOfDay: data.partOfDay,
           comment: data.comment,
         })
         showToast("Absence updated successfully!")
@@ -83,12 +147,21 @@ export default function DayDetailModal({
           type: data.type,
           studentName: data.studentName,
           date: data.date,
+          partOfDay: data.partOfDay,
           comment: data.comment,
         })
         showToast("Absence saved successfully!")
       }
     } catch (err) {
       console.error(`Error saving absence: ${err}`)
+      if (isConflictError(err)) {
+        setShakeKey((k) => k + 1)
+        setFormError(
+          extractErrorMessage(err) ||
+            "A record already exists for this student in the selected part of the day."
+        )
+        return
+      }
       setFormError(extractErrorMessage(err))
     }
   }
@@ -109,8 +182,28 @@ export default function DayDetailModal({
     }
   }
 
-  const absences = records.filter((r) => r.type === "absence")
-  const recoveries = records.filter((r) => r.type === "recovery")
+  const morningRecords = records.filter((r) => r.partOfDay === "morning")
+  const eveningRecords = records.filter((r) => r.partOfDay === "evening")
+
+  const editingId =
+    formState.mode === "edit" ? formState.target?._id : undefined
+
+  const handleEdit = (record: Absence) => {
+    lastTriggerRef.current =
+      typeof document !== "undefined"
+        ? (document.activeElement as HTMLElement | null)
+        : null
+    setFormError(null)
+    setFormState({ mode: "edit", target: record })
+    setFormPartOfDay(record.partOfDay)
+    setFormType(record.type)
+    setFormVisible(true)
+  }
+
+  const handleDelete = (record: Absence) => {
+    setDeleteError(null)
+    setPendingDelete(record)
+  }
 
   return (
     <>
@@ -127,66 +220,56 @@ export default function DayDetailModal({
         closeOnBackdropClick
       >
         <div className="space-y-6">
-          <RecordSection
-            title="Absences"
-            colorClass="bg-red-500"
-            records={absences}
-            editingId={
-              formState.mode === "edit" ? formState.target?._id : undefined
-            }
-            onEdit={(record) => {
-              setFormError(null)
-              setFormState({ mode: "edit", target: record })
-            }}
-            onDelete={(record) => {
-              setDeleteError(null)
-              setPendingDelete(record)
-            }}
+          <PartSection
+            part="morning"
+            records={morningRecords}
+            editingId={editingId}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddNew={(type) => handleAddInPart("morning", type)}
           />
 
-          <RecordSection
-            title="Recoveries"
-            colorClass="bg-green-500"
-            records={recoveries}
-            editingId={
-              formState.mode === "edit" ? formState.target?._id : undefined
-            }
-            onEdit={(record) => {
-              setFormError(null)
-              setFormState({ mode: "edit", target: record })
-            }}
-            onDelete={(record) => {
-              setDeleteError(null)
-              setPendingDelete(record)
-            }}
+          <PartSection
+            part="evening"
+            records={eveningRecords}
+            editingId={editingId}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddNew={(type) => handleAddInPart("evening", type)}
           />
 
-          <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {formState.mode === "edit" ? "Edit record" : "Add new record"}
-            </h3>
-            <AbsenceForm
-              key={
-                formState.mode === "edit"
-                  ? `edit-${formState.target?._id}`
-                  : "create"
-              }
-              initialDate={date}
-              initial={formState.mode === "edit" ? formState.target : undefined}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              submitLabel={formState.mode === "edit" ? "Save" : "Add"}
-              onCancel={
-                formState.mode === "edit"
-                  ? () => {
-                      setFormError(null)
-                      setFormState({ mode: "create" })
-                    }
-                  : undefined
-              }
-              errorMessage={formError}
-            />
-          </div>
+          {formVisible && (
+            <div
+              ref={formContainerRef}
+              className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800"
+            >
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                {formState.mode === "edit"
+                  ? "Edit record"
+                  : `Add new ${formType === "recovery" ? "Recovery" : "Absence"} for ${formPartOfDay === "evening" ? "Evening" : "Morning"}`}
+              </h3>
+              <AbsenceForm
+                key={
+                  formState.mode === "edit"
+                    ? `edit-${formState.target?._id}`
+                    : `create-${formPartOfDay}-${formType}`
+                }
+                initialDate={date}
+                initialPartOfDay={formPartOfDay}
+                initialType={formType}
+                initial={
+                  formState.mode === "edit" ? formState.target : undefined
+                }
+                hideTypeAndPartOfDay={formState.mode !== "edit"}
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                submitLabel={formState.mode === "edit" ? "Save" : "Add"}
+                onCancel={handleCancelForm}
+                errorMessage={formError}
+                shakeKey={shakeKey}
+              />
+            </div>
+          )}
         </div>
       </Modal>
 
@@ -254,6 +337,8 @@ interface RecordSectionProps {
   editingId: string | undefined
   onEdit: (record: Absence) => void
   onDelete: (record: Absence) => void
+  onAddNew: () => void
+  addAriaLabel: string
 }
 
 function RecordSection({
@@ -263,19 +348,44 @@ function RecordSection({
   editingId,
   onEdit,
   onDelete,
+  onAddNew,
+  addAriaLabel,
 }: RecordSectionProps) {
   return (
     <section className="space-y-2">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-        <span
-          aria-hidden="true"
-          className={`inline-block h-2 w-2 rounded-full ${colorClass}`}
-        />
-        {title}
-        <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
-          ({records.length})
-        </span>
-      </h3>
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <span
+            aria-hidden="true"
+            className={`inline-block h-2 w-2 rounded-full ${colorClass}`}
+          />
+          {title}
+          <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
+            ({records.length})
+          </span>
+        </h4>
+        <button
+          type="button"
+          onClick={onAddNew}
+          aria-label={addAriaLabel}
+          className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800"
+        >
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+      </div>
       {records.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">None.</p>
       ) : (
@@ -347,6 +457,67 @@ function RecordSection({
           ))}
         </ul>
       )}
+    </section>
+  )
+}
+
+interface PartSectionProps {
+  part: PartOfDay
+  records: Absence[]
+  editingId: string | undefined
+  onEdit: (record: Absence) => void
+  onDelete: (record: Absence) => void
+  onAddNew: (type: AbsenceType) => void
+}
+
+function PartSection({
+  part,
+  records,
+  editingId,
+  onEdit,
+  onDelete,
+  onAddNew,
+}: PartSectionProps) {
+  const label = PART_LABEL[part]
+  const absences = records.filter((r) => r.type === "absence")
+  const recoveries = records.filter((r) => r.type === "recovery")
+
+  return (
+    <section
+      className="space-y-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
+      aria-labelledby={`day-part-${part}`}
+    >
+      <header className="flex items-center justify-between gap-2">
+        <h3
+          id={`day-part-${part}`}
+          className="text-sm font-semibold text-zinc-900 dark:text-zinc-100"
+        >
+          {label}
+          <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+            ({records.length})
+          </span>
+        </h3>
+      </header>
+      <RecordSection
+        title="Absences"
+        colorClass="bg-red-500"
+        records={absences}
+        editingId={editingId}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onAddNew={() => onAddNew("absence")}
+        addAriaLabel={`Add absence in ${label}`}
+      />
+      <RecordSection
+        title="Recoveries"
+        colorClass="bg-green-500"
+        records={recoveries}
+        editingId={editingId}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onAddNew={() => onAddNew("recovery")}
+        addAriaLabel={`Add recovery in ${label}`}
+      />
     </section>
   )
 }

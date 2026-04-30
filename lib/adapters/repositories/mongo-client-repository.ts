@@ -116,4 +116,23 @@ export class MongoClientRepository implements ClientRepository {
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0
   }
+
+  async findAllNames(query?: string): Promise<string[]> {
+    const col = await this.collection()
+    const filter: Record<string, unknown> = {}
+
+    if (query?.trim()) {
+      const escaped = escapeRegex(query.trim())
+      filter.name = { $regex: escaped, $options: "i" }
+    }
+
+    const docs = await col
+      .find(filter)
+      .project<{ name: string }>({ name: 1, _id: 0 })
+      .sort({ name: 1 })
+      .collation({ locale: "en", strength: 2 })
+      .toArray()
+
+    return docs.map((d) => d.name)
+  }
 }

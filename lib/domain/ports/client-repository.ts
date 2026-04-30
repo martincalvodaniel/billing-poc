@@ -12,4 +12,5 @@ export interface ClientRepository {
   create(client: Omit<Client, "_id">): Promise<string>
   update(id: string, data: Partial<Client>): Promise<boolean>
   delete(id: string): Promise<boolean>
+  findAllNames(query?: string): Promise<string[]>
 }

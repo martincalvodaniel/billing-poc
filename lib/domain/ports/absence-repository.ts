@@ -12,6 +12,7 @@ export interface AbsenceRepository {
   create(absence: Omit<Absence, "_id">): Promise<string>
   update(id: string, data: Partial<Absence>): Promise<boolean>
   delete(id: string): Promise<boolean>
+  deleteByStudentName(studentName: string): Promise<number>
   findDistinctStudentNames(query?: string): Promise<string[]>
   aggregateSummary(): Promise<AbsenceSummaryRow[]>
 }

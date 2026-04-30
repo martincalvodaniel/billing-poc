@@ -24,14 +24,10 @@ export async function GET(request: NextRequest) {
     }
 
     const q = parsed.data.q ?? ""
-    const [absenceNames, clients] = await Promise.all([
+    const [absenceNames, clientNames] = await Promise.all([
       absenceRepo.findDistinctStudentNames(q || undefined),
-      clientRepo.findAll({ page: 1, pageSize: 1000, search: q || undefined }),
+      clientRepo.findAllNames(q || undefined),
     ])
-    const lower = q.toLowerCase()
-    const clientNames = clients.items
-      .map((c) => c.name)
-      .filter((n) => !lower || n.toLowerCase().includes(lower))
     const students = mergeStudentNames(absenceNames, clientNames)
     return NextResponse.json({ students }, { status: 200 })
   } catch (error) {

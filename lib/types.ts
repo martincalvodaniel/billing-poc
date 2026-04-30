@@ -1,4 +1,7 @@
 import type { ObjectId } from "mongodb"
+import type { PartOfDay } from "./domain/entities/absence"
+
+export type { PartOfDay }
 
 export type PaymentType = "income" | "outcome"
 
@@ -104,7 +107,9 @@ export interface Absence {
   _id?: ObjectId
   type: AbsenceType
   studentName: string
+  studentNameLower: string
   date: string
+  partOfDay: PartOfDay
   comment?: string
   createdAt: Date
   updatedAt: Date
@@ -114,5 +119,6 @@ export interface AbsenceFormData {
   type: AbsenceType
   studentName: string
   date: string
+  partOfDay: PartOfDay
   comment?: string
 }

@@ -1,6 +1,6 @@
 "use client"
 
-export type AbsencesView = "month" | "week" | "summary"
+export type AbsencesView = "month" | "summary"
 
 interface AbsencesViewToggleProps {
   value: AbsencesView
@@ -9,7 +9,6 @@ interface AbsencesViewToggleProps {
 
 const SEGMENTS: { value: AbsencesView; label: string }[] = [
   { value: "month", label: "Month" },
-  { value: "week", label: "Week" },
   { value: "summary", label: "Summary" },
 ]
 

@@ -8,6 +8,7 @@ const absenceBaseSchema = z.object({
     .min(1, "Student name is required")
     .max(80, "Student name must be 80 characters or fewer"),
   date: z.string().min(1, "Date is required"),
+  partOfDay: z.enum(["morning", "evening"]),
   comment: z
     .string()
     .trim()
@@ -28,6 +29,7 @@ export const updateAbsenceSchema = z
       .max(80, "Student name must be 80 characters or fewer")
       .optional(),
     date: z.string().min(1, "Date cannot be empty").optional(),
+    partOfDay: z.enum(["morning", "evening"]).optional(),
     comment: z
       .string()
       .trim()
@@ -42,9 +44,26 @@ export const updateAbsenceSchema = z
     { message: "No fields to update" }
   )
 
-export const deleteAbsenceSchema = z.object({
-  id: z.string().min(1, "Missing absence ID"),
-})
+const deleteByIdSchema = z
+  .object({
+    id: z.string().min(1, "Missing absence ID"),
+  })
+  .strict()
+
+const deleteByStudentNameSchema = z
+  .object({
+    studentName: z
+      .string()
+      .trim()
+      .min(1, "Student name is required")
+      .max(80, "Student name must be 80 characters or fewer"),
+  })
+  .strict()
+
+export const deleteAbsenceSchema = z.union([
+  deleteByIdSchema,
+  deleteByStudentNameSchema,
+])
 
 export const absenceQuerySchema = z.object({
   year: z.coerce.number().int().optional(),
@@ -62,7 +81,7 @@ export const absenceStudentsQuerySchema = z.object({
 
 export type CreateAbsenceInput = z.infer<typeof createAbsenceSchema>
 export type UpdateAbsenceInput = z.infer<typeof updateAbsenceSchema>
-export type DeleteAbsenceInput = z.infer<typeof deleteAbsenceSchema>
+export type DeleteAbsenceInput = { id: string } | { studentName: string }
 export type AbsenceQueryInput = z.infer<typeof absenceQuerySchema>
 export type AbsenceStudentsQueryInput = z.infer<
   typeof absenceStudentsQuerySchema
