@@ -12,6 +12,8 @@ import { useAbsenceStudents } from "@/lib/hooks/useAbsenceStudents"
 const COMMENT_MAX = 500
 
 interface AbsenceFormProps {
+  title: string
+  submitTooltip: string
   initialDate?: string
   initialStudentName?: string
   initialPartOfDay?: PartOfDay
@@ -19,9 +21,7 @@ interface AbsenceFormProps {
   initial?: Absence
   onSubmit: (data: AbsenceFormData) => Promise<void>
   isSubmitting: boolean
-  submitLabel?: string
   onCancel?: () => void
-  cancelLabel?: string
   errorMessage?: string | null
   shakeKey?: number
   /**
@@ -42,6 +42,8 @@ function todayISO(): string {
 }
 
 export default function AbsenceForm({
+  title,
+  submitTooltip,
   initialDate,
   initialStudentName,
   initialPartOfDay,
@@ -49,9 +51,7 @@ export default function AbsenceForm({
   initial,
   onSubmit,
   isSubmitting,
-  submitLabel = "Add",
   onCancel,
-  cancelLabel = "Cancel",
   errorMessage,
   shakeKey,
   hideTypeAndPartOfDay = false,
@@ -144,6 +144,63 @@ export default function AbsenceForm({
         onKeyDown={handleKeyDown}
         className="space-y-4"
       >
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {title}
+          </h3>
+          <div className="flex shrink-0 items-center gap-1">
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                title="Cancel"
+                aria-label="Cancel"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50 hover:text-rose-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 6l12 12M18 6L6 18"
+                  />
+                </svg>
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={
+                isSubmitting || studentName.trim() === "" || date === ""
+              }
+              title={submitTooltip}
+              aria-label={submitTooltip}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         {errorMessage && (
           <div
             className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
@@ -348,26 +405,6 @@ export default function AbsenceForm({
             placeholder="Add a note…"
             className="w-full resize-y rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
-        </div>
-
-        <div className="flex gap-2">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex-1 rounded bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-            >
-              {cancelLabel}
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={isSubmitting || studentName.trim() === "" || date === ""}
-            className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-800"
-          >
-            {isSubmitting ? "Saving…" : submitLabel}
-          </button>
         </div>
       </form>
     </div>

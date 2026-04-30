@@ -243,16 +243,19 @@ export default function DayDetailModal({
               ref={formContainerRef}
               className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800"
             >
-              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {formState.mode === "edit"
-                  ? "Edit record"
-                  : `Add new ${formType === "recovery" ? "Recovery" : "Absence"} for ${formPartOfDay === "evening" ? "Evening" : "Morning"}`}
-              </h3>
               <AbsenceForm
                 key={
                   formState.mode === "edit"
                     ? `edit-${formState.target?._id}`
                     : `create-${formPartOfDay}-${formType}`
+                }
+                title={
+                  formState.mode === "edit"
+                    ? "Edit record"
+                    : `Add new ${formType === "recovery" ? "Recovery" : "Absence"} for ${formPartOfDay === "evening" ? "Evening" : "Morning"}`
+                }
+                submitTooltip={
+                  formState.mode === "edit" ? "Save changes" : "Add record"
                 }
                 initialDate={date}
                 initialPartOfDay={formPartOfDay}
@@ -263,7 +266,6 @@ export default function DayDetailModal({
                 hideTypeAndPartOfDay={formState.mode !== "edit"}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
-                submitLabel={formState.mode === "edit" ? "Save" : "Add"}
                 onCancel={handleCancelForm}
                 errorMessage={formError}
                 shakeKey={shakeKey}

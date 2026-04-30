@@ -365,20 +365,20 @@ export default function StudentDetailModal({
           </section>
 
           <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {formState.mode === "edit" ? "Edit record" : "Add new record"}
-            </h3>
             <AbsenceForm
               key={
                 formState.mode === "edit"
                   ? `edit-${formState.target?._id}`
                   : "create"
               }
+              title={formState.mode === "edit" ? "Edit record" : "Add record"}
+              submitTooltip={
+                formState.mode === "edit" ? "Save changes" : "Add record"
+              }
               initialStudentName={studentName}
               initial={formState.mode === "edit" ? formState.target : undefined}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
-              submitLabel={formState.mode === "edit" ? "Save" : "Add"}
               onCancel={
                 formState.mode === "edit"
                   ? () => {
