@@ -201,14 +201,15 @@ VAT Amount: 410.48 - 339.24 = €71.24
 This reflects real-world salary/invoice scenarios where you know the total amount and need to extract the deductions.
 
 ### Month Navigation Pattern (Filter by Month)
-For displaying payments filtered by month with navigation controls:
+For displaying payments filtered by month with navigation controls and calendar picker:
 
-1. **State Management** - Track selected month with `selectedDate` state (set to 1st of current month)
+1. **State Management** - Track selected month with `selectedDate` state (set to 1st of current month) and `showCalendar` state for dropdown visibility
 2. **Filter Logic** - Create `getFilteredPayments()` to match payment dates against selected month/year
-3. **Month Navigation** - Implement `handlePreviousMonth()` and `handleNextMonth()` to change month
-4. **Display Current Month** - Show formatted month/year using Spanish locale
-5. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
-6. **Empty State** - Show custom message when no payments in selected month
+3. **Calendar Picker** - Render clickable month grid (4 columns) showing all 12 months of the selected year with selection highlighting
+4. **Inside Calendar** - Implement prev/next month buttons and year navigation controls
+5. **Display Toggle** - Show formatted month/year button with calendar icon (📅) that toggles calendar dropdown
+6. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
+7. **Empty State** - Show custom message when no payments in selected month
 
 Example pattern:
 ```typescript
@@ -216,6 +217,7 @@ const [selectedDate, setSelectedDate] = useState(() => {
   const today = new Date();
   return new Date(today.getFullYear(), today.getMonth(), 1);
 });
+const [showCalendar, setShowCalendar] = useState(false);
 
 const getFilteredPayments = () => {
   const year = selectedDate.getFullYear();
@@ -230,15 +232,83 @@ const getFilteredPayments = () => {
   });
 };
 
-const handlePreviousMonth = () => {
-  setSelectedDate(
-    new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1)
-  );
+const handleCalendarMonthSelect = (year: number, month: number) => {
+  setSelectedDate(new Date(year, month, 1));
+  setShowCalendar(false);
 };
 
-const handleNextMonth = () => {
-  setSelectedDate(
-    new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1)
+const renderCalendarPicker = () => {
+  const today = new Date();
+  const currentMonth = today.getMonth();
+
+  return (
+    <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      {/* Header with Prev/Next month and current month display */}
+      <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <button 
+            onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900"
+          >
+            ← Prev
+          </button>
+          <span className="flex-1 text-center text-sm font-semibold text-zinc-900">
+            {new Date(selectedDate.getFullYear(), selectedDate.getMonth()).toLocaleDateString("en-US", { 
+              year: "numeric", 
+              month: "long" 
+            })}
+          </span>
+          <button 
+            onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900"
+          >
+            Next →
+          </button>
+        </div>
+
+        {/* 12-month grid (4 columns) */}
+        <div className="grid grid-cols-4 gap-2">
+          {Array.from({ length: 12 }).map((_, monthIndex) => {
+            const year = selectedDate.getFullYear();
+            const month = monthIndex;
+            const isSelected = year === selectedDate.getFullYear() && month === selectedDate.getMonth();
+
+            return (
+              <button 
+                key={monthIndex} 
+                onClick={() => handleCalendarMonthSelect(year, month)}
+                className={`rounded px-2 py-2 text-xs font-medium ${
+                  isSelected 
+                    ? "bg-blue-600 text-white dark:bg-blue-700" 
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                }`}
+              >
+                {new Date(year, month).toLocaleDateString("en-US", { month: "short" })}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Year navigation */}
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+          <button 
+            onClick={() => setSelectedDate(new Date(selectedDate.getFullYear() - 1, selectedDate.getMonth(), 1))}
+            className="text-xs font-medium text-zinc-600 hover:text-zinc-900"
+          >
+            ← Prev Year
+          </button>
+          <span className="flex-1 text-center text-sm font-semibold text-zinc-900">
+            {selectedDate.getFullYear()}
+          </span>
+          <button 
+            onClick={() => setSelectedDate(new Date(selectedDate.getFullYear() + 1, selectedDate.getMonth(), 1))}
+            className="text-xs font-medium text-zinc-600 hover:text-zinc-900"
+          >
+            Next Year →
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -252,17 +322,29 @@ const formatMonthYear = (date: Date) => {
 const filteredPayments = getFilteredPayments();
 ```
 
-**In JSX - Month selector header:**
+**In JSX - Month selector header with calendar:**
 ```tsx
 <div className="flex items-center justify-between">
   <h2>Payments ({filteredPayments.length})</h2>
-  <div className="flex items-center gap-4">
-    <button onClick={handlePreviousMonth}>← Prev</button>
-    <span>{formatMonthYear(selectedDate)}</span>
-    <button onClick={handleNextMonth}>Next →</button>
+  <div className="relative">
+    <button 
+      onClick={() => setShowCalendar(!showCalendar)}
+      className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+    >
+      📅 {formatMonthYear(selectedDate)}
+    </button>
+    {showCalendar && renderCalendarPicker()}
   </div>
 </div>
 ```
+
+**Features:**
+- Calendar dropdown toggles with button click
+- 4-column grid of months for easy selection
+- Navigate months while calendar is open with prev/next buttons in header
+- Year navigation controls at bottom
+- Selected month highlighted in blue for visual feedback
+- Click any month to select and auto-close calendar
 
 **Summary recalculation** - Use `filteredPayments` instead of all `payments` when calculating totals
 
