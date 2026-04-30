@@ -4,6 +4,7 @@ import { useEffect, useState, forwardRef, useImperativeHandle, useRef, useCallba
 import { Payment } from "@/lib/types";
 import DonutChart from "../../components/DonutChart";
 import SummaryCard from "../../components/SummaryCard";
+import Modal from "../../components/Modal";
 import PaymentDetailModal from "./PaymentDetailModal";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
@@ -648,68 +649,17 @@ export default forwardRef(function MonthlyPaymentsView(
         )}
       </div>
 
-      {/* Delete Confirmation Modal Overlay */}
+      {/* Delete Confirmation Modal */}
       {deleteConfirmPaymentId && (() => {
         const paymentToDelete = payments.find(p => p._id?.toString() === deleteConfirmPaymentId);
         return (
-          <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            role="presentation"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setDeleteConfirmPaymentId(null);
-            }}
-          >
-            <div 
-              className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900"
-              role="dialog"
-              aria-labelledby="delete-modal-title"
-              aria-modal="true"
-            >
-              <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-                <h3 
-                  id="delete-modal-title"
-                  className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-                >
-                  Delete Payment
-                </h3>
-              </div>
-              <div className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
-                <p>Are you sure you want to delete this payment?</p>
-                {paymentToDelete && (
-                  <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatDate(paymentToDelete.date)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        paymentToDelete.type === "income"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      }`}>
-                        {paymentToDelete.type.charAt(0).toUpperCase() + paymentToDelete.type.slice(1)}
-                      </span>
-                    </div>
-                    {paymentToDelete.tag && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
-                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {paymentToDelete.tag}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm font-medium">
-                      <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
-                      <span className="text-zinc-900 dark:text-zinc-100">{formatCurrency(paymentToDelete.total)}</span>
-                    </div>
-                  </div>
-                )}
-                <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  This action cannot be undone.
-                </p>
-              </div>
-              <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <Modal
+            isOpen={!!deleteConfirmPaymentId}
+            onClose={() => setDeleteConfirmPaymentId(null)}
+            title="Delete Payment"
+            maxWidth="sm"
+            footer={
+              <div className="flex gap-2">
                 <button
                   onClick={() => setDeleteConfirmPaymentId(null)}
                   disabled={isDeleting}
@@ -725,170 +675,191 @@ export default forwardRef(function MonthlyPaymentsView(
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
+            }
+          >
+            <div className="space-y-4">
+              <p>Are you sure you want to delete this payment?</p>
+              {paymentToDelete && (
+                <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
+                    <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatDate(paymentToDelete.date)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      paymentToDelete.type === "income"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                    }`}>
+                      {paymentToDelete.type.charAt(0).toUpperCase() + paymentToDelete.type.slice(1)}
+                    </span>
+                  </div>
+                  {paymentToDelete.tag && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
+                      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                        {paymentToDelete.tag}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
+                    <span className="text-zinc-900 dark:text-zinc-100">{formatCurrency(paymentToDelete.total)}</span>
+                  </div>
+                </div>
+              )}
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                This action cannot be undone.
+              </p>
             </div>
-          </div>
+          </Modal>
         );
       })()}
 
-      {/* Edit Modal Overlay */}
-      {editingPaymentId && editingField && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeEditModal();
-          }}
-        >
-          <div 
-            className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900"
-            role="dialog"
-            aria-labelledby="edit-modal-title"
-            aria-modal="true"
-          >
-            <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              <h3 
-                id="edit-modal-title"
-                className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-              >
-                Edit {editingField.charAt(0).toUpperCase() + editingField.slice(1)}
-              </h3>
-            </div>
-
-            <div className="space-y-4 px-6 py-4">
-              {editingField === "date" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={editingDate}
-                    onChange={(e) => setEditingDate(e.target.value)}
-                    className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-              )}
-
-              {editingField === "type" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Type
-                  </label>
-                  <select
-                    value={editingType}
-                    onChange={(e) => setEditingType(e.target.value)}
-                    className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  >
-                    <option value="income">Income</option>
-                    <option value="outcome">Outcome</option>
-                  </select>
-                </div>
-              )}
-
-              {editingField === "tag" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Tag (Optional)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={editingTag}
-                      onChange={(e) => handleTagInputChange(e.target.value)}
-                      onFocus={() => {
-                        setShowTagSuggestions(true);
-                        if (!editingTag?.trim()) {
-                          setSuggestedTagsForEdit(availableTagsForEdit);
-                        }
-                      }}
-                      onBlur={() =>
-                        setTimeout(() => setShowTagSuggestions(false), 200)
-                      }
-                      placeholder={editingType === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
-                      className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                    />
-
-                    {/* Tag Suggestions Dropdown */}
-                    {showTagSuggestions && suggestedTagsForEdit.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-                        <ul className="max-h-48 overflow-y-auto py-1">
-                          {suggestedTagsForEdit.map((tag) => (
-                            <li key={tag}>
-                              <button
-                                type="button"
-                                onClick={() => handleTagSelect(tag)}
-                                className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
-                              >
-                                {tag}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {editingField === "total" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Total Amount
-                  </label>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    value={editingTotal}
-                    onChange={(e) => setEditingTotal(e.target.value)}
-                    className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                </div>
-              )}
-
-              {editingField === "vat" && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    VAT Percentage
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={editingVat}
-                      onChange={(e) => setEditingVat(e.target.value)}
-                      className="flex-1 rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                    />
-                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      %
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              <button
-                onClick={closeEditModal}
-                disabled={isSaving}
-                className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-            </div>
+      {/* Edit Modal */}
+      <Modal
+        isOpen={!!editingPaymentId && !!editingField}
+        onClose={closeEditModal}
+        title={`Edit ${editingField ? editingField.charAt(0).toUpperCase() + editingField.slice(1) : ""}`}
+        maxWidth="sm"
+        closeOnEscape={true}
+        closeOnBackdropClick={true}
+        footer={
+          <div className="flex gap-2">
+            <button
+              onClick={closeEditModal}
+              disabled={isSaving}
+              className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
           </div>
+        }
+      >
+        <div className="space-y-4">
+          {editingField === "date" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Date
+              </label>
+              <input
+                type="date"
+                value={editingDate}
+                onChange={(e) => setEditingDate(e.target.value)}
+                className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+          )}
+
+          {editingField === "type" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Type
+              </label>
+              <select
+                value={editingType}
+                onChange={(e) => setEditingType(e.target.value)}
+                className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              >
+                <option value="income">Income</option>
+                <option value="outcome">Outcome</option>
+              </select>
+            </div>
+          )}
+
+          {editingField === "tag" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Tag (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={editingTag}
+                  onChange={(e) => handleTagInputChange(e.target.value)}
+                  onFocus={() => {
+                    setShowTagSuggestions(true);
+                    if (!editingTag?.trim()) {
+                      setSuggestedTagsForEdit(availableTagsForEdit);
+                    }
+                  }}
+                  onBlur={() =>
+                    setTimeout(() => setShowTagSuggestions(false), 200)
+                  }
+                  placeholder={editingType === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
+                  className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+
+                {/* Tag Suggestions Dropdown */}
+                {showTagSuggestions && suggestedTagsForEdit.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                    <ul className="max-h-48 overflow-y-auto py-1">
+                      {suggestedTagsForEdit.map((tag) => (
+                        <li key={tag}>
+                          <button
+                            type="button"
+                            onClick={() => handleTagSelect(tag)}
+                            className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                          >
+                            {tag}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {editingField === "total" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Total Amount
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                value={editingTotal}
+                onChange={(e) => setEditingTotal(e.target.value)}
+                className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
+          )}
+
+          {editingField === "vat" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                VAT Percentage
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={editingVat}
+                  onChange={(e) => setEditingVat(e.target.value)}
+                  className="flex-1 rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  %
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
 
       {/* Payment Details Modal */}
       {detailPaymentId && (() => {

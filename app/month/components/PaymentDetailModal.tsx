@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { Payment } from "@/lib/types";
+import Modal from "@/app/components/Modal";
 
 interface PaymentDetailModalProps {
   payment: Payment;
@@ -10,29 +10,6 @@ interface PaymentDetailModalProps {
 }
 
 export default function PaymentDetailModal({ payment, onClose, formatCurrency }: PaymentDetailModalProps) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if modal is still visible before handling key
-      const modalElement = document.querySelector('[role="dialog"]');
-      if (!modalElement) return;
-      
-      if (e.key === "Escape" || e.key === "Enter") {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }
-    };
-
-    // Delay adding listener to ensure modal is fully mounted
-    const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleKeyDown);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
   const currency = (amount: number) =>
     formatCurrency
       ? formatCurrency(amount)
@@ -46,108 +23,88 @@ export default function PaymentDetailModal({ payment, onClose, formatCurrency }:
     });
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Modal
+      isOpen={payment !== undefined}
+      onClose={onClose}
+      title="Payment Details"
+      maxWidth="lg"
+      closeOnEscape={true}
+      closeOnEnter={true}
+      closeOnBackdropClick={true}
+      footer={
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+        >
+          Close
+        </button>
+      }
     >
-      <div
-        className="w-full max-w-lg rounded-lg bg-white shadow-lg dark:bg-zinc-900"
-        role="dialog"
-        aria-labelledby="payment-detail-title"
-        aria-modal="true"
-      >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h3 id="payment-detail-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Payment Details
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close payment details"
-            className="rounded p-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus:ring-offset-zinc-900"
-          >
-            ✕
-          </button>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Date</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{formatDate(payment.date)}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Type</p>
+            <span
+              className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${
+                payment.type === "income"
+                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+              }`}
+            >
+              {payment.type.charAt(0).toUpperCase() + payment.type.slice(1)}
+            </span>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Tag</p>
+            <p className="text-sm text-zinc-900 dark:text-zinc-100">{payment.tag || "—"}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Total</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{currency(payment.total)}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">VAT</p>
+            <p className="text-sm text-zinc-900 dark:text-zinc-100">
+              ({payment.vat}%) {currency(payment.vatAmount)}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Net Amount</p>
+            <p className="text-sm font-semibold text-green-700 dark:text-green-400">{currency(payment.netAmount)}</p>
+          </div>
         </div>
 
-        <div className="space-y-4 px-6 py-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Date</p>
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{formatDate(payment.date)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Type</p>
-              <span
-                className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${
-                  payment.type === "income"
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                }`}
-              >
-                {payment.type.charAt(0).toUpperCase() + payment.type.slice(1)}
-              </span>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Tag</p>
-              <p className="text-sm text-zinc-900 dark:text-zinc-100">{payment.tag || "—"}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Total</p>
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{currency(payment.total)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">VAT</p>
-              <p className="text-sm text-zinc-900 dark:text-zinc-100">
-                ({payment.vat}%) {currency(payment.vatAmount)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Net Amount</p>
-              <p className="text-sm font-semibold text-green-700 dark:text-green-400">{currency(payment.netAmount)}</p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Payment Components</p>
-            {payment.concepts && payment.concepts.length > 0 ? (
-              <ul className="space-y-2">
-                {payment.concepts.map((c, idx) => (
-                  <li key={idx} className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
-                        {idx + 1}
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Payment Components</p>
+          {payment.concepts && payment.concepts.length > 0 ? (
+            <ul className="space-y-2">
+              {payment.concepts.map((c, idx) => (
+                <li key={idx} className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800/50">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
+                      {idx + 1}
+                    </span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate text-zinc-900 dark:text-zinc-100">{c.name || "—"}</span>
+                      <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                        {c.quantity > 1 ? `Qty: ${c.quantity}` : ""}
                       </span>
-                      <div className="flex flex-col min-w-0">
-                        <span className="truncate text-zinc-900 dark:text-zinc-100">{c.name || "—"}</span>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                          {c.quantity > 1 ? `Qty: ${c.quantity}` : ""}
-                        </span>
-                      </div>
                     </div>
-                    <span className="whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">{currency(c.amount * c.quantity)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">No components</p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-          >
-            Close
-          </button>
+                  </div>
+                  <span className="whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">{currency(c.amount * c.quantity)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">No components</p>
+          )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Client, ClientFormData } from "@/lib/types";
+import Modal from "@/app/components/Modal";
 import ClientForm from "./ClientForm";
 
 interface ClientListProps {
@@ -133,102 +134,70 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
         </div>
       )}
 
-      {editingClientId && editingClient && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) handleCancelEdit();
-          }}
-        >
-          <div 
-            id="edit-client-modal"
-            className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900"
-            role="dialog"
-            aria-labelledby="edit-client-title"
-            aria-modal="true"
-          >
-            <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              <h2 
-                id="edit-client-title"
-                className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-              >
-                Edit Client
-              </h2>
-            </div>
-            <div className="p-6">
-              <ClientForm
-                client={editingClient}
-                onSubmit={handleUpdate}
-                onCancel={handleCancelEdit}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={!!editingClientId && !!editingClient}
+        onClose={handleCancelEdit}
+        title="Edit Client"
+        maxWidth="md"
+        closeOnEscape={true}
+        closeOnBackdropClick={true}
+      >
+        {editingClient && (
+          <ClientForm
+            client={editingClient}
+            onSubmit={handleUpdate}
+            onCancel={handleCancelEdit}
+          />
+        )}
+      </Modal>
 
-      {deletingClientId && clients.find((c) => c._id?.toString() === deletingClientId) && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setDeletingClientId(null);
-          }}
-        >
-          <div 
-            id="delete-client-modal"
-            className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900"
-            role="dialog"
-            aria-labelledby="delete-client-title"
-            aria-modal="true"
-          >
-            <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              <h2 
-                id="delete-client-title"
-                className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-              >
-                Delete Client
-              </h2>
-            </div>
-            <div className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
-              <p>Are you sure you want to delete this client?</p>
-              {clients.find((c) => c._id?.toString() === deletingClientId) && (
-                <div className="mt-4 space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
-                  <p>
-                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Name: </span>
-                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {clients.find((c) => c._id?.toString() === deletingClientId)?.name}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Tax ID: </span>
-                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {clients.find((c) => c._id?.toString() === deletingClientId)?.taxId}
-                    </span>
-                  </p>
-                </div>
-              )}
-              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                This action cannot be undone.
+      <Modal
+        isOpen={!!deletingClientId && !!clients.find((c) => c._id?.toString() === deletingClientId)}
+        onClose={() => setDeletingClientId(null)}
+        title="Delete Client"
+        maxWidth="sm"
+        closeOnEscape={true}
+        closeOnBackdropClick={true}
+        footer={
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDeletingClientId(null)}
+              className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+            >
+              Delete
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p>Are you sure you want to delete this client?</p>
+          {clients.find((c) => c._id?.toString() === deletingClientId) && (
+            <div className="space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+              <p>
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Name: </span>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {clients.find((c) => c._id?.toString() === deletingClientId)?.name}
+                </span>
+              </p>
+              <p>
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Tax ID: </span>
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {clients.find((c) => c._id?.toString() === deletingClientId)?.taxId}
+                </span>
               </p>
             </div>
-            <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              <button
-                onClick={() => setDeletingClientId(null)}
-                className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+          )}
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            This action cannot be undone.
+          </p>
         </div>
-      )}
+      </Modal>
 
       <div className="space-y-4">
         {clients.length === 0 ? (

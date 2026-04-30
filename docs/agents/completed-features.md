@@ -66,4 +66,5 @@
 ## Component Extraction & Refactoring
 - **MonthlyBreakdown**: Extracted monthly totals visualization from year/page.tsx for reuse and cleaner code (shows monthly income/outcome/net with progress bars); month names are clickable links that navigate to `/month?month=X&year=YYYY` to view detailed month data
 - **MonthlyPaymentsView**: Renamed from PaymentsList for clarity; handles monthly payment display, CRUD, and filtering with full modal editing support
+- **Modal Component (Reusable)**: Extracted centralized modal wrapper from repeated overlay/dialog patterns across 5 modal instances (PaymentDetailModal, MonthlyPaymentsView edit/delete, ClientList edit/delete). Provides consistent backdrop styling (`bg-black/50`), keyboard handling (ESC/ENTER configurable), accessibility (dialog roles, aria-labelledby), and dark mode support. Reduces ~200 lines of boilerplate code and ensures future modals use the same proven pattern
 - Pure display components follow React.memo pattern; composite components encapsulate state management

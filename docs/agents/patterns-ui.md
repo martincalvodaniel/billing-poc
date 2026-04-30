@@ -220,20 +220,85 @@ interface MonthlyPaymentsViewProps {
 - onPaymentsBreakdownChange callback updates filter header counter
 - Helper function `hasConceptsWithDifferentVAT()` checks if any concept vat differs from payment vat
 
+## Modal Component (Reusable)
+
+Centralized modal wrapper used across all overlay dialogs. Provides consistent styling, keyboard navigation, accessibility, and backdrop interactions.
+
+### Props
+```typescript
+interface ModalProps {
+  isOpen: boolean;                      // Whether modal is visible
+  onClose: () => void;                  // Called when user closes modal
+  title: string;                        // Modal title (displayed in header)
+  children: React.ReactNode;            // Modal content
+  footer?: React.ReactNode;             // Optional footer content (buttons, etc.)
+  maxWidth?: "sm" | "md" | "lg";       // Max width (default: "md")
+  closeOnEscape?: boolean;              // ESC key closes modal (default: true)
+  closeOnEnter?: boolean;               // ENTER key closes modal (default: false)
+  closeOnBackdropClick?: boolean;       // Click outside closes modal (default: true)
+}
+```
+
+### Features
+- Consistent backdrop styling (`bg-black/50` semi-transparent)
+- Header with title (automatically styled)
+- Scrollable content area (`max-h-[90vh]`)
+- Optional footer section for custom content
+- ESC key support (configurable)
+- ENTER key support for read-only modals (optional)
+- Click-outside-to-cancel (configurable)
+- Full ARIA accessibility with dialog roles
+- Dark mode support throughout
+
+### Usage Example
+```typescript
+import Modal from "@/app/components/Modal";
+
+export default function MyComponent() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(true)}>Open Modal</button>
+
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Confirm Action"
+        footer={
+          <div className="flex gap-2">
+            <button onClick={() => setIsOpen(false)}>Cancel</button>
+            <button onClick={handleConfirm}>Confirm</button>
+          </div>
+        }
+      >
+        <p>Are you sure you want to proceed?</p>
+      </Modal>
+    </>
+  );
+}
+```
+
+### Component Location
+`app/components/Modal.tsx` - Reusable component used by:
+- `PaymentDetailModal` - Read-only payment details (ESC/ENTER to close)
+- `MonthlyPaymentsView` - Edit field modal + Delete confirmation modal
+- `ClientList` - Edit client modal + Delete confirmation modal
+
 ## Modal Interactions & Keyboard Shortcuts
-All modals support consistent keyboard shortcuts for improved UX:
-- **ESC**: Cancel/close any modal (same as clicking close button or clicking outside backdrop)
-- **ENTER**: Confirm action in modals (save in PaymentForm and edit modal, delete in confirmation, close in detail modal)
-- Tag dropdown handling: ENTER selects tag when dropdown is open, submits/saves otherwise
-- Implementation uses `useEffect` with keydown listeners; prevents default and propagation
+All modals use the centralized Modal component for consistent keyboard support:
+- **ESC**: Close any modal (same as clicking outside backdrop or close button)
+- **ENTER**: Close read-only modals like PaymentDetailModal (configurable per modal)
+- Tag dropdown handling: ENTER selects tag when dropdown is open, otherwise handled by modal
+- Implementation: Modal component uses `useEffect` with keydown listeners; prevents default and propagation
 - Listeners use `setTimeout(..., 0)` to ensure DOM is ready before attaching; proper cleanup on unmount
 - Modal visibility checks prevent handling keys when modal is not rendered
 
 ### Specific Modal Behaviors
-- **New Payment Form** (`PaymentForm`): ENTER submits form (skipped if tag dropdown open); ESC closes parent modal via wrapper
-- **Payment Detail Modal** (`PaymentDetailModal`): ENTER or ESC closes modal
-- **Edit Field Modal** (`MonthlyPaymentsView` edit overlay): ENTER saves field (except tag field), ESC cancels
-- **Delete Confirmation Modal** (`MonthlyPaymentsView` delete overlay): ENTER deletes payment, ESC cancels
+- **PaymentDetailModal** - ENTER or ESC closes (read-only, `closeOnEnter={true}`)
+- **Edit Field Modal** (MonthlyPaymentsView) - ENTER saves field (except tag), ESC cancels; Modal handles ESC, special ENTER logic in component
+- **Delete Confirmation Modals** - ESC closes without confirming, ENTER in delete button would need focus
+- **Edit Client Modal** (ClientList) - ESC closes, ClientForm handles ENTER for submit
 
 ## Modal Editing
 - Centered overlay; track editingPaymentId + editingField
