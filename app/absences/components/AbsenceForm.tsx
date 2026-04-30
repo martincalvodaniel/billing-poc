@@ -7,7 +7,10 @@ import type {
   AbsenceType,
   PartOfDay,
 } from "@/lib/domain/entities/absence"
-import { useAbsenceStudents } from "@/lib/hooks/useAbsenceStudents"
+import CommentField from "./form/CommentField"
+import FormHeader from "./form/FormHeader"
+import RadioPillGroup from "./form/RadioPillGroup"
+import StudentNameAutocomplete from "./form/StudentNameAutocomplete"
 
 const COMMENT_MAX = 500
 
@@ -74,7 +77,6 @@ export default function AbsenceForm({
   const [comment, setComment] = useState<string>(initial?.comment ?? "")
 
   const formRef = useRef<HTMLFormElement>(null)
-  const commentRef = useRef<HTMLTextAreaElement>(null)
   const studentNameRef = useRef<HTMLInputElement>(null)
 
   // Reset state if `initial` changes (e.g., switching from create→edit),
@@ -92,8 +94,6 @@ export default function AbsenceForm({
     if (initialPartOfDay) setPartOfDay(initialPartOfDay)
     if (initialType) setType(initialType)
   }, [initial, initialPartOfDay, initialType])
-
-  const { students: options } = useAbsenceStudents(studentName)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,6 +136,8 @@ export default function AbsenceForm({
     []
   )
 
+  const canSubmit = studentName.trim() !== "" && date !== ""
+
   return (
     <div key={shakeKey} className={shakeKey ? "animate-shake" : ""}>
       <form
@@ -144,62 +146,13 @@ export default function AbsenceForm({
         onKeyDown={handleKeyDown}
         className="space-y-4"
       >
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {title}
-          </h3>
-          <div className="flex shrink-0 items-center gap-1">
-            {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                disabled={isSubmitting}
-                title="Cancel"
-                aria-label="Cancel"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50 hover:text-rose-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 6l12 12M18 6L6 18"
-                  />
-                </svg>
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={
-                isSubmitting || studentName.trim() === "" || date === ""
-              }
-              title={submitTooltip}
-              aria-label={submitTooltip}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <FormHeader
+          title={title}
+          submitTooltip={submitTooltip}
+          isSubmitting={isSubmitting}
+          canSubmit={canSubmit}
+          onCancel={onCancel}
+        />
 
         {errorMessage && (
           <div
@@ -213,36 +166,15 @@ export default function AbsenceForm({
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {/* Student name with datalist autocomplete */}
-          <div className="space-y-2">
-            <label
-              htmlFor={`${id}-studentName`}
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Student name
-            </label>
-            <input
-              type="text"
-              id={`${id}-studentName`}
-              name="studentName"
-              list={datalistId}
-              ref={studentNameRef}
-              value={studentName}
-              onChange={(e) => setStudentName(e.target.value)}
-              disabled={isSubmitting}
-              required
-              autoComplete="off"
-              placeholder="Type to search…"
-              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-            <datalist id={datalistId}>
-              {options.map((name) => (
-                <option key={name.toLowerCase()} value={name} />
-              ))}
-            </datalist>
-          </div>
+          <StudentNameAutocomplete
+            id={`${id}-studentName`}
+            datalistId={datalistId}
+            value={studentName}
+            onChange={setStudentName}
+            disabled={isSubmitting}
+            inputRef={studentNameRef}
+          />
 
-          {/* Date */}
           <div className="space-y-2">
             <label
               htmlFor={`${id}-date`}
@@ -263,149 +195,62 @@ export default function AbsenceForm({
           </div>
         </div>
 
-        {/* Type radio group */}
         {!hideTypeAndPartOfDay && (
-          <fieldset className="space-y-2" disabled={isSubmitting}>
-            <legend className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Type
-            </legend>
-            <div className="flex gap-4">
-              <label
-                htmlFor={`${id}-type-absence`}
-                className="inline-flex items-center gap-2 text-sm text-zinc-900 dark:text-zinc-100"
-              >
-                <input
-                  type="radio"
-                  id={`${id}-type-absence`}
-                  name={`${id}-type`}
-                  value="absence"
-                  checked={type === "absence"}
-                  onChange={() => setType("absence")}
-                  className="h-4 w-4 border-zinc-300 text-red-600 focus:ring-2 focus:ring-red-500 dark:border-zinc-600 dark:bg-zinc-800"
-                />
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2 w-2 rounded-full bg-red-500"
-                  />
-                  Absence
-                </span>
-              </label>
-              <label
-                htmlFor={`${id}-type-recovery`}
-                className="inline-flex items-center gap-2 text-sm text-zinc-900 dark:text-zinc-100"
-              >
-                <input
-                  type="radio"
-                  id={`${id}-type-recovery`}
-                  name={`${id}-type`}
-                  value="recovery"
-                  checked={type === "recovery"}
-                  onChange={() => setType("recovery")}
-                  className="h-4 w-4 border-zinc-300 text-green-600 focus:ring-2 focus:ring-green-500 dark:border-zinc-600 dark:bg-zinc-800"
-                />
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block h-2 w-2 rounded-full bg-green-500"
-                  />
-                  Recovery
-                </span>
-              </label>
-            </div>
-          </fieldset>
-        )}
-
-        {/* Part of day radio group */}
-        {!hideTypeAndPartOfDay && (
-          <fieldset className="space-y-2" disabled={isSubmitting}>
-            <legend className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Part of day
-            </legend>
-            <div className="flex gap-4">
-              <label
-                htmlFor={`${id}-partOfDay-morning`}
-                className="inline-flex items-center gap-2 text-sm text-zinc-900 dark:text-zinc-100"
-              >
-                <input
-                  type="radio"
-                  id={`${id}-partOfDay-morning`}
-                  name={`${id}-partOfDay`}
-                  value="morning"
-                  checked={partOfDay === "morning"}
-                  onChange={() => setPartOfDay("morning")}
-                  required
-                  className="h-4 w-4 border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
-                />
-                <span>Morning</span>
-              </label>
-              <label
-                htmlFor={`${id}-partOfDay-evening`}
-                className="inline-flex items-center gap-2 text-sm text-zinc-900 dark:text-zinc-100"
-              >
-                <input
-                  type="radio"
-                  id={`${id}-partOfDay-evening`}
-                  name={`${id}-partOfDay`}
-                  value="evening"
-                  checked={partOfDay === "evening"}
-                  onChange={() => setPartOfDay("evening")}
-                  required
-                  className="h-4 w-4 border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
-                />
-                <span>Evening</span>
-              </label>
-            </div>
-          </fieldset>
-        )}
-
-        {/* Comment */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor={`${id}-comment`}
-                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Comment (Optional)
-              </label>
-              {comment.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setComment("")
-                    commentRef.current?.focus()
-                  }}
-                  disabled={isSubmitting}
-                  aria-label="Clear comment"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded text-rose-600 hover:text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:opacity-50 dark:text-rose-400 dark:hover:text-rose-300"
-                >
-                  <span aria-hidden="true" className="text-xs leading-none">
-                    ✕
-                  </span>
-                </button>
-              )}
-            </div>
-            <span
-              className="text-xs text-zinc-500 dark:text-zinc-400"
-              aria-live="polite"
-            >
-              {comment.length}/{COMMENT_MAX}
-            </span>
-          </div>
-          <textarea
-            ref={commentRef}
-            id={`${id}-comment`}
-            name="comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
+          <RadioPillGroup<AbsenceType>
+            legend="Type"
+            name={`${id}-type`}
+            idPrefix={`${id}-type`}
+            value={type}
+            onChange={setType}
             disabled={isSubmitting}
-            rows={2}
-            maxLength={COMMENT_MAX}
-            placeholder="Add a note…"
-            className="w-full resize-y rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            options={[
+              {
+                value: "absence",
+                label: "Absence",
+                dotClass: "bg-red-500",
+                ringClass: "text-red-600 focus:ring-2 focus:ring-red-500",
+              },
+              {
+                value: "recovery",
+                label: "Recovery",
+                dotClass: "bg-green-500",
+                ringClass: "text-green-600 focus:ring-2 focus:ring-green-500",
+              },
+            ]}
           />
-        </div>
+        )}
+
+        {!hideTypeAndPartOfDay && (
+          <RadioPillGroup<PartOfDay>
+            legend="Part of day"
+            name={`${id}-partOfDay`}
+            idPrefix={`${id}-partOfDay`}
+            value={partOfDay}
+            onChange={setPartOfDay}
+            disabled={isSubmitting}
+            required
+            options={[
+              {
+                value: "morning",
+                label: "Morning",
+                ringClass: "text-blue-600 focus:ring-2 focus:ring-blue-500",
+              },
+              {
+                value: "evening",
+                label: "Evening",
+                ringClass: "text-blue-600 focus:ring-2 focus:ring-blue-500",
+              },
+            ]}
+          />
+        )}
+
+        <CommentField
+          id={`${id}-comment`}
+          value={comment}
+          onChange={setComment}
+          disabled={isSubmitting}
+          max={COMMENT_MAX}
+        />
       </form>
     </div>
   )

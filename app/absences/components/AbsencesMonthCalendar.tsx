@@ -2,6 +2,14 @@
 
 import { useMemo } from "react"
 import type { Absence } from "../../../lib/domain/entities/absence"
+import {
+  aggregateByPart,
+  buildAriaLabel,
+  buildMonthCells,
+  emptyDayCounts,
+  toDateKey,
+} from "./calendar/calendarUtils"
+import DayPill from "./calendar/DayPill"
 
 interface AbsencesMonthCalendarProps {
   records: Absence[]
@@ -9,103 +17,7 @@ interface AbsencesMonthCalendarProps {
   onDayClick: (date: string) => void
 }
 
-interface PartCounts {
-  absences: number
-  recoveries: number
-}
-
-interface DayCounts {
-  morning: PartCounts
-  evening: PartCounts
-}
-
 const WEEKDAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-function toDateKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
-// Monday-start day-of-week index: Mon=0..Sun=6.
-function mondayIndex(date: Date): number {
-  return (date.getDay() + 6) % 7
-}
-
-function emptyDayCounts(): DayCounts {
-  return {
-    morning: { absences: 0, recoveries: 0 },
-    evening: { absences: 0, recoveries: 0 },
-  }
-}
-
-function aggregateByPart(records: Absence[]): Map<string, DayCounts> {
-  const map = new Map<string, DayCounts>()
-  for (const record of records) {
-    const existing = map.get(record.date) ?? emptyDayCounts()
-    const bucket =
-      record.partOfDay === "morning" ? existing.morning : existing.evening
-    if (record.type === "absence") {
-      bucket.absences += 1
-    } else {
-      bucket.recoveries += 1
-    }
-    map.set(record.date, existing)
-  }
-  return map
-}
-
-function pluralize(count: number, singular: string, plural: string): string {
-  return `${count} ${count === 1 ? singular : plural}`
-}
-
-function buildAriaLabel(date: Date, dayCounts: DayCounts): string {
-  const dateLabel = date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-  })
-  const { morning, evening } = dayCounts
-  const isEmpty =
-    morning.absences === 0 &&
-    morning.recoveries === 0 &&
-    evening.absences === 0 &&
-    evening.recoveries === 0
-  if (isEmpty) {
-    return `${dateLabel}, no records`
-  }
-  const morningLabel = `Morning: ${pluralize(
-    morning.absences,
-    "absence",
-    "absences"
-  )}, ${pluralize(morning.recoveries, "recovery", "recoveries")}`
-  const eveningLabel = `Evening: ${pluralize(
-    evening.absences,
-    "absence",
-    "absences"
-  )}, ${pluralize(evening.recoveries, "recovery", "recoveries")}`
-  return `${dateLabel}, ${morningLabel}; ${eveningLabel}`
-}
-
-function renderPill(count: number, kind: "absence" | "recovery") {
-  if (count <= 0) return null
-  const isAbsence = kind === "absence"
-  const pillClass = isAbsence
-    ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
-    : "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300"
-  const dotClass = isAbsence ? "bg-red-500" : "bg-green-500"
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ${pillClass}`}
-    >
-      <span
-        aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${dotClass}`}
-      />
-      {count}
-    </span>
-  )
-}
 
 export default function AbsencesMonthCalendar({
   records,
@@ -114,36 +26,10 @@ export default function AbsencesMonthCalendar({
 }: AbsencesMonthCalendarProps) {
   const counts = useMemo(() => aggregateByPart(records), [records])
   const todayKey = useMemo(() => toDateKey(new Date()), [])
-
-  const cells = useMemo(() => {
-    const year = selectedDate.getFullYear()
-    const month = selectedDate.getMonth()
-    const firstOfMonth = new Date(year, month, 1)
-    const offset = mondayIndex(firstOfMonth)
-    const gridStart = new Date(year, month, 1 - offset)
-
-    const result: Array<{
-      date: Date
-      key: string
-      inMonth: boolean
-      isToday: boolean
-    }> = []
-    for (let i = 0; i < 42; i += 1) {
-      const date = new Date(
-        gridStart.getFullYear(),
-        gridStart.getMonth(),
-        gridStart.getDate() + i
-      )
-      const key = toDateKey(date)
-      result.push({
-        date,
-        key,
-        inMonth: date.getMonth() === month,
-        isToday: key === todayKey,
-      })
-    }
-    return result
-  }, [selectedDate, todayKey])
+  const cells = useMemo(
+    () => buildMonthCells(selectedDate, todayKey),
+    [selectedDate, todayKey]
+  )
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -186,12 +72,18 @@ export default function AbsencesMonthCalendar({
               </span>
               <div className="mt-1 grid flex-1 grid-rows-2 divide-y divide-zinc-200 dark:divide-zinc-800">
                 <div className="flex flex-wrap items-center gap-1 px-1 py-1">
-                  {renderPill(dayCounts.morning.absences, "absence")}
-                  {renderPill(dayCounts.morning.recoveries, "recovery")}
+                  <DayPill count={dayCounts.morning.absences} kind="absence" />
+                  <DayPill
+                    count={dayCounts.morning.recoveries}
+                    kind="recovery"
+                  />
                 </div>
                 <div className="flex flex-wrap items-center gap-1 px-1 py-1">
-                  {renderPill(dayCounts.evening.absences, "absence")}
-                  {renderPill(dayCounts.evening.recoveries, "recovery")}
+                  <DayPill count={dayCounts.evening.absences} kind="absence" />
+                  <DayPill
+                    count={dayCounts.evening.recoveries}
+                    kind="recovery"
+                  />
                 </div>
               </div>
             </button>

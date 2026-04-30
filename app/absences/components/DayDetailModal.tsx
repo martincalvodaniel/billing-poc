@@ -15,8 +15,9 @@ import {
   useDeleteAbsence,
   useUpdateAbsence,
 } from "@/lib/hooks/useAbsenceMutations"
-import { FetchError } from "@/lib/swr-fetcher"
 import AbsenceForm from "./AbsenceForm"
+import { extractAbsenceErrorMessage } from "./absencesUi"
+import PartSection from "./day-modal/PartSection"
 
 interface DayDetailModalProps {
   date: string
@@ -27,25 +28,6 @@ interface DayDetailModalProps {
 interface FormState {
   mode: "create" | "edit"
   target?: Absence
-}
-
-const PART_LABEL: Record<PartOfDay, string> = {
-  morning: "Morning",
-  evening: "Evening",
-}
-
-function extractErrorMessage(err: unknown): string {
-  if (
-    err instanceof FetchError &&
-    err.info &&
-    typeof err.info === "object" &&
-    "error" in err.info &&
-    typeof (err.info as { error: unknown }).error === "string"
-  ) {
-    return (err.info as { error: string }).error
-  }
-  if (err instanceof Error) return err.message
-  return "An error occurred"
 }
 
 export default function DayDetailModal({
@@ -157,12 +139,12 @@ export default function DayDetailModal({
       if (isConflictError(err)) {
         setShakeKey((k) => k + 1)
         setFormError(
-          extractErrorMessage(err) ||
+          extractAbsenceErrorMessage(err) ||
             "A record already exists for this student in the selected part of the day."
         )
         return
       }
-      setFormError(extractErrorMessage(err))
+      setFormError(extractAbsenceErrorMessage(err))
     }
   }
 
@@ -178,7 +160,7 @@ export default function DayDetailModal({
       setPendingDelete(null)
     } catch (err) {
       console.error(`Error deleting absence: ${err}`)
-      setDeleteError(extractErrorMessage(err))
+      setDeleteError(extractAbsenceErrorMessage(err))
     }
   }
 
@@ -329,197 +311,5 @@ export default function DayDetailModal({
         </Modal>
       )}
     </>
-  )
-}
-
-interface RecordSectionProps {
-  title: string
-  colorClass: string
-  records: Absence[]
-  editingId: string | undefined
-  onEdit: (record: Absence) => void
-  onDelete: (record: Absence) => void
-  onAddNew: () => void
-  addAriaLabel: string
-}
-
-function RecordSection({
-  title,
-  colorClass,
-  records,
-  editingId,
-  onEdit,
-  onDelete,
-  onAddNew,
-  addAriaLabel,
-}: RecordSectionProps) {
-  return (
-    <section className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          <span
-            aria-hidden="true"
-            className={`inline-block h-2 w-2 rounded-full ${colorClass}`}
-          />
-          {title}
-          <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
-            ({records.length})
-          </span>
-        </h4>
-        <button
-          type="button"
-          onClick={onAddNew}
-          aria-label={addAriaLabel}
-          className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800"
-        >
-          <svg
-            className="h-3.5 w-3.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
-      </div>
-      {records.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">None.</p>
-      ) : (
-        <ul className="space-y-2">
-          {records.map((record) => (
-            <li
-              key={record._id ?? `${record.studentName}-${record.date}`}
-              className={`flex items-start gap-2 rounded-md border p-3 ${
-                editingId && editingId === record._id
-                  ? "border-blue-400 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20"
-                  : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50"
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {record.studentName}
-                </p>
-                {record.comment && (
-                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 break-words">
-                    {record.comment}
-                  </p>
-                )}
-              </div>
-              <div className="flex shrink-0 gap-1">
-                <button
-                  type="button"
-                  onClick={() => onEdit(record)}
-                  aria-label={`Edit ${record.type} for ${record.studentName}`}
-                  className="rounded-md p-1.5 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete(record)}
-                  aria-label={`Delete ${record.type} for ${record.studentName}`}
-                  className="rounded-md p-1.5 text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-interface PartSectionProps {
-  part: PartOfDay
-  records: Absence[]
-  editingId: string | undefined
-  onEdit: (record: Absence) => void
-  onDelete: (record: Absence) => void
-  onAddNew: (type: AbsenceType) => void
-}
-
-function PartSection({
-  part,
-  records,
-  editingId,
-  onEdit,
-  onDelete,
-  onAddNew,
-}: PartSectionProps) {
-  const label = PART_LABEL[part]
-  const absences = records.filter((r) => r.type === "absence")
-  const recoveries = records.filter((r) => r.type === "recovery")
-
-  return (
-    <section
-      className="space-y-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
-      aria-labelledby={`day-part-${part}`}
-    >
-      <header className="flex items-center justify-between gap-2">
-        <h3
-          id={`day-part-${part}`}
-          className="text-sm font-semibold text-zinc-900 dark:text-zinc-100"
-        >
-          {label}
-          <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-            ({records.length})
-          </span>
-        </h3>
-      </header>
-      <RecordSection
-        title="Absences"
-        colorClass="bg-red-500"
-        records={absences}
-        editingId={editingId}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onAddNew={() => onAddNew("absence")}
-        addAriaLabel={`Add absence in ${label}`}
-      />
-      <RecordSection
-        title="Recoveries"
-        colorClass="bg-green-500"
-        records={recoveries}
-        editingId={editingId}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onAddNew={() => onAddNew("recovery")}
-        addAriaLabel={`Add recovery in ${label}`}
-      />
-    </section>
   )
 }

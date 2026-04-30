@@ -15,8 +15,15 @@ import {
   useDeleteAbsence,
   useUpdateAbsence,
 } from "@/lib/hooks/useAbsenceMutations"
-import { FetchError } from "@/lib/swr-fetcher"
 import AbsenceForm from "./AbsenceForm"
+import {
+  extractAbsenceErrorMessage,
+  PART_OF_DAY_LABEL,
+  TYPE_DOT_CLASS,
+  TYPE_LABEL,
+} from "./absencesUi"
+import { TrashIcon } from "./icons"
+import RecordRowActions from "./RecordRowActions"
 
 interface StudentDetailModalProps {
   studentName: string
@@ -29,37 +36,8 @@ interface FormState {
   target?: Absence
 }
 
-const PART_OF_DAY_LABEL: Record<PartOfDay, string> = {
-  morning: "Morning",
-  evening: "Evening",
-}
-
 const PART_OF_DAY_ORDER: PartOfDay[] = ["morning", "evening"]
 const TYPE_ORDER: AbsenceType[] = ["absence", "recovery"]
-
-function extractErrorMessage(err: unknown): string {
-  if (
-    err instanceof FetchError &&
-    err.info &&
-    typeof err.info === "object" &&
-    "error" in err.info &&
-    typeof (err.info as { error: unknown }).error === "string"
-  ) {
-    return (err.info as { error: string }).error
-  }
-  if (err instanceof Error) return err.message
-  return "An error occurred"
-}
-
-const TYPE_DOT: Record<AbsenceType, string> = {
-  absence: "bg-red-500",
-  recovery: "bg-green-500",
-}
-
-const TYPE_LABEL: Record<AbsenceType, string> = {
-  absence: "Absence",
-  recovery: "Recovery",
-}
 
 export default function StudentDetailModal({
   studentName,
@@ -152,7 +130,7 @@ export default function StudentDetailModal({
       }
     } catch (err) {
       console.error(`Error saving absence: ${err}`)
-      setFormError(extractErrorMessage(err))
+      setFormError(extractAbsenceErrorMessage(err))
       if (isConflictError(err)) {
         setShakeKey((k) => k + 1)
       }
@@ -171,7 +149,7 @@ export default function StudentDetailModal({
       setPendingDelete(null)
     } catch (err) {
       console.error(`Error deleting absence: ${err}`)
-      setDeleteError(extractErrorMessage(err))
+      setDeleteError(extractAbsenceErrorMessage(err))
     }
   }
 
@@ -184,7 +162,7 @@ export default function StudentDetailModal({
       onClose()
     } catch (err) {
       console.error(`Error deleting all records: ${err}`)
-      setDeleteAllError(extractErrorMessage(err))
+      setDeleteAllError(extractAbsenceErrorMessage(err))
     }
   }
 
@@ -221,20 +199,7 @@ export default function StudentDetailModal({
                   aria-label={`Delete all records for ${studentName}`}
                   className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
-                    />
-                  </svg>
+                  <TrashIcon />
                   Delete all
                 </button>
               )}
@@ -286,7 +251,7 @@ export default function StudentDetailModal({
                                         <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200">
                                           <span
                                             aria-hidden="true"
-                                            className={`inline-block h-2 w-2 rounded-full ${TYPE_DOT[record.type]}`}
+                                            className={`inline-block h-2 w-2 rounded-full ${TYPE_DOT_CLASS[record.type]}`}
                                           />
                                           {TYPE_LABEL[record.type]}
                                         </span>
@@ -297,59 +262,21 @@ export default function StudentDetailModal({
                                         </p>
                                       )}
                                     </div>
-                                    <div className="flex shrink-0 gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setFormError(null)
-                                          setFormState({
-                                            mode: "edit",
-                                            target: record,
-                                          })
-                                        }}
-                                        aria-label={`Edit ${record.type} on ${formatDate(record.date)}`}
-                                        className="rounded-md p-1.5 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-                                      >
-                                        <svg
-                                          className="h-4 w-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          aria-hidden="true"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                          />
-                                        </svg>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setDeleteError(null)
-                                          setPendingDelete(record)
-                                        }}
-                                        aria-label={`Delete ${record.type} on ${formatDate(record.date)}`}
-                                        className="rounded-md p-1.5 text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                                      >
-                                        <svg
-                                          className="h-4 w-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          aria-hidden="true"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3"
-                                          />
-                                        </svg>
-                                      </button>
-                                    </div>
+                                    <RecordRowActions
+                                      onEdit={() => {
+                                        setFormError(null)
+                                        setFormState({
+                                          mode: "edit",
+                                          target: record,
+                                        })
+                                      }}
+                                      onDelete={() => {
+                                        setDeleteError(null)
+                                        setPendingDelete(record)
+                                      }}
+                                      editLabel={`Edit ${record.type} on ${formatDate(record.date)}`}
+                                      deleteLabel={`Delete ${record.type} on ${formatDate(record.date)}`}
+                                    />
                                   </li>
                                 ))}
                               </ul>
