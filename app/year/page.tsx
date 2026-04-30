@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { CHART_COLORS } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
+import ChartsToggle from "../components/ChartsToggle"
 import DonutChart from "../components/DonutChart"
 import PageLayout from "../components/PageLayout"
 import SummaryCard from "../components/SummaryCard"
@@ -17,6 +18,7 @@ export default function YearSummaryPage() {
   )
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showCharts, setShowCharts] = useState(true)
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -58,6 +60,13 @@ export default function YearSummaryPage() {
       abortController.abort()
     }
   }, [selectedYear])
+
+  // On mobile, hide charts by default after mount
+  useEffect(() => {
+    if (!window.matchMedia("(min-width: 640px)").matches) {
+      setShowCharts(false)
+    }
+  }, [])
 
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const isViewingCurrentYear = selectedYear === currentYear
@@ -136,6 +145,7 @@ export default function YearSummaryPage() {
             </h3>
           </div>
           <div className="flex items-center gap-2">
+            <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
             <YearSelector
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
@@ -151,27 +161,29 @@ export default function YearSummaryPage() {
       }
     >
       <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard
-            label={`Total Income (${incomeCount})`}
-            value={formatCurrency(yearlyIncome)}
-            valueClassName="text-green-600 dark:text-green-400"
-          />
-          <SummaryCard
-            label={`Total Outcome (${outcomeCount})`}
-            value={formatCurrency(yearlyOutcome)}
-            valueClassName="text-red-600 dark:text-red-400"
-          />
-          <SummaryCard
-            label="Net Balance"
-            value={formatCurrency(yearlyNet)}
-            valueClassName={
-              yearlyNet >= 0
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-red-600 dark:text-red-400"
-            }
-          />
-        </div>
+        {showCharts && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <SummaryCard
+              label={`Total Income (${incomeCount})`}
+              value={formatCurrency(yearlyIncome)}
+              valueClassName="text-green-600 dark:text-green-400"
+            />
+            <SummaryCard
+              label={`Total Outcome (${outcomeCount})`}
+              value={formatCurrency(yearlyOutcome)}
+              valueClassName="text-red-600 dark:text-red-400"
+            />
+            <SummaryCard
+              label="Net Balance"
+              value={formatCurrency(yearlyNet)}
+              valueClassName={
+                yearlyNet >= 0
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-red-600 dark:text-red-400"
+              }
+            />
+          </div>
+        )}
 
         {payments.length === 0 ? (
           <div className="rounded-md bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-300">
@@ -179,18 +191,20 @@ export default function YearSummaryPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <DonutChart
-                data={incomeByTagYear}
-                title={`Income by Tag (${selectedYear})`}
-                colors={CHART_COLORS}
-              />
-              <DonutChart
-                data={outcomeByTagYear}
-                title={`Outcome by Tag (${selectedYear})`}
-                colors={CHART_COLORS}
-              />
-            </div>
+            {showCharts && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <DonutChart
+                  data={incomeByTagYear}
+                  title={`Income by Tag (${selectedYear})`}
+                  colors={CHART_COLORS}
+                />
+                <DonutChart
+                  data={outcomeByTagYear}
+                  title={`Outcome by Tag (${selectedYear})`}
+                  colors={CHART_COLORS}
+                />
+              </div>
+            )}
 
             <MonthlyBreakdown
               monthlyTotals={monthlyTotals}

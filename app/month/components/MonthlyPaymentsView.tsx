@@ -21,8 +21,9 @@ export default (function MonthlyPaymentsView({
   } | null>
   onMonthChange?: (dateString: string) => void
   selectedDate: Date
+  showCharts?: boolean
 }) {
-  const { onMonthChange, selectedDate } = props
+  const { onMonthChange, selectedDate, showCharts = true } = props
   const [payments, setPayments] = useState<Payment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -228,9 +229,6 @@ export default (function MonthlyPaymentsView({
 
   const netBalance = totalIncome - totalOutcome
 
-  // Year-level aggregations
-  // Generate colors for chart segments
-
   if (isLoading) {
     return (
       <div className="w-full space-y-4">
@@ -249,15 +247,19 @@ export default (function MonthlyPaymentsView({
         <Toast message={successMessage} onClose={() => setShowSuccess(false)} />
       )}
 
-      <PaymentsSummary
-        totalIncome={totalIncome}
-        totalOutcome={totalOutcome}
-        netBalance={netBalance}
-        incomeCount={incomeCount}
-        outcomeCount={outcomeCount}
-      />
+      {showCharts && (
+        <PaymentsSummary
+          totalIncome={totalIncome}
+          totalOutcome={totalOutcome}
+          netBalance={netBalance}
+          incomeCount={incomeCount}
+          outcomeCount={outcomeCount}
+        />
+      )}
 
-      <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
+      {showCharts && (
+        <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
+      )}
 
       <PaymentsTable
         payments={payments}

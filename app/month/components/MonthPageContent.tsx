@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import ChartsToggle from "../../components/ChartsToggle"
 import Modal from "../../components/Modal"
 import PageLayout from "../../components/PageLayout"
 import MonthlyPaymentsView from "./MonthlyPaymentsView"
@@ -17,6 +18,7 @@ export default function MonthPageContent() {
     return new Date(today.getFullYear(), today.getMonth(), 1)
   })
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showCharts, setShowCharts] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const formRef = useRef<{
     setFormDate: (dateString: string) => void
@@ -45,6 +47,13 @@ export default function MonthPageContent() {
       }
     }
   }, [searchParams])
+
+  // On mobile, hide charts by default after mount
+  useEffect(() => {
+    if (!window.matchMedia("(min-width: 640px)").matches) {
+      setShowCharts(false)
+    }
+  }, [])
 
   const currentMonthDate = new Date()
   const currentMonthStart = new Date(
@@ -117,6 +126,7 @@ export default function MonthPageContent() {
                   ➕
                 </span>
               </button>
+              <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
               <button
                 type="button"
                 onClick={handleGoToCurrentMonth}
@@ -142,6 +152,7 @@ export default function MonthPageContent() {
           ref={paymentsListRef}
           onMonthChange={handleMonthChange}
           selectedDate={selectedDate}
+          showCharts={showCharts}
         />
       </div>
 
