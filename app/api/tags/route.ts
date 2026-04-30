@@ -9,22 +9,45 @@ export async function GET(request: NextRequest) {
 
     const db = await getDatabase();
     
-    // Build filter based on type parameter
-    const filter = { tag: { $exists: true, $ne: "" } };
+    // Build aggregation pipeline
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pipeline: any[] = [
+      {
+        $match: {
+          tag: { $type: "string", $ne: "" }
+        }
+      }
+    ];
+
+    // Add type filter if provided
     if (type && (type === "income" || type === "outcome")) {
-      Object.assign(filter, { type });
+      pipeline[0].$match.type = type;
     }
 
-    const payments = await db
+    pipeline.push(
+      {
+        $group: {
+          _id: null,
+          tags: {
+            $addToSet: "$tag"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          tags: 1
+        }
+      }
+    );
+
+    const result = await db
       .collection<Payment>("payments")
-      .find(filter)
-      .project({ tag: 1 })
+      .aggregate(pipeline)
       .toArray();
 
-    // Extract unique tags
-    const uniqueTags = Array.from(
-      new Set(payments.map((p) => p.tag).filter(Boolean))
-    ) as string[];
+    // Extract unique tags from the result
+    const uniqueTags = result.length > 0 ? result[0].tags : [];
 
     return NextResponse.json({ tags: uniqueTags }, { status: 200 });
   } catch (error) {

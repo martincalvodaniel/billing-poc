@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { Payment } from "@/lib/types";
 
 export default forwardRef(function PaymentsList(props, ref) {
@@ -11,6 +11,12 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [editingDate, setEditingDate] = useState<string>("");
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
   const [editingType, setEditingType] = useState<string>("");
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
+  const [editingTag, setEditingTag] = useState<string>("");
+  const [availableTagsForEdit, setAvailableTagsForEdit] = useState<string[]>([]);
+  const [suggestedTagsForEdit, setSuggestedTagsForEdit] = useState<string[]>([]);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -262,6 +268,108 @@ export default forwardRef(function PaymentsList(props, ref) {
     setEditingType("");
   };
 
+  const fetchTagsByType = async (paymentType: string) => {
+    try {
+      const response = await fetch(`/api/tags?type=${paymentType}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableTagsForEdit(data.tags || []);
+      }
+    } catch (err) {
+      console.error("Error fetching tags:", err);
+    }
+  };
+
+  const handleEditTag = (payment: Payment) => {
+    setEditingTagId(payment._id?.toString() || null);
+    setEditingTag(payment.tag || "");
+    fetchTagsByType(payment.type);
+    setSuggestedTagsForEdit([]);
+  };
+
+  const handleTagInputChange = (value: string) => {
+    setEditingTag(value);
+    setShowTagSuggestions(true);
+
+    // Clear existing timer
+    if (tagDebounceTimer.current) {
+      clearTimeout(tagDebounceTimer.current);
+    }
+
+    // Set new timer for 1 second delay
+    tagDebounceTimer.current = setTimeout(() => {
+      if (value.trim() === "") {
+        setSuggestedTagsForEdit(availableTagsForEdit);
+      } else {
+        const filtered = availableTagsForEdit.filter((tag) =>
+          tag.toLowerCase().includes(value.toLowerCase())
+        );
+        setSuggestedTagsForEdit(filtered);
+      }
+    }, 1000);
+  };
+
+  const handleTagSelect = (tag: string) => {
+    setEditingTag(tag);
+    setShowTagSuggestions(false);
+    setSuggestedTagsForEdit([]);
+  };
+
+  const handleSaveTag = async () => {
+    if (!editingTagId) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingTagId, tag: editingTag }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update tag");
+      }
+
+      // Update local state
+      setPayments((prevPayments) =>
+        prevPayments.map((p) =>
+          p._id?.toString() === editingTagId ? { ...p, tag: editingTag || undefined } : p
+        )
+      );
+
+      // Add new tag to available tags if it's not already there
+      if (editingTag && !availableTagsForEdit.includes(editingTag)) {
+        setAvailableTagsForEdit((prev) => [...prev, editingTag].sort());
+      }
+
+      setEditingTagId(null);
+      setEditingTag("");
+      setSuccessMessage("Tag updated successfully");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err) {
+      console.error("Error updating tag:", err);
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelTagEdit = () => {
+    setEditingTagId(null);
+    setEditingTag("");
+    setShowTagSuggestions(false);
+    setSuggestedTagsForEdit([]);
+  };
+
+  const handleTagBlur = () => {
+    // Delay closing suggestions to allow click on suggestion
+    setTimeout(() => {
+      setShowTagSuggestions(false);
+    }, 200);
+  };
+
   const filteredPayments = getFilteredPayments();
 
   const totalIncome = filteredPayments
@@ -481,12 +589,71 @@ export default forwardRef(function PaymentsList(props, ref) {
                       )}
                     </td>
                     <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      {payment.tag ? (
-                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {payment.tag}
-                        </span>
+                      {editingTagId === payment._id?.toString() ? (
+                        <div className="relative flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingTag}
+                              onChange={(e) => handleTagInputChange(e.target.value)}
+                              onFocus={() => {
+                                setShowTagSuggestions(true);
+                                if (!editingTag?.trim()) {
+                                  setSuggestedTagsForEdit(availableTagsForEdit);
+                                }
+                              }}
+                              onBlur={handleTagBlur}
+                              placeholder="e.g., Client A, Rent, etc."
+                              className="rounded border border-zinc-300 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-800"
+                            />
+                            <button
+                              onClick={handleSaveTag}
+                              disabled={isSaving}
+                              className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700"
+                            >
+                              {isSaving ? "Saving..." : "Save"}
+                            </button>
+                            <button
+                              onClick={handleCancelTagEdit}
+                              disabled={isSaving}
+                              className="rounded bg-zinc-300 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+
+                          {/* Tag Suggestions Dropdown */}
+                          {showTagSuggestions && suggestedTagsForEdit.length > 0 && (
+                            <div className="absolute top-full left-0 right-auto z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                              <ul className="max-h-48 overflow-y-auto py-1">
+                                {suggestedTagsForEdit.map((tag) => (
+                                  <li key={tag}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTagSelect(tag)}
+                                      className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                                    >
+                                      {tag}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
+                        <button
+                          onClick={() => handleEditTag(payment)}
+                          className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                        >
+                          {payment.tag ? (
+                            <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                              {payment.tag}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
+                          )}
+                        </button>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">

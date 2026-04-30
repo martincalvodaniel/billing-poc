@@ -783,32 +783,46 @@ const vatAmount = totalAmount - netAmount;
   - Parent component (`page.tsx`) calls both `refreshPayments()` and `navigateToMonth(date)` on save
 - See "Month Navigation Pattern" in Common Tasks & Patterns
 
-### Inline Payment Editing (Date & Type)
-✓ **Completed**: Edit date and type via inline editors in payment list
-- Added PUT method to `app/api/payments/route.ts` supporting `date` and `type` updates
+### Inline Payment Editing (Date, Type & Tag)
+✓ **Completed**: Edit date, type, and tag via inline editors in payment list
+- Added PUT method to `app/api/payments/route.ts` supporting `date`, `type`, and `tag` updates
 - Validates `_id` parameter, date field, and type enum
 - Frontend uses inline editing with state management for each field
 - Optimistic updates for better UX
 - Success toast notifications on save
-- See "Inline Editing Pattern" in Common Tasks & Patterns
+- **Tag Editing Features**:
+  - Type-specific autocomplete suggestions (income/outcome tags are separate)
+  - 1-second debounce before filtering suggestions
+  - Case-insensitive tag matching
+  - Dropdown closes automatically after selection
+  - New tags automatically added to available list for current session
+  - Empty tag field converts to null in database for clean filtering
+- **Window Focus Sync**: PaymentForm automatically refetches tags when window regains focus to stay in sync with PaymentsList edits
+- See "Inline Editing Pattern" and "Tag Field with Autocomplete Pattern" in Common Tasks & Patterns
 
 ### Payment Tags with Type-Based Autocomplete
 ✓ **Completed**: Add optional tags to categorize payments with intelligent autocomplete
 - Added optional `tag` field to `Payment` and `PaymentFormData` types
 - **POST `/api/payments`**: Accepts and stores optional tag field
 - **GET `/api/tags`**: New endpoint returning unique tags filtered by payment type
+  - Uses MongoDB aggregation pipeline for efficient deduplication at database level
   - Query param: `type=income` or `type=outcome` to get type-specific tags
   - Returns all tags if no type specified
+  - Filters out empty strings and null values to prevent orphaned tags
 - **PUT `/api/payments`**: Supports updating tag alongside date and type fields
+  - Converts empty tag strings to null for database storage
+  - Only non-empty string tags are returned by GET `/api/tags`
 - **Frontend Autocomplete**:
   - Fetches tags on mount and whenever payment type changes (type-based filtering)
+  - Additional focus listener refetches tags when window regains focus for sync across components
   - 1-second debounce before showing suggestions while typing
   - Case-insensitive filtering of suggestions
   - Click to select or close suggestions dropdown
   - Selected tags immediately added to available tags list for current session
   - Resets tag field (not type/date) after successful save for better UX
 - **Type Separation**: Income and outcome tags are completely independent - users see only relevant tags
-- See "Tag Field with Autocomplete Pattern" in Common Tasks & Patterns
+- **Inline Tag Editing**: Tags in PaymentsList use same autocomplete pattern as form for consistency
+- See "Tag Field with Autocomplete Pattern" and inline editing implementation in Common Tasks & Patterns
 
 **Next steps**: Extend to edit amount and VAT fields using the same pattern
 

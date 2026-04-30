@@ -40,6 +40,16 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
     fetchTagsByType(formData.type);
   }, [formData.type]);
 
+  // Refetch tags when window regains focus to stay in sync with list edits
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchTagsByType(formData.type);
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [formData.type]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);

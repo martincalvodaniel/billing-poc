@@ -123,7 +123,8 @@ export async function PUT(request: NextRequest) {
 
     // Handle tag update
     if (tag !== undefined) {
-      updateData.tag = tag || undefined;
+      // Convert empty string to null for storage
+      updateData.tag = tag ? tag : null;
     }
 
     // Ensure at least one field is being updated
