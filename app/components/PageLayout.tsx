@@ -18,7 +18,7 @@ export default function PageLayout({
 }: PageLayoutProps) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-zinc-50 p-4 font-sans dark:bg-zinc-950">
-      <main className="mx-auto max-w-6xl space-y-8 py-12">
+      <main className="mx-auto max-w-6xl space-y-2 py-0 sm:space-y-4 sm:py-8">
         <NavigationBar subtitle={navigationSubtitle} />
 
         {headerContent}

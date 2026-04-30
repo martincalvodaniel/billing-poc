@@ -135,7 +135,7 @@ export default function YearSummaryPage() {
     <PageLayout
       navigationSubtitle="Yearly Overview"
       headerContent={
-        <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="space-y-2 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -162,7 +162,7 @@ export default function YearSummaryPage() {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-2">
         {showCharts && (
           <div className="grid gap-4 sm:grid-cols-3">
             <SummaryCard
@@ -192,7 +192,7 @@ export default function YearSummaryPage() {
             No payments recorded in {selectedYear}.
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-2">
             {showCharts && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <DonutChart

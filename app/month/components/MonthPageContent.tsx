@@ -105,7 +105,7 @@ export default function MonthPageContent() {
     <PageLayout
       navigationSubtitle="Monthly Overview"
       headerContent={
-        <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="space-y-2 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-col gap-4 border-b border-zinc-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -140,7 +140,7 @@ export default function MonthPageContent() {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-2">
         <MonthlyPaymentsView
           ref={paymentsListRef}
           onMonthChange={handleMonthChange}

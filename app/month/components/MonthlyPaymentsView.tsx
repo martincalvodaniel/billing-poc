@@ -242,7 +242,7 @@ export default (function MonthlyPaymentsView({
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-2">
       {showSuccess && (
         <Toast message={successMessage} onClose={() => setShowSuccess(false)} />
       )}
