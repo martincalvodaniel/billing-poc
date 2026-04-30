@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle, useRef, useCallback } from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from "react";
 import { Payment } from "@/lib/types";
 import DonutChart from "../../components/DonutChart";
 import SummaryCard from "../../components/SummaryCard";
 import Modal from "../../components/Modal";
 import PaymentDetailModal from "./PaymentDetailModal";
-
-type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
 export default forwardRef(function MonthlyPaymentsView(
   props: { onMonthChange?: (dateString: string) => void; selectedDate: Date },
@@ -18,21 +16,6 @@ export default forwardRef(function MonthlyPaymentsView(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Edit modal state
-  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<EditField>(null);
-  const [editingDate, setEditingDate] = useState<string>("");
-  const [editingType, setEditingType] = useState<string>("");
-  const [editingTag, setEditingTag] = useState<string>("");
-  const [editingTotal, setEditingTotal] = useState<string>("");
-  const [editingVat, setEditingVat] = useState<string>("");
-  
-  const [availableTagsForEdit, setAvailableTagsForEdit] = useState<string[]>([]);
-  const [suggestedTagsForEdit, setSuggestedTagsForEdit] = useState<string[]>([]);
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
-  
-  const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   
@@ -40,8 +23,8 @@ export default forwardRef(function MonthlyPaymentsView(
   const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Details modal state
-  const [detailPaymentId, setDetailPaymentId] = useState<string | null>(null);
+  // Edit modal state (full payment edit)
+  const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
 
   const fetchPayments = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -143,132 +126,28 @@ export default forwardRef(function MonthlyPaymentsView(
     return payments;
   };
 
-
-
-  const closeEditModal = useCallback(() => {
-    setEditingPaymentId(null);
-    setEditingField(null);
-    setEditingDate("");
-    setEditingType("");
-    setEditingTag("");
-    setEditingTotal("");
-    setEditingVat("");
-    setShowTagSuggestions(false);
-    setSuggestedTagsForEdit([]);
-    if (tagDebounceTimer.current) {
-      clearTimeout(tagDebounceTimer.current);
-    }
-  }, []);
-
-  const handleEditModalKeyDown = useCallback((e: KeyboardEvent) => {
-    if (editingPaymentId && editingField) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        closeEditModal();
-      } else if (e.key === "Enter" && editingField !== "tag") {
-        e.preventDefault();
-        e.stopPropagation();
-        // Find and click the Save button (the rightmost green button in the edit modal)
-        const saveBtn = document.evaluate("//button[contains(., 'Save')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as HTMLButtonElement;
-        saveBtn?.click();
-      }
-    }
-  }, [editingPaymentId, editingField, closeEditModal]);
-
-  useEffect(() => {
-    if (!editingPaymentId || !editingField) return;
-
-    const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleEditModalKeyDown);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleEditModalKeyDown);
-    };
-  }, [editingPaymentId, editingField, handleEditModalKeyDown]);
-
-  const handleEditDate = (payment: Payment) => {
-    setEditingPaymentId(payment._id?.toString() || null);
-    setEditingField("date");
-    setEditingDate(payment.date);
+  const handleRowClick = (paymentId: string) => {
+    setEditPaymentId(paymentId);
   };
 
-  const handleEditType = (payment: Payment) => {
-    setEditingPaymentId(payment._id?.toString() || null);
-    setEditingField("type");
-    setEditingType(payment.type);
+  const closeEditModal = () => {
+    setEditPaymentId(null);
   };
 
-  const handleEditTag = (payment: Payment) => {
-    setEditingPaymentId(payment._id?.toString() || null);
-    setEditingField("tag");
-    setEditingTag(payment.tag || "");
-    fetchTagsByType(payment.type);
-    setSuggestedTagsForEdit([]);
-  };
-
-  const handleEditTotal = (payment: Payment) => {
-    setEditingPaymentId(payment._id?.toString() || null);
-    setEditingField("total");
-    setEditingTotal(payment.total.toString());
-  };
-
-  const handleEditVat = (payment: Payment) => {
-    setEditingPaymentId(payment._id?.toString() || null);
-    setEditingField("vat");
-    setEditingVat(payment.vat.toString());
-  };
-
-  const fetchTagsByType = async (paymentType: string) => {
-    try {
-      const response = await fetch(`/api/tags?type=${paymentType}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTagsForEdit(data.tags || []);
-      }
-    } catch (err) {
-      console.error(`Error fetching tags: ${err}`);
-    }
-  };
-
-  const handleTagInputChange = (value: string) => {
-    setEditingTag(value);
-    setShowTagSuggestions(true);
-
-    if (tagDebounceTimer.current) {
-      clearTimeout(tagDebounceTimer.current);
-    }
-
-    tagDebounceTimer.current = setTimeout(() => {
-      if (value.trim() === "") {
-        setSuggestedTagsForEdit(availableTagsForEdit);
-      } else {
-        const filtered = availableTagsForEdit.filter((tag) =>
-          tag.toLowerCase().includes(value.toLowerCase())
-        );
-        setSuggestedTagsForEdit(filtered);
-      }
-    }, 1000);
-  };
-
-  const handleTagSelect = (tag: string) => {
-    setEditingTag(tag);
-    setShowTagSuggestions(false);
-    setSuggestedTagsForEdit([]);
-  };
-
-  const handleDeleteClick = (paymentId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, paymentId: string) => {
+    e.stopPropagation(); // Prevent row click
     setDeleteConfirmPaymentId(paymentId);
   };
 
-  const openDetails = (paymentId: string) => {
-    setDetailPaymentId(paymentId);
-  };
-
-  const closeDetails = () => {
-    setDetailPaymentId(null);
+  const handlePaymentUpdated = (updatedPayment: Payment) => {
+    setPayments((prevPayments) =>
+      prevPayments.map((p) =>
+        p._id?.toString() === updatedPayment._id?.toString() ? updatedPayment : p
+      )
+    );
+    setSuccessMessage("Payment updated successfully");
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 4000);
   };
 
   const handleConfirmDelete = useCallback(async () => {
@@ -331,106 +210,6 @@ export default forwardRef(function MonthlyPaymentsView(
       document.removeEventListener("keydown", handleDeleteModalKeyDown);
     };
   }, [deleteConfirmPaymentId, handleDeleteModalKeyDown]);
-
-  const handleSave = async () => {
-    if (!editingPaymentId || !editingField) return;
-
-    const payload: Record<string, unknown> = { id: editingPaymentId };
-    let errorMessage = "";
-
-    // Validate based on field type
-    if (editingField === "date") {
-      if (!editingDate) {
-        setError("Date is required");
-        return;
-      }
-      payload.date = editingDate;
-    } else if (editingField === "type") {
-      if (!editingType) {
-        setError("Type is required");
-        return;
-      }
-      payload.type = editingType;
-    } else if (editingField === "tag") {
-      payload.tag = editingTag;
-    } else if (editingField === "total") {
-      if (editingTotal.trim() === "") {
-        setError("Total is required");
-        return;
-      }
-      const totalAmount = parseFloat(editingTotal);
-      if (isNaN(totalAmount)) {
-        setError("Invalid total amount");
-        return;
-      }
-      payload.total = totalAmount;
-    } else if (editingField === "vat") {
-      if (editingVat.trim() === "") {
-        setError("VAT is required");
-        return;
-      }
-      const vatPercentage = parseFloat(editingVat);
-      if (isNaN(vatPercentage) || vatPercentage < 0 || vatPercentage > 100) {
-        setError("VAT percentage must be between 0 and 100");
-        return;
-      }
-      payload.vat = vatPercentage;
-    }
-
-    setIsSaving(true);
-    try {
-      const response = await fetch("/api/payments", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update ${editingField}`);
-      }
-
-      const responseData = await response.json();
-
-      // Update local state
-      setPayments((prevPayments) =>
-        prevPayments.map((p) => {
-          if (p._id?.toString() === editingPaymentId) {
-            if (editingField === "date") {
-              return { ...p, date: editingDate };
-            } else if (editingField === "type") {
-              return { ...p, type: editingType as "income" | "outcome" };
-            } else if (editingField === "tag") {
-              return { ...p, tag: editingTag || undefined };
-            } else if (editingField === "total" || editingField === "vat") {
-              return {
-                ...p,
-                total: responseData.total,
-                vat: responseData.vat,
-                netAmount: responseData.netAmount,
-              };
-            }
-          }
-          return p;
-        })
-      );
-
-      // Add new tag to available tags if needed
-      if (editingField === "tag" && editingTag && !availableTagsForEdit.includes(editingTag)) {
-        setAvailableTagsForEdit((prev) => [...prev, editingTag].sort());
-      }
-
-      closeEditModal();
-      setSuccessMessage(`${editingField.charAt(0).toUpperCase() + editingField.slice(1)} updated successfully`);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 4000);
-    } catch (err) {
-      console.error(`Error updating ${editingField}: ${err}`);
-      errorMessage = err instanceof Error ? err.message : "An error occurred";
-      setError(errorMessage);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const filteredPayments = getFilteredPayments();
 
@@ -584,20 +363,15 @@ export default forwardRef(function MonthlyPaymentsView(
                 {filteredPayments.map((payment) => (
                   <tr
                     key={payment._id?.toString()}
-                    className="border-b border-zinc-100 dark:border-zinc-800"
+                    onClick={() => handleRowClick(payment._id?.toString() || "")}
+                    className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
                   >
                     <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      <button
-                        onClick={() => handleEditDate(payment)}
-                        className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
-                      >
-                        {new Date(payment.date).getDate()}
-                      </button>
+                      {new Date(payment.date).getDate()}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleEditType(payment)}
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium hover:opacity-80 ${
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
                           payment.type === "income"
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                             : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
@@ -605,58 +379,34 @@ export default forwardRef(function MonthlyPaymentsView(
                       >
                         {payment.type.charAt(0).toUpperCase() +
                           payment.type.slice(1)}
-                      </button>
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      <button
-                        onClick={() => handleEditTag(payment)}
-                        className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
-                      >
-                        {payment.tag ? (
-                          <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                            {payment.tag}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
-                        )}
-                      </button>
+                      {payment.tag ? (
+                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          {payment.tag}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                      <button
-                        onClick={() => handleEditTotal(payment)}
-                        className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
-                      >
-                        {formatCurrency(payment.total)}
-                      </button>
+                      {formatCurrency(payment.total)}
                     </td>
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      <button
-                        onClick={() => handleEditVat(payment)}
-                        className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 whitespace-nowrap"
-                      >
-                        ({payment.vat}%) {formatCurrency(payment.vatAmount)}
-                      </button>
+                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+                      ({payment.vat}%) {formatCurrency(payment.vatAmount)}
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.netAmount)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          onClick={() => openDetails(payment._id?.toString() || "")}
-                          aria-label="View payment details"
-                          className="rounded px-2 py-1 text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-blue-400 dark:hover:text-blue-300 dark:focus:ring-offset-zinc-900"
-                        >
-                          🔍
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(payment._id?.toString() || "")}
-                          aria-label="Delete payment"
-                          className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => handleDeleteClick(e, payment._id?.toString() || "")}
+                        aria-label="Delete payment"
+                        className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
+                      >
+                        ✕
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -734,156 +484,17 @@ export default forwardRef(function MonthlyPaymentsView(
         );
       })()}
 
-      {/* Edit Modal */}
-      <Modal
-        isOpen={!!editingPaymentId && !!editingField}
-        onClose={closeEditModal}
-        title={`Edit ${editingField ? editingField.charAt(0).toUpperCase() + editingField.slice(1) : ""}`}
-        maxWidth="sm"
-        closeOnEscape={true}
-        closeOnBackdropClick={true}
-        footer={
-          <div className="flex gap-2">
-            <button
-              onClick={closeEditModal}
-              disabled={isSaving}
-              className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          {editingField === "date" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Date
-              </label>
-              <input
-                type="date"
-                value={editingDate}
-                onChange={(e) => setEditingDate(e.target.value)}
-                className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-          )}
-
-          {editingField === "type" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Type
-              </label>
-              <select
-                value={editingType}
-                onChange={(e) => setEditingType(e.target.value)}
-                className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              >
-                <option value="income">Income</option>
-                <option value="outcome">Outcome</option>
-              </select>
-            </div>
-          )}
-
-          {editingField === "tag" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Tag (Optional)
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={editingTag}
-                  onChange={(e) => handleTagInputChange(e.target.value)}
-                  onFocus={() => {
-                    setShowTagSuggestions(true);
-                    if (!editingTag?.trim()) {
-                      setSuggestedTagsForEdit(availableTagsForEdit);
-                    }
-                  }}
-                  onBlur={() =>
-                    setTimeout(() => setShowTagSuggestions(false), 200)
-                  }
-                  placeholder={editingType === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
-                  className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-
-                {/* Tag Suggestions Dropdown */}
-                {showTagSuggestions && suggestedTagsForEdit.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-                    <ul className="max-h-48 overflow-y-auto py-1">
-                      {suggestedTagsForEdit.map((tag) => (
-                        <li key={tag}>
-                          <button
-                            type="button"
-                            onClick={() => handleTagSelect(tag)}
-                            className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
-                          >
-                            {tag}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {editingField === "total" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Total Amount
-              </label>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                value={editingTotal}
-                onChange={(e) => setEditingTotal(e.target.value)}
-                className="w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-          )}
-
-          {editingField === "vat" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                VAT Percentage
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={editingVat}
-                  onChange={(e) => setEditingVat(e.target.value)}
-                  className="flex-1 rounded border border-zinc-300 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                  %
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </Modal>
-
-      {/* Payment Details Modal */}
-      {detailPaymentId && (() => {
-        const selected = payments.find(p => p._id?.toString() === detailPaymentId);
-        if (!selected) return null;
+      {/* Payment Edit Modal */}
+      {editPaymentId && (() => {
+        const selectedPayment = payments.find(p => p._id?.toString() === editPaymentId);
+        if (!selectedPayment) return null;
         return (
-          <PaymentDetailModal payment={selected} onClose={closeDetails} formatCurrency={formatCurrency} />
+          <PaymentDetailModal
+            payment={selectedPayment}
+            onClose={closeEditModal}
+            onUpdate={handlePaymentUpdated}
+            formatCurrency={formatCurrency}
+          />
         );
       })()}
     </div>

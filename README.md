@@ -10,8 +10,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Add multiple payment components with optional names and amounts. Gross/net calculation (enter component amounts with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks. Keyboard shortcuts: **ENTER** to save, **ESC** to cancel
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Interactive sorting controls allow sorting by percentage or name (ascending/descending). Legend positioned on the right side of the chart for better space utilization. Tags maintain consistent colors across all sorting options. Charts appear between summary cards and payment list for quick insights
-- **Modal Payment Editing** - Click any date (shows day only since month/year are in calendar picker), type, tag, total, or VAT in the payment list to open a centered edit modal. VAT displays as `(percentage%) amount`. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate. Keyboard shortcuts: **ENTER** to save (except when tag dropdown is open), **ESC** to cancel
-- **Payment Detail Modal** - View full details of any payment from the monthly list via an action button with an icon. The modal shows date, type, tag, total, VAT (percentage and amount), net amount, and all payment components with names, amounts, and optional concept-level VAT. Keyboard shortcut: **ESC** or **ENTER** to close
+- **Modal Payment Editing** - Click any payment row in the monthly list to open a full edit modal with all payment fields (date, type, tag, payment components, VAT). Edit payment components (add, remove, modify name/amount/quantity), change dates, types, and tags. Input controls include tag autocomplete. All related fields (net amount, VAT amount, total) automatically recalculate. Keyboard shortcut: **ESC** to close
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal. Keyboard shortcuts: **ENTER** to confirm deletion, **ESC** to cancel
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
 - **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), tax address, and optional phone and email. Search clients by name or tax ID with real-time filtering. Click any client row to edit in a centered modal. Create and delete client records. Support for both individual freelancers and company entities. Paginated client list with navigation controls. Keyboard shortcuts: **ESC** to close modals, **Click outside** to cancel.
@@ -298,11 +297,11 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Create payment list view with summary cards
 - [x] Real-time payment list updates
 - [x] Month navigation and filtering
-- [x] Inline payment editing (date, type, tag, total, VAT)
+- [x] Full payment editing with clickable rows (date, type, tag, concepts, VAT)
 - [x] Payment tags with type-based autocomplete
-- [x] Edit payment amount and VAT fields inline with auto-recalculation
+- [x] Edit all payment fields in modal with auto-recalculation
 - [x] Delete payments with confirmation modal
-- [x] View payment details in modal from monthly list
+- [x] Edit payments via clickable table rows
 - [x] Add client management with search and filtering
 - [x] Pagination for large datasets (clients list)
 - [ ] Add advanced filtering and search capabilities

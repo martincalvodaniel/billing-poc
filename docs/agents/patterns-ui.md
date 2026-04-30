@@ -259,14 +259,13 @@ interface MonthlyPaymentsViewProps {
 - Fetch and filter payments by selected month
 - Summary cards (income, outcome, net)
 - Donut charts by tag (income/outcome)
-- Payment table with editable fields (date, type, tag, total, VAT)
-- Modal editing with field-specific validation
-- Delete with confirmation modal
+- Clickable payment table rows open full edit modal
+- Modal editing with full payment form (date, type, tag, concepts, VAT)
+- Delete with confirmation modal (separate delete button in actions column)
 - Tag autocomplete (type-specific)
 - Success/error toast notifications
 - Dark mode support
 - Keyboard navigation and accessibility
-- **VAT Indicator** - Asterisk (*) appears next to payment VAT percentage when any concept has a different VAT than the payment's default VAT; hover tooltip explains "Payment has concepts with different VAT rates"
 
 ### Integration Notes
 - Used as the main content in monthly view (app/page.tsx)
@@ -357,8 +356,8 @@ All modals use the centralized Modal component for consistent keyboard support:
 - **Edit Client Modal** (ClientList) - ESC closes, ClientForm handles ENTER for submit
 
 ## Modal Editing
-- Centered overlay; track editingPaymentId + editingField
-- Field-specific validation; unified save handler calling PUT /api/payments
+- Centered overlay; track editPaymentId for full payment edit
+- Full form validation; save handler calling PUT /api/payments with all fields (date, type, tag, concepts, vat)
 - Current year button (🎯) is managed by parent and positioned after year selector for consistency with month page
 - Updates trigger data refiltering based on paymentsForYear memo
 - Payment count display shown adjacent to year in header (e.g., "Overview for 2026 · 45 payments")
@@ -374,13 +373,14 @@ All modals use the centralized Modal component for consistent keyboard support:
 - DELETE /api/payments; optimistic removal; success toast; handles errors
 - Keyboard support: ENTER key deletes payment, ESC closes modal without deleting
 
-## Payment Detail Modal (Read-Only)
-- Triggered by an icon-only action button in the monthly payments table
-- Use the same overlay, dialog roles, and close interactions as edit/delete modals
-- Show high-level fields (date, type chip, tag, total, VAT percentage and amount, net amount)
-- List payment components with name, amount, and optional concept-level VAT
-- Keep actions minimal (close only); no editing within detail modal
-- Component: `PaymentDetailModal` under `app/month/components` with props `{ payment, onClose, formatCurrency? }`
+## Payment Edit Modal
+- Triggered by clicking any payment row in the monthly payments table
+- Full-featured edit form mirroring the PaymentForm structure
+- Editable fields: date, type, tag, payment components (with add/remove), VAT percentage
+- Real-time calculation of totals, VAT amount, and net amount as user edits
+- Tag autocomplete with type-specific suggestions
+- Save button calls PUT /api/payments with all updated fields
+- Component: `PaymentDetailModal` (now editable) under `app/month/components` with props `{ payment, onClose, onUpdate, formatCurrency? }`
 
 ## PaginationControls Component
 
