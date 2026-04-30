@@ -838,13 +838,15 @@ const vatAmount = totalAmount - netAmount;
   - Parent component (`page.tsx`) calls both `refreshPayments()` and `navigateToMonth(date)` on save
 - See "Month Navigation Pattern" in Common Tasks & Patterns
 
-### Inline Payment Editing (Date, Type & Tag)
-✓ **Completed**: Edit date, type, and tag via inline editors in payment list
-- Added PUT method to `app/api/payments/route.ts` supporting `date`, `type`, and `tag` updates
-- Validates `_id` parameter, date field, and type enum
+### Inline Payment Editing (Date, Type, Tag, Total & VAT)
+✓ **Completed**: Edit date, type, tag, total, and VAT via inline editors in payment list
+- Added PUT method to `app/api/payments/route.ts` supporting `date`, `type`, `tag`, `total`, and `vat` updates
+- Validates `_id` parameter, date field, type enum, and numeric values
 - Frontend uses inline editing with state management for each field
 - Optimistic updates for better UX
 - Success toast notifications on save
+- **Date Editing**: Simple date input, validates non-empty
+- **Type Editing**: Dropdown select between "income" and "outcome"
 - **Tag Editing Features**:
   - Type-specific autocomplete suggestions (income/outcome tags are separate)
   - 1-second debounce before filtering suggestions
@@ -852,8 +854,16 @@ const vatAmount = totalAmount - netAmount;
   - Dropdown closes automatically after selection
   - New tags automatically added to available list for current session
   - Empty tag field converts to null in database for clean filtering
+- **Total Editing**: Number input with decimal step (0.01), displayed as currency
+  - Preserves current VAT percentage when total changes
+  - Recalculates: `newNetAmount = newTotal / (1 + currentVatPercentage / 100)` and `newVatAmount = newTotal - newNetAmount`
+- **VAT Editing**: Number input (0-100%), displayed as percentage
+  - Validates range 0-100
+  - Recalculates: `newNetAmount = currentTotal / (1 + newVatPercentage / 100)` and `newVatAmount = currentTotal - newNetAmount`
+  - Calculates displayed VAT percentage from stored VAT amount on edit initiation
 - **Window Focus Sync**: PaymentForm automatically refetches tags when window regains focus to stay in sync with PaymentsList edits
-- See "Inline Editing Pattern" and "Tag Field with Autocomplete Pattern" in Common Tasks & Patterns
+- **API Smart Calculation**: PUT endpoint handles both total and VAT updates with proper recalculation logic
+- See "Inline Editing Pattern" in Common Tasks & Patterns
 
 ### Payment Tags with Type-Based Autocomplete
 ✓ **Completed**: Add optional tags to categorize payments with intelligent autocomplete
@@ -879,8 +889,6 @@ const vatAmount = totalAmount - netAmount;
 - **Inline Tag Editing**: Tags in PaymentsList use same autocomplete pattern as form for consistency
 - See "Tag Field with Autocomplete Pattern" and inline editing implementation in Common Tasks & Patterns
 
-**Next steps**: Extend to edit amount and VAT fields using the same pattern
-
 ### Donut Chart Visualization by Tag
 ✓ **Completed**: Visualize payment distribution across tags with donut charts
 - Two charts: one for income by tag, one for outcome by tag
@@ -893,19 +901,36 @@ const vatAmount = totalAmount - netAmount;
 - Reusable `DonutChart.tsx` component accepts data, title, and colors
 - Responsive design matches summary cards layout (1 col mobile, 2 cols desktop)
 
+### Edit Payment Amount and VAT Fields
+✓ **Completed**: Inline editing for total and VAT percentage with automatic recalculation
+- **Total Editing**:
+  - Click total amount in payment list to edit
+  - Number input with decimal step (0.01)
+  - Preserves current VAT percentage when changing total
+  - Server recalculates: `newNetAmount = newTotal / (1 + currentVatPercentage / 100)` and `newVatAmount = newTotal - newNetAmount`
+  - Optimistic update on client, syncs with server response
+  - Success notification on save
+- **VAT Percentage Editing**:
+  - Click VAT amount in payment list to edit (displays as percentage calculated from stored VAT amount)
+  - Number input with validation (0-100%)
+  - Preserves total when changing VAT percentage
+  - Server recalculates: `newNetAmount = currentTotal / (1 + newVatPercentage / 100)` and `newVatAmount = currentTotal - newNetAmount`
+  - Optimistic update on client, syncs with server response
+  - Success notification on save
+- **API Implementation**:
+  - PUT endpoint accepts `total` and `vat` parameters independently
+  - Fetches current payment to maintain relationship between total, VAT%, and net amount
+  - Both fields can be updated simultaneously (edits both total and VAT at once)
+  - Returns recalculated values: `total`, `vat`, `netAmount` for optimistic client updates
+- **Frontend State Management**:
+  - Separate editing states for each field (`editingTotalId`/`editingTotal`, `editingVatId`/`editingVat`)
+  - Handlers for edit, save, and cancel operations
+  - Disabled submit during save operation
+- See "Inline Editing Pattern" in Common Tasks & Patterns for implementation reference
+
 ## Future Development Guidelines
 
 When implementing planned features (from roadmap), follow these patterns:
-
-### Edit Additional Payment Fields
-- Extend the inline editing pattern used for date and type to amount/VAT fields
-- For amount editing: validate numeric input and handle negative values
-- For VAT editing: validate percentage range (0-100) and recalculate net amount
-- Update the PUT endpoint to handle new fields alongside existing date/type updates
-- Consider field-specific formatters for display (currency for amounts, percentage for VAT)
-- Use the established PUT endpoint structure
-
-### Search & Filtering
 - Add query parameters to GET endpoint: `/api/payments?type=income&dateFrom=2026-01-01`
 - Parse and validate query parameters
 - Return filtered results

@@ -9,7 +9,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Charts appear between summary cards and payment list for quick insights
-- **Inline Payment Editing** - Click any date, type, or tag in the payment list to edit inline with appropriate input controls and autocomplete for tags
+- **Inline Payment Editing** - Click any date, type, tag, total, or VAT in the payment list to edit inline with appropriate input controls and autocomplete for tags. All related fields (net amount, VAT amount) automatically recalculate
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, and PUT endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
@@ -77,7 +77,9 @@ Returns array of payments sorted by date (descending).
   "id": "payment_id",
   "date": "YYYY-MM-DD",
   "type": "income" | "outcome",
-  "tag": "Client B"
+  "tag": "Client B",
+  "total": "450.00",
+  "vat": "21"
 }
 ```
 
@@ -86,10 +88,15 @@ Returns array of payments sorted by date (descending).
 - `date`: New date for the payment (optional)
 - `type`: Payment type either "income" or "outcome" (optional)
 - `tag`: Optional tag for the payment (optional)
+- `total`: New total amount including VAT (optional)
+- `vat`: New VAT percentage 0-100 (optional)
 
-At least one of `date`, `type`, or `tag` must be provided.
+At least one of `date`, `type`, `tag`, `total`, or `vat` must be provided.
 
-**Response:** Success status with updated payment
+When `total` is updated, VAT percentage is preserved and net amount is recalculated.
+When `vat` is updated, net amount and VAT amount are recalculated based on total.
+
+**Response:** Success status with updated payment values (`total`, `vat`, `netAmount`)
 
 ### `GET /api/tags` - Get Available Tags
 
@@ -128,9 +135,9 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Create payment list view with summary cards
 - [x] Real-time payment list updates
 - [x] Month navigation and filtering
-- [x] Inline payment editing (date & type)
+- [x] Inline payment editing (date, type, tag, total, VAT)
 - [x] Payment tags with type-based autocomplete
-- [ ] Edit other payment fields (amount, VAT)
+- [x] Edit payment amount and VAT fields inline with auto-recalculation
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, invoice number, etc.)

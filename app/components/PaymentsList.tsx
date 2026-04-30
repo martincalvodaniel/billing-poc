@@ -18,6 +18,10 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [suggestedTagsForEdit, setSuggestedTagsForEdit] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [editingTotalId, setEditingTotalId] = useState<string | null>(null);
+  const [editingTotal, setEditingTotal] = useState<string>("");
+  const [editingVatId, setEditingVatId] = useState<string | null>(null);
+  const [editingVat, setEditingVat] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -371,6 +375,130 @@ export default forwardRef(function PaymentsList(props, ref) {
     }, 200);
   };
 
+  const handleEditTotal = (payment: Payment) => {
+    setEditingTotalId(payment._id?.toString() || null);
+    setEditingTotal(payment.total.toString());
+  };
+
+  const handleSaveTotal = async () => {
+    if (!editingTotalId || !editingTotal) return;
+
+    const totalAmount = parseFloat(editingTotal);
+    if (isNaN(totalAmount)) {
+      setError("Invalid total amount");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingTotalId, total: totalAmount }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update total");
+      }
+
+      const responseData = await response.json();
+
+      // Update local state with recalculated values from server
+      setPayments((prevPayments) =>
+        prevPayments.map((p) =>
+          p._id?.toString() === editingTotalId
+            ? {
+                ...p,
+                total: responseData.total,
+                vat: responseData.vat,
+                netAmount: responseData.netAmount,
+              }
+            : p
+        )
+      );
+
+      setEditingTotalId(null);
+      setEditingTotal("");
+      setSuccessMessage("Total updated successfully");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err) {
+      console.error(`Error updating total: ${err}`);
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelTotalEdit = () => {
+    setEditingTotalId(null);
+    setEditingTotal("");
+  };
+
+  const handleEditVat = (payment: Payment) => {
+    setEditingVatId(payment._id?.toString() || null);
+    // Calculate VAT percentage from stored VAT amount and net amount
+    const vatPercentage = (payment.vat / payment.netAmount) * 100;
+    setEditingVat(vatPercentage.toFixed(2));
+  };
+
+  const handleSaveVat = async () => {
+    if (!editingVatId || !editingVat) return;
+
+    const vatPercentage = parseFloat(editingVat);
+    if (isNaN(vatPercentage) || vatPercentage < 0 || vatPercentage > 100) {
+      setError("VAT percentage must be between 0 and 100");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingVatId, vat: vatPercentage }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update VAT");
+      }
+
+      const responseData = await response.json();
+
+      // Update local state with recalculated values from server
+      setPayments((prevPayments) =>
+        prevPayments.map((p) =>
+          p._id?.toString() === editingVatId
+            ? {
+                ...p,
+                total: responseData.total,
+                vat: responseData.vat,
+                netAmount: responseData.netAmount,
+              }
+            : p
+        )
+      );
+
+      setEditingVatId(null);
+      setEditingVat("");
+      setSuccessMessage("VAT updated successfully");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err) {
+      console.error(`Error updating VAT: ${err}`);
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelVatEdit = () => {
+    setEditingVatId(null);
+    setEditingVat("");
+  };
+
   const filteredPayments = getFilteredPayments();
 
   const totalIncome = filteredPayments
@@ -687,10 +815,77 @@ export default forwardRef(function PaymentsList(props, ref) {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.total)}
+                      {editingTotalId === payment._id?.toString() ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            value={editingTotal}
+                            onChange={(e) => setEditingTotal(e.target.value)}
+                            className="w-24 rounded border border-zinc-300 px-2 py-1 text-right dark:border-zinc-600 dark:bg-zinc-800"
+                          />
+                          <button
+                            onClick={handleSaveTotal}
+                            disabled={isSaving}
+                            className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700"
+                          >
+                            {isSaving ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            onClick={handleCancelTotalEdit}
+                            disabled={isSaving}
+                            className="rounded bg-zinc-300 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEditTotal(payment)}
+                          className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                        >
+                          {formatCurrency(payment.total)}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.vat)}
+                      {editingVatId === payment._id?.toString() ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={editingVat}
+                            onChange={(e) => setEditingVat(e.target.value)}
+                            className="w-20 rounded border border-zinc-300 px-2 py-1 text-right dark:border-zinc-600 dark:bg-zinc-800"
+                          />
+                          <span className="text-xs text-zinc-600 dark:text-zinc-400">%</span>
+                          <button
+                            onClick={handleSaveVat}
+                            disabled={isSaving}
+                            className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700"
+                          >
+                            {isSaving ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            onClick={handleCancelVatEdit}
+                            disabled={isSaving}
+                            className="rounded bg-zinc-300 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEditVat(payment)}
+                          className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                        >
+                          {formatCurrency(payment.vat)}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.netAmount)}
