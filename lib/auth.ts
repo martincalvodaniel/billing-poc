@@ -7,7 +7,7 @@ if (!secret) {
 }
 
 const baseURL =
-  process.env.VERCEL_URL ?? "http://localhost:3000"
+  process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "http://localhost:3000"
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
