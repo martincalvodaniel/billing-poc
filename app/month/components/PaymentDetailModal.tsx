@@ -368,7 +368,7 @@ export default function PaymentDetailModal({
       title="Edit Payment"
       maxWidth="lg"
       closeOnEscape={true}
-      closeOnBackdropClick={false}
+      closeOnBackdropClick={true}
       footer={
         <div className="flex gap-2">
           <button
