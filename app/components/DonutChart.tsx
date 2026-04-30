@@ -1,12 +1,14 @@
 'use client';
 
+import { memo } from 'react';
+
 interface DonutChartProps {
   data: Record<string, number>;
   title: string;
   colors: string[];
 }
 
-export default function DonutChart({ data, title, colors }: DonutChartProps) {
+const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartProps) {
   const entries = Object.entries(data);
   const total = entries.reduce((sum, [, value]) => sum + value, 0);
 
@@ -143,4 +145,6 @@ export default function DonutChart({ data, title, colors }: DonutChartProps) {
       </div>
     </div>
   );
-}
+});
+
+export default DonutChart;

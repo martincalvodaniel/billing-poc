@@ -12,6 +12,8 @@ This document provides best practices and guidelines for AI agents working with 
 - **Database**: MongoDB with type-safe collections
 - **Styling**: Tailwind CSS 4 (utility-first)
 - **No external UI libraries** - custom components using semantic HTML
+- **Accessibility**: WCAG 2.1 Level A compliant with ARIA attributes and live regions
+- **Dark mode**: Native support with `color-scheme` meta tag
 
 ## Architecture Patterns
 
@@ -53,6 +55,7 @@ lib/                          # Shared utilities
 - Follow naming: PascalCase for components, camelCase for handlers
 - Extract reusable logic into separate functions or custom hooks
 - Use semantic HTML (avoid divitis)
+- **Memoize pure components** with `React.memo()` to prevent unnecessary re-renders
 
 Example component structure:
 ```typescript
@@ -121,6 +124,133 @@ try {
   - Outcome: red (`text-red-600`, `bg-red-50`)
   - Balance/Neutral: blue (`text-blue-600`, `bg-blue-50`)
 - Dark mode: Tailwind defaults handle `dark:` classes
+- Add `color-scheme` meta tag in layout for proper dark mode support
+
+### Accessibility Patterns
+
+#### Icon-Only Buttons
+All icon buttons MUST have `aria-label` for screen reader users:
+```tsx
+// ✅ Good: Accessible icon button
+<button
+  onClick={handleDelete}
+  aria-label="Delete payment"
+  className="rounded px-2 py-1 text-red-600 hover:text-red-700 
+             focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+>
+  ✕
+</button>
+
+// ❌ Avoid: Missing aria-label
+<button onClick={handleDelete} title="Delete">
+  ✕
+</button>
+```
+
+#### Modal Dialogs
+Modals require proper ARIA attributes for accessibility:
+```tsx
+{isOpen && (
+  <div 
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    role="presentation"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) closeModal();
+    }}
+  >
+    <div 
+      className="w-full max-w-sm rounded-lg bg-white shadow-lg"
+      role="dialog"
+      aria-labelledby="modal-title"
+      aria-modal="true"
+    >
+      <div className="border-b px-6 py-4">
+        <h3 id="modal-title" className="text-lg font-semibold">
+          Modal Title
+        </h3>
+      </div>
+      {/* Modal content */}
+    </div>
+  </div>
+)}
+```
+
+**Key attributes**:
+- `role="dialog"` on modal container
+- `aria-labelledby` pointing to title ID
+- `aria-modal="true"` to indicate modal behavior
+- `role="presentation"` on backdrop
+- Click-outside handler on backdrop
+
+#### Live Regions (Error Messages & Notifications)
+Use `aria-live` for dynamic content updates:
+```tsx
+// Error messages
+{error && (
+  <div 
+    className="rounded-md bg-red-50 p-4 text-sm text-red-800"
+    role="alert"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    {error}
+  </div>
+)}
+
+// Success notifications
+{showSuccess && (
+  <div 
+    className="fixed left-1/2 top-8 z-50 -translate-x-1/2"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <div className="flex items-center gap-3 rounded-lg border bg-green-50 px-6 py-4">
+      <svg aria-hidden="true" className="h-5 w-5" {/* ... */}>
+        {/* Icon path */}
+      </svg>
+      <span>Success message</span>
+      <button 
+        onClick={closeToast}
+        aria-label="Close notification"
+        className="focus:outline-none focus:ring-2 focus:ring-green-500"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+)}
+```
+
+**Key attributes**:
+- `role="alert"` for error messages (assertive)
+- `role="status"` for success messages (polite)
+- `aria-live="polite"` for automatic announcements
+- `aria-atomic="true"` to announce entire message
+- `aria-hidden="true"` on decorative SVG icons
+- `aria-label` on close buttons
+
+#### Focus Management
+All interactive elements need visible focus indicators:
+```tsx
+// Add focus rings to all buttons and interactive elements
+className="rounded px-4 py-2 
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+           dark:focus:ring-offset-zinc-900"
+```
+
+#### Expandable Elements
+Use `aria-expanded` for collapsible/expandable UI:
+```tsx
+<button
+  onClick={() => setShowCalendar(!showCalendar)}
+  aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
+  aria-expanded={showCalendar}
+  className="..."
+>
+  📅 {formatMonthYear(selectedDate)}
+</button>
+```
 
 ### Formatting Conventions
 - **Currency**: Use EUR (€) with Spanish locale (es-ES)
@@ -164,6 +294,31 @@ const formatDate = (dateString: string) => {
 4. Export as default
 5. Import and use in `page.tsx` or other components
 
+### Setting Up Dark Mode Support
+Add `color-scheme` meta tag in root layout for proper dark mode support:
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" className="light dark">
+      <head>
+        <meta name="color-scheme" content="light dark" />
+      </head>
+      <body className={/* ... */}>
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+**Benefits**:
+- Native browser controls (scrollbars, inputs) respect dark/light mode
+- Scrollbar colors automatically adjust
+- Better visual consistency across operating systems
+- Improved dark mode experience on Windows
+
 ### Creating Reusable Visualization Components
 For charts and visualizations that are used in multiple places or are complex:
 
@@ -172,13 +327,51 @@ For charts and visualizations that are used in multiple places or are complex:
 3. Keep component self-contained with all SVG/DOM generation inside
 4. Use TypeScript interfaces for props contract
 5. Apply styling through Tailwind classes (no CSS files)
-6. Export as default and import where needed
+6. **Wrap with `React.memo()`** to prevent re-renders when parent updates
+7. Export as default and import where needed
 
 Example - DonutChart component:
 - **Props**: `data` (Record of tag→amount), `title`, `colors` (string array)
 - **Handles**: Full circle (100%) edge case with semicircle rendering
 - **Returns**: No-data state or styled donut chart with legend
 - **Used in**: `PaymentsList.tsx` for income/outcome breakdown by tag
+- **Optimization**: Memoized to prevent re-renders when props unchanged
+
+### Optimizing Component Re-renders
+Use `React.memo()` for pure presentational components:
+
+```tsx
+import { memo } from 'react';
+
+interface ChartProps {
+  data: Record<string, number>;
+  title: string;
+  colors: string[];
+}
+
+// ✅ Memoized component prevents unnecessary re-renders
+const DonutChart = memo(function DonutChart({ data, title, colors }: ChartProps) {
+  // Component logic
+  return (
+    <div>
+      {/* Chart rendering */}
+    </div>
+  );
+});
+
+export default DonutChart;
+```
+
+**When to use memo()**:
+- Pure presentational components (same props = same output)
+- Components with expensive render calculations
+- Components that receive objects/arrays as props frequently
+- Components rendered in lists or tables
+
+**When NOT to use memo()**:
+- Components that always receive new props
+- Components with internal state management
+- Already fast components (premature optimization)
 
 ### Database Operations
 - Always use `getDatabase()` from `lib/mongodb.ts`
@@ -1109,6 +1302,18 @@ const vatAmount = totalAmount - netAmount;
 
 ## Completed Features & Patterns
 
+### Accessibility Compliance (WCAG 2.1 Level A)
+✓ **Completed**: Full accessibility implementation with ARIA attributes and semantic HTML
+- All icon-only buttons have `aria-label` attributes
+- Modal dialogs use `role="dialog"`, `aria-labelledby`, and `aria-modal`
+- Error messages use `role="alert"` with `aria-live="polite"`
+- Success notifications use `role="status"` with `aria-live="polite"`
+- Decorative SVG icons have `aria-hidden="true"`
+- All interactive elements have visible focus rings with `focus:ring-2`
+- Expandable elements use `aria-expanded` for state
+- Color-scheme meta tag for native dark mode support
+- See "Accessibility Patterns" section for implementation examples
+
 ### Payment List View with Summary Cards & Donut Charts
 ✓ **Completed**: Display all payments with real-time summary calculations and tag-based breakdown visualization
 - Summary cards show total income, total outcome, and net balance
@@ -1349,3 +1554,8 @@ Before completing any task, verify:
 - [ ] No `any` types without justification
 - [ ] Linting passes: `pnpm lint`
 - [ ] Code maintains existing architecture patterns
+- [ ] **Icon-only buttons have `aria-label` attributes**
+- [ ] **Modals have proper ARIA attributes (`role="dialog"`, `aria-labelledby`, `aria-modal`)**
+- [ ] **Error/success messages use live regions (`aria-live="polite"`)**
+- [ ] **Decorative icons have `aria-hidden="true"`**
+- [ ] **Interactive elements have visible focus indicators**

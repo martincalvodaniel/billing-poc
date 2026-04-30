@@ -165,7 +165,12 @@ const PaymentForm = forwardRef(function PaymentForm(
       {/* Success Toast Notification */}
       {showSuccess && (
         <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
-          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90">
+          <div 
+            className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {/* Success Icon */}
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
               <svg
@@ -176,6 +181,7 @@ const PaymentForm = forwardRef(function PaymentForm(
                 strokeWidth="2"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path d="M5 13l4 4L19 7"></path>
               </svg>
@@ -194,7 +200,7 @@ const PaymentForm = forwardRef(function PaymentForm(
             {/* Close Button */}
             <button
               onClick={() => setShowSuccess(false)}
-              className="ml-4 flex-shrink-0 rounded-md p-1 text-green-600 transition-colors hover:bg-green-100 hover:text-green-800 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-200"
+              className="ml-4 flex-shrink-0 rounded-md p-1 text-green-600 transition-colors hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-200"
               aria-label="Close notification"
             >
               <svg
@@ -205,6 +211,7 @@ const PaymentForm = forwardRef(function PaymentForm(
                 strokeWidth="2"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -227,7 +234,12 @@ const PaymentForm = forwardRef(function PaymentForm(
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div 
+          className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {error}
         </div>
       )}

@@ -12,9 +12,10 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Modal Payment Editing** - Click any date (shows day only since month/year are in calendar picker), type, tag, total, or VAT in the payment list to open a centered edit modal. VAT displays as `(percentage%) amount`. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
-- **RESTful API** - GET, POST, and PUT endpoints for payment operations
+- **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 - **Form & Server Validation** - Client and server-side validation for data integrity
+- **Accessibility Compliant** - WCAG 2.1 Level A compliant with ARIA labels, live regions, keyboard navigation, and screen reader support
 
 ## Getting Started
 

@@ -493,11 +493,17 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
       {/* Success Toast */}
       {showSuccess && (
         <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
-          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90">
+          <div 
+            className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <svg
               className="h-5 w-5 text-green-600 dark:text-green-400"
               fill="currentColor"
               viewBox="0 0 20 20"
+              aria-hidden="true"
             >
               <path
                 fillRule="evenodd"
@@ -510,7 +516,8 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
             </span>
             <button
               onClick={() => setShowSuccess(false)}
-              className="ml-auto text-green-600 hover:text-green-700 dark:text-green-400"
+              aria-label="Close notification"
+              className="ml-auto rounded-md p-1 text-green-600 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-green-400 dark:hover:text-green-300"
             >
               ✕
             </button>
@@ -561,7 +568,9 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
             <div className="relative" ref={calendarRef}>
               <button
                 onClick={() => setShowCalendar(!showCalendar)}
-                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
+                aria-expanded={showCalendar}
+                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
               >
                 📅 {formatMonthYear(selectedDate)}
               </button>
@@ -571,7 +580,12 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
         </div>
 
         {error && (
-          <div className="m-6 rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <div 
+            className="m-6 rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {error}
           </div>
         )}
@@ -672,8 +686,8 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleDeleteClick(payment._id?.toString() || "")}
-                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                        title="Delete payment"
+                        aria-label="Delete payment"
+                        className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
                       >
                         ✕
                       </button>
@@ -690,10 +704,24 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
       {deleteConfirmPaymentId && (() => {
         const paymentToDelete = payments.find(p => p._id?.toString() === deleteConfirmPaymentId);
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            role="presentation"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setDeleteConfirmPaymentId(null);
+            }}
+          >
+            <div 
+              className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900"
+              role="dialog"
+              aria-labelledby="delete-modal-title"
+              aria-modal="true"
+            >
               <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                <h3 
+                  id="delete-modal-title"
+                  className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+                >
                   Delete Payment
                 </h3>
               </div>
@@ -756,10 +784,24 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
 
       {/* Edit Modal Overlay */}
       {editingPaymentId && editingField && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeEditModal();
+          }}
+        >
+          <div 
+            className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900"
+            role="dialog"
+            aria-labelledby="edit-modal-title"
+            aria-modal="true"
+          >
             <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <h3 
+                id="edit-modal-title"
+                className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+              >
                 Edit {editingField.charAt(0).toUpperCase() + editingField.slice(1)}
               </h3>
             </div>
