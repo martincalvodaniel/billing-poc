@@ -16,6 +16,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +45,10 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
         type: "income",
       });
 
-      alert("Payment saved successfully!");
+      // Show success toast
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+      
       onPaymentSaved?.();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
@@ -76,10 +80,62 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-xl space-y-6 rounded-lg border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-    >
+    <>
+      {/* Success Toast Notification */}
+      {showSuccess && (
+        <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90">
+            {/* Success Icon */}
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+              <svg
+                className="h-6 w-6 text-green-600 dark:text-green-400"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            
+            {/* Message */}
+            <div className="flex flex-col">
+              <p className="font-semibold text-green-900 dark:text-green-100">
+                Payment saved successfully!
+              </p>
+              <p className="text-sm text-green-700 dark:text-green-300">
+                Your payment has been recorded.
+              </p>
+            </div>
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="ml-4 flex-shrink-0 rounded-md p-1 text-green-600 transition-colors hover:bg-green-100 hover:text-green-800 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-200"
+              aria-label="Close notification"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-xl space-y-6 rounded-lg border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
           New Payment
@@ -212,5 +268,6 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
         {isSubmitting ? "Saving..." : "Save Payment"}
       </button>
     </form>
+    </>
   );
 }

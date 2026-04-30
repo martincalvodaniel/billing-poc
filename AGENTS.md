@@ -170,7 +170,7 @@ const payments = await db
 - Parse string inputs to appropriate types (numbers, dates, percentages)
 - **VAT input is a percentage (0-100)**: Calculate net amount as `total / (1 + vat%)`
 - Disable form submission while processing
-- Provide user feedback (success/error messages)
+- Provide user feedback via toast notifications (see User Feedback pattern below)
 - Display calculated amounts in real-time (VAT amount and net amount)
 
 #### Payment Calculation Pattern
@@ -196,6 +196,47 @@ VAT Amount: 410.48 - 339.24 = €71.24
 ```
 
 This reflects real-world salary/invoice scenarios where you know the total amount and need to extract the deductions.
+
+### User Feedback (Toast Notifications)
+- Use custom toast notifications instead of browser `alert()` for better UX
+- Implement with state management for show/hide control
+- Auto-dismiss after 4 seconds with manual close option
+- Position fixed at top center of screen
+- Include animations for smooth appearance (slide-down effect)
+- Use semantic colors matching action type (green for success, red for errors)
+- Dark mode support built-in
+
+Example pattern:
+```typescript
+const [showSuccess, setShowSuccess] = useState(false);
+
+// After successful operation
+setShowSuccess(true);
+setTimeout(() => setShowSuccess(false), 4000);
+
+// In JSX
+{showSuccess && (
+  <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
+    <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90">
+      {/* Icon, message, and close button */}
+    </div>
+  </div>
+)}
+```
+
+**Animation setup** (in `globals.css`):
+```css
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+```
 
 ## Development Workflow
 
