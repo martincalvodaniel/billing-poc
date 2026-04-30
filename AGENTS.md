@@ -677,6 +677,178 @@ const data = await response.json(); // { tags: ["All", "tags", "combined"] }
 - Resets tag field (but not type/date) after successful save
 - Dropdown closes automatically after selection with 200ms delay to allow click
 
+### Delete Payment Pattern (Confirmation Modal with Payment Details)
+For removing payments with a confirmation overlay that displays payment information:
+
+1. **State Management** - Track which payment is being deleted (`deleteConfirmPaymentId`) and deletion status (`isDeleting`)
+2. **Delete Trigger** - Click delete button (×) in payment row to open confirmation modal
+3. **Confirmation Modal** - Display payment details (date, type, tag, total) with warning and Cancel/Delete buttons
+4. **Delete Handler** - Call DELETE API, update local state, handle errors
+5. **Success Feedback** - Show toast notification after successful deletion
+
+Example pattern:
+```typescript
+// State management
+const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<string | null>(null);
+const [isDeleting, setIsDeleting] = useState(false);
+
+// Delete trigger
+const handleDeleteClick = (paymentId: string) => {
+  setDeleteConfirmPaymentId(paymentId);
+};
+
+// Delete handler
+const handleConfirmDelete = async () => {
+  if (!deleteConfirmPaymentId) return;
+
+  setIsDeleting(true);
+  try {
+    const response = await fetch("/api/payments", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: deleteConfirmPaymentId }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete payment");
+    }
+
+    // Remove payment from local state (optimistic update)
+    setPayments((prevPayments) =>
+      prevPayments.filter((p) => p._id?.toString() !== deleteConfirmPaymentId)
+    );
+
+    setDeleteConfirmPaymentId(null);
+    setSuccessMessage("Payment deleted successfully");
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 4000);
+  } catch (err) {
+    console.error(`Error deleting payment: ${err}`);
+    setError(err instanceof Error ? err.message : "An error occurred");
+    setDeleteConfirmPaymentId(null);
+  } finally {
+    setIsDeleting(false);
+  }
+};
+```
+
+In JSX - Confirmation modal displays payment info before deletion:
+```tsx
+{deleteConfirmPaymentId && (() => {
+  const paymentToDelete = payments.find(p => p._id?.toString() === deleteConfirmPaymentId);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            Delete Payment
+          </h3>
+        </div>
+        <div className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
+          <p>Are you sure you want to delete this payment?</p>
+          {paymentToDelete && (
+            <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
+                <span className="font-medium">{formatDate(paymentToDelete.date)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
+                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  paymentToDelete.type === "income"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}>
+                  {paymentToDelete.type.charAt(0).toUpperCase() + paymentToDelete.type.slice(1)}
+                </span>
+              </div>
+              {paymentToDelete.tag && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
+                  <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                    {paymentToDelete.tag}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
+                <span>{formatCurrency(paymentToDelete.total)}</span>
+              </div>
+            </div>
+          )}
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            This action cannot be undone.
+          </p>
+        </div>
+        <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <button
+            onClick={() => setDeleteConfirmPaymentId(null)}
+            disabled={isDeleting}
+            className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirmDelete}
+            disabled={isDeleting}
+            className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+})()}
+```
+
+**API Endpoint** - `DELETE /api/payments`:
+```typescript
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing payment ID" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDatabase();
+    const result = await db.collection<Payment>("payments").deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Payment not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error(`Error deleting payment: ${error}`);
+    return NextResponse.json(
+      { error: "Failed to delete payment" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+**Key Features:**
+- Delete button is accessible in table action column
+- Confirmation modal prevents accidental deletions
+- Payment details (date, type, tag, total) shown in modal for verification
+- Optimistic UI update - payment removed immediately from list
+- Success toast notification on completion
+- Error handling with user-friendly messages
+- Loading state disables buttons during deletion
+- Modal automatically closes on successful deletion
+
 ### User Feedback (Toast Notifications)
 - Use custom toast notifications instead of browser `alert()` for better UX
 - Implement with state management for show/hide control
@@ -999,6 +1171,38 @@ const vatAmount = totalAmount - netAmount;
   - Single `handleSave` function handles validation and save for all field types
   - Disabled submit during save operation
 - See "Modal Editing Pattern" in Common Tasks & Patterns for implementation reference
+
+### Delete Payment with Confirmation Modal
+✓ **Completed**: Remove payments with overlay confirmation showing payment details
+- **DELETE `/api/payments` Endpoint**:
+  - Accepts `id` parameter (MongoDB ObjectId)
+  - Validates payment ID exists before deletion
+  - Returns success status on deletion
+  - Returns 404 if payment not found
+- **Confirmation Modal UI**:
+  - Centered overlay modal triggered by delete button (✕) in payment table row
+  - Displays payment information: date, type, tag (if exists), and total amount
+  - Payment info formatted consistently with table display (same colors, badges, currency formatting)
+  - Shows warning message: "This action cannot be undone"
+  - Cancel and Delete buttons with clear action distinction (red for delete)
+- **State Management**:
+  - `deleteConfirmPaymentId` - tracks which payment is pending deletion
+  - `isDeleting` - loading state during deletion (buttons disabled while processing)
+  - Modal only renders when `deleteConfirmPaymentId` is set
+- **Delete Handler Functions**:
+  - `handleDeleteClick(paymentId)` - Opens confirmation modal
+  - `handleConfirmDelete()` - Executes deletion:
+    - Calls DELETE API endpoint
+    - Removes payment from local state immediately (optimistic update)
+    - Shows success toast notification
+    - Handles errors gracefully with user-friendly messages
+- **UX Features**:
+  - Optimistic update - payment disappears immediately, reverts on error
+  - Success notification after deletion
+  - Error handling with display to user
+  - Loading state prevents double-clicks during deletion
+  - Modal closes automatically after successful deletion
+- See "Delete Payment Pattern" in Common Tasks & Patterns for implementation reference
 
 ## Future Development Guidelines
 

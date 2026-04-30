@@ -29,6 +29,10 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   
+  // Delete confirmation state
+  const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   // Month selection state (initialized to current month)
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
@@ -272,6 +276,43 @@ export default forwardRef(function PaymentsList(props, ref) {
     setEditingTag(tag);
     setShowTagSuggestions(false);
     setSuggestedTagsForEdit([]);
+  };
+
+  const handleDeleteClick = (paymentId: string) => {
+    setDeleteConfirmPaymentId(paymentId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmPaymentId) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteConfirmPaymentId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete payment");
+      }
+
+      // Remove payment from local state
+      setPayments((prevPayments) =>
+        prevPayments.filter((p) => p._id?.toString() !== deleteConfirmPaymentId)
+      );
+
+      setDeleteConfirmPaymentId(null);
+      setSuccessMessage("Payment deleted successfully");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err) {
+      console.error(`Error deleting payment: ${err}`);
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setDeleteConfirmPaymentId(null);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -602,6 +643,15 @@ export default forwardRef(function PaymentsList(props, ref) {
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.netAmount)}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDeleteClick(payment._id?.toString() || "")}
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        title="Delete payment"
+                      >
+                        ✕
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -609,6 +659,74 @@ export default forwardRef(function PaymentsList(props, ref) {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal Overlay */}
+      {deleteConfirmPaymentId && (() => {
+        const paymentToDelete = payments.find(p => p._id?.toString() === deleteConfirmPaymentId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+              <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  Delete Payment
+                </h3>
+              </div>
+              <div className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
+                <p>Are you sure you want to delete this payment?</p>
+                {paymentToDelete && (
+                  <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatDate(paymentToDelete.date)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        paymentToDelete.type === "income"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                      }`}>
+                        {paymentToDelete.type.charAt(0).toUpperCase() + paymentToDelete.type.slice(1)}
+                      </span>
+                    </div>
+                    {paymentToDelete.tag && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
+                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          {paymentToDelete.tag}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
+                      <span className="text-zinc-900 dark:text-zinc-100">{formatCurrency(paymentToDelete.total)}</span>
+                    </div>
+                  </div>
+                )}
+                <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
+                <button
+                  onClick={() => setDeleteConfirmPaymentId(null)}
+                  disabled={isDeleting}
+                  className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Edit Modal Overlay */}
       {editingPaymentId && editingField && (

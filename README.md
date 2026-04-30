@@ -10,6 +10,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Charts appear between summary cards and payment list for quick insights
 - **Modal Payment Editing** - Click any date, type, tag, total, or VAT in the payment list to open a centered edit modal. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
+- **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, and PUT endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
@@ -98,6 +99,19 @@ When `vat` is updated, net amount and VAT amount are recalculated based on total
 
 **Response:** Success status with updated payment values (`total`, `vat`, `netAmount`)
 
+### `DELETE /api/payments` - Delete Payment
+
+```json
+{
+  "id": "payment_id"
+}
+```
+
+**Parameters:**
+- `id`: MongoDB ObjectId of the payment to delete (required)
+
+**Response:** Success status
+
 ### `GET /api/tags` - Get Available Tags
 
 **Query Parameters:**
@@ -138,6 +152,7 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Inline payment editing (date, type, tag, total, VAT)
 - [x] Payment tags with type-based autocomplete
 - [x] Edit payment amount and VAT fields inline with auto-recalculation
+- [x] Delete payments with confirmation modal
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, invoice number, etc.)

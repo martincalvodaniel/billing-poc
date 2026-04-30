@@ -228,3 +228,41 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id } = body;
+
+    // Validate required fields
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing payment ID" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDatabase();
+    const result = await db.collection<Payment>("payments").deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Payment not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(`Error deleting payment: ${error}`);
+    return NextResponse.json(
+      { error: "Failed to delete payment" },
+      { status: 500 }
+    );
+  }
+}
