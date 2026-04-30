@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
     "192.168.0.45",
     "winter-epidemic-uniformly.ngrok-free.dev",
   ],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+    ],
+  },
   reactStrictMode: true,
 }
 

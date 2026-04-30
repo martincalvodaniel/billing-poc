@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
@@ -93,9 +94,11 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
             <>
               <div className="mx-1 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
               {session.user.image && (
-                <img
+                <Image
                   src={session.user.image}
-                  alt=""
+                  alt={session.user.name ?? "User avatar"}
+                  width={28}
+                  height={28}
                   className="h-7 w-7 rounded-full"
                   referrerPolicy="no-referrer"
                 />
@@ -215,9 +218,11 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
               <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                 <div className="mb-3 flex items-center gap-3">
                   {session.user.image && (
-                    <img
+                    <Image
                       src={session.user.image}
-                      alt=""
+                      alt={session.user.name ?? "User avatar"}
+                      width={32}
+                      height={32}
                       className="h-8 w-8 rounded-full"
                       referrerPolicy="no-referrer"
                     />
