@@ -3,6 +3,7 @@
 import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { Payment } from "@/lib/types";
 import DonutChart from "./DonutChart";
+import SummaryCard from "./SummaryCard";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
@@ -534,30 +535,25 @@ export default forwardRef(function PaymentsList(
       )}
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Total Income</p>
-          <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
-            {formatCurrency(totalIncome)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Total Outcome</p>
-          <p className="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
-            {formatCurrency(totalOutcome)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Net Balance</p>
-          <p
-            className={`mt-2 text-2xl font-bold ${
-              netBalance >= 0
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {formatCurrency(netBalance)}
-          </p>
-        </div>
+        <SummaryCard
+          label="Total Income"
+          value={formatCurrency(totalIncome)}
+          valueClassName="text-green-600 dark:text-green-400"
+        />
+        <SummaryCard
+          label="Total Outcome"
+          value={formatCurrency(totalOutcome)}
+          valueClassName="text-red-600 dark:text-red-400"
+        />
+        <SummaryCard
+          label="Net Balance"
+          value={formatCurrency(netBalance)}
+          valueClassName={
+            netBalance >= 0
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-red-600 dark:text-red-400"
+          }
+        />
       </div>
 
       {/* Donut Charts */}

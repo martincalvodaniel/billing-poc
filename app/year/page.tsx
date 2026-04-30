@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import DonutChart from "../components/DonutChart";
 import { Payment } from "@/lib/types";
 import NavigationBar from "../components/NavigationBar";
+import SummaryCard from "../components/SummaryCard";
 
 export default function YearSummaryPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -249,20 +250,24 @@ export default function YearSummaryPage() {
 
           <div className="space-y-6 px-6 pb-6">
              <div className="grid gap-4 sm:grid-cols-3">
-               <div className="rounded-lg border border-zinc-200 bg-gradient-to-b from-zinc-50 to-white p-4 dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60">
-                 <p className="text-sm text-zinc-600 dark:text-zinc-400">Income (YTD)</p>
-                 <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(yearlyIncome)}</p>
-               </div>
-               <div className="rounded-lg border border-zinc-200 bg-gradient-to-b from-zinc-50 to-white p-4 dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60">
-                 <p className="text-sm text-zinc-600 dark:text-zinc-400">Outcome (YTD)</p>
-                 <p className="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(yearlyOutcome)}</p>
-               </div>
-               <div className="rounded-lg border border-zinc-200 bg-gradient-to-b from-zinc-50 to-white p-4 dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60">
-                 <p className="text-sm text-zinc-600 dark:text-zinc-400">Net (YTD)</p>
-                 <p className={`mt-2 text-2xl font-bold ${yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>
-                   {formatCurrency(yearlyNet)}
-                 </p>
-               </div>
+               <SummaryCard
+                 label="Total Income"
+                 value={formatCurrency(yearlyIncome)}
+                 valueClassName="text-green-600 dark:text-green-400"
+                 className="bg-gradient-to-b from-zinc-50 to-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60"
+               />
+               <SummaryCard
+                 label="Total Outcome"
+                 value={formatCurrency(yearlyOutcome)}
+                 valueClassName="text-red-600 dark:text-red-400"
+                 className="bg-gradient-to-b from-zinc-50 to-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60"
+               />
+               <SummaryCard
+                 label="Net Balance"
+                 value={formatCurrency(yearlyNet)}
+                 valueClassName={yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
+                 className="bg-gradient-to-b from-zinc-50 to-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60"
+               />
              </div>
 
              {paymentsForYear.length === 0 ? (
