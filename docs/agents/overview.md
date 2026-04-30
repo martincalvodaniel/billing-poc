@@ -14,7 +14,7 @@
 ## Architecture
 - app/: Next.js App Router
   - api/payments/route.ts: REST API
-  - components/: DonutChart, PaymentForm, PaymentsList, PaymentCounter, MonthSelector, YearSelector, NavigationBar, SummaryCard
+  - components/: DonutChart, PaymentForm, MonthlyPaymentsView, MonthlyBreakdown, PaymentCounter, MonthSelector, YearSelector, NavigationBar, SummaryCard
   - page.tsx: Monthly payments list with month navigation
   - year/page.tsx: Yearly summary with year picker
   - layout.tsx, globals.css
@@ -25,8 +25,8 @@
 1) User input → PaymentForm (client validation)
 2) API → app/api/payments/route.ts (server validation)
 3) DB → MongoDB collection "payments"
-4) Display → PaymentsList (fetch, filter by month, summaries)
-5) Visualization → DonutChart (tag-based breakdown)
+4) Display → MonthlyPaymentsView (fetch, filter by month, summaries)
+5) Visualization → DonutChart (tag-based breakdown); MonthlyBreakdown (monthly totals)
 
 ## Design System (All Pages)
 All pages must follow consistent design patterns to ensure a cohesive user experience:

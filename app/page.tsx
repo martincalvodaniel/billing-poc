@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import PaymentForm from "./components/PaymentForm";
-import PaymentsList from "./components/PaymentsList";
+import MonthlyPaymentsView from "./components/MonthlyPaymentsView";
 import NavigationBar from "./components/NavigationBar";
 import MonthSelector from "./components/MonthSelector";
 import PaymentCounter from "./components/PaymentCounter";
@@ -108,7 +108,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-6">
-          <PaymentsList
+          <MonthlyPaymentsView
             ref={paymentsListRef}
             onMonthChange={handleMonthChange}
             selectedDate={selectedDate}

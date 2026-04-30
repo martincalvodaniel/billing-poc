@@ -7,7 +7,7 @@ import SummaryCard from "./SummaryCard";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
-export default forwardRef(function PaymentsList(
+export default forwardRef(function MonthlyPaymentsView(
   props: { onMonthChange?: (dateString: string) => void; selectedDate: Date; onPaymentsBreakdownChange?: (breakdown: { incomeCount: number; outcomeCount: number }) => void },
   ref
 ) {

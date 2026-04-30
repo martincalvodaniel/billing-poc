@@ -14,6 +14,8 @@
 
 ### Component Extraction
 Extract components when they appear in multiple places or represent a cohesive UI unit:
+- **MonthlyPaymentsView**: Monthly payment list with editing, deletion, and filtering (replaces inline logic)
+- **MonthlyBreakdown**: Monthly totals breakdown visualization (extracted from year view)
 - **PaymentCounter**: Shows payment count breakdown by type (used in both monthly and yearly views)
 - **MonthSelector**: Calendar picker reused across pages
 - **YearSelector**: Year navigation reused across pages

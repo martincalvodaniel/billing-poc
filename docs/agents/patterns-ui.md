@@ -174,6 +174,86 @@ return (
 - Updates trigger data refiltering based on paymentsForYear memo
 - Place year selector in layout with consistent button styling
 
+## MonthlyBreakdown Component
+
+Reusable component for displaying monthly totals breakdown in year view. Shows income, outcome, and net balance for each month with visual progress bars.
+
+### Props
+```typescript
+interface MonthlyBreakdownProps {
+  monthlyTotals: Array<{    // Calculated monthly totals
+    monthIndex: number;     // 0-11 for month
+    income: number;         // Total income for month
+    outcome: number;        // Total outcome for month
+    net: number;            // Net balance (income - outcome)
+    totalVolume: number;    // Total volume for bar scaling
+  }>;
+  selectedYear: number;     // Year for month labels
+  formatCurrency: (amount: number) => string;  // Currency formatter
+  maxMonthlyVolume: number; // Max volume across all months for bar width
+}
+```
+
+### Features
+- 3-column grid (responsive to 2 columns on mobile)
+- Month abbreviation label (Jan, Feb, etc.)
+- Color-coded net balance (blue positive, red negative, gray zero)
+- Income/outcome amounts with type-specific colors
+- Visual progress bar indicating relative monthly volume
+- Dark mode support
+- No interactive elements (pure display)
+
+### Integration Notes
+- Used in year summary view (app/year/page.tsx) to display monthly breakdown
+- Requires pre-computed monthlyTotals with income/outcome/net calculations
+- Pass the same formatCurrency function used elsewhere for consistency
+- Positioned after DonutChart visualizations in yearly view
+- Pure component (no hooks, no state mutations)
+
+## MonthlyPaymentsView Component
+
+Core component for displaying monthly payment list with full CRUD operations. Previously named PaymentsList; renamed to better reflect its role as a monthly-focused view.
+
+### Props
+```typescript
+interface MonthlyPaymentsViewProps {
+  selectedDate: Date;  // Currently selected month (1st of month)
+  onMonthChange?: (dateString: string) => void;  // Sync parent form date
+  onPaymentsBreakdownChange?: (breakdown: {
+    incomeCount: number;
+    outcomeCount: number;
+  }) => void;  // Update filter header payment counts
+}
+```
+
+### Forwarded Ref Methods
+```typescript
+{
+  refreshPayments: () => void;  // Fetch latest payments from API
+  navigateToMonth: (dateString: string) => void;  // Navigate to payment's month (reserved for future)
+  getFilteredPaymentsCount: () => number;  // Get current month payment count
+}
+```
+
+### Features
+- Fetch and filter payments by selected month
+- Summary cards (income, outcome, net)
+- Donut charts by tag (income/outcome)
+- Payment table with editable fields (date, type, tag, total, VAT)
+- Modal editing with field-specific validation
+- Delete with confirmation modal
+- Tag autocomplete (type-specific)
+- Success/error toast notifications
+- Dark mode support
+- Keyboard navigation and accessibility
+
+### Integration Notes
+- Used as the main content in monthly view (app/page.tsx)
+- Parent manages selectedDate; MonthlyPaymentsView filters by month
+- Ref used by parent to refresh list after form save
+- onMonthChange callback syncs PaymentForm date field
+- onPaymentsBreakdownChange callback updates filter header counter
+
 ## Modal Editing
 - Centered overlay; track editingPaymentId + editingField
 - Field-specific validation; unified save handler calling PUT /api/payments

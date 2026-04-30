@@ -34,7 +34,7 @@
 ## VAT & Total Editing
 - Total and VAT editable; server recalculates net/vat amounts; optimistic updates
 
-## Year Summary View
-- Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry)
-- **PaymentCounter component**: Displays breakdown of Outcome and Income payment counts in filter header
-- Yearly totals, tag donuts, monthly breakdown cards; top navigation links between monthly list and yearly summary
+## Component Extraction & Refactoring
+- **MonthlyBreakdown**: Extracted monthly totals visualization from year/page.tsx for reuse and cleaner code (shows monthly income/outcome/net with progress bars)
+- **MonthlyPaymentsView**: Renamed from PaymentsList for clarity; handles monthly payment display, CRUD, and filtering with full modal editing support
+- Pure display components follow React.memo pattern; composite components encapsulate state management
