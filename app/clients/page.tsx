@@ -6,15 +6,35 @@ import { Client, ClientFormData } from "@/lib/types";
 import ClientForm from "./components/ClientForm";
 import ClientSearch from "./components/ClientSearch";
 import ClientList from "./components/ClientList";
+import PaginationControls from "./components/PaginationControls";
+
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+const DEFAULT_PAGINATION: PaginationState = {
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  totalPages: 0,
+  hasNextPage: false,
+  hasPrevPage: false,
+};
 
 export default function ClientsPage() {
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>(DEFAULT_PAGINATION);
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchClients = useCallback(async (query?: string) => {
+  const fetchClients = useCallback(async (query?: string, pageNum?: number) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -23,6 +43,8 @@ export default function ClientsPage() {
       if (query) {
         url.searchParams.set("search", query);
       }
+      url.searchParams.set("page", String(pageNum ?? 1));
+      url.searchParams.set("pageSize", String(10));
 
       const response = await fetch(url.toString());
 
@@ -31,7 +53,8 @@ export default function ClientsPage() {
       }
 
       const data = await response.json();
-      setFilteredClients(data.clients);
+      setFilteredClients(data.items);
+      setPagination(data.pagination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -46,8 +69,12 @@ export default function ClientsPage() {
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    fetchClients(query);
+    fetchClients(query, 1); // Reset to page 1 on search
   }, [fetchClients]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    fetchClients(searchQuery, newPage);
+  }, [fetchClients, searchQuery]);
 
   const handleCreateClient = async (data: ClientFormData) => {
     try {
@@ -63,14 +90,14 @@ export default function ClientsPage() {
       }
 
       setShowForm(false);
-      await fetchClients(searchQuery);
+      await fetchClients(searchQuery, 1); // Reset to page 1 after create
     } catch (err) {
       throw err;
     }
   };
 
   const handleRefresh = async () => {
-    await fetchClients(searchQuery);
+    await fetchClients(searchQuery, pagination.page);
   };
 
   return (
@@ -124,7 +151,23 @@ export default function ClientsPage() {
             <p className="text-zinc-600 dark:text-zinc-400">Loading clients...</p>
           </div>
         ) : (
-          <ClientList clients={filteredClients} onRefresh={handleRefresh} />
+          <>
+            <ClientList clients={filteredClients} onRefresh={handleRefresh} />
+            
+            {pagination.total > 0 && (
+              <div className="flex justify-center">
+                <PaginationControls
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  total={pagination.total}
+                  pageSize={pagination.pageSize}
+                  hasPrevPage={pagination.hasPrevPage}
+                  hasNextPage={pagination.hasNextPage}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

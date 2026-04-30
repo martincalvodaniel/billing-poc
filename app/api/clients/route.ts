@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import { Client, ClientType } from "@/lib/types";
+import { Client, ClientType, PaginatedResponse } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
+    const pageParam = searchParams.get("page");
+    const pageSizeParam = searchParams.get("pageSize");
+
+    // Parse pagination parameters with defaults
+    const pageSize = pageSizeParam ? Math.max(1, Math.min(100, parseInt(pageSizeParam, 10))) : 10;
+    const page = pageParam ? Math.max(1, parseInt(pageParam, 10)) : 1;
+    const skip = (page - 1) * pageSize;
 
     const db = await getDatabase();
 
@@ -22,16 +29,36 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const clients = await db
-      .collection<Client>("clients")
+    const collection = db.collection<Client>("clients");
+
+    // Get total count for pagination metadata
+    const total = await collection.countDocuments(filter);
+
+    // Fetch paginated results
+    const clients = await collection
       .find(filter)
       .sort({ name: 1 })
-      .limit(10)
+      .skip(skip)
+      .limit(pageSize)
       .toArray();
 
-    console.log(`Fetched ${clients.length} clients from database for filter: ${JSON.stringify(filter)}`);
+    const totalPages = Math.ceil(total / pageSize);
 
-    return NextResponse.json({ clients }, { status: 200 });
+    const response: PaginatedResponse<Client> = {
+      items: clients,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+
+    console.log(`Fetched ${clients.length} clients from database (page ${page}/${totalPages}) for filter: ${JSON.stringify(filter)}`);
+
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error(`Error fetching clients: ${error}`);
     return NextResponse.json(

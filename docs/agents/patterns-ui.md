@@ -261,6 +261,77 @@ All modals support consistent keyboard shortcuts for improved UX:
 - Keep actions minimal (close only); no editing within detail modal
 - Component: `PaymentDetailModal` under `app/month/components` with props `{ payment, onClose, formatCurrency? }`
 
+## PaginationControls Component
+
+Reusable component for navigating paginated data. Used in the Clients page to provide prev/next navigation and page info display.
+
+### Props
+```typescript
+interface PaginationControlsProps {
+  currentPage: number;           // Current page number (1-indexed)
+  totalPages: number;            // Total pages available
+  total: number;                 // Total items across all pages
+  pageSize: number;              // Items displayed per page
+  hasPrevPage: boolean;          // Whether previous page exists
+  hasNextPage: boolean;          // Whether next page exists
+  onPageChange: (page: number) => void;  // Called when page changes
+}
+```
+
+### Features
+- Previous/Next navigation buttons with disabled states
+- Current page / total pages display
+- Item count display ("Showing X to Y of Z items")
+- Responsive layout (flex column on mobile, flex row on tablet)
+- Dark mode support with consistent styling
+- Disabled button states prevent navigation beyond bounds
+- Keyboard-accessible buttons with aria-labels
+- WCAG compliant focus states with focus ring
+
+### Usage Example
+```typescript
+import PaginationControls from "./components/PaginationControls";
+
+// In clients page component:
+const [pagination, setPagination] = useState({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  totalPages: 0,
+  hasNextPage: false,
+  hasPrevPage: false,
+});
+
+const handlePageChange = (newPage: number) => {
+  fetchClients(searchQuery, newPage);
+};
+
+return (
+  <>
+    {/* Client list content */}
+    {pagination.total > 0 && (
+      <PaginationControls
+        currentPage={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        pageSize={pagination.pageSize}
+        hasPrevPage={pagination.hasPrevPage}
+        hasNextPage={pagination.hasNextPage}
+        onPageChange={handlePageChange}
+      />
+    )}
+  </>
+);
+```
+
+### Integration Notes
+- Used in clients list view (app/clients/page.tsx) to paginate client results
+- Parent manages pagination state and passes it to API on page change
+- API returns paginated response with both items and pagination metadata
+- Reset to page 1 when search term changes (prevent landing on non-existent page)
+- Only display pagination controls if total > 0 (hide for empty results)
+- Card styling matches other content cards for consistent UX
+
 ## Toast Notifications
 - Custom toasts, top-center; auto-dismiss ~4s; manual close
 - Use semantic colors; slideDown animation in globals.css

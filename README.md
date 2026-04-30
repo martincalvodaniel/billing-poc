@@ -14,10 +14,11 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Detail Modal** - View full details of any payment from the monthly list via an action button with an icon. The modal shows date, type, tag, total, VAT (percentage and amount), net amount, and all payment components with names, amounts, and optional concept-level VAT. Keyboard shortcut: **ESC** or **ENTER** to close
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal. Keyboard shortcuts: **ENTER** to confirm deletion, **ESC** to cancel
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
-- **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), and tax address. Search clients by name or tax ID with real-time filtering. Create, edit, and delete client records. Support for both individual freelancers and company entities.
+- **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), and tax address. Search clients by name or tax ID with real-time filtering. Create, edit, and delete client records. Support for both individual freelancers and company entities. Paginated client list with navigation controls.
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment and client operations with support for payment components
+- **Pagination** - Client list pagination with configurable page size and full navigation controls for browsing large datasets
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 - **Form & Server Validation** - Client and server-side validation for data integrity
 - **Accessibility Compliant** - WCAG 2.1 Level A compliant with ARIA labels, live regions, keyboard navigation, screen reader support, and keyboard shortcuts for all modal interactions (ESC to cancel/close, ENTER to confirm/save)
@@ -155,27 +156,59 @@ When `vat` is updated, net amount and VAT amount are recalculated based on total
 
 When filtered by type, returns only tags used by payments of that type.
 
-### `GET /api/clients` - Get Clients
+### `GET /api/clients` - Get Clients with Pagination
 
 **Query Parameters:**
 - `search`: Optional search term to filter by client name or tax ID (case-insensitive)
+- `page`: Optional page number (default: 1, minimum: 1)
+- `pageSize`: Optional number of clients per page (default: 10, maximum: 100)
 
-**Response:** Returns array of clients sorted by name (maximum 10 clients per request).
+**Response:** Returns paginated array of clients sorted by name with pagination metadata.
 
-Each client includes:
-- `_id`: MongoDB ObjectId
-- `clientType`: Either "individual" or "company"
-- `name`: Full name (individual) or business name (company)
-- `taxId`: Tax ID (NIF/CIF/NIE)
-- `address`: Tax address with postal code and city
-- `createdAt`: Creation timestamp
-- `updatedAt`: Last update timestamp
+**Response Format:**
+```json
+{
+  "items": [
+    {
+      "_id": "ObjectId",
+      "clientType": "individual" | "company",
+      "name": "Client Name",
+      "taxId": "12345678A",
+      "address": "Tax Address",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "total": 45,
+    "totalPages": 5,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
 
-**Note:** Results are limited to a maximum of 10 clients per request to optimize performance. Refine your search term to narrow results if needed.
+**Parameters Explanation:**
+- `page`: Current page number. Pagination resets to page 1 when search term changes.
+- `pageSize`: Controls how many clients appear per page. Constrained to max 100 to prevent excessive database load.
+- `total`: Total number of matching clients across all pages
+- `totalPages`: Total pages available for pagination
+- `hasNextPage`: Whether a next page exists (useful for disabling next button)
+- `hasPrevPage`: Whether a previous page exists (useful for disabling previous button)
 
 **Examples:**
 - `GET /api/clients` - First 10 clients (sorted by name)
-- `GET /api/clients?search=John` - Up to 10 clients matching "John" in name or tax ID
+- `GET /api/clients?page=2&pageSize=10` - Second page with 10 clients per page
+- `GET /api/clients?search=John` - First page of clients matching "John" in name or tax ID
+- `GET /api/clients?search=John&page=2&pageSize=20` - Second page (20 items) of clients matching "John"
+
+**Benefits of Pagination:**
+- Loads only required data instead of all clients into memory
+- Reduces network payload for large client databases
+- Improves page performance and responsiveness
+- Works seamlessly with search filtering
 
 ### `POST /api/clients` - Create Client
 
@@ -261,10 +294,10 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Delete payments with confirmation modal
 - [x] View payment details in modal from monthly list
 - [x] Add client management with search and filtering
+- [x] Pagination for large datasets (clients list)
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, invoice number, etc.)
-- [ ] Pagination for large datasets
 - [ ] User authentication and authorization
 - [ ] Multi-user support with separate accounts
 - [ ] Payment analytics and reporting

@@ -310,10 +310,166 @@ const filteredClients = data.clients; // Already filtered and limited by server 
 - At least one field required (other than updatedAt)
 - Validates field values before update
 
-### GET /api/clients
+### GET /api/clients with Pagination
+
+Fetch clients with full pagination support. Results are paginated with configurable page size (default 10).
+
+**API Endpoint:**
+```typescript
+// GET /api/clients?search={searchTerm}&page={pageNum}&pageSize={size}
+// search: optional search term (case-insensitive, searches name and taxId)
+// page: optional page number (default 1, min 1)
+// pageSize: optional results per page (default 10, max 100)
+// Returns paginated clients sorted by name with pagination metadata
+```
+
+**Response Format:**
+```typescript
+export interface PaginationMeta {
+  page: number;              // Current page number
+  pageSize: number;          // Number of items per page
+  total: number;             // Total matching items
+  totalPages: number;        // Total pages available
+  hasNextPage: boolean;      // Whether next page exists
+  hasPrevPage: boolean;      // Whether previous page exists
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];                // Array of clients for current page
+  pagination: PaginationMeta; // Pagination metadata
+}
+```
+
+**Example Response:**
+```json
+{
+  "items": [
+    {
+      "_id": "ObjectId",
+      "clientType": "individual",
+      "name": "Client 1",
+      "taxId": "12345678A",
+      "address": "Address 1",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "total": 25,
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+**Implementation in GET /api/clients:**
+```typescript
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search");
+  const pageParam = searchParams.get("page");
+  const pageSizeParam = searchParams.get("pageSize");
+
+  // Parse pagination parameters with defaults and bounds
+  const pageSize = pageSizeParam ? Math.max(1, Math.min(100, parseInt(pageSizeParam, 10))) : 10;
+  const page = pageParam ? Math.max(1, parseInt(pageParam, 10)) : 1;
+  const skip = (page - 1) * pageSize;
+
+  const db = await getDatabase();
+  const filter: Record<string, unknown> = {};
+
+  // Build search filter if provided
+  if (search && search.trim()) {
+    const searchPattern = { $regex: search.trim(), $options: "i" };
+    filter.$or = [
+      { name: searchPattern },
+      { taxId: searchPattern },
+    ];
+  }
+
+  const collection = db.collection<Client>("clients");
+  const total = await collection.countDocuments(filter);
+
+  const clients = await collection
+    .find(filter)
+    .sort({ name: 1 })
+    .skip(skip)
+    .limit(pageSize)
+    .toArray();
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  const response: PaginatedResponse<Client> = {
+    items: clients,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+
+  return NextResponse.json(response, { status: 200 });
+}
+```
+
+**Client-Side Usage:**
+```typescript
+// Fetch first page of clients (10 items default)
+const response = await fetch("/api/clients");
+const data = await response.json();
+const clients = data.items;
+const pagination = data.pagination;
+
+// Handle pagination state
+const [currentPage, setCurrentPage] = useState(pagination.page);
+
+// Navigate to next page (if available)
+const handleNextPage = async () => {
+  if (pagination.hasNextPage) {
+    const response = await fetch(`/api/clients?page=${currentPage + 1}`);
+    const data = await response.json();
+    setCurrentPage(data.pagination.page);
+  }
+};
+
+// Fetch specific page with search
+const handleSearch = async (searchTerm: string, pageNum: number = 1) => {
+  const url = new URL("/api/clients", window.location.origin);
+  url.searchParams.set("search", searchTerm);
+  url.searchParams.set("page", String(pageNum));
+  
+  const response = await fetch(url.toString());
+  const data = await response.json();
+  // Update UI with data.items and data.pagination
+};
+```
+
+**Pagination Patterns:**
+- **Default Page Size**: 10 results per page for balanced UX and performance
+- **Max Page Size**: 100 items to prevent excessive database queries
+- **Search + Pagination**: When search term is provided, pagination applies to filtered results
+- **Reset on Search**: Navigate users to page 1 when search term changes
+- **Display Info**: Show "Showing X to Y of Z items" with current page/total pages
+- **Navigation Controls**: Previous/Next buttons disabled when not applicable (page 1 has no prev, last page has no next)
+
+**Benefits:**
+- ✅ Supports large client datasets without loading all records
+- ✅ Works seamlessly with search filtering
+- ✅ Client-side can control page size if needed (within bounds)
+- ✅ Metadata allows UI to show current position and available navigation
+- ✅ Scales horizontally as client count grows
+
+### GET /api/clients (Legacy - Single Page)
 - Returns all clients sorted by name ascending
 - Optional search parameter filters by name or taxId (case-insensitive)
 - Clients array in response
+- **Note**: This endpoint should only be used when full pagination support is not required
 
 ### DELETE /api/clients
 - Requires client ID
