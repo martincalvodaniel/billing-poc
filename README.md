@@ -1,20 +1,27 @@
 # Billing POC
 
-A proof of concept billing system built with [Next.js](https://nextjs.org) for tracking income and outcome payments with MongoDB storage.
+A proof of concept billing system built with [Next.js](https://nextjs.org) for managing and tracking income and outcome payments with real-time visualization and MongoDB storage.
 
 ## Features
 
-- **Payment Entry Form** - Add new payment transactions with the following fields:
-  - Type (Income/Outcome)
-  - Date
-  - Net Amount
-  - VAT
-  - Auto-calculated Total Amount
-- **MongoDB Storage** - Persistent data storage using MongoDB Atlas
-- **RESTful API** - API routes for payment CRUD operations
-- **Responsive Design** - Works on desktop and mobile devices
-- **Dark Mode Support** - Automatic theme switching
+- **Payment Browser** - Dynamic list view with:
+  - Summary cards showing total income, total outcome, and net balance
+  - Sortable payment table with date, type, amounts, and totals
+  - Real-time updates when new payments are added
+  - Responsive table design with proper currency formatting
+  
+- **Payment Entry Form** - Intuitive form to add new transactions:
+  - Type selector (Income/Outcome)
+  - Date picker
+  - Net Amount and VAT inputs
+  - Auto-calculated total amount
+  
+- **MongoDB Storage** - Persistent data storage using MongoDB Atlas or local instance
+- **RESTful API** - API routes for payment CRUD operations (GET, POST)
+- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
+- **Dark Mode Support** - Automatic theme switching with Tailwind CSS
 - **Form Validation** - Client-side and server-side validation
+- **Type Safety** - Full TypeScript support throughout
 
 ## Getting Started
 
@@ -67,21 +74,44 @@ pnpm dev
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
+## Usage
+
+### Landing Page Layout
+
+The home page is organized into two main sections:
+
+**Left Column (Form):**
+- Use the "New Payment" form to quickly add income or outcome transactions
+- Select the payment type, date, and amounts
+- The form automatically calculates the total (net + VAT)
+- Click "Save Payment" to submit
+
+**Right Column (Payment Browser):**
+- View all payments in a clean, sortable table
+- Summary cards at the top show key metrics:
+  - Total Income (green)
+  - Total Outcome (red)
+  - Net Balance (blue)
+- Each payment row displays date, type, net amount, VAT, and total
+- The list updates in real-time when new payments are added
+
 ## Project Structure
 
 ```
 app/
 ├── api/
 │   └── payments/
-│       └── route.ts          # Payment API endpoints (GET, POST)
+│       └── route.ts              # Payment API endpoints (GET, POST)
 ├── components/
-│   └── PaymentForm.tsx       # Payment entry form component
-├── layout.tsx                # Root layout with metadata
-├── page.tsx                  # Home page
-└── globals.css               # Global styles
+│   ├── PaymentForm.tsx           # Payment entry form component
+│   └── PaymentsList.tsx          # Payment browser/list component with summary
+├── layout.tsx                    # Root layout with metadata
+├── page.tsx                      # Home page with form and list layout
+└── globals.css                   # Global styles and typography
 lib/
-├── mongodb.ts                # MongoDB connection utility
-└── types.ts                  # TypeScript type definitions
+├── mongodb.ts                    # MongoDB connection utility
+└── types.ts                      # TypeScript type definitions
+public/                           # Static assets
 ```
 
 ## API Endpoints
@@ -150,10 +180,13 @@ Vercel will automatically detect Next.js and configure the build settings.
 
 ## Roadmap
 
-- [ ] Create payment list view
-- [ ] Implement edit/delete functionality
-- [ ] Add filtering and search
-- [ ] Export to CSV/PDF
-- [ ] Add more payment fields (description, category, etc.)
-- [ ] Add pagination for large datasets
-- [ ] Implement authentication
+- [x] Create payment list view with summary cards
+- [x] Real-time payment list updates
+- [ ] Implement edit/delete functionality for payments
+- [ ] Add advanced filtering and search capabilities
+- [ ] Export payments to CSV/PDF
+- [ ] Add more payment fields (description, category, invoice number, etc.)
+- [ ] Pagination for large datasets
+- [ ] User authentication and authorization
+- [ ] Multi-user support with separate accounts
+- [ ] Payment analytics and reporting

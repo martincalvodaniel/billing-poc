@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { PaymentFormData } from "@/lib/types";
 
-export default function PaymentForm() {
+interface PaymentFormProps {
+  onPaymentSaved?: () => void;
+}
+
+export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
     netAmount: "",
@@ -41,6 +45,7 @@ export default function PaymentForm() {
       });
 
       alert("Payment saved successfully!");
+      onPaymentSaved?.();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
