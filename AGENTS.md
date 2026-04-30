@@ -76,9 +76,10 @@ export default function ComponentName() {
 
 ### API Routes
 - All routes return `NextResponse.json()`
+- Support GET (retrieve), POST (create), and PUT (update) methods
 - **Always validate** request body data before processing
 - Parse numeric strings to numbers: `parseFloat()`, `parseInt()`
-- Include proper HTTP status codes (200, 201, 400, 500)
+- Include proper HTTP status codes (200, 201, 400, 404, 500)
 - Log errors to console for debugging
 
 Example error handling:
@@ -198,6 +199,64 @@ VAT Amount: 410.48 - 339.24 = €71.24
 ```
 
 This reflects real-world salary/invoice scenarios where you know the total amount and need to extract the deductions.
+
+### Inline Editing Pattern (Edit Payment Fields)
+For editing individual payment fields inline in a list:
+
+1. **State Management** - Track editing state with `editingId` and `editingValue`
+2. **Display Toggle** - Show formatted display or input based on `editingId`
+3. **Input Handler** - Update local state while user types
+4. **Save Handler** - Validate and send PUT request to API
+5. **Optimistic Update** - Update local state immediately, sync with server
+6. **Success Feedback** - Show toast notification after successful save
+7. **Cancel Handler** - Reset editing state and revert changes
+
+Example pattern (editing date field):
+```typescript
+const [editingId, setEditingId] = useState<string | null>(null);
+const [editingDate, setEditingDate] = useState<string>("");
+
+const handleEditDate = (payment: Payment) => {
+  setEditingId(payment._id?.toString() || null);
+  setEditingDate(payment.date);
+};
+
+const handleSaveDate = async () => {
+  if (!editingId || !editingDate) return;
+  
+  try {
+    const response = await fetch("/api/payments", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingId, date: editingDate }),
+    });
+
+    if (!response.ok) throw new Error("Failed to update");
+
+    // Optimistic update
+    setPayments(prevPayments =>
+      prevPayments.map(p =>
+        p._id?.toString() === editingId ? { ...p, date: editingDate } : p
+      )
+    );
+
+    setEditingId(null);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 4000);
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
+// In JSX - Show input or display based on state
+{editingId === payment._id?.toString() ? (
+  <input value={editingDate} onChange={(e) => setEditingDate(e.target.value)} />
+) : (
+  <button onClick={() => handleEditDate(payment)}>
+    {formatDate(payment.date)}
+  </button>
+)}
+```
 
 ### User Feedback (Toast Notifications)
 - Use custom toast notifications instead of browser `alert()` for better UX
@@ -390,14 +449,28 @@ const vatAmount = totalAmount - netAmount;
 - **CORS**: Handled by Next.js (same-origin requests on localhost)
 - **Environment variables**: Never expose `MONGODB_URI` client-side
 
+## Completed Features & Patterns
+
+### Edit/Delete Functionality (Date Editing)
+✓ **Completed**: Edit date via inline editor in payment list
+- Added PUT method to `app/api/payments/route.ts`
+- Validates `_id` parameter and date field
+- Frontend uses inline editing with modal state management
+- Optimistic updates for better UX
+- Success toast notification on save
+- See "Inline Editing Pattern" in Common Tasks & Patterns
+
+**Next steps**: Extend to edit other fields (type, amount, VAT) using the same pattern
+
 ## Future Development Guidelines
 
 When implementing planned features (from roadmap), follow these patterns:
 
-### Edit/Delete Functionality
-- Add PUT and DELETE methods to `app/api/payments/route.ts`
-- Validate `_id` parameter and user permissions
-- Update frontend components to trigger these endpoints
+### Edit Additional Payment Fields
+- Extend the inline editing pattern used for date to other fields
+- Add numeric field validation for amounts
+- Consider field-specific formatters for display (currency, percentage)
+- Use the established PUT endpoint structure
 
 ### Search & Filtering
 - Add query parameters to GET endpoint: `/api/payments?type=income&dateFrom=2026-01-01`

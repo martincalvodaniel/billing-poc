@@ -7,6 +7,10 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     fetchPayments();
@@ -52,6 +56,51 @@ export default forwardRef(function PaymentsList(props, ref) {
     });
   };
 
+  const handleEditDate = (payment: Payment) => {
+    setEditingId(payment._id?.toString() || null);
+    setEditingDate(payment.date);
+  };
+
+  const handleSaveDate = async () => {
+    if (!editingId || !editingDate) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingId, date: editingDate }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update date");
+      }
+
+      // Update local state
+      setPayments((prevPayments) =>
+        prevPayments.map((p) =>
+          p._id?.toString() === editingId ? { ...p, date: editingDate } : p
+        )
+      );
+
+      setEditingId(null);
+      setEditingDate("");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err) {
+      console.error("Error updating date:", err);
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingDate("");
+  };
+
   const totalIncome = payments
     .filter((p) => p.type === "income")
     .reduce((sum, p) => sum + p.total, 0);
@@ -76,6 +125,33 @@ export default forwardRef(function PaymentsList(props, ref) {
 
   return (
     <div className="w-full space-y-6">
+      {/* Success Toast */}
+      {showSuccess && (
+        <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90">
+            <svg
+              className="h-5 w-5 text-green-600 dark:text-green-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="text-sm font-medium text-green-800 dark:text-green-300">
+              Date updated successfully
+            </span>
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="ml-auto text-green-600 hover:text-green-700 dark:text-green-400"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -151,7 +227,37 @@ export default forwardRef(function PaymentsList(props, ref) {
                     className="border-b border-zinc-100 dark:border-zinc-800"
                   >
                     <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      {formatDate(payment.date)}
+                      {editingId === payment._id?.toString() ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="date"
+                            value={editingDate}
+                            onChange={(e) => setEditingDate(e.target.value)}
+                            className="rounded border border-zinc-300 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-800"
+                          />
+                          <button
+                            onClick={handleSaveDate}
+                            disabled={isSaving}
+                            className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700"
+                          >
+                            {isSaving ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            disabled={isSaving}
+                            className="rounded bg-zinc-300 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEditDate(payment)}
+                          className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                        >
+                          {formatDate(payment.date)}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span

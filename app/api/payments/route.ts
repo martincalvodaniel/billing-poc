@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
 import { Payment } from "@/lib/types";
 
@@ -74,6 +75,46 @@ export async function POST(request: NextRequest) {
     console.error("Error creating payment:", error);
     return NextResponse.json(
       { error: "Failed to create payment" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, date } = body;
+
+    // Validate required fields
+    if (!id || !date) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDatabase();
+
+    const result = await db.collection<Payment>("payments").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { date, updatedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { error: "Payment not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating payment date:", error);
+    return NextResponse.json(
+      { error: "Failed to update payment date" },
       { status: 500 }
     );
   }
