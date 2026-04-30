@@ -47,44 +47,47 @@ export default function PaymentFormFields({
 }: PaymentFormFieldsProps) {
   return (
     <div className="space-y-4">
-      {/* Payment Type */}
-      <div className="space-y-2">
-        <label
-          htmlFor="type"
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Type
-        </label>
-        <select
-          id="type"
-          name="type"
-          value={formData.type}
-          onChange={onChangeField}
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          required
-        >
-          <option value="income">Income</option>
-          <option value="outcome">Outcome</option>
-        </select>
-      </div>
+      {/* Payment Type and Date (Shared Row) */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Payment Type */}
+        <div className="space-y-2">
+          <label
+            htmlFor="type"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Type
+          </label>
+          <select
+            id="type"
+            name="type"
+            value={formData.type}
+            onChange={onChangeField}
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            required
+          >
+            <option value="income">Income</option>
+            <option value="outcome">Outcome</option>
+          </select>
+        </div>
 
-      {/* Date */}
-      <div className="space-y-2">
-        <label
-          htmlFor="date"
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Date
-        </label>
-        <input
-          type="date"
-          id="date"
-          name="date"
-          value={formData.date}
-          onChange={onChangeField}
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          required
-        />
+        {/* Date */}
+        <div className="space-y-2">
+          <label
+            htmlFor="date"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Date
+          </label>
+          <input
+            type="date"
+            id="date"
+            name="date"
+            value={formData.date}
+            onChange={onChangeField}
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            required
+          />
+        </div>
       </div>
 
       {/* Tag with Autocomplete and VAT Percentage (Shared Row) */}
