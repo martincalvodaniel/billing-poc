@@ -169,6 +169,7 @@ const payments = await db
 - Validate on input change (optional) and on submit (required)
 - Parse string inputs to appropriate types (numbers, dates, percentages)
 - **VAT input is a percentage (0-100)**: Calculate net amount as `total / (1 + vat%)`
+- **VAT default**: Set to 21% as the default VAT percentage (common in Europe) for improved UX
 - Disable form submission while processing
 - Provide user feedback via toast notifications (see User Feedback pattern below)
 - Display calculated amounts in real-time (VAT amount and net amount)

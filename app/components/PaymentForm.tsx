@@ -11,7 +11,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
     total: "",
-    vat: "",
+    vat: "21",
     type: "income",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +41,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
       setFormData({
         date: new Date().toISOString().split("T")[0],
         total: "",
-        vat: "",
+        vat: "21",
         type: "income",
       });
 

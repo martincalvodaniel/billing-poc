@@ -5,7 +5,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
-- **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net)
+- **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET and POST endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices

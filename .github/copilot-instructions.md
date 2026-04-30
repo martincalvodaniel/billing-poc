@@ -52,6 +52,16 @@ export default function Component({ payment }: { payment: Payment }) {
 }
 ```
 
+**Form Handling** - Use default values for better UX:
+```typescript
+const [formData, setFormData] = useState({
+  type: 'income',
+  date: new Date().toISOString().split('T')[0],
+  total: '',
+  vat: '21', // Default VAT percentage
+});
+```
+
 ### Before Completing Tasks
 - [ ] TypeScript strict mode compliance
 - [ ] All types in `lib/types.ts`
