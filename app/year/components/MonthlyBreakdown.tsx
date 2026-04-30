@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 interface MonthlyTotal {
   monthIndex: number;
   income: number;
@@ -38,9 +40,10 @@ export default function MonthlyBreakdown({
               : "bg-zinc-400 dark:bg-zinc-500";
 
           return (
-            <div
+            <Link
               key={month.monthIndex}
-              className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+              href={`/month?month=${month.monthIndex + 1}&year=${selectedYear}`}
+              className="block rounded-lg border border-zinc-200 p-3 transition hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-blue-700"
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{monthLabel}</span>
@@ -72,7 +75,7 @@ export default function MonthlyBreakdown({
                   style={{ width: `${barWidth}%` }}
                 />
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

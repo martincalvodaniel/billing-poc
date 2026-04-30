@@ -158,19 +158,21 @@ interface MonthlyBreakdownProps {
 
 ### Features
 - 3-column grid (responsive to 2 columns on mobile)
-- Month abbreviation label (Jan, Feb, etc.)
+- Month abbreviation label (Jan, Feb, etc.) — clickable link to month detail page
 - Color-coded net balance (blue positive, red negative, gray zero)
 - Income/outcome amounts with type-specific colors
 - Visual progress bar indicating relative monthly volume
 - Dark mode support
-- No interactive elements (pure display)
+- Hover effects on month cards (border highlight, shadow)
+- Link-based navigation to `/month?month=X&year=YYYY`
 
 ### Integration Notes
 - Used in year summary view (app/year/page.tsx) to display monthly breakdown
 - Requires pre-computed monthlyTotals with income/outcome/net calculations
 - Pass the same formatCurrency function used elsewhere for consistency
 - Positioned after DonutChart visualizations in yearly view
-- Pure component (no hooks, no state mutations)
+- Each month card is wrapped in Next.js Link for client-side navigation
+- URL params (month 1-12, year) auto-populate the month page's selectedDate state
 
 ## MonthlyPaymentsView Component
 

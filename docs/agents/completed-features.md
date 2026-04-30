@@ -35,6 +35,6 @@
 - Total and VAT editable; server recalculates net/vat amounts; optimistic updates
 
 ## Component Extraction & Refactoring
-- **MonthlyBreakdown**: Extracted monthly totals visualization from year/page.tsx for reuse and cleaner code (shows monthly income/outcome/net with progress bars)
+- **MonthlyBreakdown**: Extracted monthly totals visualization from year/page.tsx for reuse and cleaner code (shows monthly income/outcome/net with progress bars); month names are clickable links that navigate to `/month?month=X&year=YYYY` to view detailed month data
 - **MonthlyPaymentsView**: Renamed from PaymentsList for clarity; handles monthly payment display, CRUD, and filtering with full modal editing support
 - Pure display components follow React.memo pattern; composite components encapsulate state management
