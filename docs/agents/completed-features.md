@@ -40,6 +40,12 @@
 ## Delete Payment
 - Confirmation modal with payment details; DELETE /api/payments; optimistic removal; success toast
 
+## Payment Detail Modal
+- Action button in monthly list opens a read-only modal
+- Displays date, type, tag, total, VAT (percentage and amount), net amount
+- Lists all payment components (name, amount, optional concept-level VAT)
+- Accessible dialog with keyboard and screen reader support; consistent styling with other modals
+
 ## VAT & Total Editing
 - Total and VAT editable; server recalculates net/vat amounts; optimistic updates
 

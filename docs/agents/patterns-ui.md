@@ -234,6 +234,14 @@ interface MonthlyPaymentsViewProps {
 - Delete button opens confirmation modal with payment details
 - DELETE /api/payments; optimistic removal; success toast; handles errors
 
+## Payment Detail Modal (Read-Only)
+- Triggered by an icon-only action button in the monthly payments table
+- Use the same overlay, dialog roles, and close interactions as edit/delete modals
+- Show high-level fields (date, type chip, tag, total, VAT percentage and amount, net amount)
+- List payment components with name, amount, and optional concept-level VAT
+- Keep actions minimal (close only); no editing within detail modal
+- Component: `PaymentDetailModal` under `app/month/components` with props `{ payment, onClose, formatCurrency? }`
+
 ## Toast Notifications
 - Custom toasts, top-center; auto-dismiss ~4s; manual close
 - Use semantic colors; slideDown animation in globals.css

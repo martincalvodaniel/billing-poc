@@ -11,6 +11,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Interactive sorting controls allow sorting by percentage or name (ascending/descending). Legend positioned on the right side of the chart for better space utilization. Tags maintain consistent colors across all sorting options. Charts appear between summary cards and payment list for quick insights
 - **Modal Payment Editing** - Click any date (shows day only since month/year are in calendar picker), type, tag, total, or VAT in the payment list to open a centered edit modal. VAT displays as `(percentage%) amount`. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
+- **Payment Detail Modal** - View full details of any payment from the monthly list via an action button with an icon. The modal shows date, type, tag, total, VAT (percentage and amount), net amount, and all payment components with names, amounts, and optional concept-level VAT
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
@@ -170,6 +171,7 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Payment tags with type-based autocomplete
 - [x] Edit payment amount and VAT fields inline with auto-recalculation
 - [x] Delete payments with confirmation modal
+- [x] View payment details in modal from monthly list
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, invoice number, etc.)

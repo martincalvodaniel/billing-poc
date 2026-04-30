@@ -4,6 +4,7 @@ import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "re
 import { Payment } from "@/lib/types";
 import DonutChart from "../../components/DonutChart";
 import SummaryCard from "../../components/SummaryCard";
+import PaymentDetailModal from "./PaymentDetailModal";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
@@ -37,6 +38,9 @@ export default forwardRef(function MonthlyPaymentsView(
   // Delete confirmation state
   const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Details modal state
+  const [detailPaymentId, setDetailPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPayments();
@@ -215,6 +219,14 @@ export default forwardRef(function MonthlyPaymentsView(
 
   const handleDeleteClick = (paymentId: string) => {
     setDeleteConfirmPaymentId(paymentId);
+  };
+
+  const openDetails = (paymentId: string) => {
+    setDetailPaymentId(paymentId);
+  };
+
+  const closeDetails = () => {
+    setDetailPaymentId(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -493,6 +505,9 @@ export default forwardRef(function MonthlyPaymentsView(
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                     Net
                   </th>
+                  <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -556,13 +571,22 @@ export default forwardRef(function MonthlyPaymentsView(
                       {formatCurrency(payment.netAmount)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleDeleteClick(payment._id?.toString() || "")}
-                        aria-label="Delete payment"
-                        className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
-                      >
-                        ✕
-                      </button>
+                      <div className="inline-flex items-center gap-2">
+                        <button
+                          onClick={() => openDetails(payment._id?.toString() || "")}
+                          aria-label="View payment details"
+                          className="rounded px-2 py-1 text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-blue-400 dark:hover:text-blue-300 dark:focus:ring-offset-zinc-900"
+                        >
+                          🔍
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(payment._id?.toString() || "")}
+                          aria-label="Delete payment"
+                          className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -813,6 +837,15 @@ export default forwardRef(function MonthlyPaymentsView(
           </div>
         </div>
       )}
+
+      {/* Payment Details Modal */}
+      {detailPaymentId && (() => {
+        const selected = payments.find(p => p._id?.toString() === detailPaymentId);
+        if (!selected) return null;
+        return (
+          <PaymentDetailModal payment={selected} onClose={closeDetails} formatCurrency={formatCurrency} />
+        );
+      })()}
     </div>
   );
 });
