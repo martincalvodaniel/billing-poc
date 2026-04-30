@@ -276,7 +276,7 @@ export default forwardRef(function MonthlyPaymentsView(
         handleConfirmDelete();
       }
     }
-  }, [deleteConfirmPaymentId]);
+  }, [deleteConfirmPaymentId, handleConfirmDelete]);
 
   // Register keyboard handler for delete modal
   useEffect(() => {

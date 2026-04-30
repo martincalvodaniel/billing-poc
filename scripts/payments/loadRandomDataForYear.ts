@@ -1,4 +1,3 @@
-import { PaymentFormData } from "../../lib/types";
 import { loadData } from "./utils";
 
 /**
