@@ -42,7 +42,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-For detailed setup instructions including MongoDB Atlas configuration, see [docs/agents/workflow.md](./docs/agents/workflow.md).
+For detailed setup instructions including MongoDB Atlas configuration and data loading, see [docs/agents/workflow.md](./docs/agents/workflow.md).
 
 ## Development
 
