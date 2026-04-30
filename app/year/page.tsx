@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import DonutChart from "../components/DonutChart";
 import MonthlyBreakdown from "./components/MonthlyBreakdown";
 import { Payment } from "@/lib/types";
-import NavigationBar from "../components/NavigationBar";
+import PageLayout from "../components/PageLayout";
 import SummaryCard from "../components/SummaryCard";
 import YearSelector from "./components/YearSelector";
 
@@ -118,19 +118,11 @@ export default function YearSummaryPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-4 font-sans dark:bg-zinc-950">
-      <main className="mx-auto max-w-6xl space-y-8 py-12">
-        <NavigationBar subtitle="Yearly Summary" />
-
-        <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Yearly Overview
-          </h1>
-          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
-            Explore income and outcome performance across the year
-          </p>
-        </div>
-
+    <PageLayout
+      title="Yearly Overview"
+      subtitle="Explore income and outcome performance across the year"
+      navigationSubtitle="Yearly Summary"
+      headerContent={
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Yearly Filter</p>
@@ -149,46 +141,46 @@ export default function YearSummaryPage() {
             />
           </div>
         </div>
+      }
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <SummaryCard
+            label={`Total Income (${paymentsForYear.filter((p) => p.type === "income").length})`}
+            value={formatCurrency(yearlyIncome)}
+            valueClassName="text-green-600 dark:text-green-400"
+          />
+          <SummaryCard
+            label={`Total Outcome (${paymentsForYear.filter((p) => p.type === "outcome").length})`}
+            value={formatCurrency(yearlyOutcome)}
+            valueClassName="text-red-600 dark:text-red-400"
+          />
+          <SummaryCard
+            label="Net Balance"
+            value={formatCurrency(yearlyNet)}
+            valueClassName={yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
+          />
+        </div>
 
-        <div className="space-y-6">
-             <div className="grid gap-4 sm:grid-cols-3">
-               <SummaryCard
-                 label={`Total Income (${paymentsForYear.filter((p) => p.type === "income").length})`}
-                 value={formatCurrency(yearlyIncome)}
-                 valueClassName="text-green-600 dark:text-green-400"
-               />
-               <SummaryCard
-                 label={`Total Outcome (${paymentsForYear.filter((p) => p.type === "outcome").length})`}
-                 value={formatCurrency(yearlyOutcome)}
-                 valueClassName="text-red-600 dark:text-red-400"
-               />
-               <SummaryCard
-                 label="Net Balance"
-                 value={formatCurrency(yearlyNet)}
-                 valueClassName={yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
-               />
-             </div>
-
-             {paymentsForYear.length === 0 ? (
-               <div className="rounded-md bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-300">
-                 No payments recorded in {selectedYear}.
-               </div>
-             ) : (
-               <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <DonutChart data={incomeByTagYear} title={`Income by Tag (${selectedYear})`} colors={colors} />
-                  <DonutChart data={outcomeByTagYear} title={`Outcome by Tag (${selectedYear})`} colors={colors} />
-                </div>
-
-                <MonthlyBreakdown
-                  monthlyTotals={monthlyTotals}
-                  selectedYear={selectedYear}
-                  formatCurrency={formatCurrency}
-                  maxMonthlyVolume={maxMonthlyVolume}
-                />
-              </div>
-            )}
+        {paymentsForYear.length === 0 ? (
+          <div className="rounded-md bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-300">
+            No payments recorded in {selectedYear}.
           </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DonutChart data={incomeByTagYear} title={`Income by Tag (${selectedYear})`} colors={colors} />
+              <DonutChart data={outcomeByTagYear} title={`Outcome by Tag (${selectedYear})`} colors={colors} />
+            </div>
+
+            <MonthlyBreakdown
+              monthlyTotals={monthlyTotals}
+              selectedYear={selectedYear}
+              formatCurrency={formatCurrency}
+              maxMonthlyVolume={maxMonthlyVolume}
+            />
+          </div>
+        )}
         
         {error && (
           <div
@@ -208,7 +200,7 @@ export default function YearSummaryPage() {
             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
           </div>
         )}
-       </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

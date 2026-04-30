@@ -12,6 +12,36 @@
 - Memoize pure components with React.memo()
 - Lift state to parent for shared filter state (e.g., selectedDate in page.tsx drives PaymentsList and PaymentForm)
 
+### Page Layout Pattern (Required for All Pages)
+**All main pages MUST use the `PageLayout` component** from `/app/components/PageLayout.tsx` to enforce consistent structure.
+
+```tsx
+import PageLayout from "@/app/components/PageLayout";
+
+export default function MyPage() {
+  return (
+    <PageLayout
+      title="Page Title"
+      subtitle="Page description"
+      navigationSubtitle="Nav Label"
+      headerContent={/* Optional filters/selectors */}
+    >
+      {/* Page content */}
+    </PageLayout>
+  );
+}
+```
+
+**Benefits:**
+- Prevents layout drift and inconsistencies
+- Ensures uniform spacing, typography, dark mode
+- Makes structural changes easy (update once, apply everywhere)
+- Type-safe props enforce consistency
+
+**Never manually create** page structure with `min-h-screen`, `bg-zinc-50`, `max-w-6xl`, etc. Use `PageLayout` instead.
+
+See [patterns-ui.md](./patterns-ui.md#pagelayout-component-required-for-all-pages) for detailed documentation.
+
 ### PaymentForm Component Pattern
 - **State**: formData with PaymentFormData type including concepts array
 - **Concepts**: Array of { name?: string, amount: number } objects

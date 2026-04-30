@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import PaymentForm from "./PaymentForm";
 import MonthlyPaymentsView from "./MonthlyPaymentsView";
-import NavigationBar from "../../components/NavigationBar";
+import PageLayout from "../../components/PageLayout";
 import MonthSelector from "./MonthSelector";
 
 export default function MonthPageContent() {
@@ -101,20 +101,11 @@ export default function MonthPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-4 font-sans dark:bg-zinc-950">
-      <main className="mx-auto max-w-6xl space-y-8 py-12">
-        <NavigationBar subtitle="Monthly Payments" />
-
-        <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Monthly Overview
-          </h1>
-          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
-            Manage your income and outcome payments
-          </p>
-        </div>
-
-        {/* Month Selector */}
+    <PageLayout
+      title="Monthly Overview"
+      subtitle="Manage your income and outcome payments"
+      navigationSubtitle="Monthly Payments"
+      headerContent={
         <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
             <div>
@@ -147,15 +138,15 @@ export default function MonthPageContent() {
             </div>
           </div>
         </div>
-
-        <div className="space-y-6">
-          <MonthlyPaymentsView
-            ref={paymentsListRef}
-            onMonthChange={handleMonthChange}
-            selectedDate={selectedDate}
-          />
-        </div>
-      </main>
+      }
+    >
+      <div className="space-y-6">
+        <MonthlyPaymentsView
+          ref={paymentsListRef}
+          onMonthChange={handleMonthChange}
+          selectedDate={selectedDate}
+        />
+      </div>
 
       {showPaymentModal && (
         <div
@@ -184,6 +175,6 @@ export default function MonthPageContent() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
