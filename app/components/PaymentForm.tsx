@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type PaymentType = "income" | "outcome";
-
-interface PaymentFormData {
-  date: string;
-  netAmount: string;
-  vat: string;
-  type: PaymentType;
-}
+import { PaymentFormData } from "@/lib/types";
 
 export default function PaymentForm() {
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -18,12 +10,44 @@ export default function PaymentForm() {
     vat: "",
     type: "income",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Payment submitted:", formData);
-    // TODO: Add logic to save payment
-    alert("Payment saved! (Check console for details)");
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save payment");
+      }
+
+      // Reset form on success
+      setFormData({
+        date: new Date().toISOString().split("T")[0],
+        netAmount: "",
+        vat: "",
+        type: "income",
+      });
+
+      alert("Payment saved successfully!");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      console.error("Error saving payment:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -52,6 +76,12 @@ export default function PaymentForm() {
           Add a new income or outcome entry
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-4">
         {/* Payment Type */}
@@ -153,9 +183,10 @@ export default function PaymentForm() {
 
       <button
         type="submit"
-        className="w-full rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        disabled={isSubmitting}
+        className="w-full rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
-        Save Payment
+        {isSubmitting ? "Saving..." : "Save Payment"}
       </button>
     </form>
   );
