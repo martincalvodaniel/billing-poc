@@ -264,34 +264,6 @@ export default forwardRef(function MonthlyPaymentsView(
     setDetailPaymentId(null);
   };
 
-  const handleDeleteModalKeyDown = useCallback((e: KeyboardEvent) => {
-    if (deleteConfirmPaymentId) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        setDeleteConfirmPaymentId(null);
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleConfirmDelete();
-      }
-    }
-  }, [deleteConfirmPaymentId, handleConfirmDelete]);
-
-  // Register keyboard handler for delete modal
-  useEffect(() => {
-    if (!deleteConfirmPaymentId) return;
-
-    const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleDeleteModalKeyDown);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleDeleteModalKeyDown);
-    };
-  }, [deleteConfirmPaymentId, handleDeleteModalKeyDown]);
-
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteConfirmPaymentId) return;
 
@@ -324,6 +296,34 @@ export default forwardRef(function MonthlyPaymentsView(
       setIsDeleting(false);
     }
   }, [deleteConfirmPaymentId]);
+
+  const handleDeleteModalKeyDown = useCallback((e: KeyboardEvent) => {
+    if (deleteConfirmPaymentId) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        setDeleteConfirmPaymentId(null);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleConfirmDelete();
+      }
+    }
+  }, [deleteConfirmPaymentId, handleConfirmDelete]);
+
+  // Register keyboard handler for delete modal
+  useEffect(() => {
+    if (!deleteConfirmPaymentId) return;
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleDeleteModalKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleDeleteModalKeyDown);
+    };
+  }, [deleteConfirmPaymentId, handleDeleteModalKeyDown]);
 
   const handleSave = async () => {
     if (!editingPaymentId || !editingField) return;
