@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import PaymentForm from "./PaymentForm";
 import MonthlyPaymentsView from "./MonthlyPaymentsView";
 import PageLayout from "../../components/PageLayout";
+import Modal from "../../components/Modal";
 import MonthSelector from "./MonthSelector";
 
 export default function MonthPageContent() {
@@ -16,7 +17,8 @@ export default function MonthPageContent() {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [showCalendar, setShowCalendar] = useState(false);
-  const formRef = useRef<{ setFormDate: (dateString: string) => void }>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<{ setFormDate: (dateString: string) => void; submit: () => void }>(null);
   const paymentsListRef = useRef<{ refreshPayments: () => void; navigateToMonth: (dateString: string) => void; getFilteredPaymentsCount: () => number }>(null);
 
   // Initialize from URL parameters if provided
@@ -67,29 +69,8 @@ export default function MonthPageContent() {
 
   const handleCloseModal = useCallback(() => {
     setShowPaymentModal(false);
+    setIsSubmitting(false);
   }, []);
-
-  useEffect(() => {
-    if (!showPaymentModal) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleCloseModal();
-      }
-    };
-
-    // Delay adding listener to ensure modal is mounted
-    const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleKeyDown);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showPaymentModal, handleCloseModal]);
 
   const handleCalendarMonthSelect = (year: number, month: number) => {
     setSelectedDate(new Date(year, month, 1));
@@ -149,31 +130,41 @@ export default function MonthPageContent() {
       </div>
 
       {showPaymentModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 py-10"
-          role="presentation"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) handleCloseModal();
-          }}
+        <Modal
+          isOpen={showPaymentModal}
+          onClose={handleCloseModal}
+          title="New Payment"
+          maxWidth="lg"
+          closeOnEscape={true}
+          closeOnBackdropClick={true}
+          footer={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                disabled={isSubmitting}
+                className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSubmitting(true);
+                  formRef.current?.submit();
+                  // Reset after a brief delay to allow form submission to process
+                  setTimeout(() => setIsSubmitting(false), 100);
+                }}
+                disabled={isSubmitting}
+                className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800"
+              >
+                {isSubmitting ? "Saving..." : "Save Payment"}
+              </button>
+            </div>
+          }
         >
-          <div
-            className="relative w-full max-w-xl pt-8"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="payment-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              aria-label="Close add payment modal"
-              className="absolute right-3 top-3 rounded-full p-2 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus:ring-offset-zinc-900"
-            >
-              ✕
-            </button>
-            <PaymentForm ref={formRef} onPaymentSaved={handlePaymentSaved} />
-          </div>
-        </div>
+          <PaymentForm ref={formRef} onPaymentSaved={handlePaymentSaved} />
+        </Modal>
       )}
     </PageLayout>
   );

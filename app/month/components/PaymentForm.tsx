@@ -17,6 +17,8 @@ const PaymentForm = forwardRef(function PaymentForm(
     formData,
     suggestedTags,
     showTagSuggestions,
+    setSuggestedTags,
+    setShowTagSuggestions,
     handleChange,
     handleTagSelect,
     handleTagBlur,
@@ -31,7 +33,6 @@ const PaymentForm = forwardRef(function PaymentForm(
     calculateNetAmount,
   } = usePaymentForm();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
@@ -41,14 +42,18 @@ const PaymentForm = forwardRef(function PaymentForm(
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Expose method to sync date from parent when month changes
+  // Expose methods to parent
   useImperativeHandle(ref, () => ({
     setFormDate,
+    submit: () => {
+      // Programmatically submit the form
+      const form = document.querySelector('form[data-payment-form="true"]') as HTMLFormElement;
+      form?.requestSubmit();
+    },
   }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
     setUploadError(null);
 
@@ -123,8 +128,6 @@ const PaymentForm = forwardRef(function PaymentForm(
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
       console.error(`Error saving payment: ${err}`);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -251,20 +254,9 @@ const PaymentForm = forwardRef(function PaymentForm(
       <form
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xl space-y-6 rounded-lg border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+        data-payment-form="true"
+        className="space-y-4"
       >
-      <div className="space-y-2">
-        <h2
-          id="payment-modal-title"
-          className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50"
-        >
-          New Payment
-        </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Add a new income or outcome entry
-        </p>
-      </div>
-
       {error && (
         <div 
           className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
@@ -329,14 +321,6 @@ const PaymentForm = forwardRef(function PaymentForm(
           </p>
         </div>
       )}
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-      >
-        {isSubmitting ? "Saving..." : "Save Payment"}
-      </button>
     </form>
     </>
   );

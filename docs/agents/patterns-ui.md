@@ -402,7 +402,8 @@ export default function MyComponent() {
 
 ### Component Location
 `app/components/Modal.tsx` - Reusable component used by:
-- `PaymentDetailModal` - Read-only payment details (ESC/ENTER to close)
+- `MonthPageContent` - New payment creation modal (uses Modal + PaymentForm)
+- `PaymentDetailModal` - Payment editing (uses Modal + PaymentFormFields)
 - `MonthlyPaymentsView` - Edit field modal + Delete confirmation modal
 - `ClientList` - Edit client modal + Delete confirmation modal
 
@@ -439,9 +440,72 @@ All modals use the centralized Modal component for consistent keyboard support:
 - DELETE /api/payments; optimistic removal; success toast; handles errors
 - Keyboard support: ENTER key deletes payment, ESC closes modal without deleting
 
-## Payment Edit Modal
-- Triggered by clicking any payment row in the monthly payments table
-- Full-featured edit form mirroring the PaymentForm structure
+## Payment Form Component (Reusable)
+
+Modal-agnostic form component for creating and editing payments. Returns only form fields (no wrapper), allowing flexible modal or standalone usage.
+
+### Location
+`app/month/components/PaymentForm.tsx`
+
+### Props
+```typescript
+interface PaymentFormProps {
+  onPaymentSaved?: (date: string) => void;  // Called after successful form submission
+}
+```
+
+### Exposed Methods (via forwardRef)
+```typescript
+{
+  setFormDate: (dateString: string) => void;  // Update form date field
+  submit: () => void;                         // Trigger form submission programmatically
+}
+```
+
+### Form Fields
+- Date (required)
+- Type: income | outcome (radio, determines available fields)
+- Client (optional, searchable dropdown)
+- Concepts (multiple, each with: name, amount, quantity)
+- VAT percentage (default: 21%)
+- Surcharge percentage (optional)
+- Delivery Note Reference (optional)
+- Tag (type-specific autocomplete)
+- Provider Bill Upload (income only, PDF, max 10MB)
+
+### Features
+- Validates all required fields on submit
+- Auto-calculates VAT, surcharge, and net amounts
+- Tag autocomplete with type-specific filtering (1s debounce)
+- Provider bill upload for outcome payments (Optional)
+- Success toast notification after save
+- Error toast for validation/submission failures
+- Sticky type/date across resets (reset only clears concepts, tag, clientId)
+- Provider bill file cleared after upload
+- Keyboard support: ENTER submits (unless tag dropdown open)
+
+### Integration Notes
+- Used in MonthPageContent wrapped in Modal for payment creation
+- Used in PaymentDetailModal for payment editing
+- Both creation and editing modals follow identical layout/styling
+- Form never renders its own submit button (delegated to Modal footer)
+- Modal footer provides Cancel and Save buttons using form ref methods
+- usePaymentForm hook manages all form state and calculations
+
+## Payment Modal Creation (New Payments)
+
+Payment creation uses the shared Modal component with PaymentForm for consistent UX with payment editing.
+
+### Implementation Details
+- Triggered by "Add Payment" button (➕) in monthly view header
+- Opens Modal with `title="New Payment"` and `maxWidth="lg"`
+- Modal footer with Cancel and Save buttons (uses form ref to submit)
+- ESC key or click-outside closes modal
+- Form resets after successful save (sticky type/date)
+- Success toast notification displayed (auto-hides after 4s)
+- Same validation and error handling as edit modals
+- Identical styling/layout to PaymentDetailModal for consistency
+
 - Editable fields: date, type, tag, payment components (with add/remove), VAT percentage
 - Real-time calculation of totals, VAT amount, and net amount as user edits
 - Tag autocomplete with type-specific suggestions
