@@ -62,16 +62,6 @@ export default function YearSummaryPage() {
     }).format(amount);
   };
 
-  const groupPaymentsByTag = (list: Payment[], paymentType: Payment["type"]) => {
-    return list
-      .filter((payment) => payment.type === paymentType)
-      .reduce((acc, payment) => {
-        const tag = payment.tag || "Untagged";
-        acc[tag] = (acc[tag] || 0) + payment.total;
-        return acc;
-      }, {} as Record<string, number>);
-  };
-
   const currentYear = useMemo(() => new Date().getFullYear(), []);
   const isViewingCurrentYear = selectedYear === currentYear;
 
@@ -80,37 +70,50 @@ export default function YearSummaryPage() {
     [payments]
   );
 
-  const monthlyTotals = useMemo(() => {
+  // Combine iterations: compute monthly buckets and tag breakdowns in a single pass (js-combine-iterations)
+  const { monthlyTotals, incomeByTagYear, outcomeByTagYear, incomeCount, outcomeCount } = useMemo(() => {
     const buckets = Array.from({ length: 12 }, (_, monthIndex) => ({
       monthIndex,
       income: 0,
       outcome: 0,
     }));
+    const incByTag: Record<string, number> = {};
+    const outByTag: Record<string, number> = {};
+    let incCount = 0;
+    let outCount = 0;
 
-    paymentsForYear.forEach((payment) => {
+    for (const payment of paymentsForYear) {
       const paymentMonth = new Date(payment.date).getMonth();
       const bucket = buckets[paymentMonth];
+      const tag = payment.tag || "Untagged";
       if (payment.type === "income") {
         bucket.income += payment.total;
+        incByTag[tag] = (incByTag[tag] || 0) + payment.total;
+        incCount++;
       } else {
         bucket.outcome += payment.total;
+        outByTag[tag] = (outByTag[tag] || 0) + payment.total;
+        outCount++;
       }
-    });
+    }
 
-    return buckets.map((bucket) => ({
-      ...bucket,
-      net: bucket.income - bucket.outcome,
-      totalVolume: bucket.income + bucket.outcome,
-    }));
+    return {
+      monthlyTotals: buckets.map((b) => ({
+        ...b,
+        net: b.income - b.outcome,
+        totalVolume: b.income + b.outcome,
+      })),
+      incomeByTagYear: incByTag,
+      outcomeByTagYear: outByTag,
+      incomeCount: incCount,
+      outcomeCount: outCount,
+    };
   }, [paymentsForYear]);
 
   const yearlyIncome = monthlyTotals.reduce((sum, month) => sum + month.income, 0);
   const yearlyOutcome = monthlyTotals.reduce((sum, month) => sum + month.outcome, 0);
   const yearlyNet = yearlyIncome - yearlyOutcome;
   const maxMonthlyVolume = Math.max(1, ...monthlyTotals.map((month) => month.totalVolume));
-
-  const incomeByTagYear = groupPaymentsByTag(paymentsForYear, "income");
-  const outcomeByTagYear = groupPaymentsByTag(paymentsForYear, "outcome");
 
   const colors = [
     "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
@@ -146,12 +149,12 @@ export default function YearSummaryPage() {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <SummaryCard
-            label={`Total Income (${paymentsForYear.filter((p) => p.type === "income").length})`}
+            label={`Total Income (${incomeCount})`}
             value={formatCurrency(yearlyIncome)}
             valueClassName="text-green-600 dark:text-green-400"
           />
           <SummaryCard
-            label={`Total Outcome (${paymentsForYear.filter((p) => p.type === "outcome").length})`}
+            label={`Total Outcome (${outcomeCount})`}
             value={formatCurrency(yearlyOutcome)}
             valueClassName="text-red-600 dark:text-red-400"
           />

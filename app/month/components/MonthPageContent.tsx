@@ -37,7 +37,7 @@ export default function MonthPageContent() {
         });
       }
     }
-  }, [searchParams]);
+  }, [searchParams, startTransition]);
 
   const currentMonthDate = new Date();
   const currentMonthStart = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
@@ -102,6 +102,12 @@ export default function MonthPageContent() {
               >
                 <span className="text-white dark:text-white" aria-hidden="true">➕</span>
               </button>
+              <MonthSelector
+                selectedDate={selectedDate}
+                onMonthChange={handleCalendarMonthSelect}
+                showCalendar={showCalendar}
+                onShowCalendarChange={setShowCalendar}
+              />
               <button
                 onClick={handleGoToCurrentMonth}
                 disabled={isViewingCurrentMonth}
@@ -110,12 +116,6 @@ export default function MonthPageContent() {
               >
                 🎯
               </button>
-              <MonthSelector
-                selectedDate={selectedDate}
-                onMonthChange={handleCalendarMonthSelect}
-                showCalendar={showCalendar}
-                onShowCalendarChange={setShowCalendar}
-              />
             </div>
           </div>
         </div>

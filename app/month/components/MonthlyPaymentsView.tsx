@@ -111,16 +111,6 @@ export default forwardRef(function MonthlyPaymentsView(
     });
   };
 
-  const groupPaymentsByTag = (list: Payment[], paymentType: Payment["type"]) => {
-    return list
-      .filter((payment) => payment.type === paymentType)
-      .reduce((acc, payment) => {
-        const tag = payment.tag || "Untagged";
-        acc[tag] = (acc[tag] || 0) + payment.total;
-        return acc;
-      }, {} as Record<string, number>);
-  };
-
   const getFilteredPayments = () => {
     // No client-side filtering needed since API returns only relevant month's payments
     return payments;
@@ -213,18 +203,27 @@ export default forwardRef(function MonthlyPaymentsView(
 
   const filteredPayments = getFilteredPayments();
 
-  const totalIncome = filteredPayments
-    .filter((p) => p.type === "income")
-    .reduce((sum, p) => sum + p.total, 0);
-
-  const totalOutcome = filteredPayments
-    .filter((p) => p.type === "outcome")
-    .reduce((sum, p) => sum + p.total, 0);
+  // Combine iterations: compute totals, counts, and tag breakdowns in a single pass (js-combine-iterations)
+  let totalIncome = 0;
+  let totalOutcome = 0;
+  let incomeCount = 0;
+  let outcomeCount = 0;
+  const incomeByTag: Record<string, number> = {};
+  const outcomeByTag: Record<string, number> = {};
+  for (const p of filteredPayments) {
+    const tag = p.tag || "Untagged";
+    if (p.type === "income") {
+      totalIncome += p.total;
+      incomeByTag[tag] = (incomeByTag[tag] || 0) + p.total;
+      incomeCount++;
+    } else {
+      totalOutcome += p.total;
+      outcomeByTag[tag] = (outcomeByTag[tag] || 0) + p.total;
+      outcomeCount++;
+    }
+  }
 
   const netBalance = totalIncome - totalOutcome;
-
-  const incomeByTag = groupPaymentsByTag(filteredPayments, "income");
-  const outcomeByTag = groupPaymentsByTag(filteredPayments, "outcome");
 
   // Year-level aggregations
   // Generate colors for chart segments
@@ -284,12 +283,12 @@ export default forwardRef(function MonthlyPaymentsView(
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <SummaryCard
-          label={`Total Income (${filteredPayments.filter((p) => p.type === "income").length})`}
+          label={`Total Income (${incomeCount})`}
           value={formatCurrency(totalIncome)}
           valueClassName="text-green-600 dark:text-green-400"
         />
         <SummaryCard
-          label={`Total Outcome (${filteredPayments.filter((p) => p.type === "outcome").length})`}
+          label={`Total Outcome (${outcomeCount})`}
           value={formatCurrency(totalOutcome)}
           valueClassName="text-red-600 dark:text-red-400"
         />

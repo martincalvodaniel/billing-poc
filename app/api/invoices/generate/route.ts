@@ -30,10 +30,12 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase();
     
-    // Fetch payment
-    const payment = await db.collection<Payment>("payments").findOne({
-      _id: new ObjectId(paymentId),
-    });
+    // Start payment fetch and invoice number generation in parallel (async-parallel)
+    const paymentId_oid = new ObjectId(paymentId);
+    const [payment, invoiceNumber] = await Promise.all([
+      db.collection<Payment>("payments").findOne({ _id: paymentId_oid }),
+      getNextInvoiceNumber(series),
+    ]);
 
     if (!payment) {
       return NextResponse.json(
@@ -68,9 +70,6 @@ export async function POST(request: NextRequest) {
         client = clientDoc;
       }
     }
-
-    // Get next invoice number for the series
-    const invoiceNumber = await getNextInvoiceNumber(series);
 
     // Generate PDF
     const pdfBuffer = await generateInvoicePdf({
