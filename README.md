@@ -39,11 +39,11 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-For detailed setup instructions including MongoDB Atlas configuration, see [AGENTS.md](./AGENTS.md#setup).
+For detailed setup instructions including MongoDB Atlas configuration, see [docs/agents/workflow.md](./docs/agents/workflow.md).
 
 ## Development
 
-For detailed development guidelines, code patterns, TypeScript conventions, and architectural patterns, see [AGENTS.md](./AGENTS.md).
+For detailed development guidelines, code patterns, TypeScript conventions, and architectural patterns, see the modular documentation in [AGENTS.md](./AGENTS.md) (loads only relevant docs per task for efficient AI context).
 
 ## API Endpoints
 
