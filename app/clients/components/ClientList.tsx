@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Client, ClientFormData } from "@/lib/types";
 import ClientForm from "./ClientForm";
 
@@ -69,6 +69,56 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
     }
   };
 
+  // Handle ESC key for edit modal
+  useEffect(() => {
+    if (!editingClientId) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const modalElement = document.querySelector('[id="edit-client-modal"]');
+      if (!modalElement) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCancelEdit();
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [editingClientId]);
+
+  // Handle ESC key for delete modal
+  useEffect(() => {
+    if (!deletingClientId) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const modalElement = document.querySelector('[id="delete-client-modal"]');
+      if (!modalElement) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        setDeletingClientId(null);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("keydown", handleKeyDown);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [deletingClientId]);
+
   const getClientType = (type: string) => {
     return type === "individual" ? "Person / Freelancer" : "Company";
   };
@@ -84,50 +134,94 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
       )}
 
       {editingClientId && editingClient && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Edit Client
-          </h3>
-          <ClientForm
-            client={editingClient}
-            onSubmit={handleUpdate}
-            onCancel={handleCancelEdit}
-          />
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCancelEdit();
+          }}
+        >
+          <div 
+            id="edit-client-modal"
+            className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900"
+            role="dialog"
+            aria-labelledby="edit-client-title"
+            aria-modal="true"
+          >
+            <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+              <h2 
+                id="edit-client-title"
+                className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+              >
+                Edit Client
+              </h2>
+            </div>
+            <div className="p-6">
+              <ClientForm
+                client={editingClient}
+                onSubmit={handleUpdate}
+                onCancel={handleCancelEdit}
+              />
+            </div>
+          </div>
         </div>
       )}
 
       {deletingClientId && clients.find((c) => c._id?.toString() === deletingClientId) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Delete Client
-            </h2>
-            <div className="mt-4 space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <p>
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                  {clients.find((c) => c._id?.toString() === deletingClientId)?.name}
-                </span>
-              </p>
-              <p>
-                Tax ID:{" "}
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                  {clients.find((c) => c._id?.toString() === deletingClientId)?.taxId}
-                </span>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeletingClientId(null);
+          }}
+        >
+          <div 
+            id="delete-client-modal"
+            className="w-full max-w-sm rounded-lg bg-white shadow-lg dark:bg-zinc-900"
+            role="dialog"
+            aria-labelledby="delete-client-title"
+            aria-modal="true"
+          >
+            <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+              <h2 
+                id="delete-client-title"
+                className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+              >
+                Delete Client
+              </h2>
+            </div>
+            <div className="px-6 py-4 text-zinc-700 dark:text-zinc-300">
+              <p>Are you sure you want to delete this client?</p>
+              {clients.find((c) => c._id?.toString() === deletingClientId) && (
+                <div className="mt-4 space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+                  <p>
+                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Name: </span>
+                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {clients.find((c) => c._id?.toString() === deletingClientId)?.name}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Tax ID: </span>
+                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {clients.find((c) => c._id?.toString() === deletingClientId)?.taxId}
+                    </span>
+                  </p>
+                </div>
+              )}
+              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                This action cannot be undone.
               </p>
             </div>
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-              Are you sure you want to delete this client? This action cannot be undone.
-            </p>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="flex gap-2 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
               <button
                 onClick={() => setDeletingClientId(null)}
-                className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+                className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+                className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
               >
                 Delete
               </button>
@@ -167,7 +261,8 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                 {clients.map((client, index) => (
                   <tr
                     key={client._id?.toString()}
-                    className={`border-b border-zinc-200 dark:border-zinc-700 ${
+                    onClick={() => handleEdit(client._id!.toString())}
+                    className={`border-b border-zinc-200 cursor-pointer transition-colors hover:bg-blue-50 dark:border-zinc-700 dark:hover:bg-blue-900/20 ${
                       index % 2 === 0
                         ? "bg-white dark:bg-zinc-900"
                         : "bg-zinc-50 dark:bg-zinc-800/50"
@@ -187,13 +282,10 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => handleEdit(client._id!.toString())}
-                        className="mr-2 rounded-md bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 dark:focus:ring-offset-zinc-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(client._id!.toString())}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(client._id!.toString());
+                        }}
                         className="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 dark:focus:ring-offset-zinc-900"
                       >
                         Delete

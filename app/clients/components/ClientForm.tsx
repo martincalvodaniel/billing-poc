@@ -15,6 +15,8 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
     name: client?.name || "",
     taxId: client?.taxId || "",
     address: client?.address || "",
+    phone: client?.phone || "",
+    email: client?.email || "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -138,6 +140,38 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
           required
           disabled={isSubmitting}
         />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone || ""}
+            onChange={handleChange}
+            placeholder="E.g., +34 123 456 789"
+            className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            Email Address
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email || ""}
+            onChange={handleChange}
+            placeholder="E.g., client@example.com"
+            className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
+            disabled={isSubmitting}
+          />
+        </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

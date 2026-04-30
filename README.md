@@ -14,7 +14,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Detail Modal** - View full details of any payment from the monthly list via an action button with an icon. The modal shows date, type, tag, total, VAT (percentage and amount), net amount, and all payment components with names, amounts, and optional concept-level VAT. Keyboard shortcut: **ESC** or **ENTER** to close
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal. Keyboard shortcuts: **ENTER** to confirm deletion, **ESC** to cancel
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
-- **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), and tax address. Search clients by name or tax ID with real-time filtering. Create, edit, and delete client records. Support for both individual freelancers and company entities. Paginated client list with navigation controls.
+- **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), tax address, and optional phone and email. Search clients by name or tax ID with real-time filtering. Click any client row to edit in a centered modal. Create and delete client records. Support for both individual freelancers and company entities. Paginated client list with navigation controls. Keyboard shortcuts: **ESC** to close modals, **Click outside** to cancel.
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment and client operations with support for payment components
@@ -175,6 +175,8 @@ When filtered by type, returns only tags used by payments of that type.
       "name": "Client Name",
       "taxId": "12345678A",
       "address": "Tax Address",
+      "phone": "+34 123 456 789",
+      "email": "client@example.com",
       "createdAt": "2024-01-01T00:00:00Z",
       "updatedAt": "2024-01-01T00:00:00Z"
     }
@@ -217,7 +219,9 @@ When filtered by type, returns only tags used by payments of that type.
   "clientType": "individual" | "company",
   "name": "John Doe",
   "taxId": "12345678A",
-  "address": "Calle Principal 123, 28001 Madrid"
+  "address": "Calle Principal 123, 28001 Madrid",
+  "phone": "+34 123 456 789",
+  "email": "john@example.com"
 }
 ```
 
@@ -226,6 +230,8 @@ When filtered by type, returns only tags used by payments of that type.
 - `name`: Full name or business name (required)
 - `taxId`: Tax ID: NIF/CIF/NIE (required)
 - `address`: Tax address with postal code and city (required)
+- `phone`: Optional phone number (string)
+- `email`: Optional email address (string)
 
 **Response:** Success status with inserted client ID
 
@@ -237,7 +243,9 @@ When filtered by type, returns only tags used by payments of that type.
   "clientType": "individual" | "company",
   "name": "Jane Doe",
   "taxId": "87654321B",
-  "address": "Nueva Calle 456, 28002 Madrid"
+  "address": "Nueva Calle 456, 28002 Madrid",
+  "phone": "+34 987 654 321",
+  "email": "jane@example.com"
 }
 ```
 
@@ -247,8 +255,10 @@ When filtered by type, returns only tags used by payments of that type.
 - `name`: Full name or business name (optional)
 - `taxId`: Tax ID (optional)
 - `address`: Tax address (optional)
+- `phone`: Optional phone number (optional)
+- `email`: Optional email address (optional)
 
-At least one of `clientType`, `name`, `taxId`, or `address` must be provided.
+At least one of `clientType`, `name`, `taxId`, `address`, `phone`, or `email` must be provided.
 
 **Response:** Success status
 

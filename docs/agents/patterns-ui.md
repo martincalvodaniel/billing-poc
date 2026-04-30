@@ -332,6 +332,49 @@ return (
 - Only display pagination controls if total > 0 (hide for empty results)
 - Card styling matches other content cards for consistent UX
 
+## ClientList Component & Client Modal Editing
+
+Component for displaying paginated client list with full CRUD operations (create via separate form, edit/delete via modals).
+
+### Features
+- Clickable table rows that open edit modal
+- Edit modal with client form fields (type, name, tax ID, address, phone, email)
+- Delete confirmation modal with client details
+- Modal keyboard support: **ESC** to close edit/delete modals, **Click outside backdrop** to cancel
+- Dark mode support with consistent styling
+- Responsive table layout
+
+### Modal Styling Pattern
+All client modals follow the same pattern as payment modals:
+- **Backdrop**: `bg-black/50` (semi-transparent black overlay)
+- **Overlay Container**: `fixed inset-0 z-50 flex items-center justify-center`
+- **Click Outside**: Clicking the backdrop outside the modal closes it
+- **Dialog Structure**: Header with title + border, content area, footer with buttons
+- **Keyboard Shortcuts**: ESC closes modals, properly tracked with useEffect and visibility checks
+
+### Client Form Modal
+- Displayed when user clicks any client table row
+- Edit form with all client fields (optional: phone, email)
+- Cancel button or ESC key closes modal without saving
+- Save button submits PUT request to `/api/clients`
+- Error handling with inline error messages
+- Success automatically refreshes client list
+
+### Delete Confirmation Modal
+- Displayed when user clicks Delete button in Actions column
+- Shows client name and tax ID for confirmation
+- Cancel button or clicking outside closes without deleting
+- Delete button confirms destructive action with DELETE request
+- Success automatically refreshes client list
+- Error handling displays error messages
+
+### Integration Notes
+- Used in clients list view (app/clients/page.tsx)
+- Parent manages client array and passes onRefresh callback
+- useEffect hooks handle ESC key detection for both modals
+- Modal visibility determined by editingClientId and deletingClientId state
+- ClientForm component handles validation and submission
+
 ## Toast Notifications
 - Custom toasts, top-center; auto-dismiss ~4s; manual close
 - Use semantic colors; slideDown animation in globals.css

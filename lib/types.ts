@@ -38,6 +38,8 @@ export interface Client {
   name: string; // Nombre y Apellidos (individual) or Razón Social (company)
   taxId: string; // NIF/CIF/NIE (Tax ID)
   address: string; // Domicilio Fiscal (full address with postal code and city)
+  phone?: string; // Optional phone number
+  email?: string; // Optional email address
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +49,8 @@ export interface ClientFormData {
   name: string;
   taxId: string;
   address: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface PaginationMeta {

@@ -12,12 +12,16 @@
 ## Client Management
 - Full CRUD operations for managing business contacts
 - Support for two client types: individuals/freelancers and companies
-- Store client information: name/business name, tax ID (NIF/CIF/NIE), and tax address
+- Store client information: name/business name, tax ID (NIF/CIF/NIE), tax address, and optional phone and email
 - Search clients by name or tax ID with real-time filtering (case-insensitive)
-- Client list view with edit and delete functionality
-- Create and edit client records via form modal
-- Delete confirmation modal for safety
+- Client list view with modal editing
+- **Clickable rows** - Click any client row to edit in a centered modal
+- **Modal editing** - Edit client details in a modal overlay (matches payment modal patterns)
+- **Delete confirmation modal** - Confirmation modal for safe deletion with client details
+- Create and delete client records via form modal
 - Sorted client display (by name ascending)
+- **Keyboard navigation** - ESC key closes modals, click outside backdrop to cancel
+- **Modal consistency** - All modals use `bg-black/50` backdrop, proper dialog roles, and accessibility patterns
 
 ## Accessibility (WCAG 2.1 A)
 - Icon-only buttons labeled; modals with dialog roles; alert/status live regions; focus rings; aria-expanded on toggles; color-scheme meta
