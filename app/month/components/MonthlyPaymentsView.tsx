@@ -2,8 +2,8 @@
 
 import { useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { Payment } from "@/lib/types";
-import DonutChart from "./DonutChart";
-import SummaryCard from "./SummaryCard";
+import DonutChart from "../../components/DonutChart";
+import SummaryCard from "../../components/SummaryCard";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 

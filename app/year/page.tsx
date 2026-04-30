@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import DonutChart from "../components/DonutChart";
-import MonthlyBreakdown from "../components/MonthlyBreakdown";
+import MonthlyBreakdown from "./components/MonthlyBreakdown";
 import { Payment } from "@/lib/types";
 import NavigationBar from "../components/NavigationBar";
 import SummaryCard from "../components/SummaryCard";
-import YearSelector from "../components/YearSelector";
+import YearSelector from "./components/YearSelector";
 import PaymentCounter from "../components/PaymentCounter";
 
 export default function YearSummaryPage() {

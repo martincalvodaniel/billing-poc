@@ -14,13 +14,28 @@
 ## Architecture
 - app/: Next.js App Router
   - api/payments/route.ts: REST API
-  - components/: DonutChart, PaymentForm, MonthlyPaymentsView, MonthlyBreakdown, PaymentCounter, MonthSelector, YearSelector, NavigationBar, SummaryCard
+  - components/ (shared): DonutChart, PaymentCounter, NavigationBar, SummaryCard
+  - month/: Monthly payments page
+    - components/ (month-specific): PaymentForm, MonthlyPaymentsView, MonthSelector
+    - page.tsx: Monthly payments list with month navigation
+  - year/: Yearly summary page
+    - components/ (year-specific): MonthlyBreakdown, YearSelector
+    - page.tsx: Yearly summary with year picker
   - page.tsx: Redirect to /month
-  - month/page.tsx: Monthly payments list with month navigation
-  - year/page.tsx: Yearly summary with year picker
   - layout.tsx, globals.css
 - lib/: mongodb.ts (singleton), types.ts (shared types)
 - public/: static assets
+
+## Component Organization
+**Shared Components** (`/app/components/`): Multi-use components across pages
+- DonutChart: Tag-based breakdown visualization
+- PaymentCounter: Payment count by type
+- NavigationBar: Top navigation with page links
+- SummaryCard: Reusable info card (label + value)
+
+**Page-Specific Components**: Co-located with their pages for clarity
+- `/app/month/components/`: PaymentForm (modal), MonthlyPaymentsView (list), MonthSelector (picker)
+- `/app/year/components/`: MonthlyBreakdown (breakdown cards), YearSelector (picker)
 
 ## Data Flow
 1) User input → PaymentForm (client validation)

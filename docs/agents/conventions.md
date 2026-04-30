@@ -12,7 +12,7 @@
 - Memoize pure components with React.memo()
 - Lift state to parent for shared filter state (e.g., selectedDate in page.tsx drives PaymentsList and PaymentForm)
 
-### Component Extraction
+### Component Extraction & Organization
 Extract components when they appear in multiple places or represent a cohesive UI unit:
 - **MonthlyPaymentsView**: Monthly payment list with editing, deletion, and filtering (replaces inline logic)
 - **MonthlyBreakdown**: Monthly totals breakdown visualization (extracted from year view)
@@ -21,6 +21,16 @@ Extract components when they appear in multiple places or represent a cohesive U
 - **YearSelector**: Year navigation reused across pages
 - **DonutChart**: Visualization reused for income/outcome tag breakdowns
 - Document extracted components in [patterns-ui.md](./patterns-ui.md) with Props, Features, and Integration Notes
+
+### Component Folder Strategy
+**Shared Components** → `/app/components/`: Components used across multiple pages (DonutChart, PaymentCounter, NavigationBar, SummaryCard)
+**Page-Specific Components** → `/app/[page]/components/`: Components only used by one page, co-located for clarity and easier refactoring (e.g., `/app/month/components/MonthSelector.tsx`)
+
+Benefits of this hybrid approach:
+- Improves organization as pages grow
+- Makes it obvious which page owns which components
+- Simplifies removal of entire features (delete page folder and its components together)
+- Shared utilities remain centralized and easy to import
 
 ## API Routes
 - Return NextResponse.json()

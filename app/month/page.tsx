@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import PaymentForm from "../components/PaymentForm";
-import MonthlyPaymentsView from "../components/MonthlyPaymentsView";
+import PaymentForm from "./components/PaymentForm";
+import MonthlyPaymentsView from "./components/MonthlyPaymentsView";
 import NavigationBar from "../components/NavigationBar";
-import MonthSelector from "../components/MonthSelector";
+import MonthSelector from "./components/MonthSelector";
 import PaymentCounter from "../components/PaymentCounter";
 
 export default function Home() {
