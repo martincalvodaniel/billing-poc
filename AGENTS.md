@@ -640,8 +640,12 @@ const vatAmount = totalAmount - netAmount;
 - Displays current month by default (1st of current month)
 - Navigation buttons to move between months
 - Payment summaries (income, outcome, balance) calculated per month
-- Formatted month/year display in Spanish locale
+- Formatted month/year display in English locale
 - Empty state message when no payments in selected month
+- **Auto-navigate on save**: Automatically switches to the saved payment's month when a new payment is created
+  - `PaymentForm` passes date to `onPaymentSaved` callback
+  - `PaymentsList` exposes `navigateToMonth(dateString)` via ref for parent component
+  - Parent component (`page.tsx`) calls both `refreshPayments()` and `navigateToMonth(date)` on save
 - See "Month Navigation Pattern" in Common Tasks & Patterns
 
 ### Inline Payment Editing (Date & Type)

@@ -5,7 +5,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
-- **Month Navigation** - View payments from any month with calendar picker, prev/next buttons, and dynamic summary calculation per month
+- **Month Navigation** - View payments from any month with calendar picker, prev/next buttons, and dynamic summary calculation per month. Automatically navigates to the saved payment's month after creating a new payment
 - **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks
 - **Inline Payment Editing** - Click any date or type in the payment list to edit inline with a date picker or type selector
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase

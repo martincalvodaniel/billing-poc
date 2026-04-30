@@ -7,8 +7,9 @@ import PaymentsList from "./components/PaymentsList";
 export default function Home() {
   const paymentsListRef = useRef<{ refreshPayments: () => void }>(null);
 
-  const handlePaymentSaved = () => {
+  const handlePaymentSaved = (date: string) => {
     paymentsListRef.current?.refreshPayments();
+    paymentsListRef.current?.navigateToMonth(date);
   };
 
   return (

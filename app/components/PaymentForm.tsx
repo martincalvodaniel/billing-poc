@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PaymentFormData } from "@/lib/types";
 
 interface PaymentFormProps {
-  onPaymentSaved?: () => void;
+  onPaymentSaved?: (date: string) => void;
 }
 
 export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
@@ -47,7 +47,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
       
-      onPaymentSaved?.();
+      onPaymentSaved?.(formData.date);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);

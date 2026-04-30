@@ -28,6 +28,10 @@ export default forwardRef(function PaymentsList(props, ref) {
 
   useImperativeHandle(ref, () => ({
     refreshPayments: fetchPayments,
+    navigateToMonth: (dateString: string) => {
+      const date = new Date(dateString);
+      setSelectedDate(new Date(date.getFullYear(), date.getMonth(), 1));
+    },
   }));
 
   const fetchPayments = async () => {
