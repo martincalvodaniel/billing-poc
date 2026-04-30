@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { Payment, InvoiceSeries, PaymentFormData } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
-import { usePaymentForm } from "./usePaymentForm";
+import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types";
 import PaymentFormFields from "./PaymentFormFields";
-import {
-  validateConcepts,
-  validateVat,
-  validateSurcharge,
-} from "./paymentUtils";
+import { validateConcepts, validateSurcharge, validateVat } from "./paymentUtils";
+import { usePaymentForm } from "./usePaymentForm";
 
 interface PaymentDetailModalProps {
   payment: Payment;
@@ -58,7 +54,7 @@ export default function PaymentDetailModal({
   const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice");
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
-  
+
   // Provider bill upload state
   const [isUploadingBill, setIsUploadingBill] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -92,16 +88,16 @@ export default function PaymentDetailModal({
       }
 
       const data = await response.json();
-      
+
       // Update the local payment with invoice metadata
       const updatedPayment: Payment = {
         ...payment,
         invoice: data.invoice,
         updatedAt: new Date(),
       };
-      
+
       onUpdate?.(updatedPayment);
-      
+
       // Open the invoice in a new tab
       window.open(data.downloadUrl, "_blank");
     } catch (err) {
@@ -148,7 +144,7 @@ export default function PaymentDetailModal({
       }
 
       const data = await response.json();
-      
+
       // Update the local payment with provider bill URL
       const updatedPayment: Payment = {
         ...payment,
@@ -156,9 +152,9 @@ export default function PaymentDetailModal({
         providerBillPathname: data.pathname,
         updatedAt: new Date(),
       };
-      
+
       onUpdate?.(updatedPayment);
-      
+
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -228,7 +224,7 @@ export default function PaymentDetailModal({
       }
 
       const responseData = await response.json();
-      
+
       // Reconstruct the updated payment with response data
       const updatedPayment: Payment = {
         ...payment,
@@ -241,11 +237,13 @@ export default function PaymentDetailModal({
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
         total: responseData.total ?? calculateTotal(),
         vatAmount: responseData.vatAmount ?? parseFloat(calculateVatAmount()),
-        surchargeAmount: responseData.surchargeAmount ?? (surchargeNumber > 0 ? parseFloat(calculateSurchargeAmount()) : undefined),
+        surchargeAmount:
+          responseData.surchargeAmount ??
+          (surchargeNumber > 0 ? parseFloat(calculateSurchargeAmount()) : undefined),
         netAmount: responseData.netAmount ?? parseFloat(calculateNetAmount()),
         updatedAt: new Date(),
       };
-      
+
       onUpdate?.(updatedPayment);
       onClose();
     } catch (err) {
@@ -264,7 +262,7 @@ export default function PaymentDetailModal({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   useEffect(() => {
@@ -353,7 +351,8 @@ export default function PaymentDetailModal({
                       <span className="font-medium">Series:</span> {payment.invoice.series}
                     </p>
                     <p>
-                      <span className="font-medium">Number:</span> {String(payment.invoice.number).padStart(6, "0")}
+                      <span className="font-medium">Number:</span>{" "}
+                      {String(payment.invoice.number).padStart(6, "0")}
                     </p>
                     <p>
                       <span className="font-medium">Generated:</span>{" "}
@@ -365,12 +364,7 @@ export default function PaymentDetailModal({
                     onClick={handleDownloadInvoice}
                     className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
                   >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -408,7 +402,9 @@ export default function PaymentDetailModal({
                       <option value="Invoice">Invoice</option>
                       <option value="RectificativeInvoice">Rectificative Invoice</option>
                       <option value="SimpleInvoice">Simple Invoice</option>
-                      <option value="RectificativeSimpleInvoice">Rectificative Simple Invoice</option>
+                      <option value="RectificativeSimpleInvoice">
+                        Rectificative Simple Invoice
+                      </option>
                     </select>
                   </div>
                   <button
@@ -429,20 +425,13 @@ export default function PaymentDetailModal({
             <div className="space-y-3">
               {payment.providerBillUrl ? (
                 <div className="space-y-2">
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                    Provider bill uploaded
-                  </p>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300">Provider bill uploaded</p>
                   <button
                     type="button"
                     onClick={handleDownloadProviderBill}
                     className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
                   >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"

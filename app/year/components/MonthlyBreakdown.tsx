@@ -31,13 +31,16 @@ export default function MonthlyBreakdown({
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {monthlyTotals.map((month) => {
-          const monthLabel = new Date(selectedYear, month.monthIndex).toLocaleDateString("en-US", { month: "short" });
+          const monthLabel = new Date(selectedYear, month.monthIndex).toLocaleDateString("en-US", {
+            month: "short",
+          });
           const barWidth = Math.min(100, (month.totalVolume / maxMonthlyVolume) * 100);
-          const barColor = month.net > 0
-            ? "bg-blue-500 dark:bg-blue-400"
-            : month.net < 0
-              ? "bg-red-500 dark:bg-red-400"
-              : "bg-zinc-400 dark:bg-zinc-500";
+          const barColor =
+            month.net > 0
+              ? "bg-blue-500 dark:bg-blue-400"
+              : month.net < 0
+                ? "bg-red-500 dark:bg-red-400"
+                : "bg-zinc-400 dark:bg-zinc-500";
 
           return (
             <Link
@@ -46,7 +49,9 @@ export default function MonthlyBreakdown({
               className="block rounded-lg border border-zinc-200 p-3 transition hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-blue-700"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{monthLabel}</span>
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  {monthLabel}
+                </span>
                 <span
                   className={`text-xs font-semibold ${
                     month.net > 0
@@ -62,18 +67,22 @@ export default function MonthlyBreakdown({
               <div className="mt-2 space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
                 <div className="flex items-center justify-between">
                   <span>Income</span>
-                  <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(month.income)}</span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    {formatCurrency(month.income)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Outcome</span>
-                  <span className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(month.outcome)}</span>
+                  <span className="font-semibold text-red-600 dark:text-red-400">
+                    {formatCurrency(month.outcome)}
+                  </span>
                 </div>
               </div>
-              <div className="mt-3 h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800" aria-hidden="true">
-                <div
-                  className={`h-2 rounded-full ${barColor}`}
-                  style={{ width: `${barWidth}%` }}
-                />
+              <div
+                className="mt-3 h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800"
+                aria-hidden="true"
+              >
+                <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${barWidth}%` }} />
               </div>
             </Link>
           );

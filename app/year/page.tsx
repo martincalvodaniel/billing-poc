@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { Payment } from "@/lib/types";
 import DonutChart from "../components/DonutChart";
-import MonthlyBreakdown from "./components/MonthlyBreakdown";
-import { Payment } from "@/lib/types";
 import PageLayout from "../components/PageLayout";
 import SummaryCard from "../components/SummaryCard";
+import MonthlyBreakdown from "./components/MonthlyBreakdown";
 import YearSelector from "./components/YearSelector";
 
 export default function YearSummaryPage() {
@@ -67,48 +67,49 @@ export default function YearSummaryPage() {
 
   const paymentsForYear = useMemo(
     () => payments, // API already filters by year
-    [payments]
+    [payments],
   );
 
   // Combine iterations: compute monthly buckets and tag breakdowns in a single pass (js-combine-iterations)
-  const { monthlyTotals, incomeByTagYear, outcomeByTagYear, incomeCount, outcomeCount } = useMemo(() => {
-    const buckets = Array.from({ length: 12 }, (_, monthIndex) => ({
-      monthIndex,
-      income: 0,
-      outcome: 0,
-    }));
-    const incByTag: Record<string, number> = {};
-    const outByTag: Record<string, number> = {};
-    let incCount = 0;
-    let outCount = 0;
+  const { monthlyTotals, incomeByTagYear, outcomeByTagYear, incomeCount, outcomeCount } =
+    useMemo(() => {
+      const buckets = Array.from({ length: 12 }, (_, monthIndex) => ({
+        monthIndex,
+        income: 0,
+        outcome: 0,
+      }));
+      const incByTag: Record<string, number> = {};
+      const outByTag: Record<string, number> = {};
+      let incCount = 0;
+      let outCount = 0;
 
-    for (const payment of paymentsForYear) {
-      const paymentMonth = new Date(payment.date).getMonth();
-      const bucket = buckets[paymentMonth];
-      const tag = payment.tag || "Untagged";
-      if (payment.type === "income") {
-        bucket.income += payment.total;
-        incByTag[tag] = (incByTag[tag] || 0) + payment.total;
-        incCount++;
-      } else {
-        bucket.outcome += payment.total;
-        outByTag[tag] = (outByTag[tag] || 0) + payment.total;
-        outCount++;
+      for (const payment of paymentsForYear) {
+        const paymentMonth = new Date(payment.date).getMonth();
+        const bucket = buckets[paymentMonth];
+        const tag = payment.tag || "Untagged";
+        if (payment.type === "income") {
+          bucket.income += payment.total;
+          incByTag[tag] = (incByTag[tag] || 0) + payment.total;
+          incCount++;
+        } else {
+          bucket.outcome += payment.total;
+          outByTag[tag] = (outByTag[tag] || 0) + payment.total;
+          outCount++;
+        }
       }
-    }
 
-    return {
-      monthlyTotals: buckets.map((b) => ({
-        ...b,
-        net: b.income - b.outcome,
-        totalVolume: b.income + b.outcome,
-      })),
-      incomeByTagYear: incByTag,
-      outcomeByTagYear: outByTag,
-      incomeCount: incCount,
-      outcomeCount: outCount,
-    };
-  }, [paymentsForYear]);
+      return {
+        monthlyTotals: buckets.map((b) => ({
+          ...b,
+          net: b.income - b.outcome,
+          totalVolume: b.income + b.outcome,
+        })),
+        incomeByTagYear: incByTag,
+        outcomeByTagYear: outByTag,
+        incomeCount: incCount,
+        outcomeCount: outCount,
+      };
+    }, [paymentsForYear]);
 
   const yearlyIncome = monthlyTotals.reduce((sum, month) => sum + month.income, 0);
   const yearlyOutcome = monthlyTotals.reduce((sum, month) => sum + month.outcome, 0);
@@ -116,8 +117,16 @@ export default function YearSummaryPage() {
   const maxMonthlyVolume = Math.max(1, ...monthlyTotals.map((month) => month.totalVolume));
 
   const colors = [
-    "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
-    "#ec4899", "#06b6d4", "#f97316", "#6366f1", "#14b8a6",
+    "#10b981",
+    "#3b82f6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+    "#f97316",
+    "#6366f1",
+    "#14b8a6",
   ];
 
   return (
@@ -128,8 +137,12 @@ export default function YearSummaryPage() {
       headerContent={
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Yearly Filter</p>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Yearly Filter
+            </p>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Overview for {selectedYear}
+            </h3>
           </div>
           <div className="flex items-center gap-2">
             <YearSelector
@@ -161,7 +174,9 @@ export default function YearSummaryPage() {
           <SummaryCard
             label="Net Balance"
             value={formatCurrency(yearlyNet)}
-            valueClassName={yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}
+            valueClassName={
+              yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"
+            }
           />
         </div>
 
@@ -172,8 +187,16 @@ export default function YearSummaryPage() {
         ) : (
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
-              <DonutChart data={incomeByTagYear} title={`Income by Tag (${selectedYear})`} colors={colors} />
-              <DonutChart data={outcomeByTagYear} title={`Outcome by Tag (${selectedYear})`} colors={colors} />
+              <DonutChart
+                data={incomeByTagYear}
+                title={`Income by Tag (${selectedYear})`}
+                colors={colors}
+              />
+              <DonutChart
+                data={outcomeByTagYear}
+                title={`Outcome by Tag (${selectedYear})`}
+                colors={colors}
+              />
             </div>
 
             <MonthlyBreakdown
@@ -184,7 +207,7 @@ export default function YearSummaryPage() {
             />
           </div>
         )}
-        
+
         {error && (
           <div
             className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"

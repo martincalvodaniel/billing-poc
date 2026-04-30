@@ -26,34 +26,34 @@ This script creates realistic test data with:
 
 #### Basic Usage (localhost:3000)
 ```bash
-npx ts-node scripts/payments/loadRandomDataForMonth.ts 2025 1
+bun run scripts/payments/loadRandomDataForMonth.ts 2025 1
 ```
 
 #### With Custom Base URL
 ```bash
-npx ts-node scripts/payments/loadRandomDataForMonth.ts 2025 1 http://localhost:3000
+bun run scripts/payments/loadRandomDataForMonth.ts 2025 1 http://localhost:3000
 ```
 
 #### With Remote URL
 ```bash
-npx ts-node scripts/payments/loadRandomDataForMonth.ts 2025 1 https://billing-poc.example.com
+bun run scripts/payments/loadRandomDataForMonth.ts 2025 1 https://billing-poc.example.com
 ```
 
 ### Examples
 
 Load data for January 2024:
 ```bash
-npx ts-node scripts/payments/loadRandomDataForMonth.ts 2024 1
+bun run scripts/payments/loadRandomDataForMonth.ts 2024 1
 ```
 
 Load data for March 2025 with custom server:
 ```bash
-npx ts-node scripts/payments/loadRandomDataForMonth.ts 2025 3 http://192.168.1.100:3000
+bun run scripts/payments/loadRandomDataForMonth.ts 2025 3 http://192.168.1.100:3000
 ```
 
 Load data for December 2023:
 ```bash
-npx ts-node scripts/payments/loadRandomDataForMonth.ts 2023 12
+bun run scripts/payments/loadRandomDataForMonth.ts 2023 12
 ```
 
 ### Script Arguments
@@ -83,29 +83,29 @@ This script:
 
 #### Basic Usage (localhost:3000)
 ```bash
-npx ts-node scripts/payments/loadRandomDataForYear.ts 2025
+bun run scripts/payments/loadRandomDataForYear.ts 2025
 ```
 
 #### With Custom Base URL
 ```bash
-npx ts-node scripts/payments/loadRandomDataForYear.ts 2025 http://localhost:3000
+bun run scripts/payments/loadRandomDataForYear.ts 2025 http://localhost:3000
 ```
 
 #### With Remote URL
 ```bash
-npx ts-node scripts/payments/loadRandomDataForYear.ts 2025 https://billing-poc.example.com
+bun run scripts/payments/loadRandomDataForYear.ts 2025 https://billing-poc.example.com
 ```
 
 ### Examples
 
 Load data for entire year 2024:
 ```bash
-npx ts-node scripts/payments/loadRandomDataForYear.ts 2024
+bun run scripts/payments/loadRandomDataForYear.ts 2024
 ```
 
 Load data for 2025 with custom server:
 ```bash
-npx ts-node scripts/payments/loadRandomDataForYear.ts 2025 http://192.168.1.100:3000
+bun run scripts/payments/loadRandomDataForYear.ts 2025 http://192.168.1.100:3000
 ```
 
 ### Script Arguments
@@ -129,7 +129,7 @@ The script displays:
 
 - Application running on specified base URL
 - MongoDB database connected to the application
-- Node.js and ts-node installed
+- Node.js and bun installed
 
 ## Data Generation Details
 

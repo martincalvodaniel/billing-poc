@@ -1,4 +1,4 @@
-import { ClientFormData } from "../../lib/types";
+import type { ClientFormData } from "../../lib/types";
 
 const INDIVIDUAL_FIRST_NAMES = [
   "Juan",
@@ -90,25 +90,19 @@ export function randomBetween(min: number, max: number): number {
  */
 export function generateIndividualClient(): ClientFormData {
   const firstName =
-    INDIVIDUAL_FIRST_NAMES[
-      Math.floor(Math.random() * INDIVIDUAL_FIRST_NAMES.length)
-    ];
-  const lastName =
-    INDIVIDUAL_LAST_NAMES[
-      Math.floor(Math.random() * INDIVIDUAL_LAST_NAMES.length)
-    ];
+    INDIVIDUAL_FIRST_NAMES[Math.floor(Math.random() * INDIVIDUAL_FIRST_NAMES.length)];
+  const lastName = INDIVIDUAL_LAST_NAMES[Math.floor(Math.random() * INDIVIDUAL_LAST_NAMES.length)];
   const name = `${firstName} ${lastName}`;
 
   // NIF format: 8 digits + 1 letter
   const nif = `${randomBetween(10000000, 99999999)}${String.fromCharCode(
-    65 + Math.floor(Math.random() * 26)
+    65 + Math.floor(Math.random() * 26),
   )}`;
 
   const street = STREETS[Math.floor(Math.random() * STREETS.length)];
   const streetNumber = randomBetween(1, 200);
   const city = SPANISH_CITIES[Math.floor(Math.random() * SPANISH_CITIES.length)];
-  const postcode =
-    SPANISH_POSTCODES[Math.floor(Math.random() * SPANISH_POSTCODES.length)];
+  const postcode = SPANISH_POSTCODES[Math.floor(Math.random() * SPANISH_POSTCODES.length)];
   const address = `${street} ${streetNumber}, ${postcode} ${city}`;
 
   return {
@@ -128,14 +122,13 @@ export function generateCompanyClient(): ClientFormData {
   // CIF format: 1 letter + 7 digits + 1 control character
   const cifLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
   const cif = `${cifLetter}${randomBetween(1000000, 9999999)}${String.fromCharCode(
-    65 + Math.floor(Math.random() * 26)
+    65 + Math.floor(Math.random() * 26),
   )}`;
 
   const street = STREETS[Math.floor(Math.random() * STREETS.length)];
   const streetNumber = randomBetween(1, 200);
   const city = SPANISH_CITIES[Math.floor(Math.random() * SPANISH_CITIES.length)];
-  const postcode =
-    SPANISH_POSTCODES[Math.floor(Math.random() * SPANISH_POSTCODES.length)];
+  const postcode = SPANISH_POSTCODES[Math.floor(Math.random() * SPANISH_POSTCODES.length)];
   const address = `${street} ${streetNumber}, ${postcode} ${city}`;
 
   return {
@@ -166,10 +159,7 @@ export function generateClients(count: number): ClientFormData[] {
 /**
  * Insert a client via the API
  */
-export async function insertClient(
-  baseUrl: string,
-  client: ClientFormData
-): Promise<void> {
+export async function insertClient(baseUrl: string, client: ClientFormData): Promise<void> {
   const response = await fetch(`${baseUrl}/api/clients`, {
     method: "POST",
     headers: {
@@ -189,10 +179,7 @@ export async function insertClient(
 /**
  * Load client data into the application via API
  */
-export async function loadClients(
-  count: number,
-  baseUrl: string
-): Promise<void> {
+export async function loadClients(count: number, baseUrl: string): Promise<void> {
   // Generate data
   const clients = generateClients(count);
 
@@ -218,9 +205,7 @@ export async function loadClients(
     }
   }
 
-  console.log(
-    `\n✓ Successfully inserted ${insertedCount} clients out of ${clients.length}`
-  );
+  console.log(`\n✓ Successfully inserted ${insertedCount} clients out of ${clients.length}`);
 
   if (errors.length > 0) {
     console.log(`\n⚠ ${errors.length} clients failed to insert:`);

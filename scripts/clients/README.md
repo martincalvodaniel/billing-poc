@@ -12,13 +12,13 @@ Loads sample client data (individuals and companies) into the database via the A
 
 ```bash
 # Load 10 sample clients (default)
-npx ts-node scripts/clients/loadSampleClients.ts
+bun run scripts/clients/loadSampleClients.ts
 
 # Load 20 sample clients
-npx ts-node scripts/clients/loadSampleClients.ts 20
+bun run scripts/clients/loadSampleClients.ts 20
 
 # Load 15 sample clients to a custom API endpoint
-npx ts-node scripts/clients/loadSampleClients.ts 15 http://localhost:3000
+bun run scripts/clients/loadSampleClients.ts 15 http://localhost:3000
 ```
 
 **Arguments:**
@@ -44,19 +44,19 @@ npx ts-node scripts/clients/loadSampleClients.ts 15 http://localhost:3000
 Load 10 clients to localhost:
 
 ```bash
-npx ts-node scripts/clients/loadSampleClients.ts
+bun run scripts/clients/loadSampleClients.ts
 ```
 
 Load 50 clients:
 
 ```bash
-npx ts-node scripts/clients/loadSampleClients.ts 50
+bun run scripts/clients/loadSampleClients.ts 50
 ```
 
 Load 5 clients to production API:
 
 ```bash
-npx ts-node scripts/clients/loadSampleClients.ts 5 https://billing-app.vercel.app
+bun run scripts/clients/loadSampleClients.ts 5 https://billing-app.vercel.app
 ```
 
 ## Utilities

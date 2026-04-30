@@ -1,5 +1,5 @@
 import { getDatabase } from "./mongodb";
-import { InvoiceCounter, InvoiceSeries } from "./types";
+import type { InvoiceCounter, InvoiceSeries } from "./types";
 
 /**
  * Get and increment the invoice counter for a specific series
@@ -7,7 +7,7 @@ import { InvoiceCounter, InvoiceSeries } from "./types";
  */
 export async function getNextInvoiceNumber(series: InvoiceSeries): Promise<number> {
   const db = await getDatabase();
-  
+
   // Use findOneAndUpdate with upsert to atomically get and increment
   const result = await db.collection<InvoiceCounter>("invoiceCounters").findOneAndUpdate(
     { series },
@@ -18,7 +18,7 @@ export async function getNextInvoiceNumber(series: InvoiceSeries): Promise<numbe
     {
       upsert: true,
       returnDocument: "after",
-    }
+    },
   );
 
   if (!result) {
@@ -33,9 +33,9 @@ export async function getNextInvoiceNumber(series: InvoiceSeries): Promise<numbe
  */
 export async function getCurrentInvoiceNumber(series: InvoiceSeries): Promise<number> {
   const db = await getDatabase();
-  
+
   const counter = await db.collection<InvoiceCounter>("invoiceCounters").findOne({ series });
-  
+
   return counter?.lastNumber || 0;
 }
 
@@ -44,8 +44,13 @@ export async function getCurrentInvoiceNumber(series: InvoiceSeries): Promise<nu
  */
 export async function initializeInvoiceCounters(startNumber = 0): Promise<void> {
   const db = await getDatabase();
-  const series: InvoiceSeries[] = ["Invoice", "RectificativeInvoice", "SimpleInvoice", "RectificativeSimpleInvoice"];
-  
+  const series: InvoiceSeries[] = [
+    "Invoice",
+    "RectificativeInvoice",
+    "SimpleInvoice",
+    "RectificativeSimpleInvoice",
+  ];
+
   const operations = series.map((s) => ({
     updateOne: {
       filter: { series: s },

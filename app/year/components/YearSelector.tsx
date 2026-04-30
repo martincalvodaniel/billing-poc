@@ -69,7 +69,10 @@ export default function YearSelector({
             className="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           >
             <div className="flex items-center gap-2">
-              <label htmlFor="year-input" className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <label
+                htmlFor="year-input"
+                className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+              >
                 Year
               </label>
               <input

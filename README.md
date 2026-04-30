@@ -27,7 +27,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Getting Started
 
 ### Prerequisites
-- Node.js 20+ and pnpm
+- Node.js 20+ and bun
 - MongoDB running locally or MongoDB Atlas account
 - Vercel Blob storage token (for invoice/bill PDF storage)
 
@@ -35,7 +35,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 
 ```bash
 # 1. Install dependencies
-pnpm install
+bun install
 
 # 2. Set up environment variables
 # Copy .env.example to .env and configure:
@@ -47,7 +47,7 @@ cp .env.example .env
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 
 # 4. Run development server
-pnpm dev
+bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see the app.

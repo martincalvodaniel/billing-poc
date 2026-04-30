@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 import { put } from "@vercel/blob";
+import { ObjectId } from "mongodb";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { Payment } from "@/lib/types";
+import type { Payment } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,46 +14,37 @@ export async function POST(request: NextRequest) {
     if (!file || !paymentId) {
       return NextResponse.json(
         { error: "Missing required fields (file, paymentId)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate file type
     if (file.type !== "application/pdf") {
-      return NextResponse.json(
-        { error: "Only PDF files are allowed" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 400 });
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: "File size exceeds 10MB limit" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "File size exceeds 10MB limit" }, { status: 400 });
     }
 
     const db = await getDatabase();
-    
+
     // Fetch payment
     const payment = await db.collection<Payment>("payments").findOne({
       _id: new ObjectId(paymentId),
     });
 
     if (!payment) {
-      return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
     // Check if outcome payment (only outcome can have provider bills)
     if (payment.type !== "outcome") {
       return NextResponse.json(
         { error: "Only outcome payments can have provider bills" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -74,7 +65,7 @@ export async function POST(request: NextRequest) {
           providerBillPathname: blob.pathname,
           updatedAt: new Date(),
         },
-      }
+      },
     );
 
     return NextResponse.json(
@@ -83,13 +74,10 @@ export async function POST(request: NextRequest) {
         billUrl: blob.url,
         pathname: blob.pathname,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error(`Error uploading provider bill: ${error}`);
-    return NextResponse.json(
-      { error: "Failed to upload provider bill" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to upload provider bill" }, { status: 500 });
   }
 }

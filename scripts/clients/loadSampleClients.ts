@@ -11,7 +11,7 @@ async function main(): Promise<void> {
   let baseUrl = "http://localhost:3000";
 
   // Parse arguments
-  if (args.length > 0 && !isNaN(parseInt(args[0], 10))) {
+  if (args.length > 0 && !Number.isNaN(parseInt(args[0], 10))) {
     count = parseInt(args[0], 10);
   }
 

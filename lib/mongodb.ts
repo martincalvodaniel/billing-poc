@@ -1,4 +1,4 @@
-import { MongoClient, Db } from "mongodb";
+import { type Db, MongoClient } from "mongodb";
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');

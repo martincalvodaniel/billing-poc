@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 import { put } from "@vercel/blob";
-import { getDatabase } from "@/lib/mongodb";
-import { Payment, Client, InvoiceSeries, InvoiceMetadata } from "@/lib/types";
-import { generateInvoicePdf } from "@/lib/invoicePdf";
+import { ObjectId } from "mongodb";
+import { type NextRequest, NextResponse } from "next/server";
 import { getNextInvoiceNumber } from "@/lib/invoiceCounters";
+import { generateInvoicePdf } from "@/lib/invoicePdf";
+import { getDatabase } from "@/lib/mongodb";
+import type { Client, InvoiceMetadata, InvoiceSeries, Payment } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,21 +15,23 @@ export async function POST(request: NextRequest) {
     if (!paymentId || !series) {
       return NextResponse.json(
         { error: "Missing required fields (paymentId, series)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate series
-    const validSeries: InvoiceSeries[] = ["Invoice", "RectificativeInvoice", "SimpleInvoice", "RectificativeSimpleInvoice"];
+    const validSeries: InvoiceSeries[] = [
+      "Invoice",
+      "RectificativeInvoice",
+      "SimpleInvoice",
+      "RectificativeSimpleInvoice",
+    ];
     if (!validSeries.includes(series)) {
-      return NextResponse.json(
-        { error: "Invalid invoice series" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid invoice series" }, { status: 400 });
     }
 
     const db = await getDatabase();
-    
+
     // Start payment fetch and invoice number generation in parallel (async-parallel)
     const paymentId_oid = new ObjectId(paymentId);
     const [payment, invoiceNumber] = await Promise.all([
@@ -38,17 +40,14 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (!payment) {
-      return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
     // Check if income payment (only income can have generated invoices)
     if (payment.type !== "income") {
       return NextResponse.json(
         { error: "Only income payments can have generated invoices" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (payment.invoice) {
       return NextResponse.json(
         { error: "Invoice already generated for this payment" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
           invoice: invoiceMetadata,
           updatedAt: new Date(),
         },
-      }
+      },
     );
 
     // Return a proxy URL so the client can download via the server (no direct blob token needed)
@@ -114,13 +113,10 @@ export async function POST(request: NextRequest) {
         invoice: invoiceMetadata,
         downloadUrl,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error(`Error generating invoice: ${error}`);
-    return NextResponse.json(
-      { error: "Failed to generate invoice" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate invoice" }, { status: 500 });
   }
 }

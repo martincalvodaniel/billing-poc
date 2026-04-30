@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { memo, useState, useMemo } from 'react';
+import { memo, useMemo, useState } from "react";
 
 interface DonutChartProps {
   data: Record<string, number>;
@@ -8,12 +8,12 @@ interface DonutChartProps {
   colors: string[];
 }
 
-type SortBy = 'percentage' | 'name';
-type SortOrder = 'asc' | 'desc';
+type SortBy = "percentage" | "name";
+type SortOrder = "asc" | "desc";
 
 const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartProps) {
-  const [sortBy, setSortBy] = useState<SortBy>('percentage');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [sortBy, setSortBy] = useState<SortBy>("percentage");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const entries = useMemo(() => Object.entries(data), [data]);
   const total = useMemo(() => entries.reduce((sum, [, value]) => sum + value, 0), [entries]);
@@ -126,32 +126,30 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
   // Sort segments for legend display only (does not affect SVG rendering)
   const sortedSegments = useMemo(() => {
     const sorted = [...segments];
-    
-    if (sortBy === 'percentage') {
+
+    if (sortBy === "percentage") {
       sorted.sort((a, b) => {
-        return sortOrder === 'desc' 
-          ? b.percentage - a.percentage 
-          : a.percentage - b.percentage;
+        return sortOrder === "desc" ? b.percentage - a.percentage : a.percentage - b.percentage;
       });
     } else {
       // Sort by name
       sorted.sort((a, b) => {
         const comparison = a.tag.localeCompare(b.tag);
-        return sortOrder === 'desc' ? -comparison : comparison;
+        return sortOrder === "desc" ? -comparison : comparison;
       });
     }
-    
+
     return sorted;
   }, [segments, sortBy, sortOrder]);
 
   const toggleSortBy = (newSortBy: SortBy) => {
     if (sortBy === newSortBy) {
       // Toggle order if clicking the same sort option
-      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
       // Switch to new sort option with descending as default
       setSortBy(newSortBy);
-      setSortOrder('desc');
+      setSortOrder("desc");
     }
   };
 
@@ -170,30 +168,30 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
         <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
         <div className="flex gap-1">
           <button
-            onClick={() => toggleSortBy('percentage')}
-            aria-label={`Sort by percentage ${sortBy === 'percentage' ? (sortOrder === 'desc' ? 'descending' : 'ascending') : ''}`}
+            onClick={() => toggleSortBy("percentage")}
+            aria-label={`Sort by percentage ${sortBy === "percentage" ? (sortOrder === "desc" ? "descending" : "ascending") : ""}`}
             className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
-              sortBy === 'percentage'
-                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+              sortBy === "percentage"
+                ? "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700"
+                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
-            % {sortBy === 'percentage' && (sortOrder === 'desc' ? '↓' : '↑')}
+            % {sortBy === "percentage" && (sortOrder === "desc" ? "↓" : "↑")}
           </button>
           <button
-            onClick={() => toggleSortBy('name')}
-            aria-label={`Sort by name ${sortBy === 'name' ? (sortOrder === 'desc' ? 'descending' : 'ascending') : ''}`}
+            onClick={() => toggleSortBy("name")}
+            aria-label={`Sort by name ${sortBy === "name" ? (sortOrder === "desc" ? "descending" : "ascending") : ""}`}
             className={`rounded px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
-              sortBy === 'name'
-                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+              sortBy === "name"
+                ? "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700"
+                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             }`}
           >
-            AZ {sortBy === 'name' && (sortOrder === 'desc' ? '↓' : '↑')}
+            AZ {sortBy === "name" && (sortOrder === "desc" ? "↓" : "↑")}
           </button>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-6">
         <svg width="160" height="160" viewBox="0 0 120 120" className="flex-shrink-0">
           {segments.map((segment) => (
@@ -205,8 +203,8 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
             />
           ))}
         </svg>
-        
-        <div className="flex-1 space-y-2 overflow-y-auto" style={{ maxHeight: '160px' }}>
+
+        <div className="flex-1 space-y-2 overflow-y-auto" style={{ maxHeight: "160px" }}>
           {sortedSegments.map((segment) => (
             <div key={segment.tag} className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -214,9 +212,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
                   className="h-2 w-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: segment.color }}
                 ></div>
-                <span className="truncate text-zinc-700 dark:text-zinc-300">
-                  {segment.tag}
-                </span>
+                <span className="truncate text-zinc-700 dark:text-zinc-300">{segment.tag}</span>
               </div>
               <span className="ml-2 flex-shrink-0 font-medium text-zinc-900 dark:text-zinc-100">
                 {segment.percentage.toFixed(1)}%

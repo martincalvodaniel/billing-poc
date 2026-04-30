@@ -1,6 +1,5 @@
 import { loadData as loadDataUtil } from "./utils";
 
-
 /**
  * Main entry point
  */
@@ -9,10 +8,10 @@ async function main(): Promise<void> {
 
   if (args.length < 2) {
     console.error(
-      "Usage: npx ts-node scripts/payments/loadRandomDataForMonth.ts <year> <month> [baseUrl]"
+      "Usage: npx ts-node scripts/payments/loadRandomDataForMonth.ts <year> <month> [baseUrl]",
     );
     console.error(
-      "Example: npx ts-node scripts/payments/loadRandomDataForMonth.ts 2024 1 http://localhost:3000"
+      "Example: npx ts-node scripts/payments/loadRandomDataForMonth.ts 2024 1 http://localhost:3000",
     );
     process.exit(1);
   }
@@ -21,7 +20,7 @@ async function main(): Promise<void> {
   const month = parseInt(args[1], 10);
   const baseUrl = args[2] || "http://localhost:3000";
 
-  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+  if (Number.isNaN(year) || Number.isNaN(month) || month < 1 || month > 12) {
     console.error("Invalid year or month. Month must be between 1 and 12.");
     process.exit(1);
   }

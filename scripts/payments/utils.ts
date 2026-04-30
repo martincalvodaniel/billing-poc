@@ -1,4 +1,4 @@
-import { PaymentConcept, PaymentFormData } from "../../lib/types";
+import type { PaymentConcept, PaymentFormData } from "../../lib/types";
 
 export const INCOME_NAMES = [
   "Client Invoice",
@@ -81,7 +81,7 @@ export function generateConcepts(): PaymentConcept[] {
  * Calculate VAT and totals from concepts (amount × quantity)
  */
 export function calculateTotals(concepts: PaymentConcept[], defaultVAT: number) {
-  const totalAmount = concepts.reduce((sum, c) => sum + (c.amount * c.quantity), 0);
+  const totalAmount = concepts.reduce((sum, c) => sum + c.amount * c.quantity, 0);
   const netAmount = totalAmount / (1 + defaultVAT / 100);
   const vatAmount = totalAmount - netAmount;
 
@@ -97,10 +97,7 @@ export function calculateTotals(concepts: PaymentConcept[], defaultVAT: number) 
  */
 export function generateDateInMonth(year: number, month: number): string {
   const day = randomBetween(1, 28);
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
-    2,
-    "0"
-  )}`;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 /**
@@ -112,17 +109,15 @@ export function generateIncomes(year: number, month: number) {
     const concepts = generateConcepts();
     const vatOptions = [0, 10, 21];
     const defaultVAT = vatOptions[Math.floor(Math.random() * vatOptions.length)];
-    const { total, netAmount, vatAmount } = calculateTotals(
-      concepts,
-      defaultVAT
-    );
+    const { total, netAmount, vatAmount } = calculateTotals(concepts, defaultVAT);
 
     return {
       type: "income" as const,
       date: generateDateInMonth(year, month),
-      tag: Math.random() > 0.5
-        ? INCOME_NAMES[Math.floor(Math.random() * INCOME_NAMES.length)]
-        : undefined,
+      tag:
+        Math.random() > 0.5
+          ? INCOME_NAMES[Math.floor(Math.random() * INCOME_NAMES.length)]
+          : undefined,
       concepts,
       vat: defaultVAT,
       total,
@@ -143,17 +138,15 @@ export function generateOutcomes(year: number, month: number) {
     const concepts = generateConcepts();
     const vatOptions = [0, 10, 21];
     const defaultVAT = vatOptions[Math.floor(Math.random() * vatOptions.length)];
-    const { total, netAmount, vatAmount } = calculateTotals(
-      concepts,
-      defaultVAT
-    );
+    const { total, netAmount, vatAmount } = calculateTotals(concepts, defaultVAT);
 
     return {
       type: "outcome" as const,
       date: generateDateInMonth(year, month),
-      tag: Math.random() > 0.5
-        ? OUTCOME_NAMES[Math.floor(Math.random() * OUTCOME_NAMES.length)]
-        : undefined,
+      tag:
+        Math.random() > 0.5
+          ? OUTCOME_NAMES[Math.floor(Math.random() * OUTCOME_NAMES.length)]
+          : undefined,
       concepts,
       vat: defaultVAT,
       total,
@@ -168,10 +161,7 @@ export function generateOutcomes(year: number, month: number) {
 /**
  * Insert a payment via the API
  */
-export async function insertPayment(
-  baseUrl: string,
-  payment: PaymentFormData
-): Promise<void> {
+export async function insertPayment(baseUrl: string, payment: PaymentFormData): Promise<void> {
   const response = await fetch(`${baseUrl}/api/payments`, {
     method: "POST",
     headers: {
@@ -192,17 +182,15 @@ export async function insertPayment(
 /**
  * Load data into the application via API
  */
-export async function loadData(
-  year: number,
-  month: number,
-  baseUrl: string
-): Promise<void> {
+export async function loadData(year: number, month: number, baseUrl: string): Promise<void> {
   // Generate data
   const incomes = generateIncomes(year, month);
   const outcomes = generateOutcomes(year, month);
   const allPayments = [...incomes, ...outcomes];
 
-  console.log(`Loading ${allPayments.length} payments for ${year}-${String(month).padStart(2, "0")}...`);
+  console.log(
+    `Loading ${allPayments.length} payments for ${year}-${String(month).padStart(2, "0")}...`,
+  );
   console.log(`  - ${incomes.length} incomes`);
   console.log(`  - ${outcomes.length} outcomes`);
   console.log(`  - API URL: ${baseUrl}\n`);
@@ -233,9 +221,7 @@ export async function loadData(
     }
   }
 
-  console.log(
-    `\n✓ Successfully inserted ${insertedCount} payments out of ${allPayments.length}`
-  );
+  console.log(`\n✓ Successfully inserted ${insertedCount} payments out of ${allPayments.length}`);
 
   if (errors.length > 0) {
     console.log(`\n⚠ ${errors.length} payments failed to insert:`);

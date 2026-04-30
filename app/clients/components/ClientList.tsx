@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Client, ClientFormData } from "@/lib/types";
+import { useEffect, useState } from "react";
 import Modal from "@/app/components/Modal";
+import type { Client, ClientFormData } from "@/lib/types";
 import ClientForm from "./ClientForm";
 
 interface ClientListProps {
@@ -26,23 +26,19 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
   };
 
   const handleUpdate = async (data: ClientFormData) => {
-    try {
-      const response = await fetch("/api/clients", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editingClientId, ...data }),
-      });
+    const response = await fetch("/api/clients", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingClientId, ...data }),
+    });
 
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to update client");
-      }
-
-      setEditingClientId(null);
-      await onRefresh();
-    } catch (err) {
-      throw err;
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || "Failed to update client");
     }
+
+    setEditingClientId(null);
+    await onRefresh();
   };
 
   const handleDeleteClick = (clientId: string) => {
@@ -93,7 +89,7 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
       clearTimeout(timeoutId);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editingClientId]);
+  }, [editingClientId, handleCancelEdit]);
 
   // Handle ESC key for delete modal
   useEffect(() => {
@@ -143,11 +139,7 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
         closeOnBackdropClick={true}
       >
         {editingClient && (
-          <ClientForm
-            client={editingClient}
-            onSubmit={handleUpdate}
-            onCancel={handleCancelEdit}
-          />
+          <ClientForm client={editingClient} onSubmit={handleUpdate} onCancel={handleCancelEdit} />
         )}
       </Modal>
 
@@ -186,23 +178,25 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                 </span>
               </p>
               <p>
-                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Tax ID: </span>
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  Tax ID:{" "}
+                </span>
                 <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {clients.find((c) => c._id?.toString() === deletingClientId)?.taxId}
                 </span>
               </p>
             </div>
           )}
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            This action cannot be undone.
-          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">This action cannot be undone.</p>
         </div>
       </Modal>
 
       <div className="space-y-4">
         {clients.length === 0 ? (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-            <p className="text-zinc-600 dark:text-zinc-400">No clients found. Create your first client to get started.</p>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              No clients found. Create your first client to get started.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-zinc-200 shadow-sm dark:border-zinc-800">
@@ -230,7 +224,7 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                 {clients.map((client, index) => (
                   <tr
                     key={client._id?.toString()}
-                    onClick={() => handleEdit(client._id!.toString())}
+                    onClick={() => handleEdit(client._id?.toString() ?? "")}
                     className={`border-b border-zinc-200 cursor-pointer transition-colors hover:bg-blue-50 dark:border-zinc-700 dark:hover:bg-blue-900/20 ${
                       index % 2 === 0
                         ? "bg-white dark:bg-zinc-900"
@@ -253,7 +247,7 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteClick(client._id!.toString());
+                          handleDeleteClick(client._id?.toString() ?? "");
                         }}
                         className="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 dark:focus:ring-offset-zinc-900"
                       >

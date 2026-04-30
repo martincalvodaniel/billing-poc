@@ -6,7 +6,7 @@
 - Errors logged with template literals
 - Styling uses Tailwind utilities only
 - Components functional with React hooks; semantic HTML
-- Linting passes (pnpm lint)
+- Linting passes (bun run lint)
 - Architecture patterns preserved
 - Icon-only buttons have aria-label
 - Modals: role="dialog", aria-labelledby, aria-modal

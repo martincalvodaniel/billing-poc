@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { Payment, Client, InvoiceSeries } from "./types";
+import type { Client, InvoiceSeries, Payment } from "./types";
 
 interface InvoiceData {
   payment: Payment;

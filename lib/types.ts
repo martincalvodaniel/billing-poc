@@ -1,10 +1,14 @@
-import { ObjectId } from "mongodb";
+import type { ObjectId } from "mongodb";
 
 export type PaymentType = "income" | "outcome";
 
 export type ClientType = "individual" | "company";
 
-export type InvoiceSeries = "Invoice" | "RectificativeInvoice" | "SimpleInvoice" | "RectificativeSimpleInvoice";
+export type InvoiceSeries =
+  | "Invoice"
+  | "RectificativeInvoice"
+  | "SimpleInvoice"
+  | "RectificativeSimpleInvoice";
 
 export interface InvoiceMetadata {
   series: InvoiceSeries;

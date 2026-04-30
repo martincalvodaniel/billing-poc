@@ -1,7 +1,7 @@
 "use client";
 
-import { PaymentFormData } from "@/lib/types";
 import ClientSelector from "@/app/components/ClientSelector";
+import type { PaymentFormData } from "@/lib/types";
 
 interface PaymentFormFieldsProps {
   formData: PaymentFormData;
@@ -11,7 +11,7 @@ interface PaymentFormFieldsProps {
   onSetShowAdditionalFields: (show: boolean) => void;
   onChangeField: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    conceptIndex?: number
+    conceptIndex?: number,
   ) => void;
   onTagSelect: (tag: string) => void;
   onTagBlur: () => void;
@@ -114,7 +114,9 @@ export default function PaymentFormFields({
               }
             }}
             onBlur={onTagBlur}
-            placeholder={formData.type === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
+            placeholder={
+              formData.type === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."
+            }
             className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
 
@@ -322,12 +324,7 @@ export default function PaymentFormFields({
                 className="absolute right-2 top-2 flex h-5 w-5 flex-shrink-0 items-center justify-center text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                 aria-label="Remove component"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -353,9 +350,7 @@ export default function PaymentFormFields({
         </div>
         <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700"></div>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            VAT Amount
-          </span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">VAT Amount</span>
           <span className="text-lg font-semibold text-red-600 dark:text-red-400">
             €{calculateVatAmount()}
           </span>

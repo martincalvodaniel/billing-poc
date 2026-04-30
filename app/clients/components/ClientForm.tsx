@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Client, ClientFormData } from "@/lib/types";
+import type { Client, ClientFormData } from "@/lib/types";
 
 interface ClientFormProps {
   client?: Client;
@@ -23,7 +23,7 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -62,10 +62,7 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4"
-    >
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
           {error}
@@ -74,9 +71,7 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
-            Type
-          </label>
+          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">Type</label>
           <select
             name="clientType"
             value={formData.clientType}
@@ -100,9 +95,7 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
           value={formData.name}
           onChange={handleChange}
           placeholder={
-            formData.clientType === "individual"
-              ? "E.g., John Doe"
-              : "E.g., Empresa, S.L."
+            formData.clientType === "individual" ? "E.g., John Doe" : "E.g., Empresa, S.L."
           }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
           required

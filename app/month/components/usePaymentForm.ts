@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { PaymentFormData } from "@/lib/types";
-import {
-  calculateVatAmount,
-  calculateSurchargeAmount,
-  calculateNetAmount,
-} from "./paymentUtils";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { PaymentFormData } from "@/lib/types";
+import { calculateNetAmount, calculateSurchargeAmount, calculateVatAmount } from "./paymentUtils";
 
 /**
  * Custom hook managing payment form state and handlers
@@ -24,9 +20,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     deliveryNoteRef: "",
   };
 
-  const [formData, setFormData] = useState<PaymentFormData>(
-    initialData || defaultFormData
-  );
+  const [formData, setFormData] = useState<PaymentFormData>(initialData || defaultFormData);
 
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
@@ -46,7 +40,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
         console.error(`Error fetching tags: ${err}`);
       }
     };
-    
+
     fetchTagsByType(formData.type);
   }, [formData.type]);
 
@@ -69,10 +63,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
   }, [formData.type]);
 
   const handleChange = useCallback(
-    (
-      e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-      conceptIndex?: number
-    ) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, conceptIndex?: number) => {
       const { name, value } = e.target;
 
       // Handle concept-specific fields
@@ -107,14 +98,14 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
             setSuggestedTags(availableTags);
           } else {
             const filtered = availableTags.filter((tag) =>
-              tag.toLowerCase().includes(value.toLowerCase())
+              tag.toLowerCase().includes(value.toLowerCase()),
             );
             setSuggestedTags(filtered);
           }
         }, 1000);
       }
     },
-    [availableTags]
+    [availableTags],
   );
 
   const handleTagSelect = useCallback((tag: string) => {
@@ -153,10 +144,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
   }, []);
 
   const calculateTotal = useCallback(() => {
-    return formData.concepts.reduce(
-      (sum, c) => sum + c.amount * (c.quantity || 1),
-      0
-    );
+    return formData.concepts.reduce((sum, c) => sum + c.amount * (c.quantity || 1), 0);
   }, [formData.concepts]);
 
   const calculateVatAmountValue = useCallback(() => {

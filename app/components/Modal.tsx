@@ -86,15 +86,11 @@ export default function Modal({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">
-          {children}
-        </div>
+        <div className="px-6 py-4">{children}</div>
 
         {/* Footer (optional) */}
         {footer && (
-          <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            {footer}
-          </div>
+          <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">{footer}</div>
         )}
       </div>
     </div>

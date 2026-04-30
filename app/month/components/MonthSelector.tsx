@@ -83,10 +83,13 @@ export default function MonthSelector({
                   ← Prev
                 </button>
                 <span className="flex-1 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  {new Date(selectedDate.getFullYear(), selectedDate.getMonth()).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                  })}
+                  {new Date(selectedDate.getFullYear(), selectedDate.getMonth()).toLocaleDateString(
+                    "en-US",
+                    {
+                      year: "numeric",
+                      month: "long",
+                    },
+                  )}
                 </span>
                 <button
                   onClick={handleDayNext}

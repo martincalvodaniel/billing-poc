@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "bun:test";
 import {
+  calculateNetAmount,
+  calculateSurchargeAmount,
   calculateTotal,
   calculateVatAmount,
-  calculateSurchargeAmount,
-  calculateNetAmount,
   validateConcepts,
-  validateVat,
   validateSurcharge,
+  validateVat,
 } from "./paymentUtils";
 
 describe("calculateTotal", () => {

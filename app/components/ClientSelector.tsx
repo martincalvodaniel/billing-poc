@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Client } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
+import type { Client } from "@/lib/types";
 
 interface ClientSelectorProps {
   value?: string; // Client ID
@@ -80,7 +80,7 @@ export default function ClientSelector({
         setIsLoading(true);
         try {
           const response = await fetch(
-            `/api/clients?search=${encodeURIComponent(searchQuery)}&pageSize=20`
+            `/api/clients?search=${encodeURIComponent(searchQuery)}&pageSize=20`,
           );
           if (response.ok) {
             const data = await response.json();
@@ -105,7 +105,7 @@ export default function ClientSelector({
     const value = e.target.value;
     setSearchQuery(value);
     setShowSuggestions(true);
-    
+
     // Clear selection if user is typing
     if (selectedClient) {
       setSelectedClient(null);
@@ -159,7 +159,7 @@ export default function ClientSelector({
         {label}
         {required && <span className="ml-1 text-red-600">*</span>}
       </label>
-      
+
       <div className="relative">
         <input
           type="text"
@@ -172,7 +172,7 @@ export default function ClientSelector({
           className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           required={required}
         />
-        
+
         {/* Clear button */}
         {(searchQuery || selectedClient) && (
           <button
@@ -189,7 +189,8 @@ export default function ClientSelector({
       {/* Selected client indicator */}
       {selectedClient && (
         <div className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-          <span className="font-medium">Selected:</span> {selectedClient.name} ({selectedClient.taxId})
+          <span className="font-medium">Selected:</span> {selectedClient.name} (
+          {selectedClient.taxId})
         </div>
       )}
 
@@ -197,9 +198,7 @@ export default function ClientSelector({
       {showSuggestions && (
         <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Loading...
-            </div>
+            <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">Loading...</div>
           ) : clients.length > 0 ? (
             <ul className="max-h-60 overflow-y-auto py-1">
               {clients.map((client) => (

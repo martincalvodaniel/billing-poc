@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { Payment, PaymentType } from "@/lib/types";
+import type { Payment, PaymentType } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,15 +8,15 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") as PaymentType | null;
 
     const db = await getDatabase();
-    
+
     // Build aggregation pipeline
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pipeline: any[] = [
       {
         $match: {
-          tag: { $type: "string", $ne: "" }
-        }
-      }
+          tag: { $type: "string", $ne: "" },
+        },
+      },
     ];
 
     // Add type filter if provided
@@ -29,22 +29,19 @@ export async function GET(request: NextRequest) {
         $group: {
           _id: null,
           tags: {
-            $addToSet: "$tag"
-          }
-        }
+            $addToSet: "$tag",
+          },
+        },
       },
       {
         $project: {
           _id: 0,
-          tags: 1
-        }
-      }
+          tags: 1,
+        },
+      },
     );
 
-    const result = await db
-      .collection<Payment>("payments")
-      .aggregate(pipeline)
-      .toArray();
+    const result = await db.collection<Payment>("payments").aggregate(pipeline).toArray();
 
     // Extract unique tags from the result
     const uniqueTags = result.length > 0 ? result[0].tags : [];
@@ -52,9 +49,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ tags: uniqueTags }, { status: 200 });
   } catch (error) {
     console.error(`Error fetching tags: ${error}`);
-    return NextResponse.json(
-      { error: "Failed to fetch tags" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch tags" }, { status: 500 });
   }
 }

@@ -1,35 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 import { get } from "@vercel/blob";
+import { ObjectId } from "mongodb";
+import { type NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { Payment } from "@/lib/types";
+import type { Payment } from "@/lib/types";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Payment ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Payment ID is required" }, { status: 400 });
     }
 
     const db = await getDatabase();
-    
+
     // Fetch payment
     const payment = await db.collection<Payment>("payments").findOne({
       _id: new ObjectId(id),
     });
 
     if (!payment) {
-      return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
     // Resolve which blob URL to stream
@@ -47,7 +38,7 @@ export async function GET(
     if (!blobUrl) {
       return NextResponse.json(
         { error: "No invoice or provider bill found for this payment" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -55,10 +46,7 @@ export async function GET(
     const result = await get(blobUrl, { access: "private" });
 
     if (!result || result.statusCode !== 200) {
-      return NextResponse.json(
-        { error: "Failed to retrieve file from storage" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Failed to retrieve file from storage" }, { status: 404 });
     }
 
     return new NextResponse(result.stream, {
@@ -69,9 +57,6 @@ export async function GET(
     });
   } catch (error) {
     console.error(`Error retrieving invoice: ${error}`);
-    return NextResponse.json(
-      { error: "Failed to retrieve invoice" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to retrieve invoice" }, { status: 500 });
   }
 }

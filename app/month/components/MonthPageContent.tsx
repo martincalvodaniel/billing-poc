@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
-import PaymentForm from "./PaymentForm";
-import MonthlyPaymentsView from "./MonthlyPaymentsView";
-import PageLayout from "../../components/PageLayout";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Modal from "../../components/Modal";
+import PageLayout from "../../components/PageLayout";
+import MonthlyPaymentsView from "./MonthlyPaymentsView";
 import MonthSelector from "./MonthSelector";
+import PaymentForm from "./PaymentForm";
 
 export default function MonthPageContent() {
   const searchParams = useSearchParams();
@@ -19,7 +19,11 @@ export default function MonthPageContent() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<{ setFormDate: (dateString: string) => void; submit: () => void }>(null);
-  const paymentsListRef = useRef<{ refreshPayments: () => void; navigateToMonth: (dateString: string) => void; getFilteredPaymentsCount: () => number }>(null);
+  const paymentsListRef = useRef<{
+    refreshPayments: () => void;
+    navigateToMonth: (dateString: string) => void;
+    getFilteredPaymentsCount: () => number;
+  }>(null);
 
   // Initialize from URL parameters if provided
   useEffect(() => {
@@ -37,10 +41,14 @@ export default function MonthPageContent() {
         });
       }
     }
-  }, [searchParams, startTransition]);
+  }, [searchParams]);
 
   const currentMonthDate = new Date();
-  const currentMonthStart = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
+  const currentMonthStart = new Date(
+    currentMonthDate.getFullYear(),
+    currentMonthDate.getMonth(),
+    1,
+  );
   const isViewingCurrentMonth =
     selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
     selectedDate.getMonth() === currentMonthStart.getMonth();
@@ -90,8 +98,12 @@ export default function MonthPageContent() {
         <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Monthly Filter</p>
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {formatMonthYear(selectedDate)}</h3>
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Monthly Filter
+              </p>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                Overview for {formatMonthYear(selectedDate)}
+              </h3>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -100,7 +112,9 @@ export default function MonthPageContent() {
                 aria-label="Add payment"
                 className="inline-flex items-center justify-center rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
               >
-                <span className="text-white dark:text-white" aria-hidden="true">➕</span>
+                <span className="text-white dark:text-white" aria-hidden="true">
+                  ➕
+                </span>
               </button>
               <MonthSelector
                 selectedDate={selectedDate}

@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "load-data:month": "pnpm exec ts-node scripts/payments/loadRandomDataForMonth.ts",
-    "load-data:year": "pnpm exec ts-node scripts/payments/loadRandomDataForYear.ts"
+    "lint": "biome check",
+    "lint:fix": "biome check --fix",
+    "format": "biome format --write",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "load-data:month": "bun run scripts/payments/loadRandomDataForMonth.ts",
+    "load-data:year": "bun run scripts/payments/loadRandomDataForYear.ts"
   },
   "dependencies": {
     "@vercel/blob": "2.3.3",
@@ -21,20 +23,13 @@
     "react-dom": "19.2.5"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.0.6",
     "@tailwindcss/postcss": "4.2.2",
-    "@testing-library/jest-dom": "6.9.1",
-    "@testing-library/react": "16.3.2",
-    "@testing-library/user-event": "14.6.1",
+    "@types/bun": "1.2.18",
     "@types/node": "25.6.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.1",
-    "eslint": "^9.10.0",
-    "eslint-config-next": "16.2.4",
-    "jsdom": "29.0.2",
     "tailwindcss": "4.2.2",
-    "ts-node": "10.9.2",
-    "typescript": "6.0.3",
-    "vitest": "4.1.4"
+    "typescript": "6.0.3"
   }
 }

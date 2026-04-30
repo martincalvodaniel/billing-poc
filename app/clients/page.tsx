@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PageLayout from "@/app/components/PageLayout";
-import { Client, ClientFormData } from "@/lib/types";
+import type { Client, ClientFormData } from "@/lib/types";
 import ClientForm from "./components/ClientForm";
-import ClientSearch from "./components/ClientSearch";
 import ClientList from "./components/ClientList";
+import ClientSearch from "./components/ClientSearch";
 import PaginationControls from "./components/PaginationControls";
 
 interface PaginationState {
@@ -67,33 +67,35 @@ export default function ClientsPage() {
     fetchClients();
   }, [fetchClients]);
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    fetchClients(query, 1); // Reset to page 1 on search
-  }, [fetchClients]);
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      fetchClients(query, 1); // Reset to page 1 on search
+    },
+    [fetchClients],
+  );
 
-  const handlePageChange = useCallback((newPage: number) => {
-    fetchClients(searchQuery, newPage);
-  }, [fetchClients, searchQuery]);
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      fetchClients(searchQuery, newPage);
+    },
+    [fetchClients, searchQuery],
+  );
 
   const handleCreateClient = async (data: ClientFormData) => {
-    try {
-      const response = await fetch("/api/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    const response = await fetch("/api/clients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to create client");
-      }
-
-      setShowForm(false);
-      await fetchClients(searchQuery, 1); // Reset to page 1 after create
-    } catch (err) {
-      throw err;
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || "Failed to create client");
     }
+
+    setShowForm(false);
+    await fetchClients(searchQuery, 1); // Reset to page 1 after create
   };
 
   const handleRefresh = async () => {
@@ -113,29 +115,26 @@ export default function ClientsPage() {
       )}
 
       <div className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex-1">
-              <ClientSearch onSearch={handleSearch} />
-            </div>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
-            >
-              {showForm ? "Cancel" : "Add Client"}
-            </button>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex-1">
+            <ClientSearch onSearch={handleSearch} />
           </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+          >
+            {showForm ? "Cancel" : "Add Client"}
+          </button>
+        </div>
 
-          {showForm && (
-            <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Create New Client
-              </h3>
-              <ClientForm
-                onSubmit={handleCreateClient}
-                onCancel={() => setShowForm(false)}
-              />
-            </div>
-          )}
+        {showForm && (
+          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              Create New Client
+            </h3>
+            <ClientForm onSubmit={handleCreateClient} onCancel={() => setShowForm(false)} />
+          </div>
+        )}
       </div>
 
       {isLoading && filteredClients.length === 0 ? (
@@ -145,7 +144,7 @@ export default function ClientsPage() {
       ) : (
         <>
           <ClientList clients={filteredClients} onRefresh={handleRefresh} />
-          
+
           {pagination.total > 0 && (
             <div className="flex justify-center">
               <PaginationControls

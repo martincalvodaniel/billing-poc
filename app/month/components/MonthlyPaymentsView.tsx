@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from "react";
-import { Payment } from "@/lib/types";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import type { Payment } from "@/lib/types";
 import DonutChart from "../../components/DonutChart";
-import SummaryCard from "../../components/SummaryCard";
 import Modal from "../../components/Modal";
+import SummaryCard from "../../components/SummaryCard";
 import PaymentDetailModal from "./PaymentDetailModal";
 
 export default forwardRef(function MonthlyPaymentsView(
   props: { onMonthChange?: (dateString: string) => void; selectedDate: Date },
-  ref
+  ref,
 ) {
   const { onMonthChange, selectedDate } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
-  
+
   // Delete confirmation state
   const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -26,42 +26,45 @@ export default forwardRef(function MonthlyPaymentsView(
   // Edit modal state (full payment edit)
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null);
 
-  const fetchPayments = useCallback(async (signal?: AbortSignal) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const year = selectedDate.getFullYear();
-      const month = selectedDate.getMonth() + 1;
-      
-      const response = await fetch(`/api/payments?year=${year}&month=${month}`, {
-        signal,
-      });
+  const fetchPayments = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch payments");
-      }
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1;
 
-      const data = await response.json();
-      if (!signal?.aborted) {
-        setPayments(data.payments || []);
+        const response = await fetch(`/api/payments?year=${year}&month=${month}`, {
+          signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch payments");
+        }
+
+        const data = await response.json();
+        if (!signal?.aborted) {
+          setPayments(data.payments || []);
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          // Request was aborted, ignore
+          return;
+        }
+        const errorMessage = err instanceof Error ? err.message : "An error occurred";
+        if (!signal?.aborted) {
+          setError(errorMessage);
+        }
+        console.error(`Error fetching payments: ${err}`);
+      } finally {
+        if (!signal?.aborted) {
+          setIsLoading(false);
+        }
       }
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        // Request was aborted, ignore
-        return;
-      }
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
-      if (!signal?.aborted) {
-        setError(errorMessage);
-      }
-      console.error(`Error fetching payments: ${err}`);
-    } finally {
-      if (!signal?.aborted) {
-        setIsLoading(false);
-      }
-    }
-  }, [selectedDate]);
+    },
+    [selectedDate],
+  );
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -132,8 +135,8 @@ export default forwardRef(function MonthlyPaymentsView(
   const handlePaymentUpdated = (updatedPayment: Payment) => {
     setPayments((prevPayments) =>
       prevPayments.map((p) =>
-        p._id?.toString() === updatedPayment._id?.toString() ? updatedPayment : p
-      )
+        p._id?.toString() === updatedPayment._id?.toString() ? updatedPayment : p,
+      ),
     );
     setSuccessMessage("Payment updated successfully");
     setShowSuccess(true);
@@ -157,7 +160,7 @@ export default forwardRef(function MonthlyPaymentsView(
 
       // Remove payment from local state
       setPayments((prevPayments) =>
-        prevPayments.filter((p) => p._id?.toString() !== deleteConfirmPaymentId)
+        prevPayments.filter((p) => p._id?.toString() !== deleteConfirmPaymentId),
       );
 
       setDeleteConfirmPaymentId(null);
@@ -173,19 +176,22 @@ export default forwardRef(function MonthlyPaymentsView(
     }
   }, [deleteConfirmPaymentId]);
 
-  const handleDeleteModalKeyDown = useCallback((e: KeyboardEvent) => {
-    if (deleteConfirmPaymentId) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        setDeleteConfirmPaymentId(null);
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleConfirmDelete();
+  const handleDeleteModalKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (deleteConfirmPaymentId) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          setDeleteConfirmPaymentId(null);
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          handleConfirmDelete();
+        }
       }
-    }
-  }, [deleteConfirmPaymentId, handleConfirmDelete]);
+    },
+    [deleteConfirmPaymentId, handleConfirmDelete],
+  );
 
   // Register keyboard handler for delete modal
   useEffect(() => {
@@ -228,8 +234,16 @@ export default forwardRef(function MonthlyPaymentsView(
   // Year-level aggregations
   // Generate colors for chart segments
   const colors = [
-    "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",
-    "#ec4899", "#06b6d4", "#f97316", "#6366f1", "#14b8a6"
+    "#10b981",
+    "#3b82f6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+    "#f97316",
+    "#6366f1",
+    "#14b8a6",
   ];
 
   if (isLoading) {
@@ -249,7 +263,7 @@ export default forwardRef(function MonthlyPaymentsView(
       {/* Success Toast */}
       {showSuccess && (
         <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
-          <div 
+          <div
             className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
             role="status"
             aria-live="polite"
@@ -296,9 +310,7 @@ export default forwardRef(function MonthlyPaymentsView(
           label="Net Balance"
           value={formatCurrency(netBalance)}
           valueClassName={
-            netBalance >= 0
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-red-600 dark:text-red-400"
+            netBalance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"
           }
         />
       </div>
@@ -312,7 +324,7 @@ export default forwardRef(function MonthlyPaymentsView(
       {/* Payments Table */}
       <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {error && (
-          <div 
+          <div
             className="m-6 rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
             role="alert"
             aria-live="polite"
@@ -328,7 +340,9 @@ export default forwardRef(function MonthlyPaymentsView(
           </div>
         ) : filteredPayments.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-zinc-600 dark:text-zinc-400">No payments in {formatMonthYear(selectedDate)}</p>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              No payments in {formatMonthYear(selectedDate)}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -350,7 +364,7 @@ export default forwardRef(function MonthlyPaymentsView(
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                     VAT
                   </th>
-                  {filteredPayments.some(p => p.surcharge && p.surcharge > 0) && (
+                  {filteredPayments.some((p) => p.surcharge && p.surcharge > 0) && (
                     <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                       Surcharge
                     </th>
@@ -381,8 +395,7 @@ export default forwardRef(function MonthlyPaymentsView(
                             : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                         }`}
                       >
-                        {payment.type.charAt(0).toUpperCase() +
-                          payment.type.slice(1)}
+                        {payment.type.charAt(0).toUpperCase() + payment.type.slice(1)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
@@ -400,10 +413,12 @@ export default forwardRef(function MonthlyPaymentsView(
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                       ({payment.vat}%) {formatCurrency(payment.vatAmount)}
                     </td>
-                    {filteredPayments.some(p => p.surcharge && p.surcharge > 0) && (
+                    {filteredPayments.some((p) => p.surcharge && p.surcharge > 0) && (
                       <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                         {payment.surcharge && payment.surcharge > 0 ? (
-                          <span>({payment.surcharge}%) {formatCurrency(payment.surchargeAmount || 0)}</span>
+                          <span>
+                            ({payment.surcharge}%) {formatCurrency(payment.surchargeAmount || 0)}
+                          </span>
                         ) : (
                           <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
                         )}
@@ -430,85 +445,96 @@ export default forwardRef(function MonthlyPaymentsView(
       </div>
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmPaymentId && (() => {
-        const paymentToDelete = payments.find(p => p._id?.toString() === deleteConfirmPaymentId);
-        return (
-          <Modal
-            isOpen={!!deleteConfirmPaymentId}
-            onClose={() => setDeleteConfirmPaymentId(null)}
-            title="Delete Payment"
-            maxWidth="sm"
-            footer={
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDeleteConfirmPaymentId(null)}
-                  disabled={isDeleting}
-                  className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  disabled={isDeleting}
-                  className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            }
-          >
-            <div className="space-y-4">
-              <p>Are you sure you want to delete this payment?</p>
-              {paymentToDelete && (
-                <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">{formatDate(paymentToDelete.date)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      paymentToDelete.type === "income"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                    }`}>
-                      {paymentToDelete.type.charAt(0).toUpperCase() + paymentToDelete.type.slice(1)}
-                    </span>
-                  </div>
-                  {paymentToDelete.tag && (
+      {deleteConfirmPaymentId &&
+        (() => {
+          const paymentToDelete = payments.find(
+            (p) => p._id?.toString() === deleteConfirmPaymentId,
+          );
+          return (
+            <Modal
+              isOpen={!!deleteConfirmPaymentId}
+              onClose={() => setDeleteConfirmPaymentId(null)}
+              title="Delete Payment"
+              maxWidth="sm"
+              footer={
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setDeleteConfirmPaymentId(null)}
+                    disabled={isDeleting}
+                    className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              }
+            >
+              <div className="space-y-4">
+                <p>Are you sure you want to delete this payment?</p>
+                {paymentToDelete && (
+                  <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
                     <div className="flex justify-between text-sm">
-                      <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
-                      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                        {paymentToDelete.tag}
+                      <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {formatDate(paymentToDelete.date)}
                       </span>
                     </div>
-                  )}
-                  <div className="flex justify-between text-sm font-medium">
-                    <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
-                    <span className="text-zinc-900 dark:text-zinc-100">{formatCurrency(paymentToDelete.total)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          paymentToDelete.type === "income"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {paymentToDelete.type.charAt(0).toUpperCase() +
+                          paymentToDelete.type.slice(1)}
+                      </span>
+                    </div>
+                    {paymentToDelete.tag && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
+                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          {paymentToDelete.tag}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
+                      <span className="text-zinc-900 dark:text-zinc-100">
+                        {formatCurrency(paymentToDelete.total)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                This action cannot be undone.
-              </p>
-            </div>
-          </Modal>
-        );
-      })()}
+                )}
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </Modal>
+          );
+        })()}
 
       {/* Payment Edit Modal */}
-      {editPaymentId && (() => {
-        const selectedPayment = payments.find(p => p._id?.toString() === editPaymentId);
-        if (!selectedPayment) return null;
-        return (
-          <PaymentDetailModal
-            payment={selectedPayment}
-            onClose={closeEditModal}
-            onUpdate={handlePaymentUpdated}
-          />
-        );
-      })()}
+      {editPaymentId &&
+        (() => {
+          const selectedPayment = payments.find((p) => p._id?.toString() === editPaymentId);
+          if (!selectedPayment) return null;
+          return (
+            <PaymentDetailModal
+              payment={selectedPayment}
+              onClose={closeEditModal}
+              onUpdate={handlePaymentUpdated}
+            />
+          );
+        })()}
     </div>
   );
 });

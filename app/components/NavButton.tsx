@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes } from "react";
 
 type NavButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
