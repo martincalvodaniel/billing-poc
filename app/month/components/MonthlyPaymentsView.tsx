@@ -2,14 +2,13 @@
 
 import type { Ref } from "react"
 import { useCallback, useEffect, useImperativeHandle, useState } from "react"
-import { CHART_COLORS } from "@/lib/constants"
-import { formatCurrency, formatDate, formatMonthYear } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
-import DonutChart from "../../components/DonutChart"
-import Modal from "../../components/Modal"
-import SummaryCard from "../../components/SummaryCard"
 import Toast from "../../components/Toast"
+import DeletePaymentModal from "./DeletePaymentModal"
+import PaymentCharts from "./PaymentCharts"
 import PaymentDetailModal from "./PaymentDetailModal"
+import PaymentsSummary from "./PaymentsSummary"
+import PaymentsTable from "./PaymentsTable"
 
 export default (function MonthlyPaymentsView({
   ref,
@@ -246,274 +245,40 @@ export default (function MonthlyPaymentsView({
 
   return (
     <div className="w-full space-y-6">
-      {/* Success Toast */}
       {showSuccess && (
         <Toast message={successMessage} onClose={() => setShowSuccess(false)} />
       )}
-      {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <SummaryCard
-          label={`Total Income (${incomeCount})`}
-          value={formatCurrency(totalIncome)}
-          valueClassName="text-green-600 dark:text-green-400"
-        />
-        <SummaryCard
-          label={`Total Outcome (${outcomeCount})`}
-          value={formatCurrency(totalOutcome)}
-          valueClassName="text-red-600 dark:text-red-400"
-        />
-        <SummaryCard
-          label="Net Balance"
-          value={formatCurrency(netBalance)}
-          valueClassName={
-            netBalance >= 0
-              ? "text-blue-600 dark:text-blue-400"
-              : "text-red-600 dark:text-red-400"
-          }
-        />
-      </div>
 
-      {/* Donut Charts */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <DonutChart
-          data={incomeByTag}
-          title="Income by Tag"
-          colors={CHART_COLORS}
-        />
-        <DonutChart
-          data={outcomeByTag}
-          title="Outcome by Tag"
-          colors={CHART_COLORS}
-        />
-      </div>
+      <PaymentsSummary
+        totalIncome={totalIncome}
+        totalOutcome={totalOutcome}
+        netBalance={netBalance}
+        incomeCount={incomeCount}
+        outcomeCount={outcomeCount}
+      />
 
-      {/* Payments Table */}
-      <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        {error && (
-          <div
-            className="m-6 rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-            role="alert"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {error}
-          </div>
-        )}
+      <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
 
-        {payments.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-zinc-600 dark:text-zinc-400">No payments yet</p>
-          </div>
-        ) : filteredPayments.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-zinc-600 dark:text-zinc-400">
-              No payments in {formatMonthYear(selectedDate)}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
-                    Day
-                  </th>
-                  <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
-                    Tag
-                  </th>
-                  <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    VAT
-                  </th>
-                  {filteredPayments.some(
-                    (p) => p.surcharge && p.surcharge > 0
-                  ) && (
-                    <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                      Surcharge
-                    </th>
-                  )}
-                  <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    Net
-                  </th>
-                  <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((payment) => (
-                  <tr
-                    key={payment._id?.toString()}
-                    onClick={() =>
-                      handleRowClick(payment._id?.toString() || "")
-                    }
-                    className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
-                  >
-                    <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      {new Date(payment.date).getDate()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                          payment.type === "income"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {payment.type.charAt(0).toUpperCase() +
-                          payment.type.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      {payment.tag ? (
-                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {payment.tag}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                          —
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.total)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                      ({payment.vat}%) {formatCurrency(payment.vatAmount)}
-                    </td>
-                    {filteredPayments.some(
-                      (p) => p.surcharge && p.surcharge > 0
-                    ) && (
-                      <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                        {payment.surcharge && payment.surcharge > 0 ? (
-                          <span>
-                            ({payment.surcharge}%){" "}
-                            {formatCurrency(payment.surchargeAmount || 0)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                            —
-                          </span>
-                        )}
-                      </td>
-                    )}
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.netAmount)}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) =>
-                          handleDeleteClick(e, payment._id?.toString() || "")
-                        }
-                        aria-label="Delete payment"
-                        className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <PaymentsTable
+        payments={payments}
+        filteredPayments={filteredPayments}
+        selectedDate={selectedDate}
+        error={error}
+        onRowClick={handleRowClick}
+        onDeleteClick={handleDeleteClick}
+      />
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmPaymentId &&
-        (() => {
-          const paymentToDelete = payments.find(
+      {deleteConfirmPaymentId && (
+        <DeletePaymentModal
+          payment={payments.find(
             (p) => p._id?.toString() === deleteConfirmPaymentId
-          )
-          return (
-            <Modal
-              isOpen={!!deleteConfirmPaymentId}
-              onClose={() => setDeleteConfirmPaymentId(null)}
-              title="Delete Payment"
-              maxWidth="sm"
-              footer={
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDeleteConfirmPaymentId(null)}
-                    disabled={isDeleting}
-                    className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmDelete}
-                    disabled={isDeleting}
-                    className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
-                  >
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              }
-            >
-              <div className="space-y-4">
-                <p>Are you sure you want to delete this payment?</p>
-                {paymentToDelete && (
-                  <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-600 dark:text-zinc-400">
-                        Date:
-                      </span>
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {formatDate(paymentToDelete.date)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-600 dark:text-zinc-400">
-                        Type:
-                      </span>
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          paymentToDelete.type === "income"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {paymentToDelete.type.charAt(0).toUpperCase() +
-                          paymentToDelete.type.slice(1)}
-                      </span>
-                    </div>
-                    {paymentToDelete.tag && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-zinc-600 dark:text-zinc-400">
-                          Tag:
-                        </span>
-                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {paymentToDelete.tag}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm font-medium">
-                      <span className="text-zinc-600 dark:text-zinc-400">
-                        Total:
-                      </span>
-                      <span className="text-zinc-900 dark:text-zinc-100">
-                        {formatCurrency(paymentToDelete.total)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  This action cannot be undone.
-                </p>
-              </div>
-            </Modal>
-          )
-        })()}
+          )}
+          isDeleting={isDeleting}
+          onClose={() => setDeleteConfirmPaymentId(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
 
-      {/* Payment Edit Modal */}
       {editPaymentId &&
         (() => {
           const selectedPayment = payments.find(
