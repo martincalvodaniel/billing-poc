@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface ClientSearchProps {
   onSearch: (query: string) => void;
@@ -8,8 +8,16 @@ interface ClientSearchProps {
 
 export default function ClientSearch({ onSearch }: ClientSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
+    // Skip the initial mount to avoid duplicate API call
+    // Parent component handles initial data fetch
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       onSearch(searchQuery);
     }, 300); // Debounce search
