@@ -175,8 +175,7 @@ export default forwardRef(function MonthlyPaymentsView(
   const handleEditVat = (payment: Payment) => {
     setEditingPaymentId(payment._id?.toString() || null);
     setEditingField("vat");
-    const vatPercentage = (payment.vat / payment.netAmount) * 100;
-    setEditingVat(vatPercentage.toFixed(2));
+    setEditingVat(payment.vat.toString());
   };
 
   const fetchTagsByType = async (paymentType: string) => {
@@ -564,7 +563,7 @@ export default forwardRef(function MonthlyPaymentsView(
                         onClick={() => handleEditVat(payment)}
                         className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 whitespace-nowrap"
                       >
-                        ({((payment.vat / payment.netAmount) * 100).toFixed(2)}%) {formatCurrency(payment.vat)}
+                        ({payment.vat}%) {formatCurrency(payment.vatAmount)}
                       </button>
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">

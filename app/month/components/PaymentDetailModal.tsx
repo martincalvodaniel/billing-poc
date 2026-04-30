@@ -21,8 +21,6 @@ export default function PaymentDetailModal({ payment, onClose, formatCurrency }:
       day: "numeric",
     });
 
-  const computedVatPercent = payment.netAmount > 0 ? ((payment.vat / payment.netAmount) * 100).toFixed(2) : "0.00";
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -80,7 +78,7 @@ export default function PaymentDetailModal({ payment, onClose, formatCurrency }:
             <div className="space-y-1">
               <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">VAT</p>
               <p className="text-sm text-zinc-900 dark:text-zinc-100">
-                ({computedVatPercent}%) {currency(payment.vat)}
+                ({payment.vat}%) {currency(payment.vatAmount)}
               </p>
             </div>
             <div className="space-y-1">
