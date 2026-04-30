@@ -8,6 +8,8 @@ interface MonthSelectorProps {
   onMonthChange: (year: number, month: number) => void
   showCalendar: boolean
   onShowCalendarChange: (show: boolean) => void
+  isViewingCurrentMonth: boolean
+  onGoToCurrentMonth: () => void
 }
 
 export default function MonthSelector({
@@ -15,6 +17,8 @@ export default function MonthSelector({
   onMonthChange,
   showCalendar,
   onShowCalendarChange,
+  isViewingCurrentMonth,
+  onGoToCurrentMonth,
 }: MonthSelectorProps) {
   const calendarRef = useRef<HTMLDivElement>(null)
 
@@ -60,7 +64,16 @@ export default function MonthSelector({
   }
 
   return (
-    <div className="flex items-center gap-2" ref={calendarRef}>
+    <div className="flex flex-wrap items-center gap-2" ref={calendarRef}>
+      <button
+        type="button"
+        onClick={onGoToCurrentMonth}
+        disabled={isViewingCurrentMonth}
+        aria-label="Go to current month"
+        className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
+      >
+        🎯
+      </button>
       <NavButton onClick={handleDayPrev} aria-label="View previous month">
         ←
       </NavButton>
