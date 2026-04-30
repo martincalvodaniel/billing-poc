@@ -250,16 +250,16 @@ export default function PaymentFormFields({
             onClick={onAddConcept}
             className="rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
           >
-            + Add Component
+            +
           </button>
         </div>
 
         {formData.concepts.map((concept, index) => (
           <div
             key={index}
-            className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50 sm:grid-cols-4"
+            className="relative grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50 sm:grid-cols-12"
           >
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-12 sm:col-span-7">
               <label
                 htmlFor={`conceptName-${index}`}
                 className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
@@ -277,7 +277,7 @@ export default function PaymentFormFields({
                 required
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-6 sm:col-span-3">
               <label
                 htmlFor={`conceptAmount-${index}`}
                 className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
@@ -296,7 +296,7 @@ export default function PaymentFormFields({
                 required
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-6 sm:col-span-2">
               <label
                 htmlFor={`conceptQuantity-${index}`}
                 className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
@@ -316,28 +316,26 @@ export default function PaymentFormFields({
               />
             </div>
             {formData.concepts.length > 1 && (
-              <div className="flex items-end justify-end">
-                <button
-                  type="button"
-                  onClick={() => onRemoveConcept(index)}
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-                  aria-label="Remove component"
+              <button
+                type="button"
+                onClick={() => onRemoveConcept(index)}
+                className="absolute right-2 top-2 flex h-5 w-5 flex-shrink-0 items-center justify-center text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+                aria-label="Remove component"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             )}
           </div>
         ))}
