@@ -8,10 +8,10 @@ import SummaryCard from "./SummaryCard";
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
 export default forwardRef(function PaymentsList(
-  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date },
+  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date; onPaymentsCountChange?: (count: number) => void },
   ref
 ) {
-  const { onMonthChange, selectedDate } = props;
+  const { onMonthChange, selectedDate, onPaymentsCountChange } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +42,19 @@ export default forwardRef(function PaymentsList(
     fetchPayments();
   }, []);
 
+  useEffect(() => {
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const filtered = payments.filter((payment) => {
+      const paymentDate = new Date(payment.date);
+      return (
+        paymentDate.getFullYear() === year &&
+        paymentDate.getMonth() === month
+      );
+    });
+    onPaymentsCountChange?.(filtered.length);
+  }, [payments, selectedDate, onPaymentsCountChange]);
+
   // Notify parent when month changes so form date can be synced
   useEffect(() => {
     const year = selectedDate.getFullYear();
@@ -56,6 +69,7 @@ export default forwardRef(function PaymentsList(
     navigateToMonth: () => {
       // Month navigation is now handled by parent component via selectedDate prop
     },
+    getFilteredPaymentsCount: () => getFilteredPayments().length,
   }));
 
   const fetchPayments = async () => {
@@ -450,14 +464,6 @@ export default forwardRef(function PaymentsList(
 
       {/* Payments Table */}
       <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Payments ({filteredPayments.length})
-            </h2>
-          </div>
-        </div>
-
         {error && (
           <div 
             className="m-6 rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
@@ -483,7 +489,7 @@ export default forwardRef(function PaymentsList(
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-zinc-800">
                   <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
-                    Date
+                    Day
                   </th>
                   <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
                     Type

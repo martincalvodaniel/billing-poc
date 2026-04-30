@@ -46,14 +46,17 @@ Every page includes a consistent navigation bar:
 ## Month Navigation
 Month selector appears as a dedicated filter section at the top of the page (similar to year filter in yearly view):
 - **Container**: Same bordered card style as other filter sections with header containing label and controls
-- **State Management**: selectedDate (1st of month) and showCalendar flag managed in parent (page.tsx)
+- **State Management**: selectedDate (1st of month) and showCalendar flag managed in parent (page.tsx); paymentsCount state tracks filtered payment count
+- **Header Display**: Shows "Overview for {MONTH YEAR} · {count} payments" to display the filtered payment count at the top
 - **Calendar Picker**: 12-month grid, prev/next month buttons, year navigation with prev/next year, year display
 - **Functionality**: Click-outside closes calendar; current-month shortcut button disables when viewing current month
-- **Data Filtering**: PaymentsList receives selectedDate prop; filters payments by month/year; summaries use filtered set
-- **Date Display**: Payment date column shows day-only; VAT displays as `(percent%) amount`
+- **Data Filtering**: PaymentsList receives selectedDate prop and onPaymentsCountChange callback; filters payments by month/year; summaries use filtered set
+- **Count Tracking**: PaymentsList calls onPaymentsCountChange whenever filtered payments change (date/month change or payment updates)
+- **Date Display**: Payment date column header is "Day" and shows day-only (e.g., "15"); VAT displays as `(percent%) amount`
+- **List Header**: Removed the dedicated "Payments (X)" header above the table; count is now in the month filter header
 - **Form Sync**: onMonthChange callback syncs form date (YYYY-MM-01) when month changes
 - **Add Payment Button**: Located in the month filter header beside calendar and current-month button; shares same button styles, focus ring, and disabled state semantics as navigation buttons
-- **PaymentsList Props**: Receives selectedDate as prop; no longer manages month state internally
+- **PaymentsList Props**: Receives selectedDate and onPaymentsCountChange props; no longer manages month state internally
 
 ## Year Navigation
 - selectedYear state; prev/next buttons; jump-to-current shortcut
