@@ -32,7 +32,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
         setAvailableTags(data.tags || []);
       }
     } catch (err) {
-      console.error("Error fetching tags:", err);
+      console.error(`Error fetching tags: ${err}`);
     }
   };
 
@@ -89,7 +89,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
-      console.error("Error saving payment:", err);
+      console.error(`Error saving payment: ${err}`);
     } finally {
       setIsSubmitting(false);
     }

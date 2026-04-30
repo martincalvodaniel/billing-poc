@@ -82,12 +82,28 @@ export default function ComponentName() {
 - Include proper HTTP status codes (200, 201, 400, 404, 500)
 - Log errors to console for debugging
 
+### Console Logging
+- **Always use template literals** with string interpolation for console output
+- **Preferred format**: `console.error(\`Error message: ${error}\`)`
+- **Avoid**: `console.error("Error message:", error)` (comma-separated)
+- This applies to all console methods: `error`, `log`, `warn`, `info`
+- Template literals improve readability and provide better context for debugging
+
+Example:
+```typescript
+// ✅ Good: Clear, comprehensive error context
+console.error(`Error fetching payments: ${error}`);
+
+// ❌ Avoid: Harder to follow error chain
+console.error("Error fetching payments:", error);
+```
+
 Example error handling:
 ```typescript
 try {
   // operation
 } catch (error) {
-  console.error('Context of error:', error);
+  console.error(`Context of error: ${error}`);
   return NextResponse.json(
     { error: 'User-friendly message' },
     { status: 500 }
@@ -471,7 +487,7 @@ const fetchTagsByType = async (paymentType: string) => {
       setAvailableTags(data.tags || []);
     }
   } catch (err) {
-    console.error("Error fetching tags:", err);
+    console.error(`Error fetching tags: ${err}`);
   }
 };
 
@@ -769,6 +785,24 @@ const vatAmount = totalAmount - netAmount;
 - **Environment variables**: Never expose `MONGODB_URI` client-side
 
 ## Completed Features & Patterns
+
+### Payment List View with Summary Cards
+✓ **Completed**: Display all payments with real-time summary calculations
+- Summary cards show total income, total outcome, and net balance
+- Amounts formatted as EUR currency with Spanish locale (es-ES)
+- Responsive grid layout (1 column mobile, 3 columns desktop)
+- Dynamic calculation based on filtered month selection
+- Components: `PaymentsList.tsx` handles display and calculations
+- See "Month Navigation Pattern" for filtered payment calculations
+
+### Real-Time Payment List Updates
+✓ **Completed**: Payment list updates immediately when new payments are created
+- Form submission automatically refreshes payment list
+- Automatic navigation to the month of the newly created payment
+- Uses React state management for instant UI updates
+- No polling or WebSocket required for current scope
+- Parent component (`page.tsx`) coordinates form saves with list refresh
+- Future enhancement: WebSocket implementation for multi-user real-time sync
 
 ### Month Navigation & Filtering
 ✓ **Completed**: View payments filtered by month with prev/next navigation

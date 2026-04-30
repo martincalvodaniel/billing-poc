@@ -55,7 +55,7 @@ export default forwardRef(function PaymentsList(props, ref) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
-      console.error("Error fetching payments:", err);
+      console.error(`Error fetching payments: ${err}`);
     } finally {
       setIsLoading(false);
     }
@@ -209,7 +209,7 @@ export default forwardRef(function PaymentsList(props, ref) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
     } catch (err) {
-      console.error("Error updating date:", err);
+      console.error(`Error updating date: ${err}`);
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
     } finally {
@@ -255,7 +255,7 @@ export default forwardRef(function PaymentsList(props, ref) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
     } catch (err) {
-      console.error("Error updating type:", err);
+      console.error(`Error updating type: ${err}`);
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
     } finally {
@@ -276,7 +276,7 @@ export default forwardRef(function PaymentsList(props, ref) {
         setAvailableTagsForEdit(data.tags || []);
       }
     } catch (err) {
-      console.error("Error fetching tags:", err);
+      console.error(`Error fetching tags: ${err}`);
     }
   };
 
@@ -348,7 +348,7 @@ export default forwardRef(function PaymentsList(props, ref) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
     } catch (err) {
-      console.error("Error updating tag:", err);
+      console.error(`Error updating tag: ${err}`);
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
     } finally {

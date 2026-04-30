@@ -14,7 +14,7 @@ export async function GET() {
 
     return NextResponse.json({ payments }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching payments:", error);
+    console.error(`Error fetching payments: ${error}`);
     return NextResponse.json(
       { error: "Failed to fetch payments" },
       { status: 500 }
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating payment:", error);
+    console.error(`Error creating payment: ${error}`);
     return NextResponse.json(
       { error: "Failed to create payment" },
       { status: 500 }
@@ -154,7 +154,7 @@ export async function PUT(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error updating payment:", error);
+    console.error(`Error updating payment: ${error}`);
     return NextResponse.json(
       { error: "Failed to update payment" },
       { status: 500 }
