@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth"
+import { nextCookies } from "better-auth/next-js"
 import { getAuthBaseURL } from "./auth-base-url"
 import { isEmailAllowed } from "./domain/services/auth"
 
@@ -51,6 +52,7 @@ export const auth = betterAuth({
         },
       },
     },
+    plugins: [nextCookies()],
   },
 })
 
