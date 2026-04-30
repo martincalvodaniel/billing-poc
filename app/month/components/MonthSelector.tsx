@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { useEffect, useRef } from "react";
-import NavButton from "../../components/NavButton";
+import { useEffect, useRef } from "react"
+import NavButton from "../../components/NavButton"
 
 interface MonthSelectorProps {
-  selectedDate: Date;
-  onMonthChange: (year: number, month: number) => void;
-  showCalendar: boolean;
-  onShowCalendarChange: (show: boolean) => void;
+  selectedDate: Date
+  onMonthChange: (year: number, month: number) => void
+  showCalendar: boolean
+  onShowCalendarChange: (show: boolean) => void
 }
 
 export default function MonthSelector({
@@ -16,45 +16,48 @@ export default function MonthSelector({
   showCalendar,
   onShowCalendarChange,
 }: MonthSelectorProps) {
-  const calendarRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!showCalendar) return;
+    if (!showCalendar) return
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
-        onShowCalendarChange(false);
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target as Node)
+      ) {
+        onShowCalendarChange(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showCalendar, onShowCalendarChange]);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showCalendar, onShowCalendarChange])
 
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
-    });
-  };
+    })
+  }
 
   const handlePrevYear = () => {
-    onMonthChange(selectedDate.getFullYear() - 1, selectedDate.getMonth());
-  };
+    onMonthChange(selectedDate.getFullYear() - 1, selectedDate.getMonth())
+  }
 
   const handleNextYear = () => {
-    onMonthChange(selectedDate.getFullYear() + 1, selectedDate.getMonth());
-  };
+    onMonthChange(selectedDate.getFullYear() + 1, selectedDate.getMonth())
+  }
 
   const handleDayPrev = () => {
-    onMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() - 1);
-  };
+    onMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() - 1)
+  }
 
   const handleDayNext = () => {
-    onMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() + 1);
-  };
+    onMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() + 1)
+  }
 
   return (
     <div className="flex items-center gap-2" ref={calendarRef}>
@@ -85,13 +88,13 @@ export default function MonthSelector({
                   ← Prev
                 </button>
                 <span className="flex-1 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  {new Date(selectedDate.getFullYear(), selectedDate.getMonth()).toLocaleDateString(
-                    "en-US",
-                    {
-                      year: "numeric",
-                      month: "long",
-                    },
-                  )}
+                  {new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth()
+                  ).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                  })}
                 </span>
                 <button
                   type="button"
@@ -106,20 +109,24 @@ export default function MonthSelector({
               {/* Month Grid */}
               <div className="grid grid-cols-4 gap-2">
                 {Array.from({ length: 12 }, (_, i) => i).map((monthIndex) => {
-                  const year = selectedDate.getFullYear();
-                  const month = monthIndex;
+                  const year = selectedDate.getFullYear()
+                  const month = monthIndex
                   const isSelected =
-                    year === selectedDate.getFullYear() && month === selectedDate.getMonth();
+                    year === selectedDate.getFullYear() &&
+                    month === selectedDate.getMonth()
 
                   return (
                     <button
                       type="button"
-                      key={new Date(year, monthIndex).toLocaleDateString("en-US", {
-                        month: "short",
-                      })}
+                      key={new Date(year, monthIndex).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                        }
+                      )}
                       onClick={() => {
-                        onMonthChange(year, month);
-                        onShowCalendarChange(false);
+                        onMonthChange(year, month)
+                        onShowCalendarChange(false)
                       }}
                       className={`rounded px-2 py-2 text-xs font-medium ${
                         isSelected
@@ -131,7 +138,7 @@ export default function MonthSelector({
                         month: "short",
                       })}
                     </button>
-                  );
+                  )
                 })}
               </div>
 
@@ -165,5 +172,5 @@ export default function MonthSelector({
         Next →
       </NavButton>
     </div>
-  );
+  )
 }

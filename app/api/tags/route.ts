@@ -1,23 +1,23 @@
-import type { Document } from "mongodb";
-import { type NextRequest, NextResponse } from "next/server";
-import { getDatabase } from "@/lib/mongodb";
-import type { Payment, PaymentType } from "@/lib/types";
+import type { Document } from "mongodb"
+import { type NextRequest, NextResponse } from "next/server"
+import { getDatabase } from "@/lib/mongodb"
+import type { Payment, PaymentType } from "@/lib/types"
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const type = searchParams.get("type") as PaymentType | null;
+    const searchParams = request.nextUrl.searchParams
+    const type = searchParams.get("type") as PaymentType | null
 
-    const db = await getDatabase();
+    const db = await getDatabase()
 
     // Build aggregation pipeline
     const matchStage: Document = {
       tag: { $type: "string", $ne: "" },
-    };
+    }
 
     // Add type filter if provided
     if (type && (type === "income" || type === "outcome")) {
-      matchStage.type = type;
+      matchStage.type = type
     }
 
     const pipeline: Document[] = [
@@ -36,16 +36,19 @@ export async function GET(request: NextRequest) {
           tags: 1,
         },
       },
-    ];
+    ]
 
-    const result = await db.collection<Payment>("payments").aggregate(pipeline).toArray();
+    const result = await db
+      .collection<Payment>("payments")
+      .aggregate(pipeline)
+      .toArray()
 
     // Extract unique tags from the result
-    const uniqueTags = result.length > 0 ? result[0].tags : [];
+    const uniqueTags = result.length > 0 ? result[0].tags : []
 
-    return NextResponse.json({ tags: uniqueTags }, { status: 200 });
+    return NextResponse.json({ tags: uniqueTags }, { status: 200 })
   } catch (error) {
-    console.error(`Error fetching tags: ${error}`);
-    return NextResponse.json({ error: "Failed to fetch tags" }, { status: 500 });
+    console.error(`Error fetching tags: ${error}`)
+    return NextResponse.json({ error: "Failed to fetch tags" }, { status: 500 })
   }
 }

@@ -1,8 +1,12 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { PaymentFormData } from "@/lib/types";
-import { calculateNetAmount, calculateSurchargeAmount, calculateVatAmount } from "./paymentUtils";
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { PaymentFormData } from "@/lib/types"
+import {
+  calculateNetAmount,
+  calculateSurchargeAmount,
+  calculateVatAmount,
+} from "./paymentUtils"
 
 /**
  * Custom hook managing payment form state and handlers
@@ -18,118 +22,123 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     tag: "",
     clientId: undefined,
     deliveryNoteRef: "",
-  };
+  }
 
-  const [formData, setFormData] = useState<PaymentFormData>(initialData || defaultFormData);
+  const [formData, setFormData] = useState<PaymentFormData>(
+    initialData || defaultFormData
+  )
 
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([])
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false)
+  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch available tags on component mount and when type changes
   useEffect(() => {
     const fetchTagsByType = async (paymentType: string) => {
       try {
-        const response = await fetch(`/api/tags?type=${paymentType}`);
+        const response = await fetch(`/api/tags?type=${paymentType}`)
         if (response.ok) {
-          const data = await response.json();
-          setAvailableTags(data.tags || []);
+          const data = await response.json()
+          setAvailableTags(data.tags || [])
         }
       } catch (err) {
-        console.error(`Error fetching tags: ${err}`);
+        console.error(`Error fetching tags: ${err}`)
       }
-    };
+    }
 
-    fetchTagsByType(formData.type);
-  }, [formData.type]);
+    fetchTagsByType(formData.type)
+  }, [formData.type])
 
   // Refetch tags when window regains focus
   useEffect(() => {
     const handleFocus = async () => {
       try {
-        const response = await fetch(`/api/tags?type=${formData.type}`);
+        const response = await fetch(`/api/tags?type=${formData.type}`)
         if (response.ok) {
-          const data = await response.json();
-          setAvailableTags(data.tags || []);
+          const data = await response.json()
+          setAvailableTags(data.tags || [])
         }
       } catch (err) {
-        console.error(`Error fetching tags: ${err}`);
+        console.error(`Error fetching tags: ${err}`)
       }
-    };
+    }
 
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [formData.type]);
+    window.addEventListener("focus", handleFocus)
+    return () => window.removeEventListener("focus", handleFocus)
+  }, [formData.type])
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, conceptIndex?: number) => {
-      const { name, value } = e.target;
+    (
+      e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+      conceptIndex?: number
+    ) => {
+      const { name, value } = e.target
 
       // Handle concept-specific fields
       if (conceptIndex !== undefined) {
         setFormData((prev) => {
-          const newConcepts = [...prev.concepts];
+          const newConcepts = [...prev.concepts]
           if (name === "conceptAmount") {
-            newConcepts[conceptIndex].amount = parseFloat(value) || 0;
+            newConcepts[conceptIndex].amount = parseFloat(value) || 0
           } else if (name === "conceptName") {
-            newConcepts[conceptIndex].name = value;
+            newConcepts[conceptIndex].name = value
           } else if (name === "conceptQuantity") {
-            newConcepts[conceptIndex].quantity = parseFloat(value) || 1;
+            newConcepts[conceptIndex].quantity = parseFloat(value) || 1
           }
-          return { ...prev, concepts: newConcepts };
-        });
-        return;
+          return { ...prev, concepts: newConcepts }
+        })
+        return
       }
 
       // Handle form-level fields
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }))
 
       // Handle tag suggestions with debounce
       if (name === "tag") {
-        setShowTagSuggestions(true);
+        setShowTagSuggestions(true)
 
         if (tagDebounceTimer.current) {
-          clearTimeout(tagDebounceTimer.current);
+          clearTimeout(tagDebounceTimer.current)
         }
 
         tagDebounceTimer.current = setTimeout(() => {
           if (value.trim() === "") {
-            setSuggestedTags(availableTags);
+            setSuggestedTags(availableTags)
           } else {
             const filtered = availableTags.filter((tag) =>
-              tag.toLowerCase().includes(value.toLowerCase()),
-            );
-            setSuggestedTags(filtered);
+              tag.toLowerCase().includes(value.toLowerCase())
+            )
+            setSuggestedTags(filtered)
           }
-        }, 1000);
+        }, 1000)
       }
     },
-    [availableTags],
-  );
+    [availableTags]
+  )
 
   const handleTagSelect = useCallback((tag: string) => {
-    setFormData((prev) => ({ ...prev, tag }));
-    setShowTagSuggestions(false);
-    setSuggestedTags([]);
-  }, []);
+    setFormData((prev) => ({ ...prev, tag }))
+    setShowTagSuggestions(false)
+    setSuggestedTags([])
+  }, [])
 
   const handleTagBlur = useCallback(() => {
     setTimeout(() => {
-      setShowTagSuggestions(false);
-    }, 200);
-  }, []);
+      setShowTagSuggestions(false)
+    }, 200)
+  }, [])
 
   const handleClientChange = useCallback((clientId: string | undefined) => {
-    setFormData((prev) => ({ ...prev, clientId }));
-  }, []);
+    setFormData((prev) => ({ ...prev, clientId }))
+  }, [])
 
   const addConcept = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
       concepts: [...prev.concepts, { name: "", amount: 0, quantity: 1 }],
-    }));
-  }, []);
+    }))
+  }, [])
 
   const removeConcept = useCallback((index: number) => {
     setFormData((prev) => {
@@ -137,37 +146,48 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
         return {
           ...prev,
           concepts: prev.concepts.filter((_, i) => i !== index),
-        };
+        }
       }
-      return prev;
-    });
-  }, []);
+      return prev
+    })
+  }, [])
 
   const calculateTotal = useCallback(() => {
-    return formData.concepts.reduce((sum, c) => sum + c.amount * (c.quantity || 1), 0);
-  }, [formData.concepts]);
+    return formData.concepts.reduce(
+      (sum, c) => sum + c.amount * (c.quantity || 1),
+      0
+    )
+  }, [formData.concepts])
 
   const calculateVatAmountValue = useCallback(() => {
-    const total = calculateTotal();
-    const vatPercentage = parseFloat(formData.vat) || 0;
-    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
-    return calculateVatAmount(total, vatPercentage, surchargePercentage).toFixed(2);
-  }, [formData.vat, formData.surcharge, calculateTotal]);
+    const total = calculateTotal()
+    const vatPercentage = parseFloat(formData.vat) || 0
+    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0
+    return calculateVatAmount(
+      total,
+      vatPercentage,
+      surchargePercentage
+    ).toFixed(2)
+  }, [formData.vat, formData.surcharge, calculateTotal])
 
   const calculateSurchargeAmountValue = useCallback(() => {
-    const total = calculateTotal();
-    const vatPercentage = parseFloat(formData.vat) || 0;
-    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
-    const result = calculateSurchargeAmount(total, vatPercentage, surchargePercentage);
-    return result.toFixed(2);
-  }, [formData.vat, formData.surcharge, calculateTotal]);
+    const total = calculateTotal()
+    const vatPercentage = parseFloat(formData.vat) || 0
+    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0
+    const result = calculateSurchargeAmount(
+      total,
+      vatPercentage,
+      surchargePercentage
+    )
+    return result.toFixed(2)
+  }, [formData.vat, formData.surcharge, calculateTotal])
 
   const calculateNetAmountValue = useCallback(() => {
-    const total = calculateTotal();
-    const vatPercentage = parseFloat(formData.vat) || 0;
-    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
-    return calculateNetAmount(total, vatPercentage, surchargePercentage);
-  }, [formData.vat, formData.surcharge, calculateTotal]);
+    const total = calculateTotal()
+    const vatPercentage = parseFloat(formData.vat) || 0
+    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0
+    return calculateNetAmount(total, vatPercentage, surchargePercentage)
+  }, [formData.vat, formData.surcharge, calculateTotal])
 
   const resetForm = useCallback(() => {
     setFormData((prev) => ({
@@ -175,12 +195,12 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
       concepts: [{ name: "", amount: 0, quantity: 1 }],
       tag: "",
       clientId: undefined,
-    }));
-  }, []);
+    }))
+  }, [])
 
   const setFormDate = useCallback((dateString: string) => {
-    setFormData((prev) => ({ ...prev, date: dateString }));
-  }, []);
+    setFormData((prev) => ({ ...prev, date: dateString }))
+  }, [])
 
   return {
     // State
@@ -208,5 +228,5 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     calculateVatAmount: calculateVatAmountValue,
     calculateSurchargeAmount: calculateSurchargeAmountValue,
     calculateNetAmount: calculateNetAmountValue,
-  };
-};
+  }
+}

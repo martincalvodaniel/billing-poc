@@ -1,99 +1,99 @@
-import type { ObjectId } from "mongodb";
+import type { ObjectId } from "mongodb"
 
-export type PaymentType = "income" | "outcome";
+export type PaymentType = "income" | "outcome"
 
-export type ClientType = "individual" | "company";
+export type ClientType = "individual" | "company"
 
 export type InvoiceSeries =
   | "Invoice"
   | "RectificativeInvoice"
   | "SimpleInvoice"
-  | "RectificativeSimpleInvoice";
+  | "RectificativeSimpleInvoice"
 
 export interface InvoiceMetadata {
-  series: InvoiceSeries;
-  number: number; // Sequential number within the series
-  generatedAt: Date;
-  blobUrl: string; // Vercel Blob URL
-  blobPathname: string; // Storage path for retrieval
+  series: InvoiceSeries
+  number: number // Sequential number within the series
+  generatedAt: Date
+  blobUrl: string // Vercel Blob URL
+  blobPathname: string // Storage path for retrieval
 }
 
 export interface PaymentConcept {
-  name: string;
-  amount: number;
-  quantity: number;
+  name: string
+  amount: number
+  quantity: number
 }
 
 export interface Payment {
-  _id?: ObjectId;
-  type: PaymentType;
-  date: string;
-  tag?: string;
-  clientId?: ObjectId;
-  concepts: PaymentConcept[];
-  vat: number;
-  surcharge?: number;
-  deliveryNoteRef?: string;
-  netAmount: number;
-  vatAmount: number;
-  surchargeAmount?: number;
-  total: number;
-  invoice?: InvoiceMetadata; // Generated invoice (for income payments)
-  providerBillUrl?: string; // Uploaded provider bill URL (for outcome payments)
-  providerBillPathname?: string; // Uploaded provider bill storage path
-  createdAt: Date;
-  updatedAt: Date;
+  _id?: ObjectId
+  type: PaymentType
+  date: string
+  tag?: string
+  clientId?: ObjectId
+  concepts: PaymentConcept[]
+  vat: number
+  surcharge?: number
+  deliveryNoteRef?: string
+  netAmount: number
+  vatAmount: number
+  surchargeAmount?: number
+  total: number
+  invoice?: InvoiceMetadata // Generated invoice (for income payments)
+  providerBillUrl?: string // Uploaded provider bill URL (for outcome payments)
+  providerBillPathname?: string // Uploaded provider bill storage path
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface PaymentFormData {
-  type: PaymentType;
-  date: string;
-  concepts: PaymentConcept[];
-  vat: string;
-  surcharge?: string;
-  tag?: string;
-  clientId?: string;
-  deliveryNoteRef?: string;
+  type: PaymentType
+  date: string
+  concepts: PaymentConcept[]
+  vat: string
+  surcharge?: string
+  tag?: string
+  clientId?: string
+  deliveryNoteRef?: string
 }
 
 export interface Client {
-  _id?: ObjectId;
-  clientType: ClientType;
-  name: string;
-  taxId: string;
-  address: string;
-  phone?: string;
-  email?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  _id?: ObjectId
+  clientType: ClientType
+  name: string
+  taxId: string
+  address: string
+  phone?: string
+  email?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface ClientFormData {
-  clientType: ClientType;
-  name: string;
-  taxId: string;
-  address: string;
-  phone?: string;
-  email?: string;
+  clientType: ClientType
+  name: string
+  taxId: string
+  address: string
+  phone?: string
+  email?: string
 }
 
 export interface PaginationMeta {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
 }
 
 export interface PaginatedResponse<T> {
-  items: T[];
-  pagination: PaginationMeta;
+  items: T[]
+  pagination: PaginationMeta
 }
 
 export interface InvoiceCounter {
-  _id?: ObjectId;
-  series: InvoiceSeries;
-  lastNumber: number;
-  updatedAt: Date;
+  _id?: ObjectId
+  series: InvoiceSeries
+  lastNumber: number
+  updatedAt: Date
 }

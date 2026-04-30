@@ -1,11 +1,11 @@
-import NavigationBar from "./NavigationBar";
+import NavigationBar from "./NavigationBar"
 
 interface PageLayoutProps {
-  title: string;
-  subtitle: string;
-  navigationSubtitle: string;
-  children: React.ReactNode;
-  headerContent?: React.ReactNode;
+  title: string
+  subtitle: string
+  navigationSubtitle: string
+  children: React.ReactNode
+  headerContent?: React.ReactNode
 }
 
 /**
@@ -29,7 +29,9 @@ export default function PageLayout({
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             {title}
           </h1>
-          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
+            {subtitle}
+          </p>
         </div>
 
         {headerContent}
@@ -37,5 +39,5 @@ export default function PageLayout({
         {children}
       </main>
     </div>
-  );
+  )
 }

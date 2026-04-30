@@ -1,15 +1,20 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import type { Client, ClientFormData } from "@/lib/types";
+import { useId, useState } from "react"
+import type { Client, ClientFormData } from "@/lib/types"
 
 interface ClientFormProps {
-  client?: Client;
-  onSubmit: (data: ClientFormData) => Promise<void>;
-  onCancel: () => void;
+  client?: Client
+  onSubmit: (data: ClientFormData) => Promise<void>
+  onCancel: () => void
 }
 
-export default function ClientForm({ client, onSubmit, onCancel }: ClientFormProps) {
+export default function ClientForm({
+  client,
+  onSubmit,
+  onCancel,
+}: ClientFormProps) {
+  const id = useId()
   const [formData, setFormData] = useState<ClientFormData>({
     clientType: client?.clientType || "individual",
     name: client?.name || "",
@@ -17,49 +22,51 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
     address: client?.address || "",
     phone: client?.phone || "",
     email: client?.email || "",
-  });
+  })
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }));
-    setError(null);
-  };
+    }))
+    setError(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     // Validate form data
     if (!formData.name.trim()) {
-      setError("Name is required");
-      return;
+      setError("Name is required")
+      return
     }
     if (!formData.taxId.trim()) {
-      setError("Tax ID is required");
-      return;
+      setError("Tax ID is required")
+      return
     }
     if (!formData.address.trim()) {
-      setError("Address is required");
-      return;
+      setError("Address is required")
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
-      await onSubmit(formData);
+      await onSubmit(formData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,13 +79,13 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label
-            htmlFor="clientType"
+            htmlFor={`${id}-clientType`}
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
           >
             Type
           </label>
           <select
-            id="clientType"
+            id={`${id}-clientType`}
             name="clientType"
             value={formData.clientType}
             onChange={handleChange}
@@ -93,19 +100,23 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
       <div>
         <label
-          htmlFor="client-name"
+          htmlFor={`${id}-client-name`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
-          {formData.clientType === "individual" ? "Name & Surname" : "Business Name"}
+          {formData.clientType === "individual"
+            ? "Name & Surname"
+            : "Business Name"}
         </label>
         <input
           type="text"
-          id="client-name"
+          id={`${id}-client-name`}
           name="name"
           value={formData.name}
           onChange={handleChange}
           placeholder={
-            formData.clientType === "individual" ? "E.g., John Doe" : "E.g., Empresa, S.L."
+            formData.clientType === "individual"
+              ? "E.g., John Doe"
+              : "E.g., Empresa, S.L."
           }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
           required
@@ -115,18 +126,22 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
       <div>
         <label
-          htmlFor="client-taxId"
+          htmlFor={`${id}-client-taxId`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
           Tax ID (NIF/CIF/NIE)
         </label>
         <input
           type="text"
-          id="client-taxId"
+          id={`${id}-client-taxId`}
           name="taxId"
           value={formData.taxId}
           onChange={handleChange}
-          placeholder={formData.clientType === "individual" ? "E.g., 12345678A" : "E.g., A12345678"}
+          placeholder={
+            formData.clientType === "individual"
+              ? "E.g., 12345678A"
+              : "E.g., A12345678"
+          }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
           required
           disabled={isSubmitting}
@@ -135,13 +150,13 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
       <div>
         <label
-          htmlFor="client-address"
+          htmlFor={`${id}-client-address`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
           Tax Address (with postal code and city)
         </label>
         <textarea
-          id="client-address"
+          id={`${id}-client-address`}
           name="address"
           value={formData.address}
           onChange={handleChange}
@@ -156,14 +171,14 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label
-            htmlFor="client-phone"
+            htmlFor={`${id}-client-phone`}
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
           >
             Phone Number
           </label>
           <input
             type="tel"
-            id="client-phone"
+            id={`${id}-client-phone`}
             name="phone"
             value={formData.phone || ""}
             onChange={handleChange}
@@ -175,14 +190,14 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
 
         <div>
           <label
-            htmlFor="client-email"
+            htmlFor={`${id}-client-email`}
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
           >
             Email Address
           </label>
           <input
             type="email"
-            id="client-email"
+            id={`${id}-client-email`}
             name="email"
             value={formData.email || ""}
             onChange={handleChange}
@@ -211,5 +226,5 @@ export default function ClientForm({ client, onSubmit, onCancel }: ClientFormPro
         </button>
       </div>
     </form>
-  );
+  )
 }

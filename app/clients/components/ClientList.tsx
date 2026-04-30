@@ -1,50 +1,50 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useState } from "react";
-import Modal from "@/app/components/Modal";
-import type { Client, ClientFormData } from "@/lib/types";
-import ClientForm from "./ClientForm";
+import { useCallback, useEffect, useState } from "react"
+import Modal from "@/app/components/Modal"
+import type { Client, ClientFormData } from "@/lib/types"
+import ClientForm from "./ClientForm"
 
 interface ClientListProps {
-  clients: Client[];
-  onRefresh: () => Promise<void>;
+  clients: Client[]
+  onRefresh: () => Promise<void>
 }
 
 export default function ClientList({ clients, onRefresh }: ClientListProps) {
-  const [editingClientId, setEditingClientId] = useState<string | null>(null);
-  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [editingClientId, setEditingClientId] = useState<string | null>(null)
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleEdit = (clientId: string) => {
-    setEditingClientId(clientId);
-    setError(null);
-  };
+    setEditingClientId(clientId)
+    setError(null)
+  }
 
   const handleCancelEdit = useCallback(() => {
-    setEditingClientId(null);
-    setError(null);
-  }, []);
+    setEditingClientId(null)
+    setError(null)
+  }, [])
 
   const handleUpdate = async (data: ClientFormData) => {
     const response = await fetch("/api/clients", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: editingClientId, ...data }),
-    });
+    })
 
     if (!response.ok) {
-      const result = await response.json();
-      throw new Error(result.error || "Failed to update client");
+      const result = await response.json()
+      throw new Error(result.error || "Failed to update client")
     }
 
-    setEditingClientId(null);
-    await onRefresh();
-  };
+    setEditingClientId(null)
+    await onRefresh()
+  }
 
   const handleDeleteClick = (clientId: string) => {
-    setDeletingClientId(clientId);
-    setError(null);
-  };
+    setDeletingClientId(clientId)
+    setError(null)
+  }
 
   const handleConfirmDelete = async () => {
     try {
@@ -52,75 +52,77 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: deletingClientId }),
-      });
+      })
 
       if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Failed to delete client");
+        const result = await response.json()
+        throw new Error(result.error || "Failed to delete client")
       }
 
-      setDeletingClientId(null);
-      await onRefresh();
+      setDeletingClientId(null)
+      await onRefresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : "An error occurred")
     }
-  };
+  }
 
   // Handle ESC key for edit modal
   useEffect(() => {
-    if (!editingClientId) return;
+    if (!editingClientId) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const modalElement = document.querySelector('[id="edit-client-modal"]');
-      if (!modalElement) return;
+      const modalElement = document.querySelector('[id="edit-client-modal"]')
+      if (!modalElement) return
 
       if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleCancelEdit();
+        e.preventDefault()
+        e.stopPropagation()
+        handleCancelEdit()
       }
-    };
+    }
 
     const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleKeyDown);
-    }, 0);
+      document.addEventListener("keydown", handleKeyDown)
+    }, 0)
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [editingClientId, handleCancelEdit]);
+      clearTimeout(timeoutId)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [editingClientId, handleCancelEdit])
 
   // Handle ESC key for delete modal
   useEffect(() => {
-    if (!deletingClientId) return;
+    if (!deletingClientId) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const modalElement = document.querySelector('[id="delete-client-modal"]');
-      if (!modalElement) return;
+      const modalElement = document.querySelector('[id="delete-client-modal"]')
+      if (!modalElement) return
 
       if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        setDeletingClientId(null);
+        e.preventDefault()
+        e.stopPropagation()
+        setDeletingClientId(null)
       }
-    };
+    }
 
     const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleKeyDown);
-    }, 0);
+      document.addEventListener("keydown", handleKeyDown)
+    }, 0)
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [deletingClientId]);
+      clearTimeout(timeoutId)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [deletingClientId])
 
   const getClientType = (type: string) => {
-    return type === "individual" ? "Person / Freelancer" : "Company";
-  };
+    return type === "individual" ? "Person / Freelancer" : "Company"
+  }
 
-  const editingClient = clients.find((c) => c._id?.toString() === editingClientId);
+  const editingClient = clients.find(
+    (c) => c._id?.toString() === editingClientId
+  )
 
   return (
     <>
@@ -139,12 +141,19 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
         closeOnBackdropClick={true}
       >
         {editingClient && (
-          <ClientForm client={editingClient} onSubmit={handleUpdate} onCancel={handleCancelEdit} />
+          <ClientForm
+            client={editingClient}
+            onSubmit={handleUpdate}
+            onCancel={handleCancelEdit}
+          />
         )}
       </Modal>
 
       <Modal
-        isOpen={!!deletingClientId && !!clients.find((c) => c._id?.toString() === deletingClientId)}
+        isOpen={
+          !!deletingClientId &&
+          !!clients.find((c) => c._id?.toString() === deletingClientId)
+        }
         onClose={() => setDeletingClientId(null)}
         title="Delete Client"
         maxWidth="sm"
@@ -174,9 +183,14 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
           {clients.find((c) => c._id?.toString() === deletingClientId) && (
             <div className="space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
               <p>
-                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Name: </span>
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  Name:{" "}
+                </span>
                 <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {clients.find((c) => c._id?.toString() === deletingClientId)?.name}
+                  {
+                    clients.find((c) => c._id?.toString() === deletingClientId)
+                      ?.name
+                  }
                 </span>
               </p>
               <p>
@@ -184,12 +198,17 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                   Tax ID:{" "}
                 </span>
                 <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {clients.find((c) => c._id?.toString() === deletingClientId)?.taxId}
+                  {
+                    clients.find((c) => c._id?.toString() === deletingClientId)
+                      ?.taxId
+                  }
                 </span>
               </p>
             </div>
           )}
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">This action cannot be undone.</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            This action cannot be undone.
+          </p>
         </div>
       </Modal>
 
@@ -249,8 +268,8 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
                       <button
                         type="button"
                         onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(client._id?.toString() ?? "");
+                          e.stopPropagation()
+                          handleDeleteClick(client._id?.toString() ?? "")
                         }}
                         className="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 dark:focus:ring-offset-zinc-900"
                       >
@@ -265,5 +284,5 @@ export default function ClientList({ clients, onRefresh }: ClientListProps) {
         )}
       </div>
     </>
-  );
+  )
 }

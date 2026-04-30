@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { useMemo, useState } from "react";
-import NavButton from "../../components/NavButton";
+import { useId, useMemo, useState } from "react"
+import NavButton from "../../components/NavButton"
 
 interface YearSelectorProps {
-  selectedYear: number;
-  onYearChange: (year: number) => void;
-  isViewingCurrentYear: boolean;
-  onGoToCurrentYear: () => void;
+  selectedYear: number
+  onYearChange: (year: number) => void
+  isViewingCurrentYear: boolean
+  onGoToCurrentYear: () => void
 }
 
 export default function YearSelector({
@@ -16,39 +16,43 @@ export default function YearSelector({
   isViewingCurrentYear,
   onGoToCurrentYear,
 }: YearSelectorProps) {
-  const [showYearPicker, setShowYearPicker] = useState(false);
-  const [yearInput, setYearInput] = useState(() => selectedYear.toString());
+  const id = useId()
+  const [showYearPicker, setShowYearPicker] = useState(false)
+  const [yearInput, setYearInput] = useState(() => selectedYear.toString())
 
   // Update yearInput when selectedYear changes externally
   const handleYearInputChange = (value: string) => {
-    setYearInput(value);
-  };
+    setYearInput(value)
+  }
 
   const handleYearInputSubmit = () => {
-    const parsed = parseInt(yearInput, 10);
-    if (Number.isNaN(parsed)) return;
-    onYearChange(parsed);
-    setShowYearPicker(false);
-  };
+    const parsed = parseInt(yearInput, 10)
+    if (Number.isNaN(parsed)) return
+    onYearChange(parsed)
+    setShowYearPicker(false)
+  }
 
   const handleYearSelect = (year: number) => {
-    onYearChange(year);
-    setShowYearPicker(false);
-  };
+    onYearChange(year)
+    setShowYearPicker(false)
+  }
 
   const handleYearChange = (direction: "prev" | "next") => {
-    onYearChange(direction === "prev" ? selectedYear - 1 : selectedYear + 1);
-    setShowYearPicker(false);
-  };
+    onYearChange(direction === "prev" ? selectedYear - 1 : selectedYear + 1)
+    setShowYearPicker(false)
+  }
 
   const candidateYears = useMemo(() => {
-    const base = selectedYear;
-    return Array.from({ length: 12 }, (_, idx) => base - 6 + idx);
-  }, [selectedYear]);
+    const base = selectedYear
+    return Array.from({ length: 12 }, (_, idx) => base - 6 + idx)
+  }, [selectedYear])
 
   return (
     <div className="flex items-center gap-2">
-      <NavButton onClick={() => handleYearChange("prev")} aria-label="View previous year">
+      <NavButton
+        onClick={() => handleYearChange("prev")}
+        aria-label="View previous year"
+      >
         ← Prev
       </NavButton>
       <div className="relative">
@@ -70,21 +74,21 @@ export default function YearSelector({
           >
             <div className="flex items-center gap-2">
               <label
-                htmlFor="year-input"
+                htmlFor={`${id}-year-input`}
                 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
               >
                 Year
               </label>
               <input
-                id="year-input"
+                id={`${id}-year-input`}
                 type="number"
                 inputMode="numeric"
                 value={yearInput}
                 onChange={(e) => handleYearInputChange(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleYearInputSubmit();
+                    e.preventDefault()
+                    handleYearInputSubmit()
                   }
                 }}
                 className="w-24 rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
@@ -101,7 +105,7 @@ export default function YearSelector({
 
             <div className="mt-4 grid grid-cols-3 gap-2">
               {candidateYears.map((year) => {
-                const isActive = year === selectedYear;
+                const isActive = year === selectedYear
                 return (
                   <button
                     key={year}
@@ -115,13 +119,16 @@ export default function YearSelector({
                   >
                     {year}
                   </button>
-                );
+                )
               })}
             </div>
           </div>
         )}
       </div>
-      <NavButton onClick={() => handleYearChange("next")} aria-label="View next year">
+      <NavButton
+        onClick={() => handleYearChange("next")}
+        aria-label="View next year"
+      >
         Next →
       </NavButton>
       <button
@@ -134,5 +141,5 @@ export default function YearSelector({
         🎯
       </button>
     </div>
-  );
+  )
 }

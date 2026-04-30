@@ -1,10 +1,14 @@
-"use client";
+"use client"
 
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes } from "react"
 
-type NavButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
+type NavButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 
-export default function NavButton({ children, className, ...props }: NavButtonProps) {
+export default function NavButton({
+  children,
+  className,
+  ...props
+}: NavButtonProps) {
   return (
     <button
       type="button"
@@ -13,5 +17,5 @@ export default function NavButton({ children, className, ...props }: NavButtonPr
     >
       {children}
     </button>
-  );
+  )
 }

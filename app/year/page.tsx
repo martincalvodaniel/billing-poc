@@ -1,120 +1,136 @@
-"use client";
+"use client"
 
-import { useEffect, useMemo, useState } from "react";
-import type { Payment } from "@/lib/types";
-import DonutChart from "../components/DonutChart";
-import PageLayout from "../components/PageLayout";
-import SummaryCard from "../components/SummaryCard";
-import MonthlyBreakdown from "./components/MonthlyBreakdown";
-import YearSelector from "./components/YearSelector";
+import { useEffect, useMemo, useState } from "react"
+import type { Payment } from "@/lib/types"
+import DonutChart from "../components/DonutChart"
+import PageLayout from "../components/PageLayout"
+import SummaryCard from "../components/SummaryCard"
+import MonthlyBreakdown from "./components/MonthlyBreakdown"
+import YearSelector from "./components/YearSelector"
 
 export default function YearSummaryPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [selectedYear, setSelectedYear] = useState(() =>
+    new Date().getFullYear()
+  )
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const abortController = new AbortController();
+    const abortController = new AbortController()
 
     const fetchPayments = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setIsLoading(true)
+        setError(null)
         const response = await fetch(`/api/payments?year=${selectedYear}`, {
           signal: abortController.signal,
-        });
+        })
         if (!response.ok) {
-          throw new Error("Failed to fetch payments");
+          throw new Error("Failed to fetch payments")
         }
-        const data = await response.json();
+        const data = await response.json()
         if (!abortController.signal.aborted) {
-          setPayments(data.payments || []);
+          setPayments(data.payments || [])
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
           // Request was aborted, ignore
-          return;
+          return
         }
-        const message = err instanceof Error ? err.message : "An error occurred";
+        const message = err instanceof Error ? err.message : "An error occurred"
         if (!abortController.signal.aborted) {
-          setError(message);
+          setError(message)
         }
-        console.error(`Error fetching payments: ${err}`);
+        console.error(`Error fetching payments: ${err}`)
       } finally {
         if (!abortController.signal.aborted) {
-          setIsLoading(false);
+          setIsLoading(false)
         }
       }
-    };
+    }
 
-    fetchPayments();
+    fetchPayments()
 
     return () => {
-      abortController.abort();
-    };
-  }, [selectedYear]);
+      abortController.abort()
+    }
+  }, [selectedYear])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-ES", {
       style: "currency",
       currency: "EUR",
-    }).format(amount);
-  };
+    }).format(amount)
+  }
 
-  const currentYear = useMemo(() => new Date().getFullYear(), []);
-  const isViewingCurrentYear = selectedYear === currentYear;
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
+  const isViewingCurrentYear = selectedYear === currentYear
 
   const paymentsForYear = useMemo(
     () => payments, // API already filters by year
-    [payments],
-  );
+    [payments]
+  )
 
   // Combine iterations: compute monthly buckets and tag breakdowns in a single pass (js-combine-iterations)
-  const { monthlyTotals, incomeByTagYear, outcomeByTagYear, incomeCount, outcomeCount } =
-    useMemo(() => {
-      const buckets = Array.from({ length: 12 }, (_, monthIndex) => ({
-        monthIndex,
-        income: 0,
-        outcome: 0,
-      }));
-      const incByTag: Record<string, number> = {};
-      const outByTag: Record<string, number> = {};
-      let incCount = 0;
-      let outCount = 0;
+  const {
+    monthlyTotals,
+    incomeByTagYear,
+    outcomeByTagYear,
+    incomeCount,
+    outcomeCount,
+  } = useMemo(() => {
+    const buckets = Array.from({ length: 12 }, (_, monthIndex) => ({
+      monthIndex,
+      income: 0,
+      outcome: 0,
+    }))
+    const incByTag: Record<string, number> = {}
+    const outByTag: Record<string, number> = {}
+    let incCount = 0
+    let outCount = 0
 
-      for (const payment of paymentsForYear) {
-        const paymentMonth = new Date(payment.date).getMonth();
-        const bucket = buckets[paymentMonth];
-        const tag = payment.tag || "Untagged";
-        if (payment.type === "income") {
-          bucket.income += payment.total;
-          incByTag[tag] = (incByTag[tag] || 0) + payment.total;
-          incCount++;
-        } else {
-          bucket.outcome += payment.total;
-          outByTag[tag] = (outByTag[tag] || 0) + payment.total;
-          outCount++;
-        }
+    for (const payment of paymentsForYear) {
+      const paymentMonth = new Date(payment.date).getMonth()
+      const bucket = buckets[paymentMonth]
+      const tag = payment.tag || "Untagged"
+      if (payment.type === "income") {
+        bucket.income += payment.total
+        incByTag[tag] = (incByTag[tag] || 0) + payment.total
+        incCount++
+      } else {
+        bucket.outcome += payment.total
+        outByTag[tag] = (outByTag[tag] || 0) + payment.total
+        outCount++
       }
+    }
 
-      return {
-        monthlyTotals: buckets.map((b) => ({
-          ...b,
-          net: b.income - b.outcome,
-          totalVolume: b.income + b.outcome,
-        })),
-        incomeByTagYear: incByTag,
-        outcomeByTagYear: outByTag,
-        incomeCount: incCount,
-        outcomeCount: outCount,
-      };
-    }, [paymentsForYear]);
+    return {
+      monthlyTotals: buckets.map((b) => ({
+        ...b,
+        net: b.income - b.outcome,
+        totalVolume: b.income + b.outcome,
+      })),
+      incomeByTagYear: incByTag,
+      outcomeByTagYear: outByTag,
+      incomeCount: incCount,
+      outcomeCount: outCount,
+    }
+  }, [paymentsForYear])
 
-  const yearlyIncome = monthlyTotals.reduce((sum, month) => sum + month.income, 0);
-  const yearlyOutcome = monthlyTotals.reduce((sum, month) => sum + month.outcome, 0);
-  const yearlyNet = yearlyIncome - yearlyOutcome;
-  const maxMonthlyVolume = Math.max(1, ...monthlyTotals.map((month) => month.totalVolume));
+  const yearlyIncome = monthlyTotals.reduce(
+    (sum, month) => sum + month.income,
+    0
+  )
+  const yearlyOutcome = monthlyTotals.reduce(
+    (sum, month) => sum + month.outcome,
+    0
+  )
+  const yearlyNet = yearlyIncome - yearlyOutcome
+  const maxMonthlyVolume = Math.max(
+    1,
+    ...monthlyTotals.map((month) => month.totalVolume)
+  )
 
   const colors = [
     "#10b981",
@@ -127,7 +143,7 @@ export default function YearSummaryPage() {
     "#f97316",
     "#6366f1",
     "#14b8a6",
-  ];
+  ]
 
   return (
     <PageLayout
@@ -151,7 +167,7 @@ export default function YearSummaryPage() {
               isViewingCurrentYear={isViewingCurrentYear}
               onGoToCurrentYear={() => {
                 if (!isViewingCurrentYear) {
-                  setSelectedYear(currentYear);
+                  setSelectedYear(currentYear)
                 }
               }}
             />
@@ -175,7 +191,9 @@ export default function YearSummaryPage() {
             label="Net Balance"
             value={formatCurrency(yearlyNet)}
             valueClassName={
-              yearlyNet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"
+              yearlyNet >= 0
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-red-600 dark:text-red-400"
             }
           />
         </div>
@@ -228,5 +246,5 @@ export default function YearSummaryPage() {
         )}
       </div>
     </PageLayout>
-  );
+  )
 }

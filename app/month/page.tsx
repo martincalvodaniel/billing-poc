@@ -1,5 +1,5 @@
-import { Suspense } from "react";
-import MonthPageContent from "./components/MonthPageContent";
+import { Suspense } from "react"
+import MonthPageContent from "./components/MonthPageContent"
 
 function MonthPageLoading() {
   return (
@@ -9,7 +9,7 @@ function MonthPageLoading() {
         <div className="h-10 w-full animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
       </main>
     </div>
-  );
+  )
 }
 
 export default function Home() {
@@ -17,5 +17,5 @@ export default function Home() {
     <Suspense fallback={<MonthPageLoading />}>
       <MonthPageContent />
     </Suspense>
-  );
+  )
 }

@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
 interface PaginationControlsProps {
-  currentPage: number;
-  totalPages: number;
-  total: number;
-  pageSize: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  onPageChange: (page: number) => void;
+  currentPage: number
+  totalPages: number
+  total: number
+  pageSize: number
+  hasPrevPage: boolean
+  hasNextPage: boolean
+  onPageChange: (page: number) => void
 }
 
 export default function PaginationControls({
@@ -19,15 +19,25 @@ export default function PaginationControls({
   hasNextPage,
   onPageChange,
 }: PaginationControlsProps) {
-  const startItem = (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, total);
+  const startItem = (currentPage - 1) * pageSize + 1
+  const endItem = Math.min(currentPage * pageSize, total)
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:justify-between">
       <div className="text-sm text-zinc-600 dark:text-zinc-400">
-        Showing <span className="font-medium text-zinc-900 dark:text-zinc-50">{startItem}</span> to{" "}
-        <span className="font-medium text-zinc-900 dark:text-zinc-50">{endItem}</span> of{" "}
-        <span className="font-medium text-zinc-900 dark:text-zinc-50">{total}</span> clients
+        Showing{" "}
+        <span className="font-medium text-zinc-900 dark:text-zinc-50">
+          {startItem}
+        </span>{" "}
+        to{" "}
+        <span className="font-medium text-zinc-900 dark:text-zinc-50">
+          {endItem}
+        </span>{" "}
+        of{" "}
+        <span className="font-medium text-zinc-900 dark:text-zinc-50">
+          {total}
+        </span>{" "}
+        clients
       </div>
 
       <div className="flex items-center gap-2">
@@ -42,9 +52,13 @@ export default function PaginationControls({
         </button>
 
         <div className="flex items-center gap-1">
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{currentPage}</span>
+          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            {currentPage}
+          </span>
           <span className="text-sm text-zinc-600 dark:text-zinc-400">of</span>
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{totalPages}</span>
+          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            {totalPages}
+          </span>
         </div>
 
         <button
@@ -58,5 +72,5 @@ export default function PaginationControls({
         </button>
       </div>
     </div>
-  );
+  )
 }

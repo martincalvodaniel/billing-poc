@@ -1,13 +1,16 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
-import type { Client } from "@/lib/types";
+import { useEffect, useId, useRef, useState } from "react"
+import type { Client } from "@/lib/types"
 
 interface ClientSelectorProps {
-  value?: string; // Client ID
-  onChange: (clientId: string | undefined, clientName: string | undefined) => void;
-  label?: string;
-  required?: boolean;
+  value?: string // Client ID
+  onChange: (
+    clientId: string | undefined,
+    clientName: string | undefined
+  ) => void
+  label?: string
+  required?: boolean
 }
 
 export default function ClientSelector({
@@ -16,144 +19,150 @@ export default function ClientSelector({
   label = "Client (Optional)",
   required = false,
 }: ClientSelectorProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const id = useId()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [clients, setClients] = useState<Client[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Fetch client by ID on mount if value is provided
   useEffect(() => {
     const fetchClientById = async (clientId: string) => {
       try {
-        setIsLoading(true);
-        const response = await fetch(`/api/clients?search=`);
+        setIsLoading(true)
+        const response = await fetch(`/api/clients?search=`)
         if (response.ok) {
-          const data = await response.json();
-          const client = data.items.find((c: Client) => c._id?.toString() === clientId);
+          const data = await response.json()
+          const client = data.items.find(
+            (c: Client) => c._id?.toString() === clientId
+          )
           if (client) {
-            setSelectedClient(client);
-            setSearchQuery(client.name);
+            setSelectedClient(client)
+            setSearchQuery(client.name)
           }
         }
       } catch (err) {
-        console.error(`Error fetching client: ${err}`);
+        console.error(`Error fetching client: ${err}`)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
     if (value && !selectedClient) {
-      fetchClientById(value);
+      fetchClientById(value)
     }
-  }, [value, selectedClient]);
+  }, [value, selectedClient])
 
   // Fetch clients based on search query with debounce
   useEffect(() => {
     if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
+      clearTimeout(debounceTimer.current)
     }
 
     if (!showSuggestions) {
-      return;
+      return
     }
 
     debounceTimer.current = setTimeout(async () => {
       if (searchQuery.trim() === "") {
         // Fetch all clients if search is empty
-        setIsLoading(true);
+        setIsLoading(true)
         try {
-          const response = await fetch(`/api/clients?pageSize=20`);
+          const response = await fetch(`/api/clients?pageSize=20`)
           if (response.ok) {
-            const data = await response.json();
-            setClients(data.items || []);
+            const data = await response.json()
+            setClients(data.items || [])
           }
         } catch (err) {
-          console.error(`Error fetching clients: ${err}`);
+          console.error(`Error fetching clients: ${err}`)
         } finally {
-          setIsLoading(false);
+          setIsLoading(false)
         }
       } else {
         // Search for clients matching query
-        setIsLoading(true);
+        setIsLoading(true)
         try {
           const response = await fetch(
-            `/api/clients?search=${encodeURIComponent(searchQuery)}&pageSize=20`,
-          );
+            `/api/clients?search=${encodeURIComponent(searchQuery)}&pageSize=20`
+          )
           if (response.ok) {
-            const data = await response.json();
-            setClients(data.items || []);
+            const data = await response.json()
+            setClients(data.items || [])
           }
         } catch (err) {
-          console.error(`Error searching clients: ${err}`);
+          console.error(`Error searching clients: ${err}`)
         } finally {
-          setIsLoading(false);
+          setIsLoading(false)
         }
       }
-    }, 300);
+    }, 300)
 
     return () => {
       if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
+        clearTimeout(debounceTimer.current)
       }
-    };
-  }, [searchQuery, showSuggestions]);
+    }
+  }, [searchQuery, showSuggestions])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    setShowSuggestions(true);
+    const value = e.target.value
+    setSearchQuery(value)
+    setShowSuggestions(true)
 
     // Clear selection if user is typing
     if (selectedClient) {
-      setSelectedClient(null);
-      onChange(undefined, undefined);
+      setSelectedClient(null)
+      onChange(undefined, undefined)
     }
-  };
+  }
 
   const handleClientSelect = (client: Client) => {
-    setSelectedClient(client);
-    setSearchQuery(client.name);
-    setShowSuggestions(false);
-    onChange(client._id?.toString(), client.name);
-  };
+    setSelectedClient(client)
+    setSearchQuery(client.name)
+    setShowSuggestions(false)
+    onChange(client._id?.toString(), client.name)
+  }
 
   const handleClearSelection = () => {
-    setSelectedClient(null);
-    setSearchQuery("");
-    setClients([]);
-    onChange(undefined, undefined);
-  };
+    setSelectedClient(null)
+    setSearchQuery("")
+    setClients([])
+    onChange(undefined, undefined)
+  }
 
   const handleInputFocus = () => {
-    setShowSuggestions(true);
-  };
+    setShowSuggestions(true)
+  }
 
   const handleInputBlur = () => {
     // Delay closing to allow click on suggestion
     setTimeout(() => {
-      setShowSuggestions(false);
-    }, 200);
-  };
+      setShowSuggestions(false)
+    }, 200)
+  }
 
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   return (
     <div ref={containerRef} className="relative space-y-2">
       <label
-        htmlFor="client-selector"
+        htmlFor={`${id}-client-selector`}
         className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
       >
         {label}
@@ -163,7 +172,7 @@ export default function ClientSelector({
       <div className="relative">
         <input
           type="text"
-          id="client-selector"
+          id={`${id}-client-selector`}
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
@@ -198,7 +207,9 @@ export default function ClientSelector({
       {showSuggestions && (
         <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">Loading...</div>
+            <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+              Loading...
+            </div>
           ) : clients.length > 0 ? (
             <ul className="max-h-60 overflow-y-auto py-1">
               {clients.map((client) => (
@@ -230,5 +241,5 @@ export default function ClientSelector({
         </div>
       )}
     </div>
-  );
+  )
 }

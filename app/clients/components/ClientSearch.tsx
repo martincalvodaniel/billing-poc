@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react"
 
 interface ClientSearchProps {
-  onSearch: (query: string) => void;
+  onSearch: (query: string) => void
 }
 
 export default function ClientSearch({ onSearch }: ClientSearchProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const isInitialMount = useRef(true);
+  const [searchQuery, setSearchQuery] = useState("")
+  const isInitialMount = useRef(true)
 
   useEffect(() => {
     // Skip the initial mount to avoid duplicate API call
     // Parent component handles initial data fetch
     if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
+      isInitialMount.current = false
+      return
     }
 
     const timer = setTimeout(() => {
-      onSearch(searchQuery);
-    }, 300); // Debounce search
+      onSearch(searchQuery)
+    }, 300) // Debounce search
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, onSearch]);
+    return () => clearTimeout(timer)
+  }, [searchQuery, onSearch])
 
   return (
     <div className="relative">
@@ -45,5 +45,5 @@ export default function ClientSearch({ onSearch }: ClientSearchProps) {
         </button>
       )}
     </div>
-  );
+  )
 }

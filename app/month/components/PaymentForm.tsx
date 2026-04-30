@@ -1,15 +1,30 @@
-"use client";
+"use client"
 
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
-import PaymentFormFields from "./PaymentFormFields";
-import { validateConcepts } from "./paymentUtils";
-import { usePaymentForm } from "./usePaymentForm";
+import type { Ref } from "react"
+import {
+  useCallback,
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react"
+import PaymentFormFields from "./PaymentFormFields"
+import { validateConcepts } from "./paymentUtils"
+import { usePaymentForm } from "./usePaymentForm"
 
 interface PaymentFormProps {
-  onPaymentSaved?: (date: string) => void;
+  onPaymentSaved?: (date: string) => void
+  ref?: Ref<{
+    setFormDate: (dateString: string) => void
+    submit: () => void
+  } | null>
 }
 
-const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentFormProps, ref) {
+const PaymentForm = function PaymentForm({
+  onPaymentSaved,
+  ref,
+}: PaymentFormProps) {
+  const id = useId()
   const {
     formData,
     suggestedTags,
@@ -28,37 +43,39 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
     calculateVatAmount,
     calculateSurchargeAmount,
     calculateNetAmount,
-  } = usePaymentForm();
+  } = usePaymentForm()
 
-  const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+  const [error, setError] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showAdditionalFields, setShowAdditionalFields] = useState(false)
 
   // Provider bill upload state
-  const [providerBillFile, setProviderBillFile] = useState<File | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [providerBillFile, setProviderBillFile] = useState<File | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
     setFormDate,
     submit: () => {
       // Programmatically submit the form
-      const form = document.querySelector('form[data-payment-form="true"]') as HTMLFormElement;
-      form?.requestSubmit();
+      const form = document.querySelector(
+        'form[data-payment-form="true"]'
+      ) as HTMLFormElement
+      form?.requestSubmit()
     },
-  }));
+  }))
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setUploadError(null);
+    e.preventDefault()
+    setError(null)
+    setUploadError(null)
 
     try {
       // Validate concepts
-      const validation = validateConcepts(formData.concepts);
+      const validation = validateConcepts(formData.concepts)
       if (!validation.isValid) {
-        throw new Error(validation.error || "Validation failed");
+        throw new Error(validation.error || "Validation failed")
       }
 
       const response = await fetch("/api/payments", {
@@ -67,37 +84,41 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to save payment");
+        const data = await response.json()
+        throw new Error(data.error || "Failed to save payment")
       }
 
-      const result = await response.json();
-      const paymentId = result.id;
+      const result = await response.json()
+      const paymentId = result.id
 
       // Upload provider bill if outcome payment and file is selected
       if (formData.type === "outcome" && providerBillFile) {
         try {
-          const uploadFormData = new FormData();
-          uploadFormData.append("file", providerBillFile);
-          uploadFormData.append("paymentId", paymentId);
+          const uploadFormData = new FormData()
+          uploadFormData.append("file", providerBillFile)
+          uploadFormData.append("paymentId", paymentId)
 
           const uploadResponse = await fetch("/api/invoices/upload", {
             method: "POST",
             body: uploadFormData,
-          });
+          })
 
           if (!uploadResponse.ok) {
-            const uploadData = await uploadResponse.json();
-            throw new Error(uploadData.error || "Failed to upload provider bill");
+            const uploadData = await uploadResponse.json()
+            throw new Error(
+              uploadData.error || "Failed to upload provider bill"
+            )
           }
         } catch (uploadErr) {
-          console.error(`Error uploading provider bill: ${uploadErr}`);
+          console.error(`Error uploading provider bill: ${uploadErr}`)
           setUploadError(
-            uploadErr instanceof Error ? uploadErr.message : "Failed to upload provider bill",
-          );
+            uploadErr instanceof Error
+              ? uploadErr.message
+              : "Failed to upload provider bill"
+          )
           // Continue with success since payment was created
         }
       }
@@ -105,98 +126,98 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
       // Add new tag to available tags if it's not already there
       // Note: availableTags is managed in usePaymentForm hook
       if (formData.tag) {
-        setShowTagSuggestions(false);
-        setSuggestedTags([]);
+        setShowTagSuggestions(false)
+        setSuggestedTags([])
       }
 
       // Reset concepts, client, and provider bill file while keeping type and date sticky
-      resetForm();
-      setProviderBillFile(null);
+      resetForm()
+      setProviderBillFile(null)
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = ""
       }
 
       // Show success toast
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 4000);
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 4000)
 
-      onPaymentSaved?.(formData.date);
+      onPaymentSaved?.(formData.date)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
-      setError(errorMessage);
-      console.error(`Error saving payment: ${err}`);
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred"
+      setError(errorMessage)
+      console.error(`Error saving payment: ${err}`)
     }
-  };
+  }
 
   const handleFormFieldChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    conceptIndex?: number,
+    conceptIndex?: number
   ) => {
-    handleChange(e, conceptIndex);
+    handleChange(e, conceptIndex)
 
     // Handle tag suggestions with debounce (managed in hook, but keep dropdown state in sync here)
     if (e.target.name === "tag") {
-      setShowTagSuggestions(true);
+      setShowTagSuggestions(true)
     }
-  };
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (!file) {
-      setProviderBillFile(null);
-      return;
+      setProviderBillFile(null)
+      return
     }
 
     // Validate file type
     if (file.type !== "application/pdf") {
-      setUploadError("Only PDF files are allowed");
-      setProviderBillFile(null);
+      setUploadError("Only PDF files are allowed")
+      setProviderBillFile(null)
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = ""
       }
-      return;
+      return
     }
 
     // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
-      setUploadError("File size exceeds 10MB limit");
-      setProviderBillFile(null);
+      setUploadError("File size exceeds 10MB limit")
+      setProviderBillFile(null)
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = ""
       }
-      return;
+      return
     }
 
-    setUploadError(null);
-    setProviderBillFile(file);
-  };
+    setUploadError(null)
+    setProviderBillFile(file)
+  }
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLFormElement>) => {
       // Don't submit if tag dropdown is open (ENTER should select tag)
       if (showTagSuggestions) {
-        return;
+        return
       }
 
       if (e.key === "Enter") {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault()
+        e.stopPropagation()
         const submitButton = (e.currentTarget as HTMLFormElement).querySelector(
-          'button[type="submit"]',
-        ) as HTMLButtonElement;
-        submitButton?.click();
+          'button[type="submit"]'
+        ) as HTMLButtonElement
+        submitButton?.click()
       }
     },
-    [showTagSuggestions],
-  );
+    [showTagSuggestions]
+  )
 
   return (
     <>
       {/* Success Toast Notification */}
       {showSuccess && (
         <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
-          {/* biome-ignore lint/a11y/useSemanticElements: role="status" is the appropriate pattern for toast notifications */}
           <div
             className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
             role="status"
@@ -292,7 +313,7 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
         {formData.type === "outcome" && (
           <div className="space-y-2">
             <label
-              htmlFor="providerBill"
+              htmlFor={`${id}-providerBill`}
               className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
               Provider Bill (Optional)
@@ -308,14 +329,15 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
             <input
               ref={fileInputRef}
               type="file"
-              id="providerBill"
+              id={`${id}-providerBill`}
               accept="application/pdf"
               onChange={handleFileChange}
               className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
             {providerBillFile && (
               <p className="text-xs text-green-600 dark:text-green-400">
-                Selected: {providerBillFile.name} ({(providerBillFile.size / 1024).toFixed(2)} KB)
+                Selected: {providerBillFile.name} (
+                {(providerBillFile.size / 1024).toFixed(2)} KB)
               </p>
             )}
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
@@ -325,7 +347,7 @@ const PaymentForm = forwardRef(function PaymentForm({ onPaymentSaved }: PaymentF
         )}
       </form>
     </>
-  );
-});
+  )
+}
 
-export default PaymentForm;
+export default PaymentForm

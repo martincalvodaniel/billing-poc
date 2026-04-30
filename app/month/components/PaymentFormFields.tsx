@@ -1,27 +1,28 @@
-"use client";
+"use client"
 
-import ClientSelector from "@/app/components/ClientSelector";
-import type { PaymentFormData } from "@/lib/types";
+import { useId } from "react"
+import ClientSelector from "@/app/components/ClientSelector"
+import type { PaymentFormData } from "@/lib/types"
 
 interface PaymentFormFieldsProps {
-  formData: PaymentFormData;
-  suggestedTags: string[];
-  showTagSuggestions: boolean;
-  showAdditionalFields: boolean;
-  onSetShowAdditionalFields: (show: boolean) => void;
+  formData: PaymentFormData
+  suggestedTags: string[]
+  showTagSuggestions: boolean
+  showAdditionalFields: boolean
+  onSetShowAdditionalFields: (show: boolean) => void
   onChangeField: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    conceptIndex?: number,
-  ) => void;
-  onTagSelect: (tag: string) => void;
-  onTagBlur: () => void;
-  onClientChange: (clientId: string | undefined) => void;
-  onAddConcept: () => void;
-  onRemoveConcept: (index: number) => void;
-  calculateTotal: () => number;
-  calculateVatAmount: () => string;
-  calculateSurchargeAmount: () => string;
-  calculateNetAmount: () => string;
+    conceptIndex?: number
+  ) => void
+  onTagSelect: (tag: string) => void
+  onTagBlur: () => void
+  onClientChange: (clientId: string | undefined) => void
+  onAddConcept: () => void
+  onRemoveConcept: (index: number) => void
+  calculateTotal: () => number
+  calculateVatAmount: () => string
+  calculateSurchargeAmount: () => string
+  calculateNetAmount: () => string
 }
 
 /**
@@ -45,6 +46,7 @@ export default function PaymentFormFields({
   calculateSurchargeAmount,
   calculateNetAmount,
 }: PaymentFormFieldsProps) {
+  const id = useId()
   return (
     <div className="space-y-4">
       {/* Payment Type and Date (Shared Row) */}
@@ -52,13 +54,13 @@ export default function PaymentFormFields({
         {/* Payment Type */}
         <div className="space-y-2">
           <label
-            htmlFor="type"
+            htmlFor={`${id}-type`}
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
             Type
           </label>
           <select
-            id="type"
+            id={`${id}-type`}
             name="type"
             value={formData.type}
             onChange={onChangeField}
@@ -73,14 +75,14 @@ export default function PaymentFormFields({
         {/* Date */}
         <div className="space-y-2">
           <label
-            htmlFor="date"
+            htmlFor={`${id}-date`}
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
             Date
           </label>
           <input
             type="date"
-            id="date"
+            id={`${id}-date`}
             name="date"
             value={formData.date}
             onChange={onChangeField}
@@ -95,27 +97,31 @@ export default function PaymentFormFields({
         {/* Tag with Autocomplete */}
         <div className="relative space-y-2">
           <label
-            htmlFor="tag"
+            htmlFor={`${id}-tag`}
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
             Tag (Optional)
           </label>
           <input
             type="text"
-            id="tag"
+            id={`${id}-tag`}
             name="tag"
             value={formData.tag || ""}
             onChange={onChangeField}
             onFocus={() => {
               // Note: Component caller must manage showTagSuggestions
-              const input = document.getElementById("tag") as HTMLInputElement;
+              const input = document.getElementById(
+                `${id}-tag`
+              ) as HTMLInputElement
               if (input && formData.tag?.trim() === "") {
                 // Caller will handle setting suggestedTags
               }
             }}
             onBlur={onTagBlur}
             placeholder={
-              formData.type === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."
+              formData.type === "income"
+                ? "e.g., Inc1, Inc2, etc."
+                : "e.g., Out1, Out2, etc."
             }
             className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
@@ -143,14 +149,14 @@ export default function PaymentFormFields({
         {/* VAT Percentage */}
         <div className="space-y-2">
           <label
-            htmlFor="vat"
+            htmlFor={`${id}-vat`}
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
             VAT (%)
           </label>
           <input
             type="number"
-            id="vat"
+            id={`${id}-vat`}
             name="vat"
             value={formData.vat}
             onChange={onChangeField}
@@ -201,14 +207,14 @@ export default function PaymentFormFields({
             {/* Delivery Note Reference */}
             <div className="space-y-2">
               <label
-                htmlFor="deliveryNoteRef"
+                htmlFor={`${id}-deliveryNoteRef`}
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
                 Delivery Note Ref (Optional)
               </label>
               <input
                 type="text"
-                id="deliveryNoteRef"
+                id={`${id}-deliveryNoteRef`}
                 name="deliveryNoteRef"
                 value={formData.deliveryNoteRef || ""}
                 onChange={onChangeField}
@@ -220,14 +226,14 @@ export default function PaymentFormFields({
             {/* Surcharge Percentage (Optional) */}
             <div className="space-y-2">
               <label
-                htmlFor="surcharge"
+                htmlFor={`${id}-surcharge`}
                 className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
                 Surcharge (%) - Optional
               </label>
               <input
                 type="number"
-                id="surcharge"
+                id={`${id}-surcharge`}
                 name="surcharge"
                 value={formData.surcharge}
                 onChange={onChangeField}
@@ -265,14 +271,14 @@ export default function PaymentFormFields({
           >
             <div className="space-y-2 col-span-12 sm:col-span-7">
               <label
-                htmlFor={`conceptName-${index}`}
+                htmlFor={`${id}-conceptName-${index}`}
                 className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
               >
                 Name
               </label>
               <input
                 type="text"
-                id={`conceptName-${index}`}
+                id={`${id}-conceptName-${index}`}
                 name="conceptName"
                 value={concept.name || ""}
                 onChange={(e) => onChangeField(e, index)}
@@ -283,14 +289,14 @@ export default function PaymentFormFields({
             </div>
             <div className="space-y-2 col-span-6 sm:col-span-3">
               <label
-                htmlFor={`conceptAmount-${index}`}
+                htmlFor={`${id}-conceptAmount-${index}`}
                 className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
               >
                 Amount (€)
               </label>
               <input
                 type="number"
-                id={`conceptAmount-${index}`}
+                id={`${id}-conceptAmount-${index}`}
                 name="conceptAmount"
                 value={concept.amount || ""}
                 onChange={(e) => onChangeField(e, index)}
@@ -302,14 +308,14 @@ export default function PaymentFormFields({
             </div>
             <div className="space-y-2 col-span-6 sm:col-span-2">
               <label
-                htmlFor={`conceptQuantity-${index}`}
+                htmlFor={`${id}-conceptQuantity-${index}`}
                 className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
               >
                 Quantity
               </label>
               <input
                 type="number"
-                id={`conceptQuantity-${index}`}
+                id={`${id}-conceptQuantity-${index}`}
                 name="conceptQuantity"
                 value={concept.quantity ?? 1}
                 onChange={(e) => onChangeField(e, index)}
@@ -358,7 +364,9 @@ export default function PaymentFormFields({
         </div>
         <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700"></div>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">VAT Amount</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            VAT Amount
+          </span>
           <span className="text-lg font-semibold text-red-600 dark:text-red-400">
             €{calculateVatAmount()}
           </span>
@@ -385,5 +393,5 @@ export default function PaymentFormFields({
         </div>
       </div>
     </div>
-  );
+  )
 }

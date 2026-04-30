@@ -1,16 +1,20 @@
-"use client";
+"use client"
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Modal from "@/app/components/Modal";
-import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types";
-import PaymentFormFields from "./PaymentFormFields";
-import { validateConcepts, validateSurcharge, validateVat } from "./paymentUtils";
-import { usePaymentForm } from "./usePaymentForm";
+import { useCallback, useEffect, useId, useRef, useState } from "react"
+import Modal from "@/app/components/Modal"
+import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types"
+import PaymentFormFields from "./PaymentFormFields"
+import {
+  validateConcepts,
+  validateSurcharge,
+  validateVat,
+} from "./paymentUtils"
+import { usePaymentForm } from "./usePaymentForm"
 
 interface PaymentDetailModalProps {
-  payment: Payment;
-  onClose: () => void;
-  onUpdate?: (payment: Payment) => void;
+  payment: Payment
+  onClose: () => void
+  onUpdate?: (payment: Payment) => void
 }
 
 export default function PaymentDetailModal({
@@ -18,6 +22,7 @@ export default function PaymentDetailModal({
   onClose,
   onUpdate,
 }: PaymentDetailModalProps) {
+  const id = useId()
   // Initialize form with payment data
   const initialFormData: PaymentFormData = {
     type: payment.type,
@@ -28,7 +33,7 @@ export default function PaymentDetailModal({
     tag: payment.tag || "",
     clientId: payment.clientId?.toString() || undefined,
     deliveryNoteRef: payment.deliveryNoteRef || "",
-  };
+  }
 
   const {
     formData,
@@ -44,33 +49,33 @@ export default function PaymentDetailModal({
     calculateVatAmount,
     calculateSurchargeAmount,
     calculateNetAmount,
-  } = usePaymentForm(initialFormData);
+  } = usePaymentForm(initialFormData)
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showAdditionalFields, setShowAdditionalFields] = useState(false)
 
   // Invoice generation state
-  const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice");
-  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
-  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice")
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false)
+  const [invoiceError, setInvoiceError] = useState<string | null>(null)
 
   // Provider bill upload state
-  const [isUploadingBill, setIsUploadingBill] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingBill, setIsUploadingBill] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDownloadInvoice = () => {
-    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank");
-  };
+    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank")
+  }
 
   const handleDownloadProviderBill = () => {
-    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank");
-  };
+    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank")
+  }
 
   const handleGenerateInvoice = async () => {
-    setInvoiceError(null);
-    setIsGeneratingInvoice(true);
+    setInvoiceError(null)
+    setIsGeneratingInvoice(true)
 
     try {
       const response = await fetch("/api/invoices/generate", {
@@ -80,70 +85,72 @@ export default function PaymentDetailModal({
           paymentId: payment._id?.toString(),
           series: selectedSeries,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to generate invoice");
+        const data = await response.json()
+        throw new Error(data.error || "Failed to generate invoice")
       }
 
-      const data = await response.json();
+      const data = await response.json()
 
       // Update the local payment with invoice metadata
       const updatedPayment: Payment = {
         ...payment,
         invoice: data.invoice,
         updatedAt: new Date(),
-      };
+      }
 
-      onUpdate?.(updatedPayment);
+      onUpdate?.(updatedPayment)
 
       // Open the invoice in a new tab
-      window.open(data.downloadUrl, "_blank");
+      window.open(data.downloadUrl, "_blank")
     } catch (err) {
-      console.error(`Error generating invoice: ${err}`);
-      setInvoiceError(err instanceof Error ? err.message : "An error occurred");
+      console.error(`Error generating invoice: ${err}`)
+      setInvoiceError(err instanceof Error ? err.message : "An error occurred")
     } finally {
-      setIsGeneratingInvoice(false);
+      setIsGeneratingInvoice(false)
     }
-  };
+  }
 
-  const handleUploadProviderBill = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleUploadProviderBill = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
     // Validate file type
     if (file.type !== "application/pdf") {
-      setUploadError("Only PDF files are allowed");
-      return;
+      setUploadError("Only PDF files are allowed")
+      return
     }
 
     // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
-      setUploadError("File size exceeds 10MB limit");
-      return;
+      setUploadError("File size exceeds 10MB limit")
+      return
     }
 
-    setUploadError(null);
-    setIsUploadingBill(true);
+    setUploadError(null)
+    setIsUploadingBill(true)
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("paymentId", payment._id?.toString() || "");
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("paymentId", payment._id?.toString() || "")
 
       const response = await fetch("/api/invoices/upload", {
         method: "POST",
         body: formData,
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to upload provider bill");
+        const data = await response.json()
+        throw new Error(data.error || "Failed to upload provider bill")
       }
 
-      const data = await response.json();
+      const data = await response.json()
 
       // Update the local payment with provider bill URL
       const updatedPayment: Payment = {
@@ -151,56 +158,58 @@ export default function PaymentDetailModal({
         providerBillUrl: data.billUrl,
         providerBillPathname: data.pathname,
         updatedAt: new Date(),
-      };
+      }
 
-      onUpdate?.(updatedPayment);
+      onUpdate?.(updatedPayment)
 
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = ""
       }
     } catch (err) {
-      console.error(`Error uploading provider bill: ${err}`);
-      setUploadError(err instanceof Error ? err.message : "An error occurred");
+      console.error(`Error uploading provider bill: ${err}`)
+      setUploadError(err instanceof Error ? err.message : "An error occurred")
     } finally {
-      setIsUploadingBill(false);
+      setIsUploadingBill(false)
     }
-  };
+  }
 
   const handleSave = async () => {
-    setError(null);
+    setError(null)
 
     // Validate date
     if (!formData.date) {
-      setError("Date is required");
-      return;
+      setError("Date is required")
+      return
     }
 
     // Validate concepts
-    const conceptValidation = validateConcepts(formData.concepts);
+    const conceptValidation = validateConcepts(formData.concepts)
     if (!conceptValidation.isValid) {
-      setError(conceptValidation.error);
-      return;
+      setError(conceptValidation.error)
+      return
     }
 
     // Validate VAT
-    const vatValidation = validateVat(formData.vat);
+    const vatValidation = validateVat(formData.vat)
     if (!vatValidation.isValid) {
-      setError(vatValidation.error);
-      return;
+      setError(vatValidation.error)
+      return
     }
 
     // Validate surcharge
-    const surchargeValidation = validateSurcharge(formData.surcharge);
+    const surchargeValidation = validateSurcharge(formData.surcharge)
     if (!surchargeValidation.isValid) {
-      setError(surchargeValidation.error);
-      return;
+      setError(surchargeValidation.error)
+      return
     }
 
-    const vatNumber = parseFloat(formData.vat);
-    const surchargeNumber = surchargeValidation.isValid ? parseFloat(formData.surcharge || "0") : 0;
+    const vatNumber = parseFloat(formData.vat)
+    const surchargeNumber = surchargeValidation.isValid
+      ? parseFloat(formData.surcharge || "0")
+      : 0
 
-    setIsSaving(true);
+    setIsSaving(true)
     try {
       const response = await fetch("/api/payments", {
         method: "PUT",
@@ -216,14 +225,14 @@ export default function PaymentDetailModal({
           surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
           deliveryNoteRef: formData.deliveryNoteRef || undefined,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update payment");
+        const data = await response.json()
+        throw new Error(data.error || "Failed to update payment")
       }
 
-      const responseData = await response.json();
+      const responseData = await response.json()
 
       // Reconstruct the updated payment with response data
       const updatedPayment: Payment = {
@@ -233,48 +242,52 @@ export default function PaymentDetailModal({
         tag: formData.tag || undefined,
         concepts: formData.concepts,
         vat: responseData.vat ?? vatNumber,
-        surcharge: responseData.surcharge ?? (surchargeNumber > 0 ? surchargeNumber : undefined),
+        surcharge:
+          responseData.surcharge ??
+          (surchargeNumber > 0 ? surchargeNumber : undefined),
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
         total: responseData.total ?? calculateTotal(),
         vatAmount: responseData.vatAmount ?? parseFloat(calculateVatAmount()),
         surchargeAmount:
           responseData.surchargeAmount ??
-          (surchargeNumber > 0 ? parseFloat(calculateSurchargeAmount()) : undefined),
+          (surchargeNumber > 0
+            ? parseFloat(calculateSurchargeAmount())
+            : undefined),
         netAmount: responseData.netAmount ?? parseFloat(calculateNetAmount()),
         updatedAt: new Date(),
-      };
+      }
 
-      onUpdate?.(updatedPayment);
-      onClose();
+      onUpdate?.(updatedPayment)
+      onClose()
     } catch (err) {
-      console.error(`Error updating payment: ${err}`);
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error(`Error updating payment: ${err}`)
+      setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
+        e.preventDefault()
+        e.stopPropagation()
+        onClose()
       }
     },
-    [onClose],
-  );
+    [onClose]
+  )
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleKeyDown);
-    }, 0);
+      document.addEventListener("keydown", handleKeyDown)
+    }, 0)
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [handleKeyDown]);
+      clearTimeout(timeoutId)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [handleKeyDown])
 
   return (
     <Modal
@@ -348,7 +361,8 @@ export default function PaymentDetailModal({
                 <div className="space-y-2">
                   <div className="text-sm text-zinc-700 dark:text-zinc-300">
                     <p>
-                      <span className="font-medium">Series:</span> {payment.invoice.series}
+                      <span className="font-medium">Series:</span>{" "}
+                      {payment.invoice.series}
                     </p>
                     <p>
                       <span className="font-medium">Number:</span>{" "}
@@ -356,7 +370,9 @@ export default function PaymentDetailModal({
                     </p>
                     <p>
                       <span className="font-medium">Generated:</span>{" "}
-                      {new Date(payment.invoice.generatedAt).toLocaleDateString("es-ES")}
+                      {new Date(payment.invoice.generatedAt).toLocaleDateString(
+                        "es-ES"
+                      )}
                     </p>
                   </div>
                   <button
@@ -393,20 +409,24 @@ export default function PaymentDetailModal({
                   )}
                   <div className="space-y-2">
                     <label
-                      htmlFor="invoice-series"
+                      htmlFor={`${id}-invoice-series`}
                       className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                     >
                       Invoice Series
                     </label>
                     <select
-                      id="invoice-series"
+                      id={`${id}-invoice-series`}
                       value={selectedSeries}
-                      onChange={(e) => setSelectedSeries(e.target.value as InvoiceSeries)}
+                      onChange={(e) =>
+                        setSelectedSeries(e.target.value as InvoiceSeries)
+                      }
                       disabled={isGeneratingInvoice}
                       className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                     >
                       <option value="Invoice">Invoice</option>
-                      <option value="RectificativeInvoice">Rectificative Invoice</option>
+                      <option value="RectificativeInvoice">
+                        Rectificative Invoice
+                      </option>
                       <option value="SimpleInvoice">Simple Invoice</option>
                       <option value="RectificativeSimpleInvoice">
                         Rectificative Simple Invoice
@@ -431,7 +451,9 @@ export default function PaymentDetailModal({
             <div className="space-y-3">
               {payment.providerBillUrl ? (
                 <div className="space-y-2">
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">Provider bill uploaded</p>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                    Provider bill uploaded
+                  </p>
                   <button
                     type="button"
                     onClick={handleDownloadProviderBill}
@@ -472,10 +494,10 @@ export default function PaymentDetailModal({
                       onChange={handleUploadProviderBill}
                       disabled={isUploadingBill}
                       className="hidden"
-                      id="provider-bill-upload"
+                      id={`${id}-provider-bill-upload`}
                     />
                     <label
-                      htmlFor="provider-bill-upload"
+                      htmlFor={`${id}-provider-bill-upload`}
                       className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
                     >
                       <svg
@@ -492,7 +514,9 @@ export default function PaymentDetailModal({
                           d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                         />
                       </svg>
-                      {isUploadingBill ? "Uploading..." : "Upload Provider Bill (PDF)"}
+                      {isUploadingBill
+                        ? "Uploading..."
+                        : "Upload Provider Bill (PDF)"}
                     </label>
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400">
@@ -505,5 +529,5 @@ export default function PaymentDetailModal({
         </div>
       </div>
     </Modal>
-  );
+  )
 }

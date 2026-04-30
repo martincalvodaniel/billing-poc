@@ -1,96 +1,96 @@
-"use client";
+"use client"
 
-import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import Modal from "../../components/Modal";
-import PageLayout from "../../components/PageLayout";
-import MonthlyPaymentsView from "./MonthlyPaymentsView";
-import MonthSelector from "./MonthSelector";
-import PaymentForm from "./PaymentForm";
+import { useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import Modal from "../../components/Modal"
+import PageLayout from "../../components/PageLayout"
+import MonthlyPaymentsView from "./MonthlyPaymentsView"
+import MonthSelector from "./MonthSelector"
+import PaymentForm from "./PaymentForm"
 
 export default function MonthPageContent() {
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const searchParams = useSearchParams()
+  const [, startTransition] = useTransition()
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1);
-  });
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const today = new Date()
+    return new Date(today.getFullYear(), today.getMonth(), 1)
+  })
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const formRef = useRef<{
-    setFormDate: (dateString: string) => void;
-    submit: () => void;
-  }>(null);
+    setFormDate: (dateString: string) => void
+    submit: () => void
+  }>(null)
   const paymentsListRef = useRef<{
-    refreshPayments: () => void;
-    navigateToMonth: (dateString: string) => void;
-    getFilteredPaymentsCount: () => number;
-  }>(null);
+    refreshPayments: () => void
+    navigateToMonth: (dateString: string) => void
+    getFilteredPaymentsCount: () => number
+  }>(null)
 
   // Initialize from URL parameters if provided
   useEffect(() => {
-    const monthParam = searchParams.get("month");
-    const yearParam = searchParams.get("year");
+    const monthParam = searchParams.get("month")
+    const yearParam = searchParams.get("year")
 
     if (monthParam && yearParam) {
-      const month = parseInt(monthParam, 10);
-      const year = parseInt(yearParam, 10);
+      const month = parseInt(monthParam, 10)
+      const year = parseInt(yearParam, 10)
 
       // Validate month is 1-12
       if (month >= 1 && month <= 12 && year > 0) {
         startTransition(() => {
-          setSelectedDate(new Date(year, month - 1, 1));
-        });
+          setSelectedDate(new Date(year, month - 1, 1))
+        })
       }
     }
-  }, [searchParams]);
+  }, [searchParams])
 
-  const currentMonthDate = new Date();
+  const currentMonthDate = new Date()
   const currentMonthStart = new Date(
     currentMonthDate.getFullYear(),
     currentMonthDate.getMonth(),
-    1,
-  );
+    1
+  )
   const isViewingCurrentMonth =
     selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
-    selectedDate.getMonth() === currentMonthStart.getMonth();
+    selectedDate.getMonth() === currentMonthStart.getMonth()
 
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
-    });
-  };
+    })
+  }
 
   const handlePaymentSaved = (date: string) => {
-    formRef.current?.setFormDate(date);
-    paymentsListRef.current?.refreshPayments();
-    paymentsListRef.current?.navigateToMonth(date);
-    setShowPaymentModal(false);
-  };
+    formRef.current?.setFormDate(date)
+    paymentsListRef.current?.refreshPayments()
+    paymentsListRef.current?.navigateToMonth(date)
+    setShowPaymentModal(false)
+  }
 
   const handleMonthChange = (dateString: string) => {
-    formRef.current?.setFormDate(dateString);
-  };
+    formRef.current?.setFormDate(dateString)
+  }
 
   const handleAddPaymentClick = () => {
-    setShowPaymentModal(true);
-  };
+    setShowPaymentModal(true)
+  }
 
   const handleCloseModal = useCallback(() => {
-    setShowPaymentModal(false);
-    setIsSubmitting(false);
-  }, []);
+    setShowPaymentModal(false)
+    setIsSubmitting(false)
+  }, [])
 
   const handleCalendarMonthSelect = (year: number, month: number) => {
-    setSelectedDate(new Date(year, month, 1));
-  };
+    setSelectedDate(new Date(year, month, 1))
+  }
 
   const handleGoToCurrentMonth = () => {
-    if (isViewingCurrentMonth) return;
-    setSelectedDate(currentMonthStart);
-  };
+    if (isViewingCurrentMonth) return
+    setSelectedDate(currentMonthStart)
+  }
 
   return (
     <PageLayout
@@ -168,10 +168,10 @@ export default function MonthPageContent() {
               <button
                 type="button"
                 onClick={() => {
-                  setIsSubmitting(true);
-                  formRef.current?.submit();
+                  setIsSubmitting(true)
+                  formRef.current?.submit()
                   // Reset after a brief delay to allow form submission to process
-                  setTimeout(() => setIsSubmitting(false), 100);
+                  setTimeout(() => setIsSubmitting(false), 100)
                 }}
                 disabled={isSubmitting}
                 className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800"
@@ -185,5 +185,5 @@ export default function MonthPageContent() {
         </Modal>
       )}
     </PageLayout>
-  );
+  )
 }
