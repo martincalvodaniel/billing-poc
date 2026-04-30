@@ -37,7 +37,7 @@ interface PageLayoutProps {
 <PageLayout
   title="Yearly Overview"
   subtitle="Explore income and outcome performance"
-  navigationSubtitle="Yearly Summary"
+  navigationSubtitle="Year Summary"
   headerContent={
     <div className="rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       {/* Year selector or other filters */}
@@ -148,7 +148,7 @@ return (
 
 ## YearSelector Component
 
-Reusable component for selecting and navigating between years. Used in the Yearly Summary page to provide year filtering with manual input.
+Reusable component for selecting and navigating between years. Used in the Year Summary page to provide year filtering with manual input.
 
 ### Props
 ```typescript
@@ -187,7 +187,7 @@ return (
 ```
 
 ### Integration Notes
-- Used in filter section header of yearly summary view (app/year/page.tsx)
+- Used in filter section header of year summary view (app/year/page.tsx)
 - Parent manages selectedYear and isViewingCurrentYear state
 - Updates trigger data refiltering based on paymentsForYear memo
 - Place year selector in layout with consistent button styling

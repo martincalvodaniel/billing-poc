@@ -18,9 +18,9 @@
   - month/: Monthly payments page
     - components/ (month-specific): PaymentForm, MonthlyPaymentsView, MonthSelector
     - page.tsx: Monthly payments list with month navigation
-  - year/: Yearly summary page
+  - year/: Year summary page
     - components/ (year-specific): MonthlyBreakdown, YearSelector
-    - page.tsx: Yearly summary with year picker
+    - page.tsx: Year summary with year picker
   - page.tsx: Redirect to /month
   - layout.tsx, globals.css
 - lib/: mongodb.ts (singleton), types.ts (shared types)
