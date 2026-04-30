@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useId, useRef, useState } from "react"
+import { useId } from "react"
 import type {
   Absence,
   AbsenceFormData,
@@ -11,6 +11,7 @@ import CommentField from "./form/CommentField"
 import FormHeader from "./form/FormHeader"
 import RadioPillGroup from "./form/RadioPillGroup"
 import StudentNameAutocomplete from "./form/StudentNameAutocomplete"
+import useAbsenceFormState from "./form/useAbsenceFormState"
 
 const COMMENT_MAX = 500
 
@@ -43,14 +44,6 @@ interface AbsenceFormProps {
   hideStudentName?: boolean
 }
 
-function todayISO(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const day = String(d.getDate()).padStart(2, "0")
-  return `${y}-${m}-${day}`
-}
-
 export default function AbsenceForm({
   title,
   submitTooltip,
@@ -70,83 +63,32 @@ export default function AbsenceForm({
   const id = useId()
   const datalistId = `${id}-students`
 
-  const [studentName, setStudentName] = useState<string>(
-    initial?.studentName ?? initialStudentName ?? ""
-  )
-  const [date, setDate] = useState<string>(
-    initial?.date ?? initialDate ?? todayISO()
-  )
-  const [type, setType] = useState<AbsenceType>(
-    initial?.type ?? initialType ?? "absence"
-  )
-  const [partOfDay, setPartOfDay] = useState<PartOfDay>(
-    initial?.partOfDay ?? initialPartOfDay ?? "morning"
-  )
-  const [comment, setComment] = useState<string>(initial?.comment ?? "")
-
-  const formRef = useRef<HTMLFormElement>(null)
-  const studentNameRef = useRef<HTMLInputElement>(null)
-
-  // Reset state if `initial` changes (e.g., switching from create→edit),
-  // or if the create-mode initial part/type props change (e.g., user clicks
-  // a different "Add new" affordance).
-  useEffect(() => {
-    if (initial) {
-      setStudentName(initial.studentName)
-      setDate(initial.date)
-      setType(initial.type)
-      setPartOfDay(initial.partOfDay)
-      setComment(initial.comment ?? "")
-      return
-    }
-    if (initialPartOfDay) setPartOfDay(initialPartOfDay)
-    if (initialType) setType(initialType)
-  }, [initial, initialPartOfDay, initialType])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (isSubmitting) return
-    const trimmedName = studentName.trim()
-    if (trimmedName === "" || date === "") return
-    const trimmedComment = comment.trim()
-    const data: AbsenceFormData = {
-      type,
-      studentName: trimmedName,
-      date,
-      partOfDay,
-      // Always include `comment`. Sending an empty string allows the
-      // backend to clear a previously saved comment on update; sending
-      // `undefined` would cause the adapter to skip the `$set` and the
-      // old value would be preserved.
-      comment: trimmedComment,
-    }
-    await onSubmit(data)
-    if (!initial && !hideStudentName) {
-      // Create mode: clear ONLY the student name so the user can quickly
-      // add another record for a different student. Date, type, partOfDay
-      // and comment stay sticky. If `onSubmit` throws (validation/conflict),
-      // this block is skipped and the user's input is preserved.
-      // When the student-name input is hidden (per-student context), the
-      // student is implicit and must remain seeded — skip the reset+focus.
-      setStudentName("")
-      requestAnimationFrame(() => {
-        studentNameRef.current?.focus()
-      })
-    }
-  }
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLFormElement>) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        e.preventDefault()
-        e.stopPropagation()
-        formRef.current?.requestSubmit()
-      }
-    },
-    []
-  )
-
-  const canSubmit = studentName.trim() !== "" && date !== ""
+  const {
+    studentName,
+    setStudentName,
+    date,
+    setDate,
+    type,
+    setType,
+    partOfDay,
+    setPartOfDay,
+    comment,
+    setComment,
+    canSubmit,
+    formRef,
+    studentNameRef,
+    handleSubmit,
+    handleKeyDown,
+  } = useAbsenceFormState({
+    initial,
+    initialDate,
+    initialStudentName,
+    initialPartOfDay,
+    initialType,
+    hideStudentName,
+    onSubmit,
+    isSubmitting,
+  })
 
   return (
     <div key={shakeKey} className={shakeKey ? "animate-shake" : ""}>
