@@ -10,6 +10,7 @@
 - PascalCase components, camelCase handlers
 - Extract reusable logic; use semantic HTML
 - Memoize pure components with React.memo()
+- Lift state to parent for shared filter state (e.g., selectedDate in page.tsx drives PaymentsList and PaymentForm)
 
 ## API Routes
 - Return NextResponse.json()

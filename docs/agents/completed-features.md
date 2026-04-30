@@ -13,9 +13,12 @@
 - Parent coordinates refresh + navigate
 
 ## Month Navigation
-- Current-month default; prev/next; calendar picker; empty state
-- Date column day-only; VAT `(percent%) amount`
-- Form date sync via onMonthChange and PaymentForm ref
+- Dedicated filter section at top (matching year filter structure)
+- Current-month default; prev/next buttons; calendar picker with month/year controls
+- Click-outside closes calendar; current-month shortcut disables when active
+- Date column shows day-only; VAT displays as `(percent%) amount`
+- Form date syncs via onMonthChange callback with PaymentForm ref
+- Add-payment button integrated in filter header for consistent UX
 
 ## Modal Editing
 - Edit date/type/tag/total/vat via overlay modal

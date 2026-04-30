@@ -44,13 +44,16 @@ Every page includes a consistent navigation bar:
 - Memoize pure visual components; stable color mapping
 
 ## Month Navigation
-- Track selectedDate (1st of month) and showCalendar flag
-- Calendar: 12-month grid, prev/next month, year controls
-- Click-outside closes; current-month shortcut button
-- Filter payments by month/year; summaries use filtered set
-- Date column shows day-only; VAT column `(percent%) amount`
-- Expose onMonthChange to sync form date (YYYY-MM-01)
-- Add-payment modal trigger lives beside the calendar controls; share the same button styles, focus ring, and disabled state semantics as navigation buttons
+Month selector appears as a dedicated filter section at the top of the page (similar to year filter in yearly view):
+- **Container**: Same bordered card style as other filter sections with header containing label and controls
+- **State Management**: selectedDate (1st of month) and showCalendar flag managed in parent (page.tsx)
+- **Calendar Picker**: 12-month grid, prev/next month buttons, year navigation with prev/next year, year display
+- **Functionality**: Click-outside closes calendar; current-month shortcut button disables when viewing current month
+- **Data Filtering**: PaymentsList receives selectedDate prop; filters payments by month/year; summaries use filtered set
+- **Date Display**: Payment date column shows day-only; VAT displays as `(percent%) amount`
+- **Form Sync**: onMonthChange callback syncs form date (YYYY-MM-01) when month changes
+- **Add Payment Button**: Located in the month filter header beside calendar and current-month button; shares same button styles, focus ring, and disabled state semantics as navigation buttons
+- **PaymentsList Props**: Receives selectedDate as prop; no longer manages month state internally
 
 ## Year Navigation
 - selectedYear state; prev/next buttons; jump-to-current shortcut

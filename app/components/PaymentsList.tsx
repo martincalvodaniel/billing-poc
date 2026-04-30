@@ -8,10 +8,10 @@ import SummaryCard from "./SummaryCard";
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
 export default forwardRef(function PaymentsList(
-  props: { onMonthChange?: (dateString: string) => void; onAddPaymentClick?: () => void },
+  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date },
   ref
 ) {
-  const { onMonthChange, onAddPaymentClick } = props;
+  const { onMonthChange, selectedDate } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,6 @@ export default forwardRef(function PaymentsList(
   const [suggestedTagsForEdit, setSuggestedTagsForEdit] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
   
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -38,19 +37,6 @@ export default forwardRef(function PaymentsList(
   // Delete confirmation state
   const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Month selection state (initialized to current month)
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1);
-  });
-  const [showCalendar, setShowCalendar] = useState(false);
-
-  const currentMonthDate = new Date();
-  const currentMonthStart = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), 1);
-  const isViewingCurrentMonth =
-    selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
-    selectedDate.getMonth() === currentMonthStart.getMonth();
 
   useEffect(() => {
     fetchPayments();
@@ -65,26 +51,10 @@ export default forwardRef(function PaymentsList(
     onMonthChange?.(dateString);
   }, [selectedDate, onMonthChange]);
 
-  useEffect(() => {
-    if (!showCalendar) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
-        setShowCalendar(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showCalendar]);
-
   useImperativeHandle(ref, () => ({
     refreshPayments: fetchPayments,
-    navigateToMonth: (dateString: string) => {
-      const date = new Date(dateString);
-      setSelectedDate(new Date(date.getFullYear(), date.getMonth(), 1));
+    navigateToMonth: () => {
+      // Month navigation is now handled by parent component via selectedDate prop
     },
   }));
 
@@ -154,91 +124,7 @@ export default forwardRef(function PaymentsList(
     });
   };
 
-  const handleCalendarMonthSelect = (year: number, month: number) => {
-    setSelectedDate(new Date(year, month, 1));
-    setShowCalendar(false);
-  };
 
-  const handleGoToCurrentMonth = () => {
-    if (isViewingCurrentMonth) return;
-    setSelectedDate(currentMonthStart);
-    setShowCalendar(false);
-  };
-
-  const renderCalendarPicker = () => {
-    return (
-      <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-        {/* Calendar Header */}
-        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <button
-              onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
-              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              ← Prev
-            </button>
-            <span className="flex-1 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {new Date(selectedDate.getFullYear(), selectedDate.getMonth()).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-              })}
-            </span>
-            <button
-              onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
-              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Next →
-            </button>
-          </div>
-
-          {/* Month Grid */}
-          <div className="grid grid-cols-4 gap-2">
-            {Array.from({ length: 12 }).map((_, monthIndex) => {
-              const year = selectedDate.getFullYear();
-              const month = monthIndex;
-              const isSelected =
-                year === selectedDate.getFullYear() && month === selectedDate.getMonth();
-
-              return (
-                <button
-                  key={monthIndex}
-                  onClick={() => handleCalendarMonthSelect(year, month)}
-                  className={`rounded px-2 py-2 text-xs font-medium ${
-                    isSelected
-                      ? "bg-blue-600 text-white dark:bg-blue-700"
-                      : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  }`}
-                >
-                  {new Date(year, month).toLocaleDateString("en-US", {
-                    month: "short",
-                  })}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Year Navigation */}
-          <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-            <button
-              onClick={() => setSelectedDate(new Date(selectedDate.getFullYear() - 1, selectedDate.getMonth(), 1))}
-              className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              ← Prev Year
-            </button>
-            <span className="flex-1 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {selectedDate.getFullYear()}
-            </span>
-            <button
-              onClick={() => setSelectedDate(new Date(selectedDate.getFullYear() + 1, selectedDate.getMonth(), 1))}
-              className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Next Year →
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const closeEditModal = () => {
     setEditingPaymentId(null);
@@ -569,37 +455,6 @@ export default forwardRef(function PaymentsList(
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Payments ({filteredPayments.length})
             </h2>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => onAddPaymentClick?.()}
-                aria-label="Add payment"
-                className="inline-flex items-center justify-center rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
-              >
-                <span className="text-white dark:text-white" aria-hidden="true">➕</span>
-              </button>
-              <div className="flex items-center gap-3" ref={calendarRef}>
-                <button
-                  onClick={handleGoToCurrentMonth}
-                  disabled={isViewingCurrentMonth}
-                  aria-label="Go to current month"
-                  className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
-                >
-                  🎯
-                </button>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowCalendar(!showCalendar)}
-                    aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
-                    aria-expanded={showCalendar}
-                    className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-                  >
-                    📅 {formatMonthYear(selectedDate)}
-                  </button>
-                  {showCalendar && renderCalendarPicker()}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
