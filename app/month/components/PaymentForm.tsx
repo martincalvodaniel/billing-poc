@@ -428,6 +428,25 @@ const PaymentForm = forwardRef(function PaymentForm(
           )}
         </div>
 
+        {/* Delivery Note Reference */}
+        <div className="space-y-2">
+          <label
+            htmlFor="deliveryNoteRef"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Delivery Note Ref (Optional)
+          </label>
+          <input
+            type="text"
+            id="deliveryNoteRef"
+            name="deliveryNoteRef"
+            value={formData.deliveryNoteRef || ""}
+            onChange={handleChange}
+            placeholder="e.g., DN-2024-001"
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+
         {/* Concepts (Payment Components) */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">

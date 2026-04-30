@@ -27,6 +27,7 @@ export default function PaymentDetailModal({
   const [date, setDate] = useState(payment.date);
   const [type, setType] = useState(payment.type);
   const [tag, setTag] = useState(payment.tag || "");
+  const [deliveryNoteRef, setDeliveryNoteRef] = useState(payment.deliveryNoteRef || "");
   const [clientId, setClientId] = useState(payment.clientId?.toString() || "");
   const [concepts, setConcepts] = useState(
     payment.concepts && payment.concepts.length > 0
@@ -191,6 +192,7 @@ export default function PaymentDetailModal({
           concepts,
           vat: vatNumber,
           surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
+          deliveryNoteRef: deliveryNoteRef || undefined,
         }),
       });
 
@@ -210,6 +212,7 @@ export default function PaymentDetailModal({
         concepts,
         vat: responseData.vat ?? vatNumber,
         surcharge: responseData.surcharge ?? (surchargeNumber > 0 ? surchargeNumber : undefined),
+        deliveryNoteRef: deliveryNoteRef || undefined,
         total: responseData.total ?? calculateTotal(),
         vatAmount: responseData.vatAmount ?? calculateVatAmount(),
         surchargeAmount: responseData.surchargeAmount ?? (surchargeNumber > 0 ? calculateSurchargeAmount() : undefined),
@@ -378,6 +381,24 @@ export default function PaymentDetailModal({
               </ul>
             </div>
           )}
+        </div>
+
+        {/* Delivery Note Reference */}
+        <div className="space-y-2">
+          <label
+            htmlFor="edit-deliveryNoteRef"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Delivery Note Ref (Optional)
+          </label>
+          <input
+            type="text"
+            id="edit-deliveryNoteRef"
+            value={deliveryNoteRef}
+            onChange={(e) => setDeliveryNoteRef(e.target.value)}
+            placeholder="e.g., DN-2024-001"
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
         </div>
 
         {/* Concepts (Payment Components) */}
