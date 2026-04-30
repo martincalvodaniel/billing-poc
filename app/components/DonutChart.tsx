@@ -15,8 +15,8 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
   const [sortBy, setSortBy] = useState<SortBy>('percentage');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-  const entries = Object.entries(data);
-  const total = entries.reduce((sum, [, value]) => sum + value, 0);
+  const entries = useMemo(() => Object.entries(data), [data]);
+  const total = useMemo(() => entries.reduce((sum, [, value]) => sum + value, 0), [entries]);
 
   // Create stable color mapping based on original order to maintain consistent colors
   const colorMap = useMemo(() => {
@@ -25,7 +25,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
       map.set(tag, colors[index % colors.length]);
     });
     return map;
-  }, [entries.length, colors]);
+  }, [entries, colors]);
 
   // Calculate segments for SVG rendering (memoized, independent of sorting)
   const segments = useMemo(() => {
