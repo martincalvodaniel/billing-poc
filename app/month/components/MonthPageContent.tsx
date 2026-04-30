@@ -94,8 +94,6 @@ export default function MonthPageContent() {
 
   return (
     <PageLayout
-      title="Monthly Overview"
-      subtitle="Manage your income and outcome payments"
       navigationSubtitle="Monthly Overview"
       headerContent={
         <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">

@@ -11,7 +11,7 @@
 - Use shared `CHART_COLORS` from `lib/constants.ts` — never define color arrays locally
 
 ## PageLayout (Required)
-All pages must use `<PageLayout title subtitle navigationSubtitle headerContent? children />`. Never manually create page structure with `min-h-screen`, `max-w-6xl`, etc.
+All pages must use `<PageLayout navigationSubtitle headerContent? children />`. Never manually create page structure with `min-h-screen`, `max-w-6xl`, etc.
 
 ## Design System
 - **Layout**: `mx-auto max-w-6xl space-y-8 py-12`; content sections `space-y-6`

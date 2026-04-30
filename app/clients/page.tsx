@@ -104,11 +104,7 @@ export default function ClientsPage() {
   }
 
   return (
-    <PageLayout
-      title="Clients"
-      subtitle="Manage your business contacts and client information"
-      navigationSubtitle="Clients"
-    >
+    <PageLayout navigationSubtitle="Clients">
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
           {error}
