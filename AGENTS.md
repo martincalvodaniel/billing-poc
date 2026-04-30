@@ -1,19 +1,41 @@
-# Agent Guidelines (Index)
+# Billing POC — Agent Guidelines
 
-This file is an index so Copilot only loads what is needed. Open the relevant doc below based on the task.
+## Stack
+Next.js 16 (App Router), React 19, TypeScript 6 (strict), MongoDB 7, Tailwind CSS 4, Biome (lint + format), Bun (runtime, package manager, test runner).
 
-## Where to look
-- Overview & architecture: [docs/agents/overview.md](docs/agents/overview.md)
-- Code conventions (TS, React, API, logging, styling, formatting): [docs/agents/conventions.md](docs/agents/conventions.md)
-- Accessibility patterns: [docs/agents/accessibility.md](docs/agents/accessibility.md)
-- UI patterns (forms, charts, navigation, modals, tags, delete, toasts): [docs/agents/patterns-ui.md](docs/agents/patterns-ui.md)
-- Data/API patterns (DB, validation, errors, env, performance, security): [docs/agents/patterns-data.md](docs/agents/patterns-data.md)
-- Workflow & ops (setup, commands, debugging, file access): [docs/agents/workflow.md](docs/agents/workflow.md)
-- Completed features reference: [docs/agents/completed-features.md](docs/agents/completed-features.md)
-- Future development guidelines: [docs/agents/future-guidelines.md](docs/agents/future-guidelines.md)
-- Summary checklist: [docs/agents/checklist.md](docs/agents/checklist.md)
+## Universal Rules
+- TypeScript strict mode everywhere; no `any` without `unknown` guard
+- All shared types in `lib/types.ts`; never duplicate type definitions
+- Tailwind CSS only for styling — no CSS modules, no external UI kits
+- All pages must use the `PageLayout` component (`app/components/PageLayout.tsx`)
+- Console logging: template literals only (`console.error(\`Error: ${error}\`)`)
+- Dark mode: use `dark:` classes on all visual elements
+- Currency: EUR with `es-ES` via `Intl.NumberFormat`; dates: `en-US` via `toLocaleDateString`
 
-## How to use
-- For any request, load only the smallest relevant doc(s) above.
-- If multiple areas apply (e.g., UI + accessibility), load both corresponding files.
-- Keep this index slim; do not mirror content here.
+## Commands
+| Command | Purpose |
+|---------|---------|
+| `bun install` | Install dependencies |
+| `bun dev` | Start dev server |
+| `bun run build` | Production build |
+| `bun run lint` | Biome check (lint + format) |
+| `bun run lint:fix` | Auto-fix lint/format issues |
+| `bun test` | Run unit tests |
+| `bun run load-data:month YYYY MM` | Load sample payment data for a month |
+| `bun run load-data:year YYYY` | Load sample data for all 12 months |
+
+## Quality Checklist
+- Types imported from `lib/types.ts`
+- API endpoints validate inputs, return `NextResponse.json` with correct status
+- Linting passes (`bun run lint`)
+- Tests pass (`bun test`)
+- Build passes (`bun run build`)
+- Icon-only buttons have `aria-label`
+- Modals have `role="dialog"`, `aria-labelledby`, `aria-modal`
+- Focus indicators on all interactive elements
+
+## Debugging
+- API issues: browser Network tab + console logs
+- MongoDB: verify URI and container (`docker start mongodb`)
+- Types: `bunx tsc --noEmit`
+- Build: clear `.next/` then `bun run build`
