@@ -102,7 +102,7 @@ All pages in the webapp must follow the same design system to ensure a cohesive 
 
 **Navigation Bar (appears on all pages):**
 - Consistent styling: `rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900`
-- Left section: Billing label with page descriptor (e.g., "Monthly Payments", "Year Summary")
+- Left section: Billing label with page descriptor (e.g., "Monthly Overview", "Yearly Overview")
 - Right section: Navigation links with active/inactive states
   - Active link: `text-blue-700` with `hover:bg-blue-50` background
   - Inactive link: `text-zinc-700` with `hover:bg-zinc-100` background

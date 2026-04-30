@@ -33,14 +33,14 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
           className={buildLinkClass(isMonthlyActive)}
           aria-current={isMonthlyActive ? "page" : undefined}
         >
-          Monthly Payments
+          Monthly Overview
         </Link>
         <Link
           href="/year"
           className={buildLinkClass(isYearActive)}
           aria-current={isYearActive ? "page" : undefined}
         >
-          Year summary
+          Yearly Overview
         </Link>
         <Link
           href="/clients"

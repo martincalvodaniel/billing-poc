@@ -13,7 +13,7 @@ Shared layout component that enforces consistent structure across all main pages
 interface PageLayoutProps {
   title: string;              // Page heading (e.g., "Clients", "Monthly Overview")
   subtitle: string;           // Page description/subtitle
-  navigationSubtitle: string; // Label shown in NavigationBar (e.g., "Clients", "Monthly Payments")
+  navigationSubtitle: string; // Label shown in NavigationBar (e.g., "Clients", "Monthly Overview")
   children: React.ReactNode;  // Main page content
   headerContent?: React.ReactNode; // Optional content between header and children (e.g., filters, selectors)
 }
@@ -37,7 +37,7 @@ interface PageLayoutProps {
 <PageLayout
   title="Yearly Overview"
   subtitle="Explore income and outcome performance"
-  navigationSubtitle="Year Summary"
+  navigationSubtitle="Yearly Overview"
   headerContent={
     <div className="rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       {/* Year selector or other filters */}
@@ -101,7 +101,7 @@ interface PageLayoutProps {
 
 ## MonthSelector Component
 
-Reusable component for selecting and navigating between months. Used in the Monthly Payments page to provide a calendar picker for date filtering.
+Reusable component for selecting and navigating between months. Used in the Monthly Overview page to provide a calendar picker for date filtering.
 
 ### Props
 ```typescript
@@ -148,7 +148,7 @@ return (
 
 ## YearSelector Component
 
-Reusable component for selecting and navigating between years. Used in the Year Summary page to provide year filtering with manual input.
+Reusable component for selecting and navigating between years. Used in the Yearly Overview page to provide year filtering with manual input.
 
 ### Props
 ```typescript
@@ -187,7 +187,7 @@ return (
 ```
 
 ### Integration Notes
-- Used in filter section header of year summary view (app/year/page.tsx)
+- Used in filter section header of yearly overview view (app/year/page.tsx)
 - Parent manages selectedYear and isViewingCurrentYear state
 - Updates trigger data refiltering based on paymentsForYear memo
 - Place year selector in layout with consistent button styling
@@ -289,7 +289,7 @@ interface MonthlyBreakdownProps {
 - Link-based navigation to `/month?month=X&year=YYYY`
 
 ### Integration Notes
-- Used in year summary view (app/year/page.tsx) to display monthly breakdown
+- Used in yearly overview view (app/year/page.tsx) to display monthly breakdown
 - Requires pre-computed monthlyTotals with income/outcome/net calculations
 - Pass the same formatCurrency function used elsewhere for consistency
 - Positioned after DonutChart visualizations in yearly view
