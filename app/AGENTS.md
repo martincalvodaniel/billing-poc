@@ -2,10 +2,13 @@
 
 ## Component Architecture
 - Functional components with React 19 hooks; PascalCase names, camelCase handlers
-- **Shared** components (`app/components/`): reused across pages (DonutChart, Modal, SummaryCard, NavButton, NavigationBar, PageLayout, ClientSelector)
+- **Shared** components (`app/components/`): reused across pages (DonutChart, Modal, SummaryCard, NavButton, NavigationBar, PageLayout, ClientSelector, Toast)
 - **Page-specific** components (`app/[page]/components/`): co-located with their page
 - Extract reusable logic into custom hooks (e.g., `usePaymentForm`)
 - Memoize pure display components with `React.memo()` and `useMemo`
+- Use shared `Toast` component (`app/components/Toast.tsx`) for success notifications — never inline toast JSX
+- Use shared `formatCurrency`, `formatDate`, `formatMonthYear` from `lib/formatters.ts` — never define locally
+- Use shared `CHART_COLORS` from `lib/constants.ts` — never define color arrays locally
 
 ## PageLayout (Required)
 All pages must use `<PageLayout title subtitle navigationSubtitle headerContent? children />`. Never manually create page structure with `min-h-screen`, `max-w-6xl`, etc.

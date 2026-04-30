@@ -1,67 +1,32 @@
-import { ObjectId } from "mongodb"
 import { type NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/mongodb"
-import type { Client, ClientType, PaginatedResponse } from "@/lib/types"
+import { MongoClientRepository } from "@/lib/adapters/repositories/mongo-client-repository"
+import {
+  clientQuerySchema,
+  createClientSchema,
+  deleteClientSchema,
+  updateClientSchema,
+} from "@/lib/domain/services/client-validator"
+import { zodError } from "@/lib/validation"
+
+const clients = new MongoClientRepository()
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const pageParam = searchParams.get("page")
-    const pageSizeParam = searchParams.get("pageSize")
-
-    // Parse pagination parameters with defaults
-    const pageSize = pageSizeParam
-      ? Math.max(1, Math.min(100, parseInt(pageSizeParam, 10)))
-      : 10
-    const page = pageParam ? Math.max(1, parseInt(pageParam, 10)) : 1
-    const skip = (page - 1) * pageSize
-
-    const db = await getDatabase()
-
-    const filter: Record<string, unknown> = {}
-
-    // Build search filter if provided
-    if (search?.trim()) {
-      const escaped = search
-        .trim()
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-      const searchPattern = { $regex: escaped, $options: "i" }
-      filter.$or = [{ name: searchPattern }, { taxId: searchPattern }]
+    const params = Object.fromEntries(request.nextUrl.searchParams)
+    const parsed = clientQuerySchema.safeParse(params)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
     }
 
-    const collection = db.collection<Client>("clients")
-
-    // Get total count for pagination metadata
-    const total = await collection.countDocuments(filter)
-
-    // Fetch paginated results
-    const clients = await collection
-      .find(filter)
-      .sort({ name: 1 })
-      .skip(skip)
-      .limit(pageSize)
-      .toArray()
-
-    const totalPages = Math.ceil(total / pageSize)
-
-    const response: PaginatedResponse<Client> = {
-      items: clients,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    }
+    const result = await clients.findAll(parsed.data)
 
     console.log(
-      `Fetched ${clients.length} clients from database (page ${page}/${totalPages}) for filter: ${JSON.stringify(filter)}`
+      `Fetched ${result.items.length} clients (page ${result.pagination.page}/${result.pagination.totalPages})`
     )
-
-    return NextResponse.json(response, { status: 200 })
+    return NextResponse.json(result, { status: 200 })
   } catch (error) {
     console.error(`Error fetching clients: ${error}`)
     return NextResponse.json(
@@ -74,50 +39,21 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { clientType, name, taxId, address } = body
-
-    // Validate required fields
-    if (!clientType || !name || !taxId || !address) {
+    const parsed = createClientSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields (clientType, name, taxId, address)" },
+        { error: zodError(parsed.error) },
         { status: 400 }
       )
     }
 
-    // Validate clientType
-    if (clientType !== "individual" && clientType !== "company") {
-      return NextResponse.json(
-        { error: "clientType must be either 'individual' or 'company'" },
-        { status: 400 }
-      )
-    }
-
-    // Validate non-empty strings
-    if (name.trim() === "" || taxId.trim() === "" || address.trim() === "") {
-      return NextResponse.json(
-        { error: "Fields cannot be empty" },
-        { status: 400 }
-      )
-    }
-
-    const client: Omit<Client, "_id"> = {
-      clientType: clientType as ClientType,
-      name: name.trim(),
-      taxId: taxId.trim(),
-      address: address.trim(),
+    const id = await clients.create({
+      ...parsed.data,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    })
 
-    const db = await getDatabase()
-    const result = await db
-      .collection<Client>("clients")
-      .insertOne(client as Client)
-
-    return NextResponse.json(
-      { success: true, id: result.insertedId },
-      { status: 201 }
-    )
+    return NextResponse.json({ success: true, id }, { status: 201 })
   } catch (error) {
     console.error(`Error creating client: ${error}`)
     return NextResponse.json(
@@ -130,76 +66,17 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, clientType, name, taxId, address } = body
-
-    // Validate required fields
-    if (!id) {
-      return NextResponse.json({ error: "Missing client ID" }, { status: 400 })
-    }
-
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    }
-
-    // Validate and add clientType if provided
-    if (clientType !== undefined) {
-      if (clientType !== "individual" && clientType !== "company") {
-        return NextResponse.json(
-          { error: "clientType must be either 'individual' or 'company'" },
-          { status: 400 }
-        )
-      }
-      updateData.clientType = clientType
-    }
-
-    // Validate and add name if provided
-    if (name !== undefined) {
-      if (!name || name.trim() === "") {
-        return NextResponse.json(
-          { error: "Name cannot be empty" },
-          { status: 400 }
-        )
-      }
-      updateData.name = name.trim()
-    }
-
-    // Validate and add taxId if provided
-    if (taxId !== undefined) {
-      if (!taxId || taxId.trim() === "") {
-        return NextResponse.json(
-          { error: "Tax ID cannot be empty" },
-          { status: 400 }
-        )
-      }
-      updateData.taxId = taxId.trim()
-    }
-
-    // Validate and add address if provided
-    if (address !== undefined) {
-      if (!address || address.trim() === "") {
-        return NextResponse.json(
-          { error: "Address cannot be empty" },
-          { status: 400 }
-        )
-      }
-      updateData.address = address.trim()
-    }
-
-    // Ensure at least one field is being updated
-    if (Object.keys(updateData).length === 1) {
-      // Only updatedAt is present
+    const parsed = updateClientSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "No fields to update" },
+        { error: zodError(parsed.error) },
         { status: 400 }
       )
     }
 
-    const db = await getDatabase()
-    const result = await db
-      .collection<Client>("clients")
-      .updateOne({ _id: new ObjectId(id) }, { $set: updateData })
-
-    if (result.matchedCount === 0) {
+    const { id, ...fields } = parsed.data
+    const updated = await clients.update(id, fields)
+    if (!updated) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
@@ -216,19 +93,16 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id } = body
-
-    // Validate required fields
-    if (!id) {
-      return NextResponse.json({ error: "Missing client ID" }, { status: 400 })
+    const parsed = deleteClientSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
     }
 
-    const db = await getDatabase()
-    const result = await db.collection<Client>("clients").deleteOne({
-      _id: new ObjectId(id),
-    })
-
-    if (result.deletedCount === 0) {
+    const deleted = await clients.delete(parsed.data.id)
+    if (!deleted) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 

@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { CHART_COLORS } from "@/lib/constants"
+import { formatCurrency } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
 import DonutChart from "../components/DonutChart"
 import PageLayout from "../components/PageLayout"
@@ -57,20 +59,8 @@ export default function YearSummaryPage() {
     }
   }, [selectedYear])
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount)
-  }
-
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const isViewingCurrentYear = selectedYear === currentYear
-
-  const paymentsForYear = useMemo(
-    () => payments, // API already filters by year
-    [payments]
-  )
 
   // Combine iterations: compute monthly buckets and tag breakdowns in a single pass (js-combine-iterations)
   const {
@@ -90,7 +80,7 @@ export default function YearSummaryPage() {
     let incCount = 0
     let outCount = 0
 
-    for (const payment of paymentsForYear) {
+    for (const payment of payments) {
       const paymentMonth = new Date(payment.date).getMonth()
       const bucket = buckets[paymentMonth]
       const tag = payment.tag || "Untagged"
@@ -116,7 +106,7 @@ export default function YearSummaryPage() {
       incomeCount: incCount,
       outcomeCount: outCount,
     }
-  }, [paymentsForYear])
+  }, [payments])
 
   const yearlyIncome = monthlyTotals.reduce(
     (sum, month) => sum + month.income,
@@ -131,19 +121,6 @@ export default function YearSummaryPage() {
     1,
     ...monthlyTotals.map((month) => month.totalVolume)
   )
-
-  const colors = [
-    "#10b981",
-    "#3b82f6",
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#ec4899",
-    "#06b6d4",
-    "#f97316",
-    "#6366f1",
-    "#14b8a6",
-  ]
 
   return (
     <PageLayout
@@ -198,7 +175,7 @@ export default function YearSummaryPage() {
           />
         </div>
 
-        {paymentsForYear.length === 0 ? (
+        {payments.length === 0 ? (
           <div className="rounded-md bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-300">
             No payments recorded in {selectedYear}.
           </div>
@@ -208,12 +185,12 @@ export default function YearSummaryPage() {
               <DonutChart
                 data={incomeByTagYear}
                 title={`Income by Tag (${selectedYear})`}
-                colors={colors}
+                colors={CHART_COLORS}
               />
               <DonutChart
                 data={outcomeByTagYear}
                 title={`Outcome by Tag (${selectedYear})`}
-                colors={colors}
+                colors={CHART_COLORS}
               />
             </div>
 

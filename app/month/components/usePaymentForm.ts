@@ -111,7 +111,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
             )
             setSuggestedTags(filtered)
           }
-        }, 1000)
+        }, 300)
       }
     },
     [availableTags]
@@ -186,7 +186,11 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     const total = calculateTotal()
     const vatPercentage = parseFloat(formData.vat) || 0
     const surchargePercentage = parseFloat(formData.surcharge || "0") || 0
-    return calculateNetAmount(total, vatPercentage, surchargePercentage)
+    return calculateNetAmount(
+      total,
+      vatPercentage,
+      surchargePercentage
+    ).toFixed(2)
   }, [formData.vat, formData.surcharge, calculateTotal])
 
   const resetForm = useCallback(() => {

@@ -1,63 +1,17 @@
 /**
- * Shared payment calculation utilities used by both PaymentForm and PaymentDetailModal
+ * Shared payment calculation utilities
+ * Re-exports from domain services for backward compatibility
  */
 
-/**
- * Calculate the total amount from all concepts
- */
-export const calculateTotal = (
-  concepts: Array<{ name: string; amount: number; quantity: number }>
-): number => {
-  return concepts.reduce((sum, c) => sum + c.amount * (c.quantity || 1), 0)
-}
-
-/**
- * Calculate the VAT amount based on total and VAT percentage
- * Uses formula: VAT = Total * (VAT% / 100) / (1 + VAT% / 100 + Surcharge% / 100)
- */
-export const calculateVatAmount = (
-  total: number,
-  vatPercentage: number,
-  surchargePercentage: number = 0
-): number => {
-  const vat =
-    (total * (vatPercentage / 100)) /
-    (1 + vatPercentage / 100 + surchargePercentage / 100)
-  return parseFloat(vat.toFixed(2))
-}
-
-/**
- * Calculate the surcharge amount based on total and surcharge percentage
- * Uses formula: Surcharge = Total * (Surcharge% / 100) / (1 + VAT% / 100 + Surcharge% / 100)
- */
-export const calculateSurchargeAmount = (
-  total: number,
-  vatPercentage: number,
-  surchargePercentage: number = 0
-): number => {
-  if (surchargePercentage === 0) return 0
-  const surcharge =
-    (total * (surchargePercentage / 100)) /
-    (1 + vatPercentage / 100 + surchargePercentage / 100)
-  return parseFloat(surcharge.toFixed(2))
-}
-
-/**
- * Calculate the net amount after deductions
- * Uses formula: Net = Total / (1 + VAT% / 100 + Surcharge% / 100)
- */
-export const calculateNetAmount = (
-  total: number,
-  vatPercentage: number,
-  surchargePercentage: number = 0
-): string => {
-  const net = total / (1 + vatPercentage / 100 + surchargePercentage / 100)
-  return net.toFixed(2)
-}
+export {
+  calculateNetAmount,
+  calculateSurchargeAmount,
+  calculateTotal,
+  calculateVatAmount,
+} from "@/lib/domain/services/payment-calculator"
 
 /**
  * Validate concepts array
- * @returns { isValid: boolean; error: string | null }
  */
 export const validateConcepts = (
   concepts: Array<{ name: string; amount: number; quantity: number }>

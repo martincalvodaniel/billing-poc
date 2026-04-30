@@ -1,83 +1,38 @@
-import { ObjectId } from "mongodb"
 import { type NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/mongodb"
-import type { Payment, PaymentConcept } from "@/lib/types"
+import { MongoClientRepository } from "@/lib/adapters/repositories/mongo-client-repository"
+import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
+import { computePaymentFinancials } from "@/lib/domain/services/payment-calculator"
+import {
+  createPaymentSchema,
+  deletePaymentSchema,
+  paymentQuerySchema,
+  updatePaymentSchema,
+} from "@/lib/domain/services/payment-validator"
+import { zodError } from "@/lib/validation"
 
-// Type for raw concept from request body (amount and quantity may be string or number)
-interface RawPaymentConcept {
-  name: string
-  amount: string | number
-  quantity?: string | number // Optional; defaults to 1 if omitted
-}
+const payments = new MongoPaymentRepository()
+const clients = new MongoClientRepository()
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const year = searchParams.get("year")
-    const month = searchParams.get("month")
-
-    const db = await getDatabase()
-
-    // Build filter based on query parameters
-    const filter: Record<string, unknown> = {}
-
-    if (year && month) {
-      // Filter by specific month and year
-      const yearNum = parseInt(year, 10)
-      const monthNum = parseInt(month, 10)
-
-      if (
-        Number.isNaN(yearNum) ||
-        Number.isNaN(monthNum) ||
-        monthNum < 1 ||
-        monthNum > 12
-      ) {
-        return NextResponse.json(
-          { error: "Invalid year or month parameters" },
-          { status: 400 }
-        )
-      }
-
-      // Create date range for the month
-      const startDate = new Date(yearNum, monthNum - 1, 1)
-      const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999)
-
-      filter.date = {
-        $gte: startDate.toISOString().split("T")[0],
-        $lte: endDate.toISOString().split("T")[0],
-      }
-    } else if (year) {
-      // Filter by year only
-      const yearNum = parseInt(year, 10)
-
-      if (Number.isNaN(yearNum)) {
-        return NextResponse.json(
-          { error: "Invalid year parameter" },
-          { status: 400 }
-        )
-      }
-
-      // Create date range for the year
-      const startDate = new Date(yearNum, 0, 1)
-      const endDate = new Date(yearNum, 11, 31, 23, 59, 59, 999)
-
-      filter.date = {
-        $gte: startDate.toISOString().split("T")[0],
-        $lte: endDate.toISOString().split("T")[0],
-      }
+    const params = Object.fromEntries(request.nextUrl.searchParams)
+    const parsed = paymentQuerySchema.safeParse(params)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
     }
 
-    const payments = await db
-      .collection<Payment>("payments")
-      .find(filter)
-      .sort({ date: -1, createdAt: -1 })
-      .toArray()
+    const result = await payments.findAll({
+      year: parsed.data.year,
+      month: parsed.data.month,
+    })
 
     console.log(
-      `Fetched ${payments.length} payments from database for filter: ${JSON.stringify(filter)}`
+      `Fetched ${result.length} payments for filter: ${JSON.stringify(parsed.data)}`
     )
-
-    return NextResponse.json({ payments }, { status: 200 })
+    return NextResponse.json({ payments: result }, { status: 200 })
   } catch (error) {
     console.error(`Error fetching payments: ${error}`)
     return NextResponse.json(
@@ -90,164 +45,51 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { type, date, concepts, vat, surcharge, tag, clientId } = body
-
-    // Validate required fields
-    if (!type || !date) {
+    const parsed = createPaymentSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields (type, date)" },
+        { error: zodError(parsed.error) },
         { status: 400 }
       )
     }
 
-    // Support both new format (concepts) and legacy format (total)
-    let paymentConcepts = concepts
-    if (!concepts && body.total !== undefined && vat !== undefined) {
-      // Legacy format: convert single total to concepts array
-      paymentConcepts = [{ amount: parseFloat(body.total) }]
-    }
+    const {
+      type,
+      date,
+      concepts,
+      vat,
+      surcharge,
+      tag,
+      clientId,
+      deliveryNoteRef,
+    } = parsed.data
+    const surchargeVal = surcharge ?? 0
 
-    if (
-      !paymentConcepts ||
-      !Array.isArray(paymentConcepts) ||
-      paymentConcepts.length === 0
-    ) {
-      return NextResponse.json(
-        { error: "At least one concept is required" },
-        { status: 400 }
-      )
-    }
-
-    const vatPercentage = parseFloat(vat)
-    if (Number.isNaN(vatPercentage)) {
-      return NextResponse.json(
-        { error: "Invalid VAT percentage" },
-        { status: 400 }
-      )
-    }
-
-    if (vatPercentage < 0 || vatPercentage > 100) {
-      return NextResponse.json(
-        { error: "VAT percentage must be between 0 and 100" },
-        { status: 400 }
-      )
-    }
-
-    // Validate surcharge percentage (optional)
-    let surchargePercentage = 0
-    if (surcharge !== undefined && surcharge !== null && surcharge !== "") {
-      surchargePercentage = parseFloat(surcharge)
-      if (Number.isNaN(surchargePercentage)) {
-        return NextResponse.json(
-          { error: "Invalid surcharge percentage" },
-          { status: 400 }
-        )
-      }
-
-      if (surchargePercentage < 0 || surchargePercentage > 100) {
-        return NextResponse.json(
-          { error: "Surcharge percentage must be between 0 and 100" },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Validate and normalize concepts
-    const normalizedConcepts = paymentConcepts.map(
-      (concept: RawPaymentConcept): PaymentConcept => ({
-        name: concept.name,
-        amount: parseFloat(String(concept.amount)),
-        quantity: concept.quantity ? parseFloat(String(concept.quantity)) : 1,
-      })
-    )
-
-    // Check for missing or empty names
-    if (
-      normalizedConcepts.some(
-        (c: PaymentConcept) => !c.name || c.name.trim() === ""
-      )
-    ) {
-      return NextResponse.json(
-        { error: "All concepts must have a name" },
-        { status: 400 }
-      )
-    }
-
-    // Check for invalid amounts
-    if (
-      normalizedConcepts.some((c: PaymentConcept) => Number.isNaN(c.amount))
-    ) {
-      return NextResponse.json(
-        { error: "Invalid concept amount" },
-        { status: 400 }
-      )
-    }
-
-    // Calculate totals from concepts (amount × quantity per concept)
-    const totalAmount = normalizedConcepts.reduce(
-      (sum: number, c: PaymentConcept) => sum + c.amount * c.quantity,
-      0
-    )
-    const netAmount =
-      totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100)
-    const vatAmount =
-      (totalAmount * (vatPercentage / 100)) /
-      (1 + vatPercentage / 100 + surchargePercentage / 100)
-    const surchargeAmount =
-      surchargePercentage > 0
-        ? (totalAmount * (surchargePercentage / 100)) /
-          (1 + vatPercentage / 100 + surchargePercentage / 100)
-        : undefined
-
-    // Validate clientId if provided
-    let clientObjectId: ObjectId | undefined
+    // Verify client exists if provided
     if (clientId) {
-      try {
-        clientObjectId = new ObjectId(clientId)
-        // Optionally verify client exists
-        const db = await getDatabase()
-        const clientExists = await db
-          .collection("clients")
-          .findOne({ _id: clientObjectId })
-        if (!clientExists) {
-          return NextResponse.json(
-            { error: "Client not found" },
-            { status: 404 }
-          )
-        }
-      } catch {
-        return NextResponse.json(
-          { error: "Invalid client ID" },
-          { status: 400 }
-        )
+      const client = await clients.findById(clientId)
+      if (!client) {
+        return NextResponse.json({ error: "Client not found" }, { status: 404 })
       }
     }
 
-    const payment: Omit<Payment, "_id"> = {
+    const financials = computePaymentFinancials(concepts, vat, surchargeVal)
+
+    const id = await payments.create({
       type,
       date,
       tag: tag || undefined,
-      clientId: clientObjectId,
-      concepts: normalizedConcepts,
-      vat: vatPercentage,
-      surcharge: surchargePercentage > 0 ? surchargePercentage : undefined,
-      netAmount,
-      vatAmount,
-      surchargeAmount,
-      total: totalAmount,
+      clientId: clientId || undefined,
+      deliveryNoteRef: deliveryNoteRef || undefined,
+      concepts,
+      vat,
+      surcharge: surchargeVal > 0 ? surchargeVal : undefined,
+      ...financials,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    })
 
-    const db = await getDatabase()
-    const result = await db
-      .collection<Payment>("payments")
-      .insertOne(payment as Payment)
-
-    return NextResponse.json(
-      { success: true, id: result.insertedId },
-      { status: 201 }
-    )
+    return NextResponse.json({ success: true, id }, { status: 201 })
   } catch (error) {
     console.error(`Error creating payment: ${error}`)
     return NextResponse.json(
@@ -260,301 +102,58 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, date, type, tag, clientId, concepts, vat, surcharge, total } =
-      body
-
-    // Validate required fields
-    if (!id) {
-      return NextResponse.json({ error: "Missing payment ID" }, { status: 400 })
+    const parsed = updatePaymentSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
     }
 
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
+    const { id, clientId, ...fields } = parsed.data
+
+    // Verify client if provided
+    if (clientId) {
+      const client = await clients.findById(clientId)
+      if (!client) {
+        return NextResponse.json({ error: "Client not found" }, { status: 404 })
+      }
     }
 
-    const db = await getDatabase()
+    // Recalculate financials if concepts, vat, or surcharge changed
+    const updateData: Record<string, unknown> = { ...fields }
+    if (clientId !== undefined) updateData.clientId = clientId || undefined
 
-    // Get current payment for calculations
-    let payment: Payment | null = null
     if (
-      concepts !== undefined ||
-      total !== undefined ||
-      vat !== undefined ||
-      surcharge !== undefined
+      fields.concepts !== undefined ||
+      fields.vat !== undefined ||
+      fields.surcharge !== undefined ||
+      fields.total !== undefined
     ) {
-      payment = await db.collection<Payment>("payments").findOne({
-        _id: new ObjectId(id),
-      })
-
-      if (!payment) {
+      const existing = await payments.findById(id)
+      if (!existing) {
         return NextResponse.json(
           { error: "Payment not found" },
           { status: 404 }
         )
       }
+
+      const concepts = fields.concepts ?? existing.concepts
+      const vat = fields.vat ?? existing.vat
+      const surcharge = fields.surcharge ?? existing.surcharge ?? 0
+      const financials = computePaymentFinancials(concepts, vat, surcharge)
+
+      updateData.concepts = concepts
+      updateData.vat = vat
+      updateData.surcharge = surcharge > 0 ? surcharge : undefined
+      updateData.total = financials.total
+      updateData.netAmount = financials.netAmount
+      updateData.vatAmount = financials.vatAmount
+      updateData.surchargeAmount = financials.surchargeAmount
     }
 
-    // Handle date update
-    if (date !== undefined) {
-      if (!date) {
-        return NextResponse.json(
-          { error: "Date cannot be empty" },
-          { status: 400 }
-        )
-      }
-      updateData.date = date
-    }
-
-    // Handle type update
-    if (type !== undefined) {
-      if (type !== "income" && type !== "outcome") {
-        return NextResponse.json(
-          { error: "Type must be either 'income' or 'outcome'" },
-          { status: 400 }
-        )
-      }
-      updateData.type = type
-    }
-
-    // Handle tag update
-    if (tag !== undefined) {
-      updateData.tag = tag ? tag : null
-    }
-
-    // Handle clientId update
-    if (clientId !== undefined) {
-      if (clientId) {
-        try {
-          const clientObjectId = new ObjectId(clientId)
-          // Verify client exists
-          const db = await getDatabase()
-          const clientExists = await db
-            .collection("clients")
-            .findOne({ _id: clientObjectId })
-          if (!clientExists) {
-            return NextResponse.json(
-              { error: "Client not found" },
-              { status: 404 }
-            )
-          }
-          updateData.clientId = clientObjectId
-        } catch {
-          return NextResponse.json(
-            { error: "Invalid client ID" },
-            { status: 400 }
-          )
-        }
-      } else {
-        // Clear clientId if empty string or null
-        updateData.clientId = null
-      }
-    }
-
-    // Handle concepts update
-    if (concepts !== undefined) {
-      if (!Array.isArray(concepts) || concepts.length === 0) {
-        return NextResponse.json(
-          { error: "At least one concept is required" },
-          { status: 400 }
-        )
-      }
-
-      const normalizedConcepts = concepts.map(
-        (concept: RawPaymentConcept): PaymentConcept => ({
-          name: concept.name,
-          amount: parseFloat(String(concept.amount)),
-          quantity: concept.quantity ? parseFloat(String(concept.quantity)) : 1,
-        })
-      )
-
-      if (
-        normalizedConcepts.some(
-          (c: PaymentConcept) => !c.name || c.name.trim() === ""
-        )
-      ) {
-        return NextResponse.json(
-          { error: "All concepts must have a name" },
-          { status: 400 }
-        )
-      }
-
-      if (
-        normalizedConcepts.some((c: PaymentConcept) => Number.isNaN(c.amount))
-      ) {
-        return NextResponse.json(
-          { error: "Invalid concept amount" },
-          { status: 400 }
-        )
-      }
-
-      updateData.concepts = normalizedConcepts
-
-      // Recalculate totals (amount × quantity per concept)
-      const totalAmount = normalizedConcepts.reduce(
-        (sum: number, c: PaymentConcept) => sum + c.amount * c.quantity,
-        0
-      )
-      const vatPercentage =
-        vat !== undefined ? parseFloat(vat) : (payment?.vat ?? 0)
-      const surchargePercentage =
-        surcharge !== undefined
-          ? parseFloat(surcharge) || 0
-          : (payment?.surcharge ?? 0)
-      const netAmount =
-        totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const vatAmount =
-        (totalAmount * (vatPercentage / 100)) /
-        (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const surchargeAmount =
-        surchargePercentage > 0
-          ? (totalAmount * (surchargePercentage / 100)) /
-            (1 + vatPercentage / 100 + surchargePercentage / 100)
-          : undefined
-
-      updateData.total = totalAmount
-      updateData.netAmount = netAmount
-      updateData.vatAmount = vatAmount
-      updateData.surchargeAmount = surchargeAmount
-    }
-
-    // Handle VAT percentage update
-    if (vat !== undefined) {
-      const vatPercentage = parseFloat(vat)
-      if (Number.isNaN(vatPercentage)) {
-        return NextResponse.json(
-          { error: "Invalid VAT percentage" },
-          { status: 400 }
-        )
-      }
-
-      if (vatPercentage < 0 || vatPercentage > 100) {
-        return NextResponse.json(
-          { error: "VAT percentage must be between 0 and 100" },
-          { status: 400 }
-        )
-      }
-
-      updateData.vat = vatPercentage
-
-      // Recalculate with new VAT
-      const totalAmount =
-        total !== undefined ? parseFloat(total) : (payment?.total ?? 0)
-      const surchargePercentage =
-        surcharge !== undefined
-          ? parseFloat(surcharge) || 0
-          : (payment?.surcharge ?? 0)
-      const netAmount =
-        totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const vatAmount =
-        (totalAmount * (vatPercentage / 100)) /
-        (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const surchargeAmount =
-        surchargePercentage > 0
-          ? (totalAmount * (surchargePercentage / 100)) /
-            (1 + vatPercentage / 100 + surchargePercentage / 100)
-          : undefined
-
-      updateData.netAmount = netAmount
-      updateData.vatAmount = vatAmount
-      updateData.surchargeAmount = surchargeAmount
-    }
-
-    // Handle surcharge percentage update
-    if (surcharge !== undefined) {
-      const surchargePercentage = surcharge ? parseFloat(surcharge) : 0
-      if (surcharge && Number.isNaN(surchargePercentage)) {
-        return NextResponse.json(
-          { error: "Invalid surcharge percentage" },
-          { status: 400 }
-        )
-      }
-
-      if (surchargePercentage < 0 || surchargePercentage > 100) {
-        return NextResponse.json(
-          { error: "Surcharge percentage must be between 0 and 100" },
-          { status: 400 }
-        )
-      }
-
-      updateData.surcharge =
-        surchargePercentage > 0 ? surchargePercentage : null
-
-      // Recalculate with new surcharge
-      const totalAmount =
-        total !== undefined ? parseFloat(total) : (payment?.total ?? 0)
-      const vatPercentage =
-        vat !== undefined ? parseFloat(vat) : (payment?.vat ?? 0)
-      const netAmount =
-        totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const vatAmount =
-        (totalAmount * (vatPercentage / 100)) /
-        (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const surchargeAmount =
-        surchargePercentage > 0
-          ? (totalAmount * (surchargePercentage / 100)) /
-            (1 + vatPercentage / 100 + surchargePercentage / 100)
-          : undefined
-
-      updateData.netAmount = netAmount
-      updateData.vatAmount = vatAmount
-      updateData.surchargeAmount = surchargeAmount
-    }
-
-    // Handle total update (legacy - convert to concepts)
-    if (total !== undefined && concepts === undefined) {
-      const totalAmount = parseFloat(total)
-      if (Number.isNaN(totalAmount)) {
-        return NextResponse.json(
-          { error: "Invalid total amount" },
-          { status: 400 }
-        )
-      }
-
-      const vatPercentage =
-        vat !== undefined ? parseFloat(vat) : (payment?.vat ?? 0)
-      const surchargePercentage =
-        surcharge !== undefined
-          ? parseFloat(surcharge) || 0
-          : (payment?.surcharge ?? 0)
-      const netAmount =
-        totalAmount / (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const vatAmount =
-        (totalAmount * (vatPercentage / 100)) /
-        (1 + vatPercentage / 100 + surchargePercentage / 100)
-      const surchargeAmount =
-        surchargePercentage > 0
-          ? (totalAmount * (surchargePercentage / 100)) /
-            (1 + vatPercentage / 100 + surchargePercentage / 100)
-          : undefined
-
-      updateData.total = totalAmount
-      updateData.netAmount = netAmount
-      updateData.vatAmount = vatAmount
-      updateData.surchargeAmount = surchargeAmount
-    }
-
-    // Ensure at least one field is being updated
-    if (
-      date === undefined &&
-      type === undefined &&
-      tag === undefined &&
-      clientId === undefined &&
-      concepts === undefined &&
-      total === undefined &&
-      vat === undefined &&
-      surcharge === undefined
-    ) {
-      return NextResponse.json(
-        { error: "No fields to update" },
-        { status: 400 }
-      )
-    }
-
-    const result = await db
-      .collection<Payment>("payments")
-      .updateOne({ _id: new ObjectId(id) }, { $set: updateData })
-
-    if (result.matchedCount === 0) {
+    const updated = await payments.update(id, updateData)
+    if (!updated) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 })
     }
 
@@ -582,19 +181,16 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id } = body
-
-    // Validate required fields
-    if (!id) {
-      return NextResponse.json({ error: "Missing payment ID" }, { status: 400 })
+    const parsed = deletePaymentSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
     }
 
-    const db = await getDatabase()
-    const result = await db.collection<Payment>("payments").deleteOne({
-      _id: new ObjectId(id),
-    })
-
-    if (result.deletedCount === 0) {
+    const deleted = await payments.delete(parsed.data.id)
+    if (!deleted) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 })
     }
 

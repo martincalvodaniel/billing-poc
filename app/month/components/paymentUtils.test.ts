@@ -94,24 +94,26 @@ describe("calculateSurchargeAmount", () => {
 })
 
 describe("calculateNetAmount", () => {
-  it("returns total as string when VAT is 0", () => {
-    expect(calculateNetAmount(100, 0)).toBe("100.00")
+  it("returns total when VAT is 0", () => {
+    expect(calculateNetAmount(100, 0)).toBe(100)
   })
 
   it("calculates net amount for 21% VAT", () => {
     // 121 / (1 + 0.21) = 100
-    expect(calculateNetAmount(121, 21)).toBe("100.00")
+    expect(calculateNetAmount(121, 21)).toBe(100)
   })
 
   it("calculates net with VAT and surcharge", () => {
     // 131.52 / (1 + 0.21 + 0.052) = 131.52 / 1.262 ≈ 104.22
-    const result = parseFloat(calculateNetAmount(131.52, 21, 5.2))
+    const result = calculateNetAmount(131.52, 21, 5.2)
     expect(result).toBeCloseTo(104.22, 0)
   })
 
-  it("returns formatted string with 2 decimals", () => {
+  it("returns number with 2 decimal precision", () => {
     const result = calculateNetAmount(100, 10)
-    expect(result).toMatch(/^\d+\.\d{2}$/)
+    // Should be a number with at most 2 decimal places
+    expect(typeof result).toBe("number")
+    expect(Number(result.toFixed(2))).toBe(result)
   })
 })
 

@@ -1,52 +1,13 @@
-import type { Document } from "mongodb"
 import { type NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/mongodb"
-import type { Payment, PaymentType } from "@/lib/types"
+import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
+
+const payments = new MongoPaymentRepository()
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const type = searchParams.get("type") as PaymentType | null
-
-    const db = await getDatabase()
-
-    // Build aggregation pipeline
-    const matchStage: Document = {
-      tag: { $type: "string", $ne: "" },
-    }
-
-    // Add type filter if provided
-    if (type && (type === "income" || type === "outcome")) {
-      matchStage.type = type
-    }
-
-    const pipeline: Document[] = [
-      { $match: matchStage },
-      {
-        $group: {
-          _id: null,
-          tags: {
-            $addToSet: "$tag",
-          },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          tags: 1,
-        },
-      },
-    ]
-
-    const result = await db
-      .collection<Payment>("payments")
-      .aggregate(pipeline)
-      .toArray()
-
-    // Extract unique tags from the result
-    const uniqueTags = result.length > 0 ? result[0].tags : []
-
-    return NextResponse.json({ tags: uniqueTags }, { status: 200 })
+    const type = request.nextUrl.searchParams.get("type") ?? undefined
+    const tags = await payments.findDistinctTags(type)
+    return NextResponse.json({ tags }, { status: 200 })
   } catch (error) {
     console.error(`Error fetching tags: ${error}`)
     return NextResponse.json({ error: "Failed to fetch tags" }, { status: 500 })

@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react"
+import Toast from "../../components/Toast"
 import PaymentFormFields from "./PaymentFormFields"
 import { validateConcepts } from "./paymentUtils"
 import { usePaymentForm } from "./usePaymentForm"
@@ -53,16 +54,13 @@ const PaymentForm = function PaymentForm({
   const [providerBillFile, setProviderBillFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
     setFormDate,
     submit: () => {
-      // Programmatically submit the form
-      const form = document.querySelector(
-        'form[data-payment-form="true"]'
-      ) as HTMLFormElement
-      form?.requestSubmit()
+      formRef.current?.requestSubmit()
     },
   }))
 
@@ -217,67 +215,16 @@ const PaymentForm = function PaymentForm({
     <>
       {/* Success Toast Notification */}
       {showSuccess && (
-        <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
-          <div
-            className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {/* Success Icon */}
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-              <svg
-                className="h-6 w-6 text-green-600 dark:text-green-400"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-
-            {/* Message */}
-            <div className="flex flex-col">
-              <p className="font-semibold text-green-900 dark:text-green-100">
-                Payment saved successfully!
-              </p>
-              <p className="text-sm text-green-700 dark:text-green-300">
-                Your payment has been recorded.
-              </p>
-            </div>
-
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setShowSuccess(false)}
-              className="ml-4 flex-shrink-0 rounded-md p-1 text-green-600 transition-colors hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-green-400 dark:hover:bg-green-900 dark:hover:text-green-200"
-              aria-label="Close notification"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <Toast
+          message="Payment saved successfully!"
+          onClose={() => setShowSuccess(false)}
+        />
       )}
 
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
-        data-payment-form="true"
         className="space-y-4"
       >
         {error && (

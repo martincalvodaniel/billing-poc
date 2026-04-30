@@ -2,10 +2,13 @@
 
 import type { Ref } from "react"
 import { useCallback, useEffect, useImperativeHandle, useState } from "react"
+import { CHART_COLORS } from "@/lib/constants"
+import { formatCurrency, formatDate, formatMonthYear } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
 import DonutChart from "../../components/DonutChart"
 import Modal from "../../components/Modal"
 import SummaryCard from "../../components/SummaryCard"
+import Toast from "../../components/Toast"
 import PaymentDetailModal from "./PaymentDetailModal"
 
 export default (function MonthlyPaymentsView({
@@ -104,30 +107,8 @@ export default (function MonthlyPaymentsView({
     navigateToMonth: () => {
       // Month navigation is now handled by parent component via selectedDate prop
     },
-    getFilteredPaymentsCount: () => getFilteredPayments().length,
+    getFilteredPaymentsCount: () => payments.length,
   }))
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-    })
-  }
 
   const getFilteredPayments = () => {
     // No client-side filtering needed since API returns only relevant month's payments
@@ -250,18 +231,6 @@ export default (function MonthlyPaymentsView({
 
   // Year-level aggregations
   // Generate colors for chart segments
-  const colors = [
-    "#10b981",
-    "#3b82f6",
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#ec4899",
-    "#06b6d4",
-    "#f97316",
-    "#6366f1",
-    "#14b8a6",
-  ]
 
   if (isLoading) {
     return (
@@ -279,38 +248,7 @@ export default (function MonthlyPaymentsView({
     <div className="w-full space-y-6">
       {/* Success Toast */}
       {showSuccess && (
-        <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
-          <div
-            className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <svg
-              className="h-5 w-5 text-green-600 dark:text-green-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-sm font-medium text-green-800 dark:text-green-300">
-              {successMessage}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowSuccess(false)}
-              aria-label="Close notification"
-              className="ml-auto rounded-md p-1 text-green-600 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:text-green-400 dark:hover:text-green-300"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
+        <Toast message={successMessage} onClose={() => setShowSuccess(false)} />
       )}
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -337,11 +275,15 @@ export default (function MonthlyPaymentsView({
 
       {/* Donut Charts */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <DonutChart data={incomeByTag} title="Income by Tag" colors={colors} />
+        <DonutChart
+          data={incomeByTag}
+          title="Income by Tag"
+          colors={CHART_COLORS}
+        />
         <DonutChart
           data={outcomeByTag}
           title="Outcome by Tag"
-          colors={colors}
+          colors={CHART_COLORS}
         />
       </div>
 

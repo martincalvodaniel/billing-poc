@@ -21,12 +21,12 @@ Shared between `PaymentForm` and `PaymentDetailModal`. Manages:
 - Tag autocomplete suggestions
 
 ## Calculation Utilities — `paymentUtils.ts`
-Pure functions (37 unit tests via `bun test`):
+Re-exports pure functions from `lib/domain/services/payment-calculator.ts` (99 unit tests via `bun test`):
 - `calculateTotal(concepts)` — sum of amount × quantity
 - `calculateVatAmount(total, vat, surcharge?)` — VAT portion
 - `calculateSurchargeAmount(total, vat, surcharge)` — surcharge portion
-- `calculateNetAmount(total, vat, surcharge?)` — net after taxes
-- `validateConcepts(concepts)`, `validateVat(vat)`, `validateSurcharge(surcharge)`
+- `calculateNetAmount(total, vat, surcharge?)` — net after taxes (returns number)
+- `validateConcepts(concepts)`, `validateVat(vat)`, `validateSurcharge(surcharge)` — local validation helpers
 
 ## API Endpoints
 - `GET /api/payments?year={year}&month={month}` — filtered by month, sorted by date desc
