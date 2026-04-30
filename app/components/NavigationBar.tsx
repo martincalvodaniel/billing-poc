@@ -27,6 +27,7 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
 
   const isMonthlyActive = pathname === "/" || pathname === "/month"
   const isYearActive = pathname === "/year"
+  const isAbsencesActive = pathname === "/absences"
   const isClientsActive = pathname === "/clients"
 
   const closeMenu = useCallback(() => setMenuOpen(false), [])
@@ -73,6 +74,13 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
             aria-current={isYearActive ? "page" : undefined}
           >
             Yearly Overview
+          </Link>
+          <Link
+            href="/absences"
+            className={buildLinkClass(isAbsencesActive)}
+            aria-current={isAbsencesActive ? "page" : undefined}
+          >
+            Absences
           </Link>
           <Link
             href="/clients"
@@ -186,6 +194,13 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
                 aria-current={isYearActive ? "page" : undefined}
               >
                 Yearly Overview
+              </Link>
+              <Link
+                href="/absences"
+                className={buildLinkClass(isAbsencesActive)}
+                aria-current={isAbsencesActive ? "page" : undefined}
+              >
+                Absences
               </Link>
               <Link
                 href="/clients"

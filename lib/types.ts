@@ -97,3 +97,22 @@ export interface InvoiceCounter {
   lastNumber: number
   updatedAt: Date
 }
+
+export type AbsenceType = "absence" | "recovery"
+
+export interface Absence {
+  _id?: ObjectId
+  type: AbsenceType
+  studentName: string
+  date: string
+  comment?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AbsenceFormData {
+  type: AbsenceType
+  studentName: string
+  date: string
+  comment?: string
+}
