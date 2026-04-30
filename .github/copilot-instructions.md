@@ -52,12 +52,12 @@ export default function Component({ payment }: { payment: Payment }) {
 }
 ```
 
-**Form Handling** - Use default values for better UX:
+**Form Handling** - Use default values for better UX (supports negative amounts for refunds):
 ```typescript
 const [formData, setFormData] = useState({
   type: 'income',
   date: new Date().toISOString().split('T')[0],
-  total: '',
+  total: '', // Can be negative for refunds/corrections
   vat: '21', // Default VAT percentage
 });
 ```
