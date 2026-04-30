@@ -312,10 +312,6 @@ export default function PaymentFormFields({
             )}
           </div>
         ))}
-
-        <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-          <p className="font-medium">Total from components: €{calculateTotal().toFixed(2)}</p>
-        </div>
       </div>
 
       {/* VAT Percentage */}
@@ -343,6 +339,15 @@ export default function PaymentFormFields({
 
       {/* VAT Amount and Net Amount (calculated) */}
       <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Total from components
+          </span>
+          <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+            €{calculateTotal().toFixed(2)}
+          </span>
+        </div>
+        <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700"></div>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             VAT Amount
