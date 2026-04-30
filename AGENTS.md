@@ -338,7 +338,7 @@ Example - DonutChart component:
 - **Returns**: No-data state or styled donut chart with horizontal layout (chart left, legend right)
 - **Features**: Interactive sorting buttons (% and AZ), stable color mapping across sorts, scrollable legend
 - **Used in**: `PaymentsList.tsx` for income/outcome breakdown by tag
-- **Optimization**: Memoized to prevent re-renders when props unchanged; `useMemo` for sorting and color mapping
+- **Optimization**: Memoized to prevent re-renders when props unchanged; `useMemo` for segments (SVG paths), sorting, and color mapping to avoid re-rendering donut when only legend order changes
 
 ### Optimizing Component Re-renders
 Use `React.memo()` for pure presentational components:
@@ -1560,6 +1560,7 @@ const vatAmount = totalAmount - netAmount;
   - Active button highlighted in blue with proper accessibility labels
 - **Horizontal Layout**: Chart on left (160x160px), legend on right side
 - **Stable Colors**: Tags maintain consistent colors across all sorting options using `useMemo` color mapping
+- **Performance Optimized**: SVG segments calculated once and memoized - only legend order changes when sorting, donut chart never re-renders
 - **Scrollable Legend**: Legend scrolls if more tags than fit in 160px height
 - Displays percentage distribution with tag color indicators
 - Shows "No data" state when no payments exist for category
