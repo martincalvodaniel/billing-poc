@@ -135,27 +135,29 @@ export default function YearSummaryPage() {
     <PageLayout
       navigationSubtitle="Yearly Overview"
       headerContent={
-        <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 dark:bg-zinc-900">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Yearly Filter
-            </p>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Overview for {selectedYear}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
-            <YearSelector
-              selectedYear={selectedYear}
-              onYearChange={setSelectedYear}
-              isViewingCurrentYear={isViewingCurrentYear}
-              onGoToCurrentYear={() => {
-                if (!isViewingCurrentYear) {
-                  setSelectedYear(currentYear)
-                }
-              }}
-            />
+        <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Yearly Filter
+              </p>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                Overview for {selectedYear}
+              </h3>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
+              <YearSelector
+                selectedYear={selectedYear}
+                onYearChange={setSelectedYear}
+                isViewingCurrentYear={isViewingCurrentYear}
+                onGoToCurrentYear={() => {
+                  if (!isViewingCurrentYear) {
+                    setSelectedYear(currentYear)
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       }
