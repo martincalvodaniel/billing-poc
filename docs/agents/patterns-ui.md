@@ -99,6 +99,35 @@ interface PageLayoutProps {
 - Props for data/title/colors; no external UI libs
 - Memoize pure visual components; stable color mapping
 
+## NavButton Component
+
+Reusable button for prev/next navigation controls. Used by `MonthSelector` and `YearSelector` to ensure a consistent zinc-bordered style across all step-navigation buttons.
+
+### Props
+```typescript
+// Extends all native ButtonHTMLAttributes<HTMLButtonElement>
+type NavButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
+```
+
+### Usage Example
+```typescript
+import NavButton from "@/app/components/NavButton";
+
+<NavButton onClick={() => onChange(value - 1)} aria-label="View previous">
+  ← Prev
+</NavButton>
+<NavButton onClick={() => onChange(value + 1)} aria-label="View next">
+  Next →
+</NavButton>
+```
+
+### Notes
+- Always renders `type="button"` by default (safe inside forms)
+- Accepts optional `className` to append extra Tailwind classes
+- Spread `...props` passes through any native button attribute (e.g., `disabled`, `aria-*`)
+- Use this component for any step-navigation button that should share the zinc-border style
+- Do **not** use for primary/submit actions (use blue `bg-blue-600` button instead) or for the current-period jump button (uses blue-border variant)
+
 ## MonthSelector Component
 
 Reusable component for selecting and navigating between months. Used in the Monthly Overview page to provide a calendar picker for date filtering.
@@ -145,6 +174,7 @@ return (
 - Used in filter section header of monthly view (app/page.tsx)
 - Parent manages selectedDate, showCalendar, and isViewingCurrentMonth state
 - onMonthChange callback syncs PaymentForm date field via ref callback
+- Prev/Next flanking buttons are rendered via `NavButton` component
 - Place in layout with other filter controls (alongside add-payment button)
 
 ## YearSelector Component
@@ -191,6 +221,7 @@ return (
 - Used in filter section header of yearly overview view (app/year/page.tsx)
 - Parent manages selectedYear and isViewingCurrentYear state
 - Updates trigger data refiltering based on paymentsForYear memo
+- Prev/Next flanking buttons are rendered via `NavButton` component
 - Place year selector in layout with consistent button styling
 
 ## ClientSelector Component

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import NavButton from "../../components/NavButton";
 
 interface YearSelectorProps {
   selectedYear: number;
@@ -47,13 +48,9 @@ export default function YearSelector({
 
   return (
     <div className="flex items-center gap-2">
-      <button
-        onClick={() => handleYearChange("prev")}
-        aria-label="View previous year"
-        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-      >
+      <NavButton onClick={() => handleYearChange("prev")} aria-label="View previous year">
         ← Prev
-      </button>
+      </NavButton>
       <div className="relative">
         <button
           type="button"
@@ -121,13 +118,9 @@ export default function YearSelector({
           </div>
         )}
       </div>
-      <button
-        onClick={() => handleYearChange("next")}
-        aria-label="View next year"
-        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-      >
+      <NavButton onClick={() => handleYearChange("next")} aria-label="View next year">
         Next →
-      </button>
+      </NavButton>
       <button
         onClick={onGoToCurrentYear}
         disabled={isViewingCurrentYear}
