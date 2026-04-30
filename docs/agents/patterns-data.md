@@ -9,8 +9,8 @@ export type PaymentType = "income" | "outcome";
 
 export interface PaymentConcept {
   name?: string;           // Optional name/description (e.g., "Consulting", "Materials")
-  amount: number;          // Amount in euros for this concept/line item
-  vat?: number;           // Optional concept-level VAT override (as percentage)
+  amount: number;          // Amount in euros per unit for this concept/line item
+  quantity: number;        // Quantity multiplier (1 or more); defaults to 1 if omitted
 }
 
 export interface Payment {
@@ -19,10 +19,10 @@ export interface Payment {
   date: string;           // ISO date YYYY-MM-DD
   tag?: string;          // Optional category tag
   concepts: PaymentConcept[]; // Array of payment components
-  vat: number;           // Default VAT percentage (0-100)
+  vat: number;           // VAT percentage applied uniformly (0-100)
   netAmount: number;     // Calculated: total / (1 + vat/100)
   vatAmount: number;     // Calculated: total - netAmount
-  total: number;         // Calculated: sum of all concept amounts
+  total: number;         // Calculated: sum of (concept.amount * concept.quantity) for all concepts
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,8 +31,9 @@ export interface Payment {
 ### Key Concepts Pattern
 - **Concepts**: A payment is composed of one or more concepts (line items)
 - **Flexible Naming**: Each concept can optionally have a descriptive name
-- **Total Calculation**: `total = sum(concept.amount for all concepts)`
-- **VAT Application**: Applied at payment level to total amount; concepts inherit default VAT unless overridden
+- **Quantity Support**: Each concept has a quantity multiplier (default 1)
+- **Total Calculation**: `total = sum(concept.amount * concept.quantity for all concepts)`
+- **VAT Application**: Applied uniformly at payment level to total amount; no concept-level overrides
 - **Calculated Fields**: `netAmount`, `vatAmount`, `total` are computed server-side
 
 ## Database Operations
@@ -44,8 +45,8 @@ export interface Payment {
 
 ### Server Validation (API Routes)
 - **Required**: type, date, concepts[] (at least one), vat
-- **Concepts**: Each must have amount (number); name is optional string
-- **Numeric**: Parse amounts with parseFloat(); check !isNaN
+- **Concepts**: Each must have amount (number); quantity defaults to 1 if omitted; name is optional string
+- **Numeric**: Parse amounts and quantities with parseFloat(); check !isNaN
 - **VAT Range**: Must be 0-100; reject if outside range
 - **Concept Amounts**: Reject if any amount is NaN
 - **Legacy Support**: Single `total` field converts to single unnamed concept for backward compatibility
@@ -57,7 +58,7 @@ export interface Payment {
 - Show error messages for API failures
 
 ### Calculation Rules
-- **Total**: `total = sum(concept.amount)`
+- **Total**: `total = sum(concept.amount * concept.quantity)` for all concepts
 - **Net**: `netAmount = total / (1 + vat%/100)`
 - **VAT Amount**: `vatAmount = total - netAmount`
 - All calculations done server-side on create/update
@@ -71,15 +72,16 @@ export interface Payment {
   "type": "income",
   "date": "2024-01-15",
   "concepts": [
-    { "name": "Service A", "amount": 100.00 },
-    { "name": "Service B", "amount": 200.00 }
+    { "name": "Service A", "amount": 100.00, "quantity": 1 },
+    { "name": "Service B", "amount": 50.00, "quantity": 4 }
   ],
   "vat": "21",
   "tag": "Client X"
 }
 ```
-- Validates all concepts have amounts
-- Calculates total, net, vat amounts server-side
+- Validates all concepts have amounts; quantity defaults to 1 if omitted
+- Calculates total: (100 × 1) + (50 × 4) = 300
+- Calculates net and vat amounts server-side
 - Returns insertedId on success
 
 ### PUT /api/payments
@@ -87,12 +89,12 @@ export interface Payment {
 ```json
 {
   "id": "ObjectId",
-  "concepts": [{ "name": "Updated Item", "amount": 250.00 }],
+  "concepts": [{ "name": "Updated Item", "amount": 125.00, "quantity": 2 }],
   "vat": "21"
 }
 ```
 - Can update concepts, vat, date, type, tag independently
-- Recalculates totals when concepts or vat change
+- Recalculates totals when concepts or vat change (total = 125 × 2 = 250)
 - Returns updated total/vat/netAmount for optimistic updates
 
 ### GET /api/payments

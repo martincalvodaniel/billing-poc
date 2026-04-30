@@ -13,7 +13,7 @@ const PaymentForm = forwardRef(function PaymentForm(
 ) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
-    concepts: [{ amount: 0 }],
+    concepts: [{ amount: 0, quantity: 1 }],
     vat: "21",
     type: "income",
     tag: "",
@@ -93,7 +93,7 @@ const PaymentForm = forwardRef(function PaymentForm(
       // Reset concepts while keeping type and date sticky
       setFormData((prev) => ({
         ...prev,
-        concepts: [{ amount: 0 }],
+        concepts: [{ amount: 0, quantity: 1 }],
         tag: "",
       }));
 
@@ -125,8 +125,8 @@ const PaymentForm = forwardRef(function PaymentForm(
           newConcepts[conceptIndex].amount = parseFloat(value) || 0;
         } else if (name === "conceptName") {
           newConcepts[conceptIndex].name = value || undefined;
-        } else if (name === "conceptVat") {
-          newConcepts[conceptIndex].vat = value === "" ? undefined : parseFloat(value);
+        } else if (name === "conceptQuantity") {
+          newConcepts[conceptIndex].quantity = parseFloat(value) || 1;
         }
         return { ...prev, concepts: newConcepts };
       });
@@ -160,7 +160,7 @@ const PaymentForm = forwardRef(function PaymentForm(
   };
 
   const calculateTotal = () => {
-    return formData.concepts.reduce((sum, c) => sum + (c.amount || 0), 0);
+    return formData.concepts.reduce((sum, c) => sum + (c.amount * (c.quantity || 1)), 0);
   };
 
   const calculateVatAmount = () => {
@@ -179,7 +179,7 @@ const PaymentForm = forwardRef(function PaymentForm(
   const addConcept = () => {
     setFormData((prev) => ({
       ...prev,
-      concepts: [...prev.concepts, { amount: 0 }],
+      concepts: [...prev.concepts, { amount: 0, quantity: 1 }],
     }));
   };
 
@@ -453,21 +453,20 @@ const PaymentForm = forwardRef(function PaymentForm(
               </div>
               <div className="space-y-2">
                 <label
-                  htmlFor={`conceptVat-${index}`}
+                  htmlFor={`conceptQuantity-${index}`}
                   className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
                 >
-                  VAT % (Optional)
+                  Quantity
                 </label>
                 <input
                   type="number"
-                  id={`conceptVat-${index}`}
-                  name="conceptVat"
-                  value={concept.vat ?? ""}
+                  id={`conceptQuantity-${index}`}
+                  name="conceptQuantity"
+                  value={concept.quantity ?? 1}
                   onChange={(e) => handleChange(e, index)}
-                  step="0.5"
-                  min="0"
-                  max="100"
-                  placeholder="—"
+                  step="1"
+                  min="1"
+                  placeholder="1"
                   className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>

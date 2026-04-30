@@ -5,7 +5,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View filtered transactions in a table (day, type, tag, total, VAT, net amount) with summary cards (total income with count, outcome with count, balance) and real-time updates
-- **Payment Components** - Payments can be composed of multiple named or unnamed concepts (line items). Each concept has an amount and optional name (e.g., "Consulting", "Materials"), and optional concept-level VAT override. The total payment is the sum of all component amounts. When a concept's VAT differs from the payment's default VAT, an asterisk (*) appears next to the VAT percentage in the payment list with a tooltip indicating mixed VAT rates
+- **Payment Components** - Payments can be composed of multiple named or unnamed concepts (line items). Each concept has an amount, quantity (1 or more multiplier), and optional name. Quantities are multiplied by the amount to calculate the contribution of each concept to the total. The total payment is the sum of (amount × quantity) for all components. VAT is applied uniformly at the payment level.
 - **Month Navigation** - Dedicated filter section at the top displays the selected month and controls. Calendar picker (closes when clicking outside) with prev/next navigation, month grid, year selection, and manual year input. Quick icon button jumps to the current month and disables when already there. Add payment button positioned adjacent to the calendar for easy access. Automatically navigates to the saved payment's month after creating a new payment. Form date field syncs with calendar selection to match the viewed month
 - **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Add multiple payment components with optional names and amounts. Gross/net calculation (enter component amounts with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks. Keyboard shortcuts: **ENTER** to save, **ESC** to cancel
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
@@ -57,8 +57,8 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
   "type": "income" | "outcome",
   "date": "YYYY-MM-DD",
   "concepts": [
-    { "name": "Service A", "amount": 150.00 },
-    { "name": "Service B", "amount": 260.48 }
+    { "name": "Service A", "amount": 150.00, "quantity": 1 },
+    { "name": "Service B", "amount": 130.24, "quantity": 2 }
   ],
   "vat": "21",
   "tag": "Client A"
@@ -69,21 +69,20 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
 - `type`: Payment type (required)
 - `date`: Payment date in YYYY-MM-DD format (required)  
 - `concepts`: Array of payment components/line items (required, at least one). Each concept has:
-  - `amount`: Numeric amount in euros (required)
+  - `amount`: Numeric amount in euros per unit (required)
+  - `quantity`: Numeric quantity/multiplier (1 or more). Defaults to 1 if omitted. (optional)
   - `name`: Optional name/description for the concept (e.g., "Consulting", "Product")
 - `vat`: VAT percentage applied to total (e.g., 21 for 21%) (required)
 - `tag`: Optional tag for categorizing payments (string)
 
 **Response:**
-The API calculates `netAmount` from the sum of all concept amounts and VAT percentage using: `netAmount = total / (1 + vat/100)` where `total` is the sum of all concept amounts.
-
-**Note:** Legacy format with a single `total` field is also supported for backward compatibility and will be converted to a single unnamed concept.
+The API calculates `netAmount` from the sum of all concept totals (amount × quantity) and VAT percentage using: `netAmount = total / (1 + vat/100)` where `total` is the sum of (amount × quantity) for all concepts.
 
 ### `GET /api/payments` - Get All Payments
 
 Returns array of payments sorted by date (descending). Each payment includes:
-- `concepts`: Array of payment components with amounts and optional names
-- `total`: Sum of all concept amounts
+- `concepts`: Array of payment components with amounts, quantities, and optional names
+- `total`: Sum of (amount × quantity) for all concepts
 - `vat`: VAT percentage and VAT amount
 - `netAmount`: Net amount after VAT deduction
 
@@ -96,7 +95,7 @@ Returns array of payments sorted by date (descending). Each payment includes:
   "type": "income" | "outcome",
   "tag": "Client B",
   "concepts": [
-    { "name": "Updated Service", "amount": 500.00 }
+    { "name": "Updated Service", "amount": 250.00, "quantity": 2 }
   ],
   "vat": "21"
 }
@@ -107,12 +106,12 @@ Returns array of payments sorted by date (descending). Each payment includes:
 - `date`: New date for the payment (optional)
 - `type`: Payment type either "income" or "outcome" (optional)
 - `tag`: Optional tag for the payment (optional)
-- `concepts`: New array of payment components (optional)
+- `concepts`: New array of payment components (optional). Each concept supports quantity field.
 - `vat`: New VAT percentage 0-100 (optional)
 
 At least one of `date`, `type`, `tag`, `concepts`, or `vat` must be provided.
 
-When `concepts` are updated, totals are automatically recalculated.
+When `concepts` are updated, totals are automatically recalculated using amount × quantity.
 When `vat` is updated, net amount and VAT amount are recalculated based on total.
 
 **Response:** Success status with updated payment values (`total`, `vatAmount`, `netAmount`, `vat`)

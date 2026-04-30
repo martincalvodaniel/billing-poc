@@ -52,14 +52,10 @@ export function randomAmount(): number {
 }
 
 /**
- * Generate random VAT percentage or undefined
+ * Generate random quantity (1-3)
  */
-export function randomVAT(): number | undefined {
-  const shouldHaveVAT = Math.random() > 0.3; // 70% chance of having VAT
-  if (!shouldHaveVAT) return undefined;
-
-  const vatOptions = [0, 10, 21];
-  return vatOptions[Math.floor(Math.random() * vatOptions.length)];
+export function randomQuantity(): number {
+  return randomBetween(1, 3);
 }
 
 /**
@@ -73,7 +69,7 @@ export function generateConcept(): PaymentConcept {
       ? CONCEPT_NAMES[Math.floor(Math.random() * CONCEPT_NAMES.length)]
       : undefined,
     amount: randomAmount(),
-    vat: randomVAT(),
+    quantity: randomQuantity(),
   };
 }
 
@@ -86,10 +82,10 @@ export function generateConcepts(): PaymentConcept[] {
 }
 
 /**
- * Calculate VAT and totals from concepts
+ * Calculate VAT and totals from concepts (amount × quantity)
  */
 export function calculateTotals(concepts: PaymentConcept[], defaultVAT: number) {
-  const totalAmount = concepts.reduce((sum, c) => sum + c.amount, 0);
+  const totalAmount = concepts.reduce((sum, c) => sum + (c.amount * c.quantity), 0);
   const netAmount = totalAmount / (1 + defaultVAT / 100);
   const vatAmount = totalAmount - netAmount;
 

@@ -121,14 +121,14 @@ export default function PaymentDetailModal({ payment, onClose, formatCurrency }:
                       <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200">
                         {idx + 1}
                       </span>
-                      <span className="truncate text-zinc-900 dark:text-zinc-100">{c.name || "—"}</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate text-zinc-900 dark:text-zinc-100">{c.name || "—"}</span>
+                        <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                          {c.quantity > 1 ? `Qty: ${c.quantity}` : ""}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {typeof c.vat === "number" && (
-                        <span className="whitespace-nowrap text-xs text-zinc-600 dark:text-zinc-400">VAT {c.vat}%</span>
-                      )}
-                      <span className="whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">{currency(c.amount)}</span>
-                    </div>
+                    <span className="whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">{currency(c.amount * c.quantity)}</span>
                   </li>
                 ))}
               </ul>

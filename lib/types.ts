@@ -5,7 +5,7 @@ export type PaymentType = "income" | "outcome";
 export interface PaymentConcept {
   name?: string;
   amount: number;
-  vat?: number; // Optional concept-level VAT override (as percentage)
+  quantity: number; // Quantity/multiplier for the concept (1 or more)
 }
 
 export interface Payment {

@@ -3,11 +3,11 @@ import { ObjectId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
 import { Payment, PaymentConcept } from "@/lib/types";
 
-// Type for raw concept from request body (amount may be string or number)
+// Type for raw concept from request body (amount and quantity may be string or number)
 interface RawPaymentConcept {
   name?: string;
   amount: string | number;
-  vat?: string | number;
+  quantity?: string | number; // Optional; defaults to 1 if omitted
 }
 
 export async function GET() {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const normalizedConcepts = paymentConcepts.map((concept: RawPaymentConcept): PaymentConcept => ({
       name: concept.name || undefined,
       amount: parseFloat(String(concept.amount)),
-      vat: concept.vat !== undefined ? parseFloat(String(concept.vat)) : undefined,
+      quantity: concept.quantity ? parseFloat(String(concept.quantity)) : 1,
     }));
 
     // Check for invalid amounts
@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate totals from concepts
-    const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + c.amount, 0);
+    // Calculate totals from concepts (amount × quantity per concept)
+    const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + (c.amount * c.quantity), 0);
     const netAmount = totalAmount / (1 + vatPercentage / 100);
     const vatAmount = totalAmount - netAmount;
 
@@ -193,7 +193,7 @@ export async function PUT(request: NextRequest) {
       const normalizedConcepts = concepts.map((concept: RawPaymentConcept): PaymentConcept => ({
         name: concept.name || undefined,
         amount: parseFloat(String(concept.amount)),
-        vat: concept.vat !== undefined ? parseFloat(String(concept.vat)) : undefined,
+        quantity: concept.quantity ? parseFloat(String(concept.quantity)) : 1,
       }));
 
       if (normalizedConcepts.some((c: PaymentConcept) => isNaN(c.amount))) {
@@ -205,8 +205,8 @@ export async function PUT(request: NextRequest) {
 
       updateData.concepts = normalizedConcepts;
 
-      // Recalculate totals
-      const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + c.amount, 0);
+      // Recalculate totals (amount × quantity per concept)
+      const totalAmount = normalizedConcepts.reduce((sum: number, c: PaymentConcept) => sum + (c.amount * c.quantity), 0);
       const vatPercentage = vat !== undefined ? parseFloat(vat) : payment!.vat;
       const netAmount = totalAmount / (1 + vatPercentage / 100);
       const vatAmount = totalAmount - netAmount;
