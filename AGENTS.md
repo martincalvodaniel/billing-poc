@@ -383,98 +383,164 @@ const filteredPayments = getFilteredPayments();
 
 **Summary recalculation** - Use `filteredPayments` instead of all `payments` when calculating totals
 
-### Inline Editing Pattern (Edit Payment Fields)
-For editing individual payment fields inline in a list:
+### Modal Editing Pattern (Edit Payment Fields)
+For editing individual payment fields using a centered overlay modal:
 
-1. **State Management** - Track editing state with `editingId` and `editingValue` per field (or separate states for each field)
-2. **Display Toggle** - Show formatted display or input based on `editingId`
-3. **Input Handler** - Update local state while user types
-4. **Save Handler** - Validate and send PUT request to API
+1. **State Management** - Track which payment is being edited (`editingPaymentId`), which field is being edited (`editingField`), and field values
+2. **Modal Trigger** - Clicking a field opens the modal with that field's input
+3. **Input Handler** - Update local state while user types (field-specific handlers)
+4. **Unified Save Handler** - Validate all field types and send PUT request to API
 5. **Optimistic Update** - Update local state immediately, sync with server
 6. **Success Feedback** - Show toast notification after successful save
-7. **Cancel Handler** - Reset editing state and revert changes
+7. **Close Modal** - Reset all editing state when closing (cancel or save)
 
-Example pattern (editing date field):
+Key advantage: **No layout shifts** - Table rows stay consistent height. Modal overlays prevent scrolling issues when editing rows near the bottom of a long list.
+
+Example pattern:
 ```typescript
-const [editingId, setEditingId] = useState<string | null>(null);
+type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
+
+const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+const [editingField, setEditingField] = useState<EditField>(null);
 const [editingDate, setEditingDate] = useState<string>("");
+const [editingType, setEditingType] = useState<string>("");
+const [editingTotal, setEditingTotal] = useState<string>("");
+const [editingVat, setEditingVat] = useState<string>("");
+
+const closeEditModal = () => {
+  setEditingPaymentId(null);
+  setEditingField(null);
+  // Reset all field values
+  setEditingDate("");
+  setEditingType("");
+  setEditingTotal("");
+  setEditingVat("");
+};
 
 const handleEditDate = (payment: Payment) => {
-  setEditingId(payment._id?.toString() || null);
+  setEditingPaymentId(payment._id?.toString() || null);
+  setEditingField("date");
   setEditingDate(payment.date);
 };
 
-const handleSaveDate = async () => {
-  if (!editingId || !editingDate) return;
-  
+const handleEditType = (payment: Payment) => {
+  setEditingPaymentId(payment._id?.toString() || null);
+  setEditingField("type");
+  setEditingType(payment.type);
+};
+
+const handleSave = async () => {
+  if (!editingPaymentId || !editingField) return;
+
+  let payload: Record<string, any> = { id: editingPaymentId };
+
+  // Validate and build payload based on field type
+  if (editingField === "date") {
+    if (!editingDate) {
+      setError("Date is required");
+      return;
+    }
+    payload.date = editingDate;
+  } else if (editingField === "type") {
+    if (!editingType) {
+      setError("Type is required");
+      return;
+    }
+    payload.type = editingType;
+  }
+  // ... handle other fields similarly
+
+  setIsSaving(true);
   try {
     const response = await fetch("/api/payments", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: editingId, date: editingDate }),
+      body: JSON.stringify(payload),
     });
 
-    if (!response.ok) throw new Error("Failed to update");
+    if (!response.ok) throw new Error(`Failed to update ${editingField}`);
+
+    const responseData = await response.json();
 
     // Optimistic update
-    setPayments(prevPayments =>
-      prevPayments.map(p =>
-        p._id?.toString() === editingId ? { ...p, date: editingDate } : p
-      )
+    setPayments((prevPayments) =>
+      prevPayments.map((p) => {
+        if (p._id?.toString() === editingPaymentId) {
+          if (editingField === "date") return { ...p, date: editingDate };
+          if (editingField === "type") return { ...p, type: editingType as "income" | "outcome" };
+          // For total/vat, server returns recalculated values
+          return {
+            ...p,
+            total: responseData.total,
+            vat: responseData.vat,
+            netAmount: responseData.netAmount,
+          };
+        }
+        return p;
+      })
     );
 
-    setEditingId(null);
+    closeEditModal();
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 4000);
   } catch (err) {
-    setError(err.message);
+    console.error(`Error updating ${editingField}: ${err}`);
+    setError(err instanceof Error ? err.message : "An error occurred");
+  } finally {
+    setIsSaving(false);
   }
 };
+```
 
-// In JSX - Show input or display based on state
-{editingId === payment._id?.toString() ? (
-  <input value={editingDate} onChange={(e) => setEditingDate(e.target.value)} />
-) : (
-  <button onClick={() => handleEditDate(payment)}>
-    {formatDate(payment.date)}
-  </button>
+In JSX - Table rows stay simple with just clickable fields:
+```tsx
+<tr>
+  <td>
+    <button onClick={() => handleEditDate(payment)}>
+      {formatDate(payment.date)}
+    </button>
+  </td>
+  {/* ... more cells with similar click handlers ... */}
+</tr>
+
+{/* Modal Overlay - renders when editingPaymentId && editingField are set */}
+{editingPaymentId && editingField && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-sm rounded-lg bg-white shadow-lg">
+      <div className="border-b px-6 py-4">
+        <h3 className="text-lg font-semibold">
+          Edit {editingField.charAt(0).toUpperCase() + editingField.slice(1)}
+        </h3>
+      </div>
+      <div className="space-y-4 px-6 py-4">
+        {editingField === "date" && (
+          <input
+            type="date"
+            value={editingDate}
+            onChange={(e) => setEditingDate(e.target.value)}
+          />
+        )}
+        {/* ... conditional renders for other field types ... */}
+      </div>
+      <div className="flex gap-2 border-t px-6 py-4">
+        <button onClick={closeEditModal} disabled={isSaving}>
+          Cancel
+        </button>
+        <button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save"}
+        </button>
+      </div>
+    </div>
+  </div>
 )}
 ```
 
-**For multiple fields**: Use separate state variables for each field (`editingTypeId`, `editingType`, `editingDateId`, `editingDate`, etc.). The PUT endpoint can handle multiple field updates by accepting optional parameters and updating only the provided fields.
-
-Example with type field:
-```typescript
-const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
-const [editingType, setEditingType] = useState<string>("");
-
-const handleSaveType = async () => {
-  if (!editingTypeId || !editingType) return;
-  
-  const response = await fetch("/api/payments", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: editingTypeId, type: editingType }),
-  });
-  
-  // Update, show success message, reset state...
-};
-
-// In JSX
-{editingTypeId === payment._id?.toString() ? (
-  <select
-    value={editingType}
-    onChange={(e) => setEditingType(e.target.value)}
-  >
-    <option value="income">Income</option>
-    <option value="outcome">Outcome</option>
-  </select>
-) : (
-  <button onClick={() => handleEditType(payment)}>
-    {payment.type}
-  </button>
-)}
-```
+**Benefits:**
+- ✅ No layout shifts - table rows stay consistent height
+- ✅ No scroll jumping - modal is centered on viewport, doesn't affect table position
+- ✅ Clean UX - all editing interface is clearly separated from data display
+- ✅ Mobile-friendly - responsive modal works on all screen sizes
+- ✅ Unified state management - single field type determines modal content
 
 ### Tag Field with Autocomplete Pattern (Tags with Type-Based Filtering)
 For adding optional tags to payments with intelligent autocomplete suggestions:
@@ -838,15 +904,20 @@ const vatAmount = totalAmount - netAmount;
   - Parent component (`page.tsx`) calls both `refreshPayments()` and `navigateToMonth(date)` on save
 - See "Month Navigation Pattern" in Common Tasks & Patterns
 
-### Inline Payment Editing (Date, Type, Tag, Total & VAT)
-✓ **Completed**: Edit date, type, tag, total, and VAT via inline editors in payment list
+### Modal Payment Editing (Date, Type, Tag, Total & VAT)
+✓ **Completed**: Edit date, type, tag, total, and VAT via centered overlay modal in payment list
 - Added PUT method to `app/api/payments/route.ts` supporting `date`, `type`, `tag`, `total`, and `vat` updates
 - Validates `_id` parameter, date field, type enum, and numeric values
-- Frontend uses inline editing with state management for each field
+- Frontend uses modal overlay with unified state management for all field types
 - Optimistic updates for better UX
 - Success toast notifications on save
-- **Date Editing**: Simple date input, validates non-empty
-- **Type Editing**: Dropdown select between "income" and "outcome"
+- **Design Benefits**:
+  - No layout shifts - table rows maintain consistent height while editing
+  - No scroll jumping - modal centered on viewport, doesn't affect table position
+  - Clean separation of edit UI from data display
+  - Works seamlessly on mobile and desktop
+- **Date Editing**: Simple date input in modal, validates non-empty
+- **Type Editing**: Dropdown select between "income" and "outcome" in modal
 - **Tag Editing Features**:
   - Type-specific autocomplete suggestions (income/outcome tags are separate)
   - 1-second debounce before filtering suggestions
@@ -854,16 +925,17 @@ const vatAmount = totalAmount - netAmount;
   - Dropdown closes automatically after selection
   - New tags automatically added to available list for current session
   - Empty tag field converts to null in database for clean filtering
-- **Total Editing**: Number input with decimal step (0.01), displayed as currency
+- **Total Editing**: Number input with decimal step (0.01) in modal
   - Preserves current VAT percentage when total changes
   - Recalculates: `newNetAmount = newTotal / (1 + currentVatPercentage / 100)` and `newVatAmount = newTotal - newNetAmount`
-- **VAT Editing**: Number input (0-100%), displayed as percentage
+- **VAT Editing**: Number input (0-100%) in modal
   - Validates range 0-100
   - Recalculates: `newNetAmount = currentTotal / (1 + newVatPercentage / 100)` and `newVatAmount = currentTotal - newNetAmount`
   - Calculates displayed VAT percentage from stored VAT amount on edit initiation
 - **Window Focus Sync**: PaymentForm automatically refetches tags when window regains focus to stay in sync with PaymentsList edits
 - **API Smart Calculation**: PUT endpoint handles both total and VAT updates with proper recalculation logic
-- See "Inline Editing Pattern" in Common Tasks & Patterns
+- **Unified State Management**: Single `editingField` type determines modal content and validation
+- See "Modal Editing Pattern" in Common Tasks & Patterns
 
 ### Payment Tags with Type-Based Autocomplete
 ✓ **Completed**: Add optional tags to categorize payments with intelligent autocomplete
@@ -902,17 +974,17 @@ const vatAmount = totalAmount - netAmount;
 - Responsive design matches summary cards layout (1 col mobile, 2 cols desktop)
 
 ### Edit Payment Amount and VAT Fields
-✓ **Completed**: Inline editing for total and VAT percentage with automatic recalculation
-- **Total Editing**:
-  - Click total amount in payment list to edit
-  - Number input with decimal step (0.01)
+✓ **Completed**: Modal editing for total and VAT percentage with automatic recalculation
+- **Total Editing via Modal**:
+  - Click total amount in payment list to open edit modal
+  - Number input with decimal step (0.01) in modal
   - Preserves current VAT percentage when changing total
   - Server recalculates: `newNetAmount = newTotal / (1 + currentVatPercentage / 100)` and `newVatAmount = newTotal - newNetAmount`
   - Optimistic update on client, syncs with server response
   - Success notification on save
-- **VAT Percentage Editing**:
-  - Click VAT amount in payment list to edit (displays as percentage calculated from stored VAT amount)
-  - Number input with validation (0-100%)
+- **VAT Percentage Editing via Modal**:
+  - Click VAT amount in payment list to open edit modal (displays as percentage calculated from stored VAT amount)
+  - Number input with validation (0-100%) in modal
   - Preserves total when changing VAT percentage
   - Server recalculates: `newNetAmount = currentTotal / (1 + newVatPercentage / 100)` and `newVatAmount = currentTotal - newNetAmount`
   - Optimistic update on client, syncs with server response
@@ -922,11 +994,11 @@ const vatAmount = totalAmount - netAmount;
   - Fetches current payment to maintain relationship between total, VAT%, and net amount
   - Both fields can be updated simultaneously (edits both total and VAT at once)
   - Returns recalculated values: `total`, `vat`, `netAmount` for optimistic client updates
-- **Frontend State Management**:
-  - Separate editing states for each field (`editingTotalId`/`editingTotal`, `editingVatId`/`editingVat`)
-  - Handlers for edit, save, and cancel operations
+- **Modal State Management**:
+  - Unified `editingField` state determines which field modal is editing
+  - Single `handleSave` function handles validation and save for all field types
   - Disabled submit during save operation
-- See "Inline Editing Pattern" in Common Tasks & Patterns for implementation reference
+- See "Modal Editing Pattern" in Common Tasks & Patterns for implementation reference
 
 ## Future Development Guidelines
 
