@@ -3,6 +3,7 @@
 import type { Ref } from "react"
 import { useCallback, useEffect, useImperativeHandle, useState } from "react"
 import type { Payment } from "@/lib/types"
+import CollapsibleSection from "../../components/CollapsibleSection"
 import Toast from "../../components/Toast"
 import DeletePaymentModal from "./DeletePaymentModal"
 import PaymentCharts from "./PaymentCharts"
@@ -249,15 +250,17 @@ export default (function MonthlyPaymentsView({
         <Toast message={successMessage} onClose={() => setShowSuccess(false)} />
       )}
 
-      <PaymentsSummary
-        totalIncome={totalIncome}
-        totalOutcome={totalOutcome}
-        netBalance={netBalance}
-        incomeCount={incomeCount}
-        outcomeCount={outcomeCount}
-      />
+      <CollapsibleSection title="Summary & Charts">
+        <PaymentsSummary
+          totalIncome={totalIncome}
+          totalOutcome={totalOutcome}
+          netBalance={netBalance}
+          incomeCount={incomeCount}
+          outcomeCount={outcomeCount}
+        />
 
-      <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
+        <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
+      </CollapsibleSection>
 
       <PaymentsTable
         payments={payments}
