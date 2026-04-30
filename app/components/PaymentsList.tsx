@@ -9,8 +9,11 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingDate, setEditingDate] = useState<string>("");
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+  const [editingType, setEditingType] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   useEffect(() => {
     fetchPayments();
@@ -85,6 +88,7 @@ export default forwardRef(function PaymentsList(props, ref) {
 
       setEditingId(null);
       setEditingDate("");
+      setSuccessMessage("Date updated successfully");
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 4000);
     } catch (err) {
@@ -99,6 +103,52 @@ export default forwardRef(function PaymentsList(props, ref) {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingDate("");
+  };
+
+  const handleEditType = (payment: Payment) => {
+    setEditingTypeId(payment._id?.toString() || null);
+    setEditingType(payment.type);
+  };
+
+  const handleSaveType = async () => {
+    if (!editingTypeId || !editingType) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingTypeId, type: editingType }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update type");
+      }
+
+      // Update local state
+      setPayments((prevPayments) =>
+        prevPayments.map((p) =>
+          p._id?.toString() === editingTypeId ? { ...p, type: editingType as "income" | "outcome" } : p
+        )
+      );
+
+      setEditingTypeId(null);
+      setEditingType("");
+      setSuccessMessage("Type updated successfully");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
+    } catch (err) {
+      console.error("Error updating type:", err);
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelTypeEdit = () => {
+    setEditingTypeId(null);
+    setEditingType("");
   };
 
   const totalIncome = payments
@@ -141,7 +191,7 @@ export default forwardRef(function PaymentsList(props, ref) {
               />
             </svg>
             <span className="text-sm font-medium text-green-800 dark:text-green-300">
-              Date updated successfully
+              {successMessage}
             </span>
             <button
               onClick={() => setShowSuccess(false)}
@@ -260,16 +310,44 @@ export default forwardRef(function PaymentsList(props, ref) {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                          payment.type === "income"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                      >
-                        {payment.type.charAt(0).toUpperCase() +
-                          payment.type.slice(1)}
-                      </span>
+                      {editingTypeId === payment._id?.toString() ? (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={editingType}
+                            onChange={(e) => setEditingType(e.target.value)}
+                            className="rounded border border-zinc-300 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-800"
+                          >
+                            <option value="income">Income</option>
+                            <option value="outcome">Outcome</option>
+                          </select>
+                          <button
+                            onClick={handleSaveType}
+                            disabled={isSaving}
+                            className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700"
+                          >
+                            {isSaving ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            onClick={handleCancelTypeEdit}
+                            disabled={isSaving}
+                            className="rounded bg-zinc-300 px-2 py-1 text-xs font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEditType(payment)}
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium hover:opacity-80 ${
+                            payment.type === "income"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                        >
+                          {payment.type.charAt(0).toUpperCase() +
+                            payment.type.slice(1)}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.netAmount)}

@@ -6,7 +6,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 
 - **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
 - **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%. Supports negative amounts for refunds, corrections, and chargebacks
-- **Edit Payment Date** - Click any date in the payment list to edit it inline with a date picker
+- **Inline Payment Editing** - Click any date or type in the payment list to edit inline with a date picker or type selector
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, and PUT endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
@@ -63,7 +63,7 @@ The API calculates `netAmount` from total and VAT percentage using: `netAmount =
 
 Returns array of payments sorted by date (descending).
 
-### `PUT /api/payments` - Update Payment Date
+### `PUT /api/payments` - Update Payment
 
 ```json
 {
@@ -72,9 +72,21 @@ Returns array of payments sorted by date (descending).
 }
 ```
 
+Or update type:
+
+```json
+{
+  "id": "payment_id",
+  "type": "income" | "outcome"
+}
+```
+
 **Parameters:**
-- `id`: MongoDB ObjectId of the payment
-- `date`: New date for the payment
+- `id`: MongoDB ObjectId of the payment (required)
+- `date`: New date for the payment (optional)
+- `type`: Payment type either "income" or "outcome" (optional)
+
+At least one of `date` or `type` must be provided.
 
 **Response:** Success status with updated payment
 
@@ -100,8 +112,8 @@ Vercel will automatically detect Next.js and configure the build settings.
 
 - [x] Create payment list view with summary cards
 - [x] Real-time payment list updates
-- [x] Edit date of payments
-- [ ] Edit/delete other payment fields
+- [x] Inline payment editing (date & type)
+- [ ] Edit other payment fields (amount, VAT)
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, category, invoice number, etc.)

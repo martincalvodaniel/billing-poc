@@ -203,7 +203,7 @@ This reflects real-world salary/invoice scenarios where you know the total amoun
 ### Inline Editing Pattern (Edit Payment Fields)
 For editing individual payment fields inline in a list:
 
-1. **State Management** - Track editing state with `editingId` and `editingValue`
+1. **State Management** - Track editing state with `editingId` and `editingValue` per field (or separate states for each field)
 2. **Display Toggle** - Show formatted display or input based on `editingId`
 3. **Input Handler** - Update local state while user types
 4. **Save Handler** - Validate and send PUT request to API
@@ -254,6 +254,41 @@ const handleSaveDate = async () => {
 ) : (
   <button onClick={() => handleEditDate(payment)}>
     {formatDate(payment.date)}
+  </button>
+)}
+```
+
+**For multiple fields**: Use separate state variables for each field (`editingTypeId`, `editingType`, `editingDateId`, `editingDate`, etc.). The PUT endpoint can handle multiple field updates by accepting optional parameters and updating only the provided fields.
+
+Example with type field:
+```typescript
+const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+const [editingType, setEditingType] = useState<string>("");
+
+const handleSaveType = async () => {
+  if (!editingTypeId || !editingType) return;
+  
+  const response = await fetch("/api/payments", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: editingTypeId, type: editingType }),
+  });
+  
+  // Update, show success message, reset state...
+};
+
+// In JSX
+{editingTypeId === payment._id?.toString() ? (
+  <select
+    value={editingType}
+    onChange={(e) => setEditingType(e.target.value)}
+  >
+    <option value="income">Income</option>
+    <option value="outcome">Outcome</option>
+  </select>
+) : (
+  <button onClick={() => handleEditType(payment)}>
+    {payment.type}
   </button>
 )}
 ```
@@ -451,25 +486,27 @@ const vatAmount = totalAmount - netAmount;
 
 ## Completed Features & Patterns
 
-### Edit/Delete Functionality (Date Editing)
-✓ **Completed**: Edit date via inline editor in payment list
-- Added PUT method to `app/api/payments/route.ts`
-- Validates `_id` parameter and date field
-- Frontend uses inline editing with modal state management
+### Inline Payment Editing (Date & Type)
+✓ **Completed**: Edit date and type via inline editors in payment list
+- Added PUT method to `app/api/payments/route.ts` supporting `date` and `type` updates
+- Validates `_id` parameter, date field, and type enum
+- Frontend uses inline editing with state management for each field
 - Optimistic updates for better UX
-- Success toast notification on save
+- Success toast notifications on save
 - See "Inline Editing Pattern" in Common Tasks & Patterns
 
-**Next steps**: Extend to edit other fields (type, amount, VAT) using the same pattern
+**Next steps**: Extend to edit amount and VAT fields using the same pattern
 
 ## Future Development Guidelines
 
 When implementing planned features (from roadmap), follow these patterns:
 
 ### Edit Additional Payment Fields
-- Extend the inline editing pattern used for date to other fields
-- Add numeric field validation for amounts
-- Consider field-specific formatters for display (currency, percentage)
+- Extend the inline editing pattern used for date and type to amount/VAT fields
+- For amount editing: validate numeric input and handle negative values
+- For VAT editing: validate percentage range (0-100) and recalculate net amount
+- Update the PUT endpoint to handle new fields alongside existing date/type updates
+- Consider field-specific formatters for display (currency for amounts, percentage for VAT)
 - Use the established PUT endpoint structure
 
 ### Search & Filtering

@@ -83,12 +83,47 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, date } = body;
+    const { id, date, type } = body;
 
     // Validate required fields
-    if (!id || !date) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing payment ID" },
+        { status: 400 }
+      );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    // Handle date update
+    if (date !== undefined) {
+      if (!date) {
+        return NextResponse.json(
+          { error: "Date cannot be empty" },
+          { status: 400 }
+        );
+      }
+      updateData.date = date;
+    }
+
+    // Handle type update
+    if (type !== undefined) {
+      if (type !== "income" && type !== "outcome") {
+        return NextResponse.json(
+          { error: "Type must be either 'income' or 'outcome'" },
+          { status: 400 }
+        );
+      }
+      updateData.type = type;
+    }
+
+    // Ensure at least one field is being updated
+    if (!date && !type) {
+      return NextResponse.json(
+        { error: "No fields to update" },
         { status: 400 }
       );
     }
@@ -97,7 +132,7 @@ export async function PUT(request: NextRequest) {
 
     const result = await db.collection<Payment>("payments").updateOne(
       { _id: new ObjectId(id) },
-      { $set: { date, updatedAt: new Date() } }
+      { $set: updateData }
     );
 
     if (result.matchedCount === 0) {
@@ -112,9 +147,9 @@ export async function PUT(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error updating payment date:", error);
+    console.error("Error updating payment:", error);
     return NextResponse.json(
-      { error: "Failed to update payment date" },
+      { error: "Failed to update payment" },
       { status: 500 }
     );
   }
