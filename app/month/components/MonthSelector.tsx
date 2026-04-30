@@ -30,9 +30,9 @@ export default function MonthSelector({
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("pointerdown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("pointerdown", handleClickOutside)
     }
   }, [showCalendar, onShowCalendarChange])
 
@@ -62,7 +62,7 @@ export default function MonthSelector({
   return (
     <div className="flex items-center gap-2" ref={calendarRef}>
       <NavButton onClick={handleDayPrev} aria-label="View previous month">
-        ← Prev
+        ←
       </NavButton>
       <div className="relative">
         <button
@@ -70,12 +70,12 @@ export default function MonthSelector({
           onClick={() => onShowCalendarChange(!showCalendar)}
           aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
           aria-expanded={showCalendar}
-          className="w-40 whitespace-nowrap rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+          className="min-h-11 whitespace-nowrap rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
         >
           📅 {formatMonthYear(selectedDate)}
         </button>
         {showCalendar && (
-          <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white shadow-lg sm:left-auto sm:right-0 dark:border-zinc-700 dark:bg-zinc-900">
             {/* Calendar Header */}
             <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
               <div className="mb-4 flex items-center justify-between gap-2">
@@ -85,7 +85,7 @@ export default function MonthSelector({
                   className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Previous month"
                 >
-                  ← Prev
+                  ←
                 </button>
                 <span className="flex-1 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   {new Date(
@@ -102,7 +102,7 @@ export default function MonthSelector({
                   className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Next month"
                 >
-                  Next →
+                  →
                 </button>
               </div>
 
@@ -150,7 +150,7 @@ export default function MonthSelector({
                   className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Previous year"
                 >
-                  ← Prev Year
+                  ←
                 </button>
                 <span className="flex-1 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   {selectedDate.getFullYear()}
@@ -161,7 +161,7 @@ export default function MonthSelector({
                   className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                   aria-label="Next year"
                 >
-                  Next Year →
+                  →
                 </button>
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function MonthSelector({
         )}
       </div>
       <NavButton onClick={handleDayNext} aria-label="View next month">
-        Next →
+        →
       </NavButton>
     </div>
   )

@@ -214,12 +214,10 @@ const DonutChart = memo(function DonutChart({
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
         <svg
-          width="160"
-          height="160"
           viewBox="0 0 120 120"
-          className="flex-shrink-0"
+          className="h-32 w-32 flex-shrink-0 sm:h-40 sm:w-40"
           aria-hidden="true"
         >
           {segments.map((segment) => (

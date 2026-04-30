@@ -26,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="light dark">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
       </head>
       <body

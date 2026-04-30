@@ -48,12 +48,21 @@ export default function YearSelector({
   }, [selectedYear])
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={onGoToCurrentYear}
+        disabled={isViewingCurrentYear}
+        aria-label="Jump to current year"
+        className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
+      >
+        🎯
+      </button>
       <NavButton
         onClick={() => handleYearChange("prev")}
         aria-label="View previous year"
       >
-        ← Prev
+        ←
       </NavButton>
       <div className="relative">
         <button
@@ -70,7 +79,7 @@ export default function YearSelector({
           <div
             role="dialog"
             aria-modal="true"
-            className="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+            className="absolute left-0 top-full z-40 mt-2 w-64 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg sm:left-auto sm:right-0 dark:border-zinc-700 dark:bg-zinc-900"
           >
             <div className="flex items-center gap-2">
               <label
@@ -129,17 +138,8 @@ export default function YearSelector({
         onClick={() => handleYearChange("next")}
         aria-label="View next year"
       >
-        Next →
+        →
       </NavButton>
-      <button
-        type="button"
-        onClick={onGoToCurrentYear}
-        disabled={isViewingCurrentYear}
-        aria-label="Jump to current year"
-        className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
-      >
-        🎯
-      </button>
     </div>
   )
 }

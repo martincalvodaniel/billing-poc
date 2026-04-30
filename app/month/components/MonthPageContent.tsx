@@ -99,7 +99,7 @@ export default function MonthPageContent() {
       navigationSubtitle="Monthly Overview"
       headerContent={
         <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <div className="flex flex-col gap-4 border-b border-zinc-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Monthly Filter
@@ -108,7 +108,7 @@ export default function MonthPageContent() {
                 Overview for {formatMonthYear(selectedDate)}
               </h3>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => handleAddPaymentClick()}
@@ -119,12 +119,6 @@ export default function MonthPageContent() {
                   ➕
                 </span>
               </button>
-              <MonthSelector
-                selectedDate={selectedDate}
-                onMonthChange={handleCalendarMonthSelect}
-                showCalendar={showCalendar}
-                onShowCalendarChange={setShowCalendar}
-              />
               <button
                 type="button"
                 onClick={handleGoToCurrentMonth}
@@ -134,6 +128,12 @@ export default function MonthPageContent() {
               >
                 🎯
               </button>
+              <MonthSelector
+                selectedDate={selectedDate}
+                onMonthChange={handleCalendarMonthSelect}
+                showCalendar={showCalendar}
+                onShowCalendarChange={setShowCalendar}
+              />
             </div>
           </div>
         </div>

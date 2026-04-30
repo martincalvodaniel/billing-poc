@@ -128,7 +128,7 @@ export default function YearSummaryPage() {
       subtitle="Explore income and outcome performance across the year"
       navigationSubtitle="Yearly Overview"
       headerContent={
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 dark:bg-zinc-900">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Yearly Filter
