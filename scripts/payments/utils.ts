@@ -62,12 +62,8 @@ export function randomQuantity(): number {
  * Generate a random concept
  */
 export function generateConcept(): PaymentConcept {
-  const shouldHaveName = Math.random() > 0.3; // 70% chance of having a name
-
   return {
-    name: shouldHaveName
-      ? CONCEPT_NAMES[Math.floor(Math.random() * CONCEPT_NAMES.length)]
-      : undefined,
+    name: CONCEPT_NAMES[Math.floor(Math.random() * CONCEPT_NAMES.length)],
     amount: randomAmount(),
     quantity: randomQuantity(),
   };

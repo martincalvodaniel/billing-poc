@@ -5,7 +5,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View filtered transactions in a table (day, type, tag, total, VAT, net amount) with summary cards (total income with count, outcome with count, balance) and real-time updates
-- **Payment Components** - Payments can be composed of multiple named or unnamed concepts (line items). Each concept has an amount, quantity (1 or more multiplier), and optional name. Quantities are multiplied by the amount to calculate the contribution of each concept to the total. The total payment is the sum of (amount × quantity) for all components. VAT is applied uniformly at the payment level.
+- **Payment Components** - Payments can be composed of multiple named concepts (line items). Each concept has a required name, amount, and quantity (1 or more multiplier). Quantities are multiplied by the amount to calculate the contribution of each concept to the total. The total payment is the sum of (amount × quantity) for all components. VAT is applied uniformly at the payment level.
 - **Month Navigation** - Dedicated filter section at the top displays the selected month and controls. Calendar picker (closes when clicking outside) with prev/next navigation, month grid, year selection, and manual year input. Quick icon button jumps to the current month and disables when already there. Add payment button positioned adjacent to the calendar for easy access. Automatically navigates to the saved payment's month after creating a new payment. Form date field syncs with calendar selection to match the viewed month
 - **Payment Entry Form (Modal)** - Add payments in a centered modal launched from the monthly view header beside the calendar picker. Shares the same control styles and disabled states as the month navigation buttons. Add multiple payment components with optional names and amounts. Gross/net calculation (enter component amounts with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks. Keyboard shortcuts: **ENTER** to save, **ESC** to cancel
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
@@ -69,9 +69,9 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
 - `type`: Payment type (required)
 - `date`: Payment date in YYYY-MM-DD format (required)  
 - `concepts`: Array of payment components/line items (required, at least one). Each concept has:
+  - `name`: Required name/description for the concept (e.g., "Consulting", "Product")
   - `amount`: Numeric amount in euros per unit (required)
   - `quantity`: Numeric quantity/multiplier (1 or more). Defaults to 1 if omitted. (optional)
-  - `name`: Optional name/description for the concept (e.g., "Consulting", "Product")
 - `vat`: VAT percentage applied to total (e.g., 21 for 21%) (required)
 - `tag`: Optional tag for categorizing payments (string)
 

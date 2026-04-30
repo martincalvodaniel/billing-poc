@@ -13,7 +13,7 @@ const PaymentForm = forwardRef(function PaymentForm(
 ) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
-    concepts: [{ amount: 0, quantity: 1 }],
+    concepts: [{ name: "", amount: 0, quantity: 1 }],
     vat: "21",
     type: "income",
     tag: "",
@@ -72,6 +72,11 @@ const PaymentForm = forwardRef(function PaymentForm(
         throw new Error("At least one concept must have an amount greater than 0");
       }
 
+      // Validate that all concepts have names
+      if (formData.concepts.some(c => !c.name || c.name.trim() === "")) {
+        throw new Error("All concepts must have a name");
+      }
+
       const response = await fetch("/api/payments", {
         method: "POST",
         headers: {
@@ -93,7 +98,7 @@ const PaymentForm = forwardRef(function PaymentForm(
       // Reset concepts while keeping type and date sticky
       setFormData((prev) => ({
         ...prev,
-        concepts: [{ amount: 0, quantity: 1 }],
+        concepts: [{ name: "", amount: 0, quantity: 1 }],
         tag: "",
       }));
 
@@ -124,7 +129,7 @@ const PaymentForm = forwardRef(function PaymentForm(
         if (name === "conceptAmount") {
           newConcepts[conceptIndex].amount = parseFloat(value) || 0;
         } else if (name === "conceptName") {
-          newConcepts[conceptIndex].name = value || undefined;
+          newConcepts[conceptIndex].name = value;
         } else if (name === "conceptQuantity") {
           newConcepts[conceptIndex].quantity = parseFloat(value) || 1;
         }
@@ -179,7 +184,7 @@ const PaymentForm = forwardRef(function PaymentForm(
   const addConcept = () => {
     setFormData((prev) => ({
       ...prev,
-      concepts: [...prev.concepts, { amount: 0, quantity: 1 }],
+      concepts: [...prev.concepts, { name: "", amount: 0, quantity: 1 }],
     }));
   };
 
@@ -420,7 +425,7 @@ const PaymentForm = forwardRef(function PaymentForm(
                   htmlFor={`conceptName-${index}`}
                   className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
                 >
-                  Name (Optional)
+                  Name
                 </label>
                 <input
                   type="text"
@@ -430,6 +435,7 @@ const PaymentForm = forwardRef(function PaymentForm(
                   onChange={(e) => handleChange(e, index)}
                   placeholder="e.g., Service, Product..."
                   className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  required
                 />
               </div>
               <div className="space-y-2">

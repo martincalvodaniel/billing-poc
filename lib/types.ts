@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 export type PaymentType = "income" | "outcome";
 
 export interface PaymentConcept {
-  name?: string;
+  name: string;
   amount: number;
   quantity: number; // Quantity/multiplier for the concept (1 or more)
 }

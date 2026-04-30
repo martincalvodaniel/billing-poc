@@ -5,7 +5,7 @@ import { Payment, PaymentConcept } from "@/lib/types";
 
 // Type for raw concept from request body (amount and quantity may be string or number)
 interface RawPaymentConcept {
-  name?: string;
+  name: string;
   amount: string | number;
   quantity?: string | number; // Optional; defaults to 1 if omitted
 }
@@ -73,10 +73,18 @@ export async function POST(request: NextRequest) {
 
     // Validate and normalize concepts
     const normalizedConcepts = paymentConcepts.map((concept: RawPaymentConcept): PaymentConcept => ({
-      name: concept.name || undefined,
+      name: concept.name,
       amount: parseFloat(String(concept.amount)),
       quantity: concept.quantity ? parseFloat(String(concept.quantity)) : 1,
     }));
+
+    // Check for missing or empty names
+    if (normalizedConcepts.some((c: PaymentConcept) => !c.name || c.name.trim() === "")) {
+      return NextResponse.json(
+        { error: "All concepts must have a name" },
+        { status: 400 }
+      );
+    }
 
     // Check for invalid amounts
     if (normalizedConcepts.some((c: PaymentConcept) => isNaN(c.amount))) {
@@ -191,10 +199,17 @@ export async function PUT(request: NextRequest) {
       }
 
       const normalizedConcepts = concepts.map((concept: RawPaymentConcept): PaymentConcept => ({
-        name: concept.name || undefined,
+        name: concept.name,
         amount: parseFloat(String(concept.amount)),
         quantity: concept.quantity ? parseFloat(String(concept.quantity)) : 1,
       }));
+
+      if (normalizedConcepts.some((c: PaymentConcept) => !c.name || c.name.trim() === "")) {
+        return NextResponse.json(
+          { error: "All concepts must have a name" },
+          { status: 400 }
+        );
+      }
 
       if (normalizedConcepts.some((c: PaymentConcept) => isNaN(c.amount))) {
         return NextResponse.json(

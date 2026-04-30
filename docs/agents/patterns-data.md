@@ -8,7 +8,7 @@
 export type PaymentType = "income" | "outcome";
 
 export interface PaymentConcept {
-  name?: string;           // Optional name/description (e.g., "Consulting", "Materials")
+  name: string;            // Required name/description (e.g., "Consulting", "Materials")
   amount: number;          // Amount in euros per unit for this concept/line item
   quantity: number;        // Quantity multiplier (1 or more); defaults to 1 if omitted
 }
@@ -30,7 +30,7 @@ export interface Payment {
 
 ### Key Concepts Pattern
 - **Concepts**: A payment is composed of one or more concepts (line items)
-- **Flexible Naming**: Each concept can optionally have a descriptive name
+- **Required Naming**: Each concept must have a descriptive name
 - **Quantity Support**: Each concept has a quantity multiplier (default 1)
 - **Total Calculation**: `total = sum(concept.amount * concept.quantity for all concepts)`
 - **VAT Application**: Applied uniformly at payment level to total amount; no concept-level overrides
@@ -45,16 +45,18 @@ export interface Payment {
 
 ### Server Validation (API Routes)
 - **Required**: type, date, concepts[] (at least one), vat
-- **Concepts**: Each must have amount (number); quantity defaults to 1 if omitted; name is optional string
+- **Concepts**: Each must have name (non-empty string) and amount (number); quantity defaults to 1 if omitted
 - **Numeric**: Parse amounts and quantities with parseFloat(); check !isNaN
 - **VAT Range**: Must be 0-100; reject if outside range
+- **Concept Names**: Reject if any name is missing or empty string
 - **Concept Amounts**: Reject if any amount is NaN
-- **Legacy Support**: Single `total` field converts to single unnamed concept for backward compatibility
+- **Legacy Support**: Single `total` field converts to single unnamed concept for backward compatibility (deprecated)
 
 ### Client Validation (PaymentForm)
 - Use HTML required/type="number"/step="0.01" attributes
+- All concept name fields are required; show validation error if empty
 - Disable submit during processing (isSubmitting state)
-- Validate at least one concept has amount > 0 before submit
+- Validate all concepts have names and at least one concept has amount > 0
 - Show error messages for API failures
 
 ### Calculation Rules
