@@ -192,12 +192,13 @@ const filteredPayments = data.payments; // Already filtered by server
 
 ### Fetching Clients with Search Filtering
 
-Use search query parameter to filter clients at database level by name or tax ID.
+Use search query parameter to filter clients at database level by name or tax ID. Results are limited to 10 clients maximum to avoid loading all clients into memory.
 
 **API Endpoint:**
 ```typescript
 // GET /api/clients?search={searchTerm}
 // search: optional search term (case-insensitive, searches name and taxId)
+// Returns maximum 10 clients sorted by name (limit applied server-side)
 ```
 
 **Implementation in GET /api/clients:**
@@ -221,6 +222,7 @@ export async function GET(request: NextRequest) {
     .collection<Client>("clients")
     .find(filter)
     .sort({ name: 1 })
+    .limit(10)         // Limit to 10 clients to prevent memory overhead
     .toArray();
 
   return NextResponse.json({ clients }, { status: 200 });
@@ -229,17 +231,19 @@ export async function GET(request: NextRequest) {
 
 **Client-Side Usage:**
 ```typescript
-// Fetch clients matching search term
+// Fetch clients matching search term (limited to 10 results)
 const searchTerm = "John";
 const response = await fetch(`/api/clients?search=${encodeURIComponent(searchTerm)}`);
 const data = await response.json();
-const filteredClients = data.clients; // Already filtered by server (sorted by name)
+const filteredClients = data.clients; // Already filtered and limited by server (sorted by name, max 10)
 ```
 
 **Benefits:**
 - ✅ Case-insensitive search across name and tax ID
 - ✅ Returns clients sorted by name
 - ✅ Filters at database level for performance
+- ✅ Limits to 10 results to prevent loading unnecessary data into memory
+- ✅ Refine search term to narrow results when more than 10 matches exist
 - ✅ No search results returns empty array (not an error)
 
 ### POST /api/payments

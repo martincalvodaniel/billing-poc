@@ -160,7 +160,7 @@ When filtered by type, returns only tags used by payments of that type.
 **Query Parameters:**
 - `search`: Optional search term to filter by client name or tax ID (case-insensitive)
 
-**Response:** Returns array of clients sorted by name.
+**Response:** Returns array of clients sorted by name (maximum 10 clients per request).
 
 Each client includes:
 - `_id`: MongoDB ObjectId
@@ -171,9 +171,11 @@ Each client includes:
 - `createdAt`: Creation timestamp
 - `updatedAt`: Last update timestamp
 
+**Note:** Results are limited to a maximum of 10 clients per request to optimize performance. Refine your search term to narrow results if needed.
+
 **Examples:**
-- `GET /api/clients` - All clients
-- `GET /api/clients?search=John` - Clients matching "John" in name or tax ID
+- `GET /api/clients` - First 10 clients (sorted by name)
+- `GET /api/clients?search=John` - Up to 10 clients matching "John" in name or tax ID
 
 ### `POST /api/clients` - Create Client
 

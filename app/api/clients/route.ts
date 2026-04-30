@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       .collection<Client>("clients")
       .find(filter)
       .sort({ name: 1 })
+      .limit(10)
       .toArray();
 
     console.log(`Fetched ${clients.length} clients from database for filter: ${JSON.stringify(filter)}`);
