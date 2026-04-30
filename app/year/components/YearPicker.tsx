@@ -3,20 +3,21 @@
 import { useId, useMemo, useState } from "react"
 import GoToCurrentButton from "../../components/GoToCurrentButton"
 import NavButton from "../../components/NavButton"
+import PickerOverlay from "../../components/PickerOverlay"
 
-interface YearSelectorProps {
+interface YearPickerProps {
   selectedYear: number
   onYearChange: (year: number) => void
   isViewingCurrentYear: boolean
   onGoToCurrentYear: () => void
 }
 
-export default function YearSelector({
+export default function YearPicker({
   selectedYear,
   onYearChange,
   isViewingCurrentYear,
   onGoToCurrentYear,
-}: YearSelectorProps) {
+}: YearPickerProps) {
   const id = useId()
   const [showYearPicker, setShowYearPicker] = useState(false)
   const [yearInput, setYearInput] = useState(() => selectedYear.toString())
@@ -74,10 +75,11 @@ export default function YearSelector({
           </button>
 
           {showYearPicker && (
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="fixed left-1/2 top-1/2 z-40 w-64 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:translate-x-0 sm:translate-y-0 dark:border-zinc-700 dark:bg-zinc-900"
+            <PickerOverlay
+              onClose={() => setShowYearPicker(false)}
+              closeLabel="Close year picker"
+              width="w-64"
+              className="p-4"
             >
               <div className="flex items-center gap-2">
                 <label
@@ -129,7 +131,7 @@ export default function YearSelector({
                   )
                 })}
               </div>
-            </div>
+            </PickerOverlay>
           )}
         </div>
         <NavButton

@@ -12,7 +12,7 @@
 | `PaymentForm` | Create payment form with concept CRUD |
 | `PaymentDetailModal` | Read-only payment detail display |
 | `PaymentFormFields` | Reusable form fields molecule |
-| `MonthSelector` | Calendar picker (12-month grid, keyboard nav) |
+| `MonthPicker` | Calendar picker (12-month grid, keyboard nav) |
 
 ## Form State Hook — `usePaymentForm`
 Shared between `PaymentForm` and `PaymentDetailModal`. Manages:

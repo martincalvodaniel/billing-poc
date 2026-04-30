@@ -6,7 +6,7 @@ import ChartsToggle from "../../components/ChartsToggle"
 import Modal from "../../components/Modal"
 import PageLayout from "../../components/PageLayout"
 import MonthlyPaymentsView from "./MonthlyPaymentsView"
-import MonthSelector from "./MonthSelector"
+import MonthPicker from "./MonthPicker"
 import PaymentForm from "./PaymentForm"
 
 export default function MonthPageContent() {
@@ -125,7 +125,7 @@ export default function MonthPageContent() {
                 <span aria-hidden="true">➕</span>
               </button>
               <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
-              <MonthSelector
+              <MonthPicker
                 selectedDate={selectedDate}
                 onMonthChange={handleCalendarMonthSelect}
                 showCalendar={showCalendar}

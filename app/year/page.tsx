@@ -9,7 +9,7 @@ import DonutChart from "../components/DonutChart"
 import PageLayout from "../components/PageLayout"
 import SummaryCard from "../components/SummaryCard"
 import MonthlyBreakdown from "./components/MonthlyBreakdown"
-import YearSelector from "./components/YearSelector"
+import YearPicker from "./components/YearPicker"
 
 export default function YearSummaryPage() {
   const [payments, setPayments] = useState<Payment[]>([])
@@ -147,7 +147,7 @@ export default function YearSummaryPage() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
-              <YearSelector
+              <YearPicker
                 selectedYear={selectedYear}
                 onYearChange={setSelectedYear}
                 isViewingCurrentYear={isViewingCurrentYear}
