@@ -18,9 +18,11 @@ export interface Payment {
   type: PaymentType;
   date: string;           // ISO date YYYY-MM-DD
   tag?: string;          // Optional category tag
+  clientId?: ObjectId;    // Optional associated client
   concepts: PaymentConcept[]; // Array of payment components
   vat: number;           // VAT percentage applied uniformly (0-100)
   surcharge?: number;      // Optional surcharge percentage (0-100)
+  deliveryNoteRef?: string;  // Optional reference identifier for a delivery note
   netAmount: number;     // Calculated: total / (1 + vat/100 + surcharge/100)
   vatAmount: number;     // Calculated: total * (vat/100) / (1 + vat/100 + surcharge/100)
   surchargeAmount?: number; // Calculated: total * (surcharge/100) / (1 + vat/100 + surcharge/100) when surcharge > 0

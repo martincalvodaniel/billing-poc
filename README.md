@@ -64,7 +64,8 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
   "vat": "21",
   "surcharge": "5.2",
   "tag": "Client A",
-  "clientId": "optional_client_object_id"
+  "clientId": "optional_client_object_id",
+  "deliveryNoteRef": "DN-2024-001"
 }
 ```
 
@@ -79,6 +80,7 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
 - `surcharge`: Surcharge percentage (e.g., 5.2 for 5.2%) (optional)
 - `tag`: Optional tag for categorizing payments (string)
 - `clientId`: Optional MongoDB ObjectId of the associated client (string)
+- `deliveryNoteRef`: Optional reference identifier for a delivery note (string)
 
 **Response:**
 The API calculates `netAmount` from the sum of all concept totals (amount × quantity) and VAT/surcharge percentages using: `netAmount = total / (1 + vat/100 + surcharge/100)` where `total` is the sum of (amount × quantity) for all concepts. When surcharge is provided, both `vatAmount` and `surchargeAmount` are calculated proportionally.
@@ -116,7 +118,8 @@ Each payment includes:
     { "name": "Updated Service", "amount": 250.00, "quantity": 2 }
   ],
   "vat": "21",
-  "surcharge": "5.2"
+  "surcharge": "5.2",
+  "deliveryNoteRef": "DN-2024-001"
 }
 ```
 
@@ -129,8 +132,9 @@ Each payment includes:
 - `concepts`: New array of payment components (optional). Each concept supports quantity field.
 - `vat`: New VAT percentage 0-100 (optional)
 - `surcharge`: New surcharge percentage 0-100 (optional)
+- `deliveryNoteRef`: Optional reference identifier for a delivery note (optional)
 
-At least one of `date`, `type`, `tag`, `clientId`, `concepts`, `vat`, or `surcharge` must be provided.
+At least one of `date`, `type`, `tag`, `clientId`, `concepts`, `vat`, `surcharge`, or `deliveryNoteRef` must be provided.
 
 When `concepts` are updated, totals are automatically recalculated using amount × quantity.
 When `vat` or `surcharge` are updated, net amount, VAT amount, and surcharge amount are recalculated based on total.

@@ -20,6 +20,7 @@ const PaymentForm = forwardRef(function PaymentForm(
     type: "income",
     tag: "",
     clientId: undefined,
+    deliveryNoteRef: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

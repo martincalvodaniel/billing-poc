@@ -19,6 +19,7 @@ export interface Payment {
   concepts: PaymentConcept[];
   vat: number;
   surcharge?: number;
+  deliveryNoteRef?: string;
   netAmount: number;
   vatAmount: number;
   surchargeAmount?: number;
@@ -35,6 +36,7 @@ export interface PaymentFormData {
   surcharge?: string;
   tag?: string;
   clientId?: string;
+  deliveryNoteRef?: string;
 }
 
 export interface Client {
