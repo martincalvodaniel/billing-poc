@@ -14,7 +14,7 @@
 ## Architecture
 - app/: Next.js App Router
   - api/payments/route.ts: REST API
-  - components/ (shared): DonutChart, PaymentCounter, NavigationBar, SummaryCard
+  - components/ (shared): DonutChart, NavigationBar, SummaryCard
   - month/: Monthly payments page
     - components/ (month-specific): PaymentForm, MonthlyPaymentsView, MonthSelector
     - page.tsx: Monthly payments list with month navigation
@@ -29,9 +29,8 @@
 ## Component Organization
 **Shared Components** (`/app/components/`): Multi-use components across pages
 - DonutChart: Tag-based breakdown visualization
-- PaymentCounter: Payment count by type
 - NavigationBar: Top navigation with page links
-- SummaryCard: Reusable info card (label + value)
+- SummaryCard: Reusable info card with optional payment counts in labels
 
 **Page-Specific Components**: Co-located with their pages for clarity
 - `/app/month/components/`: PaymentForm (modal), MonthlyPaymentsView (list), MonthSelector (picker)

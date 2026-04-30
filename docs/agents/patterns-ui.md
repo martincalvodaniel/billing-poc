@@ -90,44 +90,6 @@ return (
 - onMonthChange callback syncs PaymentForm date field via ref callback
 - Place in layout with other filter controls (alongside add-payment button)
 
-## PaymentCounter Component
-
-Reusable component for displaying payment count breakdown by type (Outcome and Income). Used in both monthly and yearly views to show type-specific payment counts in the filter section header.
-
-### Props
-```typescript
-interface PaymentCounterProps {
-  payments?: Payment[];      // Array of payments to count by type (auto-calculates)
-  incomeCount?: number;      // Direct income payment count (if not using payments array)
-  outcomeCount?: number;     // Direct outcome payment count (if not using payments array)
-}
-```
-
-### Features
-- Accepts either a payments array OR direct count numbers
-- Displays format: "X Outcome · Y Income" 
-- Type-safe with Payment interface from lib/types
-- Lightweight, pure component (no state)
-
-### Usage Examples
-
-**With payments array (Year view):**
-```typescript
-<PaymentCounter payments={paymentsForYear} />
-```
-
-**With direct counts (Month view, when counts come from callback):**
-```typescript
-const [paymentBreakdown, setPaymentBreakdown] = useState({ incomeCount: 0, outcomeCount: 0 });
-<PaymentCounter incomeCount={paymentBreakdown.incomeCount} outcomeCount={paymentBreakdown.outcomeCount} />
-```
-
-### Integration Notes
-- Used in filter section headers (alongside month/year selectors)
-- In monthly view: receives breakdown from PaymentsList `onPaymentsBreakdownChange` callback
-- In yearly view: receives full payments array and calculates breakdown internally
-- Positioned in header next to filter controls: "Overview for [period] · [PaymentCounter]"
-
 ## YearSelector Component
 
 Reusable component for selecting and navigating between years. Used in the Yearly Summary page to provide year filtering with manual input.

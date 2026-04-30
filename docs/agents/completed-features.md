@@ -19,7 +19,7 @@
 - Date column shows day-only; VAT displays as `(percent%) amount`
 - Form date syncs via onMonthChange callback with PaymentForm ref
 - Add-payment button integrated in filter header for consistent UX
-- **PaymentCounter component**: Displays breakdown of Outcome and Income payment counts in filter header
+- **SummaryCards**: Display financial totals with payment counts integrated into labels
 
 ## Modal Editing
 - Edit date/type/tag/total/vat via overlay modal

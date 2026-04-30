@@ -16,14 +16,14 @@
 Extract components when they appear in multiple places or represent a cohesive UI unit:
 - **MonthlyPaymentsView**: Monthly payment list with editing, deletion, and filtering (replaces inline logic)
 - **MonthlyBreakdown**: Monthly totals breakdown visualization (extracted from year view)
-- **PaymentCounter**: Shows payment count breakdown by type (used in both monthly and yearly views)
+- **SummaryCard**: Shows financial summaries with optional payment counts
 - **MonthSelector**: Calendar picker reused across pages
 - **YearSelector**: Year navigation reused across pages
 - **DonutChart**: Visualization reused for income/outcome tag breakdowns
 - Document extracted components in [patterns-ui.md](./patterns-ui.md) with Props, Features, and Integration Notes
 
 ### Component Folder Strategy
-**Shared Components** → `/app/components/`: Components used across multiple pages (DonutChart, PaymentCounter, NavigationBar, SummaryCard)
+**Shared Components** → `/app/components/`: Components used across multiple pages (DonutChart, NavigationBar, SummaryCard)
 **Page-Specific Components** → `/app/[page]/components/`: Components only used by one page, co-located for clarity and easier refactoring (e.g., `/app/month/components/MonthSelector.tsx`)
 
 Benefits of this hybrid approach:

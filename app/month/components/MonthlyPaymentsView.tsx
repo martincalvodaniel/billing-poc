@@ -8,10 +8,10 @@ import SummaryCard from "../../components/SummaryCard";
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
 export default forwardRef(function MonthlyPaymentsView(
-  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date; onPaymentsBreakdownChange?: (breakdown: { incomeCount: number; outcomeCount: number }) => void },
+  props: { onMonthChange?: (dateString: string) => void; selectedDate: Date },
   ref
 ) {
-  const { onMonthChange, selectedDate, onPaymentsBreakdownChange } = props;
+  const { onMonthChange, selectedDate } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,22 +41,6 @@ export default forwardRef(function MonthlyPaymentsView(
   useEffect(() => {
     fetchPayments();
   }, []);
-
-  useEffect(() => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const filtered = payments.filter((payment) => {
-      const paymentDate = new Date(payment.date);
-      return (
-        paymentDate.getFullYear() === year &&
-        paymentDate.getMonth() === month
-      );
-    });
-    
-    const incomeCount = filtered.filter((p) => p.type === "income").length;
-    const outcomeCount = filtered.filter((p) => p.type === "outcome").length;
-    onPaymentsBreakdownChange?.({ incomeCount, outcomeCount });
-  }, [payments, selectedDate, onPaymentsBreakdownChange]);
 
   // Notify parent when month changes so form date can be synced
   useEffect(() => {
@@ -439,12 +423,12 @@ export default forwardRef(function MonthlyPaymentsView(
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <SummaryCard
-          label="Total Income"
+          label={`Total Income (${filteredPayments.filter((p) => p.type === "income").length})`}
           value={formatCurrency(totalIncome)}
           valueClassName="text-green-600 dark:text-green-400"
         />
         <SummaryCard
-          label="Total Outcome"
+          label={`Total Outcome (${filteredPayments.filter((p) => p.type === "outcome").length})`}
           value={formatCurrency(totalOutcome)}
           valueClassName="text-red-600 dark:text-red-400"
         />
