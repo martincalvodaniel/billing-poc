@@ -6,8 +6,11 @@ import DonutChart from "./DonutChart";
 
 type EditField = "date" | "type" | "tag" | "total" | "vat" | null;
 
-export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateString: string) => void }, ref) {
-  const { onMonthChange } = props;
+export default forwardRef(function PaymentsList(
+  props: { onMonthChange?: (dateString: string) => void; onAddPaymentClick?: () => void },
+  ref
+) {
+  const { onMonthChange, onAddPaymentClick } = props;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -570,25 +573,35 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Payments ({filteredPayments.length})
             </h2>
-            <div className="flex items-center gap-3" ref={calendarRef}>
+            <div className="flex items-center gap-3">
               <button
-                onClick={handleGoToCurrentMonth}
-                disabled={isViewingCurrentMonth}
-                aria-label="Go to current month"
-                className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
+                type="button"
+                onClick={() => onAddPaymentClick?.()}
+                aria-label="Add payment"
+                className="inline-flex items-center justify-center rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
               >
-                🎯
+                <span className="text-white dark:text-white" aria-hidden="true">➕</span>
               </button>
-              <div className="relative">
+              <div className="flex items-center gap-3" ref={calendarRef}>
                 <button
-                  onClick={() => setShowCalendar(!showCalendar)}
-                  aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
-                  aria-expanded={showCalendar}
-                  className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+                  onClick={handleGoToCurrentMonth}
+                  disabled={isViewingCurrentMonth}
+                  aria-label="Go to current month"
+                  className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
                 >
-                  📅 {formatMonthYear(selectedDate)}
+                  🎯
                 </button>
-                {showCalendar && renderCalendarPicker()}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCalendar(!showCalendar)}
+                    aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
+                    aria-expanded={showCalendar}
+                    className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+                  >
+                    📅 {formatMonthYear(selectedDate)}
+                  </button>
+                  {showCalendar && renderCalendarPicker()}
+                </div>
               </div>
             </div>
           </div>

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import PaymentForm from "./components/PaymentForm";
 import PaymentsList from "./components/PaymentsList";
 
 export default function Home() {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const formRef = useRef<{ setFormDate: (dateString: string) => void }>(null);
   const paymentsListRef = useRef<{ refreshPayments: () => void; navigateToMonth: (dateString: string) => void }>(null);
 
@@ -13,10 +14,19 @@ export default function Home() {
     formRef.current?.setFormDate(date);
     paymentsListRef.current?.refreshPayments();
     paymentsListRef.current?.navigateToMonth(date);
+    setShowPaymentModal(false);
   };
 
   const handleMonthChange = (dateString: string) => {
     formRef.current?.setFormDate(dateString);
+  };
+
+  const handleAddPaymentClick = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowPaymentModal(false);
   };
 
   return (
@@ -53,18 +63,42 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Form Section */}
-          <div className="lg:col-span-1">
-            <PaymentForm ref={formRef} onPaymentSaved={handlePaymentSaved} />
-          </div>
-
-          {/* Payments List Section */}
-          <div className="lg:col-span-2">
-            <PaymentsList ref={paymentsListRef} onMonthChange={handleMonthChange} />
-          </div>
+        <div className="grid gap-8">
+          <PaymentsList
+            ref={paymentsListRef}
+            onMonthChange={handleMonthChange}
+            onAddPaymentClick={handleAddPaymentClick}
+          />
         </div>
       </main>
+
+      {showPaymentModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 py-10"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) handleCloseModal();
+          }}
+        >
+          <div
+            className="relative w-full max-w-xl pt-8"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              aria-label="Close add payment modal"
+              className="absolute right-3 top-3 rounded-full p-2 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:focus:ring-offset-zinc-900"
+            >
+              ✕
+            </button>
+            <PaymentForm ref={formRef} onPaymentSaved={handlePaymentSaved} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

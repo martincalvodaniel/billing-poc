@@ -18,6 +18,7 @@
 - Filter payments by month/year; summaries use filtered set
 - Date column shows day-only; VAT column `(percent%) amount`
 - Expose onMonthChange to sync form date (YYYY-MM-01)
+- Add-payment modal trigger lives beside the calendar controls; share the same button styles, focus ring, and disabled state semantics as navigation buttons
 
 ## Year Navigation
 - selectedYear state; prev/next buttons; jump-to-current shortcut
