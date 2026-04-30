@@ -44,7 +44,7 @@ export default forwardRef(function MonthlyPaymentsView(
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [selectedDate]);
 
   // Notify parent when month changes so form date can be synced
   useEffect(() => {
@@ -67,7 +67,11 @@ export default forwardRef(function MonthlyPaymentsView(
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch("/api/payments");
+      
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth() + 1;
+      
+      const response = await fetch(`/api/payments?year=${year}&month=${month}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch payments");
@@ -117,16 +121,8 @@ export default forwardRef(function MonthlyPaymentsView(
   };
 
   const getFilteredPayments = () => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    
-    return payments.filter((payment) => {
-      const paymentDate = new Date(payment.date);
-      return (
-        paymentDate.getFullYear() === year &&
-        paymentDate.getMonth() === month
-      );
-    });
+    // No client-side filtering needed since API returns only relevant month's payments
+    return payments;
   };
 
 

@@ -10,14 +10,65 @@ interface RawPaymentConcept {
   quantity?: string | number; // Optional; defaults to 1 if omitted
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const year = searchParams.get("year");
+    const month = searchParams.get("month");
+
     const db = await getDatabase();
+    
+    // Build filter based on query parameters
+    let filter: Record<string, unknown> = {};
+    
+    if (year && month) {
+      // Filter by specific month and year
+      const yearNum = parseInt(year);
+      const monthNum = parseInt(month);
+      
+      if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+        return NextResponse.json(
+          { error: "Invalid year or month parameters" },
+          { status: 400 }
+        );
+      }
+      
+      // Create date range for the month
+      const startDate = new Date(yearNum, monthNum - 1, 1);
+      const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+      
+      filter.date = {
+        $gte: startDate.toISOString().split('T')[0],
+        $lte: endDate.toISOString().split('T')[0],
+      };
+    } else if (year) {
+      // Filter by year only
+      const yearNum = parseInt(year);
+      
+      if (isNaN(yearNum)) {
+        return NextResponse.json(
+          { error: "Invalid year parameter" },
+          { status: 400 }
+        );
+      }
+      
+      // Create date range for the year
+      const startDate = new Date(yearNum, 0, 1);
+      const endDate = new Date(yearNum, 11, 31, 23, 59, 59, 999);
+      
+      filter.date = {
+        $gte: startDate.toISOString().split('T')[0],
+        $lte: endDate.toISOString().split('T')[0],
+      };
+    }
+
     const payments = await db
       .collection<Payment>("payments")
-      .find({})
+      .find(filter)
       .sort({ date: -1, createdAt: -1 })
       .toArray();
+
+    console.log(`Fetched ${payments.length} payments from database for filter: ${JSON.stringify(filter)}`);
 
     return NextResponse.json({ payments }, { status: 200 });
   } catch (error) {

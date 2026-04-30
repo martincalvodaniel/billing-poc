@@ -67,6 +67,83 @@ export interface Payment {
 
 ## API Patterns
 
+### Fetching Payments with Year/Month Filtering (Performance Optimization)
+
+For large datasets, use query parameters to filter at the database level rather than fetching all payments client-side.
+
+**API Endpoint:**
+```typescript
+// GET /api/payments?year={year}&month={month}
+// year: required if month is used; optional standalone
+// month: 1-12 optional; requires year parameter
+```
+
+**Implementation in GET /api/payments:**
+```typescript
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const year = searchParams.get("year");
+  const month = searchParams.get("month");
+
+  let filter: Record<string, unknown> = {};
+  
+  if (year && month) {
+    // Filter by specific month: create date range for that month
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+    
+    filter.date = {
+      $gte: startDate.toISOString().split('T')[0],
+      $lte: endDate.toISOString().split('T')[0],
+    };
+  } else if (year) {
+    // Filter by year: create date range for that year
+    const yearNum = parseInt(year);
+    const startDate = new Date(yearNum, 0, 1);
+    const endDate = new Date(yearNum, 11, 31, 23, 59, 59, 999);
+    
+    filter.date = {
+      $gte: startDate.toISOString().split('T')[0],
+      $lte: endDate.toISOString().split('T')[0],
+    };
+  }
+
+  const payments = await db
+    .collection<Payment>("payments")
+    .find(filter)
+    .sort({ date: -1, createdAt: -1 })
+    .toArray();
+
+  return NextResponse.json({ payments }, { status: 200 });
+}
+```
+
+**Client-Side Usage:**
+```typescript
+// Fetch payments for a specific month
+const year = selectedDate.getFullYear();
+const month = selectedDate.getMonth() + 1;
+const response = await fetch(`/api/payments?year=${year}&month=${month}`);
+const data = await response.json();
+
+// No client-side filtering needed since API returns only relevant month's payments
+const filteredPayments = data.payments; // Already filtered by server
+```
+
+**Benefits:**
+- ✅ Only relevant data fetched from database (not all payments)
+- ✅ Scales well as database grows (database can index date field)
+- ✅ Reduces payload size over network
+- ✅ Eliminates client-side filtering overhead
+- ✅ Backward compatible (no params = all payments)
+
+**Edge Cases:**
+- Invalid month (not 1-12): Returns 400 error
+- Invalid year (non-numeric): Returns 400 error  
+- Month without year: Month parameter is ignored
+
 ### POST /api/payments
 **Request with Multiple Concepts:**
 ```json

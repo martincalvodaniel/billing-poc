@@ -19,7 +19,7 @@ export default function YearSummaryPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch("/api/payments");
+        const response = await fetch(`/api/payments?year=${selectedYear}`);
         if (!response.ok) {
           throw new Error("Failed to fetch payments");
         }
@@ -35,7 +35,7 @@ export default function YearSummaryPage() {
     };
 
     fetchPayments();
-  }, []);
+  }, [selectedYear]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-ES", {
@@ -58,12 +58,8 @@ export default function YearSummaryPage() {
   const isViewingCurrentYear = selectedYear === currentYear;
 
   const paymentsForYear = useMemo(
-    () =>
-      payments.filter((payment) => {
-        const paymentDate = new Date(payment.date);
-        return paymentDate.getFullYear() === selectedYear;
-      }),
-    [payments, selectedYear]
+    () => payments, // API already filters by year
+    [payments]
   );
 
   const monthlyTotals = useMemo(() => {

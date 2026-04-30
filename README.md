@@ -78,13 +78,24 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
 **Response:**
 The API calculates `netAmount` from the sum of all concept totals (amount × quantity) and VAT percentage using: `netAmount = total / (1 + vat/100)` where `total` is the sum of (amount × quantity) for all concepts.
 
-### `GET /api/payments` - Get All Payments
+### `GET /api/payments` - Get Payments (With Optional Year/Month Filtering)
 
-Returns array of payments sorted by date (descending). Each payment includes:
+**Query Parameters:**
+- `year`: Optional year filter (e.g., `2024`)
+- `month`: Optional month filter (1-12, requires year). Returns payments from that month only.
+
+**Response:** Returns array of payments sorted by date (descending). When no parameters provided, returns all payments. When `year` provided alone, returns all payments in that year. When both `year` and `month` provided, returns payments for that specific month only.
+
+Each payment includes:
 - `concepts`: Array of payment components with amounts, quantities, and optional names
 - `total`: Sum of (amount × quantity) for all concepts
 - `vat`: VAT percentage and VAT amount
 - `netAmount`: Net amount after VAT deduction
+
+**Examples:**
+- `GET /api/payments` - All payments
+- `GET /api/payments?year=2024` - All payments in 2024
+- `GET /api/payments?year=2024&month=3` - All payments in March 2024
 
 ### `PUT /api/payments` - Update Payment
 
