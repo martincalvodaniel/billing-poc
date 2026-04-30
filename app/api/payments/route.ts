@@ -24,32 +24,41 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, date, netAmount, vat } = body;
+    const { type, date, total, vat } = body;
 
     // Validate required fields
-    if (!type || !date || netAmount === undefined || vat === undefined) {
+    if (!type || !date || total === undefined || vat === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const net = parseFloat(netAmount);
-    const vatAmount = parseFloat(vat);
+    const totalAmount = parseFloat(total);
+    const vatPercentage = parseFloat(vat);
 
-    if (isNaN(net) || isNaN(vatAmount)) {
+    if (isNaN(totalAmount) || isNaN(vatPercentage)) {
       return NextResponse.json(
         { error: "Invalid numeric values" },
         { status: 400 }
       );
     }
 
+    if (vatPercentage < 0 || vatPercentage > 100) {
+      return NextResponse.json(
+        { error: "VAT percentage must be between 0 and 100" },
+        { status: 400 }
+      );
+    }
+
+    const netAmount = totalAmount / (1 + vatPercentage / 100);
+    const vatAmount = totalAmount - netAmount;
     const payment: Omit<Payment, "_id"> = {
       type,
       date,
-      netAmount: net,
+      netAmount,
       vat: vatAmount,
-      total: net + vatAmount,
+      total: totalAmount,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

@@ -138,12 +138,38 @@ const payments = await db
   .toArray();
 ```
 
-### Form Handling
+### Form Handling (Payment Entry Form Pattern)
 - Use controlled components with `useState`
 - Validate on input change (optional) and on submit (required)
-- Parse string inputs to appropriate types (numbers, dates)
+- Parse string inputs to appropriate types (numbers, dates, percentages)
+- **VAT input is a percentage (0-100)**: Calculate net amount as `total / (1 + vat%)`
 - Disable form submission while processing
 - Provide user feedback (success/error messages)
+- Display calculated amounts in real-time (VAT amount and net amount)
+
+#### Payment Calculation Pattern
+
+The billing system uses a **percentage-based VAT model**:
+
+**User Input:**
+- **Total Amount (with VAT)**: The gross amount including taxes (e.g., €410.48)
+- **VAT (%)**: The tax percentage to deduct (e.g., 21%)
+
+**Calculation:**
+```
+Net Amount = Total / (1 + VAT% / 100)
+VAT Amount = Total - Net Amount
+```
+
+**Example:**
+```
+Total: €410.48
+VAT: 21%
+Net: 410.48 / 1.21 = €339.24
+VAT Amount: 410.48 - 339.24 = €71.24
+```
+
+This reflects real-world salary/invoice scenarios where you know the total amount and need to extract the deductions.
 
 ## Development Workflow
 
@@ -191,8 +217,8 @@ const result = await db.collection("payments").find({});
 interface FormState {
   type: PaymentType;
   date: string; // ISO format "YYYY-MM-DD"
-  netAmount: string; // Keep as string until parsing
-  vat: string;
+  total: string; // Total amount with VAT
+  vat: string;   // VAT percentage (0-100)
 }
 
 // ❌ Avoid: Loose typing
@@ -201,37 +227,53 @@ const formData: any = { /* ... */ };
 
 ### When Creating API Payloads
 ```typescript
-// ✅ Good: Define interface for validation
+// ✅ Good: Calculate net from total and VAT percentage
+const totalAmount = parseFloat(total);
+const vatPercentage = parseFloat(vat);
+const netAmount = totalAmount / (1 + vatPercentage / 100);
+const vatAmount = totalAmount - netAmount;
+
 const payment: Omit<Payment, "_id"> = {
   type,
   date,
-  netAmount: parseFloat(netAmount),
-  vat: parseFloat(vat),
-  total: net + vatAmount,
+  netAmount,
+  vat: vatAmount,
+  total: totalAmount,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
 // ❌ Avoid: Loose object creation
-const payment = { type, date, netAmount, vat };
+const payment = { type, date, total, vat };
 ```
 
-## Validation Patterns
-
-### Server-Side Validation (Required)
-All API endpoints must validate input:
-```typescript
-if (!type || !date || netAmount === undefined || vat === undefined) {
+## Validation Patternstotal === undefined || vat === undefined) {
   return NextResponse.json(
     { error: "Missing required fields" },
     { status: 400 }
   );
 }
 
-const net = parseFloat(netAmount);
-const vatAmount = parseFloat(vat);
+const totalAmount = parseFloat(total);
+const vatPercentage = parseFloat(vat);
 
-if (isNaN(net) || isNaN(vatAmount)) {
+if (isNaN(totalAmount) || isNaN(vatPercentage)) {
+  return NextResponse.json(
+    { error: "Invalid numeric values" },
+    { status: 400 }
+  );
+}
+
+if (vatPercentage < 0 || vatPercentage > 100) {
+  return NextResponse.json(
+    { error: "VAT percentage must be between 0 and 100" },
+    { status: 400 }
+  );
+}
+
+// Calculate net from total and VAT percentage
+const netAmount = totalAmount / (1 + vatPercentage / 100);
+const vatAmount = totalAmount - netAmount;f (isNaN(net) || isNaN(vatAmount)) {
   return NextResponse.json(
     { error: "Invalid numeric values" },
     { status: 400 }

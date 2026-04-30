@@ -5,7 +5,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
-- **Payment Entry Form** - Quick form to add new income/outcome transactions with auto-calculated totals
+- **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net)
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET and POST endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
@@ -48,10 +48,17 @@ For GitHub Copilot context and quick reference, see [.github/copilot-instruction
 {
   "type": "income" | "outcome",
   "date": "YYYY-MM-DD",
-  "netAmount": "100.00",
-  "vat": "21.00"
+  "total": "410.48",
+  "vat": "21"
 }
 ```
+
+**Parameters:**
+- `total`: Total amount including VAT (e.g., $410.48)
+- `vat`: VAT percentage (e.g., 21 for 21%)
+
+**Response:**
+The API calculates `netAmount` from total and VAT percentage using: `netAmount = total / (1 + vat/100)`
 
 ### `GET /api/payments` - Get All Payments
 

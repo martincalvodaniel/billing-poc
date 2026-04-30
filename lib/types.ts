@@ -16,6 +16,6 @@ export interface Payment {
 export interface PaymentFormData {
   type: PaymentType;
   date: string;
-  netAmount: string;
+  total: string;
   vat: string;
 }

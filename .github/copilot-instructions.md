@@ -18,9 +18,21 @@ This file is automatically used by GitHub Copilot in VS Code. For comprehensive 
 **API Routes** - Always validate and return proper status codes:
 ```typescript
 // app/api/[resource]/route.ts
-if (!requiredField) {
+if (!type || !date || total === undefined || vat === undefined) {
   return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 }
+
+if (vat < 0 || vat > 100) {
+  return NextResponse.json({ error: "VAT must be 0-100%" }, { status: 400 });
+}
+```
+
+**Payment Calculation** - VAT as percentage, net extracted from total:
+```typescript
+const totalAmount = parseFloat(total);
+const vatPercentage = parseFloat(vat);
+const netAmount = totalAmount / (1 + vatPercentage / 100);
+const vatAmount = totalAmount - netAmount;
 ```
 
 **Database** - Use typed collections:

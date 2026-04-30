@@ -10,7 +10,7 @@ interface PaymentFormProps {
 export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentFormData>({
     date: new Date().toISOString().split("T")[0],
-    netAmount: "",
+    total: "",
     vat: "",
     type: "income",
   });
@@ -39,7 +39,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
       // Reset form on success
       setFormData({
         date: new Date().toISOString().split("T")[0],
-        netAmount: "",
+        total: "",
         vat: "",
         type: "income",
       });
@@ -62,10 +62,17 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const calculateTotal = () => {
-    const net = parseFloat(formData.netAmount) || 0;
-    const vatAmount = parseFloat(formData.vat) || 0;
-    return (net + vatAmount).toFixed(2);
+  const calculateVatAmount = () => {
+    const total = parseFloat(formData.total) || 0;
+    const vatPercentage = parseFloat(formData.vat) || 0;
+    const net = total / (1 + vatPercentage / 100);
+    return (total - net).toFixed(2);
+  };
+
+  const calculateNetAmount = () => {
+    const total = parseFloat(formData.total) || 0;
+    const vatPercentage = parseFloat(formData.vat) || 0;
+    return (total / (1 + vatPercentage / 100)).toFixed(2);
   };
 
   return (
@@ -129,19 +136,19 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
           />
         </div>
 
-        {/* Net Amount */}
+        {/* Total Amount (with VAT) */}
         <div className="space-y-2">
           <label
-            htmlFor="netAmount"
+            htmlFor="total"
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Net Amount
+            Total Amount (with VAT)
           </label>
           <input
             type="number"
-            id="netAmount"
-            name="netAmount"
-            value={formData.netAmount}
+            id="total"
+            name="total"
+            value={formData.total}
             onChange={handleChange}
             step="0.01"
             min="0"
@@ -151,13 +158,13 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
           />
         </div>
 
-        {/* VAT */}
+        {/* VAT Percentage */}
         <div className="space-y-2">
           <label
             htmlFor="vat"
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            VAT
+            VAT (%)
           </label>
           <input
             type="number"
@@ -165,23 +172,34 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
             name="vat"
             value={formData.vat}
             onChange={handleChange}
-            step="0.01"
+            step="0.5"
             min="0"
-            placeholder="0.00"
+            max="100"
+            placeholder="0"
             className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             required
           />
         </div>
 
-        {/* Total (calculated) */}
-        <div className="space-y-2 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
+        {/* VAT Amount and Net Amount (calculated) */}
+        <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Total Amount
+              VAT Amount
             </span>
-            <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              ${calculateTotal()}
+            <span className="text-lg font-semibold text-red-600 dark:text-red-400">
+              ${calculateVatAmount()}
             </span>
+          </div>
+          <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Net Amount (after deductions)
+              </span>
+              <span className="text-lg font-semibold text-green-600 dark:text-green-400">
+                ${calculateNetAmount()}
+              </span>
+            </div>
           </div>
         </div>
       </div>
