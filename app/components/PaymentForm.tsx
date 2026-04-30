@@ -188,7 +188,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
               VAT Amount
             </span>
             <span className="text-lg font-semibold text-red-600 dark:text-red-400">
-              ${calculateVatAmount()}
+              €{calculateVatAmount()}
             </span>
           </div>
           <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
@@ -197,7 +197,7 @@ export default function PaymentForm({ onPaymentSaved }: PaymentFormProps) {
                 Net Amount (after deductions)
               </span>
               <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                ${calculateNetAmount()}
+                €{calculateNetAmount()}
               </span>
             </div>
           </div>

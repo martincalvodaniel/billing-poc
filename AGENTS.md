@@ -103,6 +103,32 @@ try {
   - Balance/Neutral: blue (`text-blue-600`, `bg-blue-50`)
 - Dark mode: Tailwind defaults handle `dark:` classes
 
+### Formatting Conventions
+- **Currency**: Use EUR (€) with Spanish locale (es-ES)
+- **Dates**: Use Spanish locale (es-ES) for consistency
+- Use `Intl.NumberFormat` and `toLocaleDateString` for localization
+
+Example currency formatting:
+```typescript
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount);
+};
+```
+
+Example date formatting:
+```typescript
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+```
+
 ## Common Tasks & Patterns
 
 ### Adding a New API Endpoint
@@ -247,7 +273,13 @@ const payment: Omit<Payment, "_id"> = {
 const payment = { type, date, total, vat };
 ```
 
-## Validation Patternstotal === undefined || vat === undefined) {
+## Validation Patterns
+
+### Server-Side Validation (Required)
+```typescript
+const { type, date, total, vat } = body;
+
+if (!type || !date || total === undefined || vat === undefined) {
   return NextResponse.json(
     { error: "Missing required fields" },
     { status: 400 }
@@ -273,12 +305,7 @@ if (vatPercentage < 0 || vatPercentage > 100) {
 
 // Calculate net from total and VAT percentage
 const netAmount = totalAmount / (1 + vatPercentage / 100);
-const vatAmount = totalAmount - netAmount;f (isNaN(net) || isNaN(vatAmount)) {
-  return NextResponse.json(
-    { error: "Invalid numeric values" },
-    { status: 400 }
-  );
-}
+const vatAmount = totalAmount - netAmount;
 ```
 
 ### Client-Side Validation (UX Enhancement)

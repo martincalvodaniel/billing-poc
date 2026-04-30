@@ -54,7 +54,7 @@ For GitHub Copilot context and quick reference, see [.github/copilot-instruction
 ```
 
 **Parameters:**
-- `total`: Total amount including VAT (e.g., $410.48)
+- `total`: Total amount including VAT (e.g., €410.48)
 - `vat`: VAT percentage (e.g., 21 for 21%)
 
 **Response:**

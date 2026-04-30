@@ -22,8 +22,9 @@ if (!type || !date || total === undefined || vat === undefined) {
   return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 }
 
-if (vat < 0 || vat > 100) {
-  return NextResponse.json({ error: "VAT must be 0-100%" }, { status: 400 });
+const vatPercentage = parseFloat(vat);
+if (vatPercentage < 0 || vatPercentage > 100) {
+  return NextResponse.json({ error: "VAT percentage must be between 0 and 100" }, { status: 400 });
 }
 ```
 
