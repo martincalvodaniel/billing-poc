@@ -260,13 +260,13 @@ export default forwardRef(function PaymentsList(props, ref) {
                     Type
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    Net Amount
+                    Total
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                     VAT
                   </th>
                   <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                    Total
+                    Net Amount
                   </th>
                 </tr>
               </thead>
@@ -349,14 +349,14 @@ export default forwardRef(function PaymentsList(props, ref) {
                         </button>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.netAmount)}
+                    <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
+                      {formatCurrency(payment.total)}
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.vat)}
                     </td>
-                    <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.total)}
+                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
+                      {formatCurrency(payment.netAmount)}
                     </td>
                   </tr>
                 ))}
