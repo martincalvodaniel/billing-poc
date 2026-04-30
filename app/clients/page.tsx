@@ -101,8 +101,8 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white dark:bg-zinc-950">
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-12">
+    <div className="min-h-screen bg-zinc-50 p-4 font-sans dark:bg-zinc-950">
+      <main className="mx-auto max-w-6xl space-y-8 py-12">
         <NavigationBar subtitle="Clients" />
 
         <div className="space-y-2 text-center">
@@ -146,7 +146,7 @@ export default function ClientsPage() {
           )}
         </div>
 
-        {isLoading ? (
+        {isLoading && filteredClients.length === 0 ? (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
             <p className="text-zinc-600 dark:text-zinc-400">Loading clients...</p>
           </div>
@@ -169,7 +169,7 @@ export default function ClientsPage() {
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
