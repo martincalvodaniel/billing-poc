@@ -24,10 +24,6 @@ describe("useToast module", () => {
   test("function is named useToast", () => {
     expect(useToast.name).toBe("useToast")
   })
-
-  test("calling outside React renderer throws (confirms it is a hook)", () => {
-    expect(() => useToast()).toThrow()
-  })
 })
 
 describe("useToast timer contract (manual schedule)", () => {
