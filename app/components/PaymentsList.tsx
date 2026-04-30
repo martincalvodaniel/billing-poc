@@ -127,6 +127,16 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
     });
   };
 
+  const groupPaymentsByTag = (list: Payment[], paymentType: Payment["type"]) => {
+    return list
+      .filter((payment) => payment.type === paymentType)
+      .reduce((acc, payment) => {
+        const tag = payment.tag || "Untagged";
+        acc[tag] = (acc[tag] || 0) + payment.total;
+        return acc;
+      }, {} as Record<string, number>);
+  };
+
   const getFilteredPayments = () => {
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
@@ -224,10 +234,6 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
         </div>
       </div>
     );
-  };
-
-  const getEditingPayment = () => {
-    return payments.find(p => p._id?.toString() === editingPaymentId);
   };
 
   const closeEditModal = () => {
@@ -356,7 +362,7 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
   const handleSave = async () => {
     if (!editingPaymentId || !editingField) return;
 
-    let payload: Record<string, any> = { id: editingPaymentId };
+    const payload: Record<string, unknown> = { id: editingPaymentId };
     let errorMessage = "";
 
     // Validate based on field type
@@ -465,23 +471,10 @@ export default forwardRef(function PaymentsList(props: { onMonthChange?: (dateSt
 
   const netBalance = totalIncome - totalOutcome;
 
-  // Calculate data grouped by tag
-  const incomeByTag = filteredPayments
-    .filter((p) => p.type === "income")
-    .reduce((acc, p) => {
-      const tag = p.tag || "Untagged";
-      acc[tag] = (acc[tag] || 0) + p.total;
-      return acc;
-    }, {} as Record<string, number>);
+  const incomeByTag = groupPaymentsByTag(filteredPayments, "income");
+  const outcomeByTag = groupPaymentsByTag(filteredPayments, "outcome");
 
-  const outcomeByTag = filteredPayments
-    .filter((p) => p.type === "outcome")
-    .reduce((acc, p) => {
-      const tag = p.tag || "Untagged";
-      acc[tag] = (acc[tag] || 0) + p.total;
-      return acc;
-    }, {} as Record<string, number>);
-
+  // Year-level aggregations
   // Generate colors for chart segments
   const colors = [
     "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6",

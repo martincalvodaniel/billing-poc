@@ -11,6 +11,7 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Charts appear between summary cards and payment list for quick insights
 - **Modal Payment Editing** - Click any date (shows day only since month/year are in calendar picker), type, tag, total, or VAT in the payment list to open a centered edit modal. VAT displays as `(percentage%) amount`. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal
+- **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals, tag donuts, and monthly breakdown cards; top navigation links between monthly list and yearly summary
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment operations
 - **Responsive Design** - Works on desktop, tablet, and mobile devices

@@ -25,7 +25,8 @@ app/                          # Next.js App Router directory
 │   ├── DonutChart.tsx         # Reusable donut chart visualization
 │   ├── PaymentForm.tsx        # Controlled form component
 │   └── PaymentsList.tsx       # Payment display with summary and charts
-├── page.tsx                   # Home page (main layout)
+├── page.tsx                   # Home page (monthly list + form)
+├── year/page.tsx              # Year summary view with navigation and donuts
 ├── layout.tsx                 # Root layout
 └── globals.css                # Global styles
 
@@ -656,6 +657,118 @@ const PaymentForm = forwardRef(function PaymentForm({ ... }, ref) {
 - Use local timezone for date string formatting (not `toISOString()` which converts to UTC and can shift date backward)
 - Format as `YYYY-MM-DD` to match HTML date input expectations
 - Form date updates whenever `selectedDate` changes in the calendar
+
+### Year Navigation Pattern (Year Summary Page)
+For displaying an annual view with aggregated data and month-by-month breakdown on `app/year/page.tsx`:
+
+1. **Navigation Controls** - Previous/next year buttons plus a jump-to-current-year shortcut (disabled when viewing current year)
+2. **Year Picker** - Clicking the year badge opens a dropdown dialog with:
+   - Text input field to manually type a year (press `Enter` or click `Go` to navigate)
+   - Grid of 12 nearby years (current ±6) for quick selection
+   - Dropdown closes automatically after any selection or manual submission
+3. **Yearly Aggregations** - Calculate and display across entire year:
+   - Year-to-date totals: income, outcome, and net balance
+   - Tag-based donut charts for income and outcome (reuses `DonutChart` component)
+   - Monthly breakdown: 12 cards showing income, outcome, net for each month with normalized bars
+4. **State Synchronization** - Keep `yearInput` string state synced with `selectedYear` number; use `useEffect` to update input when year changes programmatically
+5. **Top Navigation** - Include navigation bar with links to monthly list (`/`) and year summary (`/year`) for seamless app-wide navigation
+
+**Example Implementation:**
+```typescript
+const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+const [showYearPicker, setShowYearPicker] = useState(false);
+const [yearInput, setYearInput] = useState(() => new Date().getFullYear().toString());
+
+const currentYear = useMemo(() => new Date().getFullYear(), []);
+const isViewingCurrentYear = selectedYear === currentYear;
+
+// Sync text input when year changes
+useEffect(() => {
+  setYearInput(selectedYear.toString());
+}, [selectedYear]);
+
+const handleYearChange = (direction: "prev" | "next") => {
+  setSelectedYear((year) => (direction === "prev" ? year - 1 : year + 1));
+  setShowYearPicker(false);
+};
+
+const handleYearSelect = (year: number) => {
+  if (Number.isNaN(year)) return;
+  setSelectedYear(year);
+  setShowYearPicker(false);
+};
+
+const handleYearInputSubmit = () => {
+  const parsed = parseInt(yearInput, 10);
+  if (Number.isNaN(parsed)) return;
+  handleYearSelect(parsed);
+};
+
+const candidateYears = useMemo(() => {
+  const base = selectedYear;
+  return Array.from({ length: 12 }, (_, idx) => base - 6 + idx);
+}, [selectedYear]);
+```
+
+**In JSX - Year picker dialog:**
+```tsx
+<button
+  onClick={() => setShowYearPicker((open) => !open)}
+  aria-haspopup="dialog"
+  aria-expanded={showYearPicker}
+  className="rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-zinc-50"
+>
+  {selectedYear}
+</button>
+
+{showYearPicker && (
+  <div role="dialog" aria-modal="true" className="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border bg-white p-4 shadow-lg">
+    <div className="flex items-center gap-2">
+      <label htmlFor="year-input" className="text-xs font-semibold uppercase">Year</label>
+      <input
+        id="year-input"
+        type="number"
+        inputMode="numeric"
+        value={yearInput}
+        onChange={(e) => setYearInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleYearInputSubmit();
+          }
+        }}
+        className="w-24 rounded border px-2 py-1 text-sm"
+        aria-label="Enter year manually"
+      />
+      <button onClick={handleYearInputSubmit} className="rounded-md bg-blue-600 px-2 py-1 text-xs text-white">
+        Go
+      </button>
+    </div>
+
+    <div className="mt-4 grid grid-cols-3 gap-2">
+      {candidateYears.map((year) => {
+        const isActive = year === selectedYear;
+        return (
+          <button
+            key={year}
+            onClick={() => handleYearSelect(year)}
+            className={isActive ? "bg-blue-600 text-white shadow-sm" : "border text-zinc-800 hover:bg-zinc-50"}
+          >
+            {year}
+          </button>
+        );
+      })}
+    </div>
+  </div>
+)}
+```
+
+**Benefits:**
+- ✅ Quick year-to-year navigation without page reload
+- ✅ Manual year entry for jumping to distant years
+- ✅ Grid selection for browsing nearby years
+- ✅ Synced state between input and selected year
+- ✅ Accessible with proper ARIA attributes
 
 ### Modal Editing Pattern (Edit Payment Fields)
 For editing individual payment fields using a centered overlay modal:

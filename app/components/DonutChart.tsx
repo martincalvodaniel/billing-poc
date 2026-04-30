@@ -14,7 +14,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
 
   if (total === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-col items-center justify-start rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
         <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-500">No data</p>
       </div>
@@ -113,7 +113,7 @@ const DonutChart = memo(function DonutChart({ data, title, colors }: DonutChartP
   });
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex flex-col items-center justify-start rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
       <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
       <svg width="160" height="160" viewBox="0 0 120 120" className="mt-4">
         {segments.map((segment) => (
