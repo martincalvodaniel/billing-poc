@@ -1,5 +1,37 @@
 # UI Patterns
 
+## Page Layout & Design System
+
+### Navigation Bar (All Pages)
+Every page includes a consistent navigation bar:
+- Structure: Two-column flex layout with `justify-between`
+- Styling: `rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900`
+- Left section: "Billing" label + page title (e.g., "Monthly Payments", "Yearly Summary")
+- Right section: Navigation links with active/inactive states
+  - Active: `text-blue-700 hover:bg-blue-50` + `aria-current="page"`
+  - Inactive: `text-zinc-700 hover:bg-zinc-100`
+
+### Page Structure (All Pages)
+```
+<div class="min-h-screen bg-zinc-50 p-4 dark:bg-zinc-950">
+  <main class="mx-auto max-w-6xl space-y-8 py-12">
+    <!-- Navigation bar -->
+    <!-- Page header (h1 + subtitle) -->
+    <!-- Content sections with space-y-6 -->
+  </main>
+</div>
+```
+
+### Page Header (All Pages)
+- Container: `text-center`
+- Heading: `text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50`
+- Subtitle: `mt-2 text-lg text-zinc-600 dark:text-zinc-400`
+
+### Content Section Cards
+- Container: `space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`
+- Header: `border-b border-zinc-200 px-6 py-4 dark:border-zinc-800` with title + controls
+- Content: `space-y-6 px-6 pb-6`
+
 ## Form Handling
 - Controlled inputs; validate on submit
 - VAT is percentage (0-100), default 21%

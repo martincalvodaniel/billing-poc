@@ -35,7 +35,7 @@ export default function Home() {
         <nav className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Billing</p>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Payments</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Monthly Payments</p>
           </div>
           <div className="flex items-center gap-2">
             <Link
@@ -56,14 +56,14 @@ export default function Home() {
 
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Billing System
+            Monthly Overview
           </h1>
           <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
             Manage your income and outcome payments
           </p>
         </div>
 
-        <div className="grid gap-8">
+        <div className="space-y-6">
           <PaymentsList
             ref={paymentsListRef}
             onMonthChange={handleMonthChange}

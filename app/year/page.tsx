@@ -140,7 +140,7 @@ export default function YearSummaryPage() {
         <nav className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Billing</p>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Year summary</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Yearly Summary</p>
           </div>
           <div className="flex items-center gap-2">
             <Link
@@ -148,7 +148,7 @@ export default function YearSummaryPage() {
               className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900"
             >
               Monthly list
-             </Link>
+            </Link>
             <Link
               href="/year"
               className="rounded-md px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900"
@@ -156,32 +156,32 @@ export default function YearSummaryPage() {
             >
               Year summary
             </Link>
-           </div>
-         </nav>
+          </div>
+        </nav>
 
-         <div className="text-center">
-           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-             Yearly Overview
-           </h1>
-           <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
-             Explore income and outcome performance across the year
-           </p>
-         </div>
+        <div className="text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            Yearly Overview
+          </h1>
+          <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
+            Explore income and outcome performance across the year
+          </p>
+        </div>
 
-         <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-             <div>
-               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Year summary</p>
-               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear}</h3>
-             </div>
-             <div className="flex items-center gap-2">
-               <button
-                 onClick={() => handleYearChange("prev")}
-                 aria-label="View previous year"
-                 className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-               >
-                 ← Prev
-               </button>
+        <div className="space-y-6 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Yearly Filter</p>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Overview for {selectedYear}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleYearChange("prev")}
+                aria-label="View previous year"
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+              >
+                ← Prev
+              </button>
               <div className="relative">
                 <button
                   type="button"
@@ -249,25 +249,25 @@ export default function YearSummaryPage() {
                   </div>
                 )}
               </div>
-               <button
-                 onClick={() => handleYearChange("next")}
-                 aria-label="View next year"
-                 className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-               >
-                 Next →
-               </button>
-               <button
-                 onClick={handleGoToCurrentYear}
-                 disabled={isViewingCurrentYear}
-                 aria-label="Jump to current year"
-                 className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
-               >
-                 🎯
-               </button>
-             </div>
-           </div>
+              <button
+                onClick={() => handleYearChange("next")}
+                aria-label="View next year"
+                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+              >
+                Next →
+              </button>
+              <button
+                onClick={handleGoToCurrentYear}
+                disabled={isViewingCurrentYear}
+                aria-label="Jump to current year"
+                className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400 disabled:hover:bg-transparent dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:focus:ring-offset-zinc-900 dark:disabled:border-zinc-700 dark:disabled:text-zinc-500"
+              >
+                🎯
+              </button>
+            </div>
+          </div>
 
-           <div className="space-y-6 px-6 pb-6">
+          <div className="space-y-6 px-6 pb-6">
              <div className="grid gap-4 sm:grid-cols-3">
                <div className="rounded-lg border border-zinc-200 bg-gradient-to-b from-zinc-50 to-white p-4 dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/60">
                  <p className="text-sm text-zinc-600 dark:text-zinc-400">Income (YTD)</p>
@@ -351,29 +351,29 @@ export default function YearSummaryPage() {
                     })}
                   </div>
                 </div>
-               </div>
-             )}
-           </div>
-         </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-         {error && (
-           <div
-             className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-             role="alert"
-             aria-live="polite"
-             aria-atomic="true"
-           >
-             {error}
-           </div>
-         )}
+        {error && (
+          <div
+            className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+            role="alert"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {error}
+          </div>
+        )}
 
-         {isLoading && (
-           <div className="space-y-4">
-             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-           </div>
-         )}
+        {isLoading && (
+          <div className="space-y-4">
+            <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        )}
        </main>
     </div>
   );
