@@ -106,6 +106,13 @@ export default forwardRef(function MonthlyPaymentsView(
     });
   };
 
+  const hasConceptsWithDifferentVAT = (payment: Payment): boolean => {
+    if (!payment.concepts || payment.concepts.length === 0) return false;
+    return payment.concepts.some((concept) => 
+      typeof concept.vat === "number" && concept.vat !== payment.vat
+    );
+  };
+
   const groupPaymentsByTag = (list: Payment[], paymentType: Payment["type"]) => {
     return list
       .filter((payment) => payment.type === paymentType)
@@ -619,8 +626,9 @@ export default forwardRef(function MonthlyPaymentsView(
                       <button
                         onClick={() => handleEditVat(payment)}
                         className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 whitespace-nowrap"
+                        title={hasConceptsWithDifferentVAT(payment) ? "Payment has concepts with different VAT rates" : undefined}
                       >
-                        ({payment.vat}%) {formatCurrency(payment.vatAmount)}
+                        ({payment.vat}%{hasConceptsWithDifferentVAT(payment) ? "*" : ""}) {formatCurrency(payment.vatAmount)}
                       </button>
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">

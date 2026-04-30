@@ -210,6 +210,7 @@ interface MonthlyPaymentsViewProps {
 - Success/error toast notifications
 - Dark mode support
 - Keyboard navigation and accessibility
+- **VAT Indicator** - Asterisk (*) appears next to payment VAT percentage when any concept has a different VAT than the payment's default VAT; hover tooltip explains "Payment has concepts with different VAT rates"
 
 ### Integration Notes
 - Used as the main content in monthly view (app/page.tsx)
@@ -217,6 +218,7 @@ interface MonthlyPaymentsViewProps {
 - Ref used by parent to refresh list after form save
 - onMonthChange callback syncs PaymentForm date field
 - onPaymentsBreakdownChange callback updates filter header counter
+- Helper function `hasConceptsWithDifferentVAT()` checks if any concept vat differs from payment vat
 
 ## Modal Interactions & Keyboard Shortcuts
 All modals support consistent keyboard shortcuts for improved UX:
