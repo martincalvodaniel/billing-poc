@@ -15,26 +15,44 @@ export default function YearSummaryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchPayments = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`/api/payments?year=${selectedYear}`);
+        const response = await fetch(`/api/payments?year=${selectedYear}`, {
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch payments");
         }
         const data = await response.json();
-        setPayments(data.payments || []);
+        if (!abortController.signal.aborted) {
+          setPayments(data.payments || []);
+        }
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          // Request was aborted, ignore
+          return;
+        }
         const message = err instanceof Error ? err.message : "An error occurred";
-        setError(message);
+        if (!abortController.signal.aborted) {
+          setError(message);
+        }
         console.error(`Error fetching payments: ${err}`);
       } finally {
-        setIsLoading(false);
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchPayments();
+
+    return () => {
+      abortController.abort();
+    };
   }, [selectedYear]);
 
   const formatCurrency = (amount: number) => {

@@ -491,6 +491,111 @@ const handleSearch = async (searchTerm: string, pageNum: number = 1) => {
 - Calculations in-memory (no DB aggregation for now)
 - Search filtering at database level using regex patterns
 
+### Data Fetching with AbortController (React Strict Mode)
+
+React 18 Strict Mode in development intentionally double-invokes effects to help detect side effects. This causes duplicate API calls on component mount. Use AbortController to prevent duplicate requests.
+
+**Pattern for useEffect with fetch:**
+```typescript
+useEffect(() => {
+  const abortController = new AbortController();
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/endpoint', {
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch");
+      }
+
+      const data = await response.json();
+      
+      // Only update state if not aborted
+      if (!abortController.signal.aborted) {
+        setData(data);
+      }
+    } catch (err) {
+      // Ignore abort errors
+      if (err instanceof Error && err.name === "AbortError") {
+        return;
+      }
+      
+      // Handle other errors only if not aborted
+      if (!abortController.signal.aborted) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      }
+      console.error(`Error fetching data: ${err}`);
+    } finally {
+      if (!abortController.signal.aborted) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  fetchData();
+
+  // Cleanup: abort request if component unmounts or effect re-runs
+  return () => {
+    abortController.abort();
+  };
+}, [dependencies]);
+```
+
+**Pattern for useCallback-wrapped fetch:**
+```typescript
+const fetchData = useCallback(async (signal?: AbortSignal) => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    
+    const response = await fetch('/api/endpoint', { signal });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch");
+    }
+
+    const data = await response.json();
+    if (!signal?.aborted) {
+      setData(data);
+    }
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return;
+    }
+    if (!signal?.aborted) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    }
+    console.error(`Error fetching data: ${err}`);
+  } finally {
+    if (!signal?.aborted) {
+      setIsLoading(false);
+    }
+  }
+}, [dependencies]);
+
+useEffect(() => {
+  const abortController = new AbortController();
+  fetchData(abortController.signal);
+
+  return () => {
+    abortController.abort();
+  };
+}, [fetchData]);
+```
+
+**Key Points:**
+- ✅ Pass `signal` to fetch request
+- ✅ Check `signal.aborted` before setting state
+- ✅ Ignore `AbortError` exceptions (expected on cleanup)
+- ✅ Return cleanup function that calls `abort()`
+- ✅ Prevents duplicate database queries in development
+- ✅ No effect in production (Strict Mode disabled)
+
 ## Security
 - Validate all user input server-side
 - Validate vat percentage range

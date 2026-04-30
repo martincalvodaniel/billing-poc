@@ -43,7 +43,7 @@ export default forwardRef(function MonthlyPaymentsView(
   // Details modal state
   const [detailPaymentId, setDetailPaymentId] = useState<string | null>(null);
 
-  const fetchPayments = useCallback(async () => {
+  const fetchPayments = useCallback(async (signal?: AbortSignal) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -51,25 +51,42 @@ export default forwardRef(function MonthlyPaymentsView(
       const year = selectedDate.getFullYear();
       const month = selectedDate.getMonth() + 1;
       
-      const response = await fetch(`/api/payments?year=${year}&month=${month}`);
+      const response = await fetch(`/api/payments?year=${year}&month=${month}`, {
+        signal,
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch payments");
       }
 
       const data = await response.json();
-      setPayments(data.payments || []);
+      if (!signal?.aborted) {
+        setPayments(data.payments || []);
+      }
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        // Request was aborted, ignore
+        return;
+      }
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
-      setError(errorMessage);
+      if (!signal?.aborted) {
+        setError(errorMessage);
+      }
       console.error(`Error fetching payments: ${err}`);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [selectedDate]);
 
   useEffect(() => {
-    fetchPayments();
+    const abortController = new AbortController();
+    fetchPayments(abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
   }, [fetchPayments]);
 
   // Notify parent when month changes so form date can be synced
@@ -82,7 +99,7 @@ export default forwardRef(function MonthlyPaymentsView(
   }, [selectedDate, onMonthChange]);
 
   useImperativeHandle(ref, () => ({
-    refreshPayments: fetchPayments,
+    refreshPayments: () => fetchPayments(),
     navigateToMonth: () => {
       // Month navigation is now handled by parent component via selectedDate prop
     },
