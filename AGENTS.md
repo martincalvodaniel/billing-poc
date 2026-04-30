@@ -436,9 +436,10 @@ For displaying payments filtered by month with navigation controls and calendar 
 3. **Calendar Picker** - Render clickable month grid (4 columns) showing all 12 months of the selected year with selection highlighting
 4. **Inside Calendar** - Implement prev/next month buttons and year navigation controls
 5. **Display Toggle** - Show formatted month/year button with calendar icon (📅) that toggles calendar dropdown
-6. **Click-Outside Behavior** - Attach a `useEffect` hook to detect clicks outside the calendar and close it automatically
-7. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
-8. **Empty State** - Show custom message when no payments in selected month
+6. **Current Month Shortcut** - Add an icon-only button (e.g., 🎯) to jump back to the current month; disable it when already viewing the current month and close the calendar when used
+7. **Click-Outside Behavior** - Attach a `useEffect` hook to detect clicks outside the calendar and close it automatically
+8. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
+9. **Empty State** - Show custom message when no payments in selected month
 
 Example pattern:
 ```typescript
@@ -555,14 +556,26 @@ const filteredPayments = getFilteredPayments();
 ```tsx
 <div className="flex items-center justify-between">
   <h2>Payments ({filteredPayments.length})</h2>
-  <div className="relative">
-    <button 
-      onClick={() => setShowCalendar(!showCalendar)}
-      className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+  <div className="flex items-center gap-3" ref={calendarRef}>
+    <button
+      onClick={handleGoToCurrentMonth}
+      disabled={isViewingCurrentMonth}
+      aria-label="Go to current month"
+      className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:text-zinc-400"
     >
-      📅 {formatMonthYear(selectedDate)}
+      🎯
     </button>
-    {showCalendar && renderCalendarPicker()}
+    <div className="relative">
+      <button 
+        onClick={() => setShowCalendar(!showCalendar)}
+        aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
+        aria-expanded={showCalendar}
+        className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+      >
+        📅 {formatMonthYear(selectedDate)}
+      </button>
+      {showCalendar && renderCalendarPicker()}
+    </div>
   </div>
 </div>
 ```
@@ -575,6 +588,7 @@ const filteredPayments = getFilteredPayments();
 - Year navigation controls at bottom
 - Selected month highlighted in blue for visual feedback
 - Click any month to select and auto-close calendar
+- Icon-only button jumps to the current month and disables when already there
 
 **Click-Outside Implementation:**
 ```typescript
