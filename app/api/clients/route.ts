@@ -23,8 +23,10 @@ export async function GET(request: NextRequest) {
 
     // Build search filter if provided
     if (search?.trim()) {
-      // Search by name or taxId (case-insensitive)
-      const searchPattern = { $regex: search.trim(), $options: "i" }
+      const escaped = search
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      const searchPattern = { $regex: escaped, $options: "i" }
       filter.$or = [{ name: searchPattern }, { taxId: searchPattern }]
     }
 
