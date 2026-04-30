@@ -507,7 +507,6 @@ export default forwardRef(function MonthlyPaymentsView(
             payment={selectedPayment}
             onClose={closeEditModal}
             onUpdate={handlePaymentUpdated}
-            formatCurrency={formatCurrency}
           />
         );
       })()}

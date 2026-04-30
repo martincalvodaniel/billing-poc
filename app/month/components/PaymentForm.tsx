@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
-import { PaymentFormData } from "@/lib/types";
-import ClientSelector from "@/app/components/ClientSelector";
+import { useState, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
+import { usePaymentForm } from "./usePaymentForm";
+import { validateConcepts } from "./paymentUtils";
+import PaymentFormFields from "./PaymentFormFields";
 
 interface PaymentFormProps {
   onPaymentSaved?: (date: string) => void;
@@ -12,25 +13,29 @@ const PaymentForm = forwardRef(function PaymentForm(
   { onPaymentSaved }: PaymentFormProps,
   ref
 ) {
-  const [formData, setFormData] = useState<PaymentFormData>({
-    date: new Date().toISOString().split("T")[0],
-    concepts: [{ name: "", amount: 0, quantity: 1 }],
-    vat: "21",
-    surcharge: "",
-    type: "income",
-    tag: "",
-    clientId: undefined,
-    deliveryNoteRef: "",
-  });
+  const {
+    formData,
+    suggestedTags,
+    showTagSuggestions,
+    handleChange,
+    handleTagSelect,
+    handleTagBlur,
+    handleClientChange,
+    addConcept,
+    removeConcept,
+    resetForm,
+    setFormDate,
+    calculateTotal,
+    calculateVatAmount,
+    calculateSurchargeAmount,
+    calculateNetAmount,
+  } = usePaymentForm();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
-  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Provider bill upload state
   const [providerBillFile, setProviderBillFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -38,37 +43,8 @@ const PaymentForm = forwardRef(function PaymentForm(
 
   // Expose method to sync date from parent when month changes
   useImperativeHandle(ref, () => ({
-    setFormDate: (dateString: string) => {
-      setFormData((prev) => ({ ...prev, date: dateString }));
-    },
+    setFormDate,
   }));
-
-  // Fetch available tags on component mount and when type changes
-  const fetchTagsByType = async (paymentType: string) => {
-    try {
-      const response = await fetch(`/api/tags?type=${paymentType}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTags(data.tags || []);
-      }
-    } catch (err) {
-      console.error(`Error fetching tags: ${err}`);
-    }
-  };
-
-  useEffect(() => {
-    fetchTagsByType(formData.type);
-  }, [formData.type]);
-
-  // Refetch tags when window regains focus to stay in sync with list edits
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchTagsByType(formData.type);
-    };
-
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [formData.type]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,15 +53,10 @@ const PaymentForm = forwardRef(function PaymentForm(
     setUploadError(null);
 
     try {
-      // Validate that at least one concept has a non-zero amount
-      const validConcepts = formData.concepts.filter(c => c.amount > 0);
-      if (validConcepts.length === 0) {
-        throw new Error("At least one concept must have an amount greater than 0");
-      }
-
-      // Validate that all concepts have names
-      if (formData.concepts.some(c => !c.name || c.name.trim() === "")) {
-        throw new Error("All concepts must have a name");
+      // Validate concepts
+      const validation = validateConcepts(formData.concepts);
+      if (!validation.isValid) {
+        throw new Error(validation.error || "Validation failed");
       }
 
       const response = await fetch("/api/payments", {
@@ -130,17 +101,14 @@ const PaymentForm = forwardRef(function PaymentForm(
       }
 
       // Add new tag to available tags if it's not already there
-      if (formData.tag && !availableTags.includes(formData.tag)) {
-        setAvailableTags((prev) => [...prev, formData.tag!].sort());
+      // Note: availableTags is managed in usePaymentForm hook
+      if (formData.tag) {
+        setShowTagSuggestions(false);
+        setSuggestedTags([]);
       }
 
       // Reset concepts, client, and provider bill file while keeping type and date sticky
-      setFormData((prev) => ({
-        ...prev,
-        concepts: [{ name: "", amount: 0, quantity: 1 }],
-        tag: "",
-        clientId: undefined,
-      }));
+      resetForm();
       setProviderBillFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -160,113 +128,16 @@ const PaymentForm = forwardRef(function PaymentForm(
     }
   };
 
-  const handleChange = (
+  const handleFormFieldChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     conceptIndex?: number
   ) => {
-    const { name, value } = e.target;
-
-    // Handle concept-specific fields
-    if (conceptIndex !== undefined) {
-      setFormData((prev) => {
-        const newConcepts = [...prev.concepts];
-        if (name === "conceptAmount") {
-          newConcepts[conceptIndex].amount = parseFloat(value) || 0;
-        } else if (name === "conceptName") {
-          newConcepts[conceptIndex].name = value;
-        } else if (name === "conceptQuantity") {
-          newConcepts[conceptIndex].quantity = parseFloat(value) || 1;
-        }
-        return { ...prev, concepts: newConcepts };
-      });
-      return;
-    }
-
-    // Handle form-level fields
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Handle tag suggestions with debounce
-    if (name === "tag") {
+    handleChange(e, conceptIndex);
+    
+    // Handle tag suggestions with debounce (managed in hook, but keep dropdown state in sync here)
+    if (e.target.name === "tag") {
       setShowTagSuggestions(true);
-
-      // Clear existing timer
-      if (tagDebounceTimer.current) {
-        clearTimeout(tagDebounceTimer.current);
-      }
-
-      // Set new timer for 1 second delay
-      tagDebounceTimer.current = setTimeout(() => {
-        if (value.trim() === "") {
-          setSuggestedTags(availableTags);
-        } else {
-          const filtered = availableTags.filter((tag) =>
-            tag.toLowerCase().includes(value.toLowerCase())
-          );
-          setSuggestedTags(filtered);
-        }
-      }, 1000);
     }
-  };
-
-  const calculateTotal = () => {
-    return formData.concepts.reduce((sum, c) => sum + (c.amount * (c.quantity || 1)), 0);
-  };
-
-  const calculateVatAmount = () => {
-    const total = calculateTotal();
-    const vatPercentage = parseFloat(formData.vat) || 0;
-    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
-    const vatAmount = total * (vatPercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
-    return vatAmount.toFixed(2);
-  };
-
-  const calculateSurchargeAmount = () => {
-    const total = calculateTotal();
-    const vatPercentage = parseFloat(formData.vat) || 0;
-    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
-    if (surchargePercentage === 0) return "0.00";
-    const surchargeAmount = total * (surchargePercentage / 100) / (1 + vatPercentage / 100 + surchargePercentage / 100);
-    return surchargeAmount.toFixed(2);
-  };
-
-  const calculateNetAmount = () => {
-    const total = calculateTotal();
-    const vatPercentage = parseFloat(formData.vat) || 0;
-    const surchargePercentage = parseFloat(formData.surcharge || "0") || 0;
-    return (total / (1 + vatPercentage / 100 + surchargePercentage / 100)).toFixed(2);
-  };
-
-  const addConcept = () => {
-    setFormData((prev) => ({
-      ...prev,
-      concepts: [...prev.concepts, { name: "", amount: 0, quantity: 1 }],
-    }));
-  };
-
-  const removeConcept = (index: number) => {
-    if (formData.concepts.length > 1) {
-      setFormData((prev) => ({
-        ...prev,
-        concepts: prev.concepts.filter((_, i) => i !== index),
-      }));
-    }
-  };
-
-  const handleTagSelect = (tag: string) => {
-    setFormData((prev) => ({ ...prev, tag }));
-    setShowTagSuggestions(false);
-    setSuggestedTags([]);
-  };
-
-  const handleTagBlur = () => {
-    // Delay closing suggestions to allow click on suggestion
-    setTimeout(() => {
-      setShowTagSuggestions(false);
-    }, 200);
-  };
-
-  const handleClientChange = (clientId: string | undefined) => {
-    setFormData((prev) => ({ ...prev, clientId }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -405,368 +276,59 @@ const PaymentForm = forwardRef(function PaymentForm(
         </div>
       )}
 
-      <div className="space-y-4">
-        {/* Payment Type */}
+      <PaymentFormFields
+        formData={formData}
+        suggestedTags={suggestedTags}
+        showTagSuggestions={showTagSuggestions}
+        showAdditionalFields={showAdditionalFields}
+        onSetShowAdditionalFields={setShowAdditionalFields}
+        onChangeField={handleFormFieldChange}
+        onTagSelect={handleTagSelect}
+        onTagBlur={handleTagBlur}
+        onClientChange={handleClientChange}
+        onAddConcept={addConcept}
+        onRemoveConcept={removeConcept}
+        calculateTotal={calculateTotal}
+        calculateVatAmount={calculateVatAmount}
+        calculateSurchargeAmount={calculateSurchargeAmount}
+        calculateNetAmount={calculateNetAmount}
+      />
+
+      {/* Provider Bill Upload (Outcome Only) */}
+      {formData.type === "outcome" && (
         <div className="space-y-2">
           <label
-            htmlFor="type"
+            htmlFor="providerBill"
             className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
-            Type
+            Provider Bill (Optional)
           </label>
-          <select
-            id="type"
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            required
-          >
-            <option value="income">Income</option>
-            <option value="outcome">Outcome</option>
-          </select>
-        </div>
-
-        {/* Date */}
-        <div className="space-y-2">
-          <label
-            htmlFor="date"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Date
-          </label>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            required
-          />
-        </div>
-
-        {/* Tag with Autocomplete */}
-        <div className="relative space-y-2">
-          <label
-            htmlFor="tag"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Tag (Optional)
-          </label>
-          <input
-            type="text"
-            id="tag"
-            name="tag"
-            value={formData.tag || ""}
-            onChange={handleChange}
-            onFocus={() => {
-              setShowTagSuggestions(true);
-              if (formData.tag?.trim() === "") {
-                setSuggestedTags(availableTags);
-              }
-            }}
-            onBlur={handleTagBlur}
-            placeholder={formData.type === "income" ? "e.g., Inc1, Inc2, etc." : "e.g., Out1, Out2, etc."}
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          />
-
-          {/* Tag Suggestions Dropdown */}
-          {showTagSuggestions && suggestedTags.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-              <ul className="max-h-48 overflow-y-auto py-1">
-                {suggestedTags.map((tag) => (
-                  <li key={tag}>
-                    <button
-                      type="button"
-                      onClick={() => handleTagSelect(tag)}
-                      className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
-                    >
-                      {tag}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* Additional Fields (Collapsed) */}
-        <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-          <button
-            type="button"
-            onClick={() => setShowAdditionalFields(!showAdditionalFields)}
-            className="flex w-full items-center justify-between rounded-md bg-zinc-100 px-4 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
-          >
-            <span>Additional Fields</span>
-            <svg
-              className={`h-4 w-4 transition-transform ${showAdditionalFields ? "rotate-180" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </button>
-
-          {showAdditionalFields && (
-            <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
-              {/* Client Selector */}
-              <ClientSelector
-                value={formData.clientId}
-                onChange={handleClientChange}
-                label="Client (Optional)"
-                required={false}
-              />
-
-              {/* Delivery Note Reference */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="deliveryNoteRef"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                >
-                  Delivery Note Ref (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="deliveryNoteRef"
-                  name="deliveryNoteRef"
-                  value={formData.deliveryNoteRef || ""}
-                  onChange={handleChange}
-                  placeholder="e.g., DN-2024-001"
-                  className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-
-              {/* Surcharge Percentage (Optional) */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="surcharge"
-                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                >
-                  Surcharge (%) - Optional
-                </label>
-                <input
-                  type="number"
-                  id="surcharge"
-                  name="surcharge"
-                  value={formData.surcharge}
-                  onChange={handleChange}
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  placeholder="0"
-                  className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Concepts (Payment Components) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Payment Components
-            </label>
-            <button
-              type="button"
-              onClick={addConcept}
-              className="rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
-            >
-              + Add Component
-            </button>
-          </div>
-
-          {formData.concepts.map((concept, index) => (
+          {uploadError && (
             <div
-              key={index}
-              className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50 sm:grid-cols-4"
+              className="rounded-md bg-red-50 p-2 text-xs text-red-800 dark:bg-red-900/20 dark:text-red-400"
+              role="alert"
             >
-              <div className="space-y-2">
-                <label
-                  htmlFor={`conceptName-${index}`}
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id={`conceptName-${index}`}
-                  name="conceptName"
-                  value={concept.name || ""}
-                  onChange={(e) => handleChange(e, index)}
-                  placeholder="e.g., Service, Product..."
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor={`conceptAmount-${index}`}
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Amount (€)
-                </label>
-                <input
-                  type="number"
-                  id={`conceptAmount-${index}`}
-                  name="conceptAmount"
-                  value={concept.amount || ""}
-                  onChange={(e) => handleChange(e, index)}
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor={`conceptQuantity-${index}`}
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  id={`conceptQuantity-${index}`}
-                  name="conceptQuantity"
-                  value={concept.quantity ?? 1}
-                  onChange={(e) => handleChange(e, index)}
-                  step="1"
-                  min="1"
-                  placeholder="1"
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-              {formData.concepts.length > 1 && (
-                <div className="flex items-end justify-end">
-                  <button
-                    type="button"
-                    onClick={() => removeConcept(index)}
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-                    aria-label="Remove component"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-            <p className="font-medium">Total from components: €{calculateTotal().toFixed(2)}</p>
-          </div>
-        </div>
-
-        {/* VAT Percentage */}
-        <div className="space-y-2">
-          <label
-            htmlFor="vat"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            VAT (%)
-          </label>
-          <input
-            type="number"
-            id="vat"
-            name="vat"
-            value={formData.vat}
-            onChange={handleChange}
-            step="0.5"
-            min="0"
-            max="100"
-            placeholder="0"
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            required
-          />
-        </div>
-
-        {/* Provider Bill Upload (Outcome Only) */}
-        {formData.type === "outcome" && (
-          <div className="space-y-2">
-            <label
-              htmlFor="providerBill"
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Provider Bill (Optional)
-            </label>
-            {uploadError && (
-              <div
-                className="rounded-md bg-red-50 p-2 text-xs text-red-800 dark:bg-red-900/20 dark:text-red-400"
-                role="alert"
-              >
-                {uploadError}
-              </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              id="providerBill"
-              accept="application/pdf"
-              onChange={handleFileChange}
-              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-            {providerBillFile && (
-              <p className="text-xs text-green-600 dark:text-green-400">
-                Selected: {providerBillFile.name} ({(providerBillFile.size / 1024).toFixed(2)} KB)
-              </p>
-            )}
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Max file size: 10MB. Only PDF files allowed.
-            </p>
-          </div>
-        )}
-
-        {/* VAT Amount and Net Amount (calculated) */}
-        <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              VAT Amount
-            </span>
-            <span className="text-lg font-semibold text-red-600 dark:text-red-400">
-              €{calculateVatAmount()}
-            </span>
-          </div>
-          {parseFloat(formData.surcharge || "0") > 0 && (
-            <div className="flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-700">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Surcharge Amount
-              </span>
-              <span className="text-lg font-semibold text-orange-600 dark:text-orange-400">
-                €{calculateSurchargeAmount()}
-              </span>
+              {uploadError}
             </div>
           )}
-          <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Net Amount (after deductions)
-              </span>
-              <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                €{calculateNetAmount()}
-              </span>
-            </div>
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            id="providerBill"
+            accept="application/pdf"
+            onChange={handleFileChange}
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+          {providerBillFile && (
+            <p className="text-xs text-green-600 dark:text-green-400">
+              Selected: {providerBillFile.name} ({(providerBillFile.size / 1024).toFixed(2)} KB)
+            </p>
+          )}
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            Max file size: 10MB. Only PDF files allowed.
+          </p>
         </div>
-      </div>
+      )}
 
       <button
         type="submit"
