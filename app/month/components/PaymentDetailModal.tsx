@@ -39,6 +39,7 @@ export default function PaymentDetailModal({
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
 
   // Invoice generation state
   const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice");
@@ -422,14 +423,6 @@ export default function PaymentDetailModal({
           </select>
         </div>
 
-        {/* Client Selector */}
-        <ClientSelector
-          value={clientId}
-          onChange={handleClientChange}
-          label="Client (Optional)"
-          required={false}
-        />
-
         {/* Date */}
         <div className="space-y-2">
           <label
@@ -492,22 +485,79 @@ export default function PaymentDetailModal({
           )}
         </div>
 
-        {/* Delivery Note Reference */}
-        <div className="space-y-2">
-          <label
-            htmlFor="edit-deliveryNoteRef"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        {/* Additional Fields (Collapsed) */}
+        <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+          <button
+            type="button"
+            onClick={() => setShowAdditionalFields(!showAdditionalFields)}
+            className="flex w-full items-center justify-between rounded-md bg-zinc-100 px-4 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
           >
-            Delivery Note Ref (Optional)
-          </label>
-          <input
-            type="text"
-            id="edit-deliveryNoteRef"
-            value={deliveryNoteRef}
-            onChange={(e) => setDeliveryNoteRef(e.target.value)}
-            placeholder="e.g., DN-2024-001"
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          />
+            <span>Additional Fields</span>
+            <svg
+              className={`h-4 w-4 transition-transform ${showAdditionalFields ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+          </button>
+
+          {showAdditionalFields && (
+            <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
+              {/* Client Selector */}
+              <ClientSelector
+                value={clientId}
+                onChange={handleClientChange}
+                label="Client (Optional)"
+                required={false}
+              />
+
+              {/* Delivery Note Reference */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="edit-deliveryNoteRef"
+                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  Delivery Note Ref (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="edit-deliveryNoteRef"
+                  value={deliveryNoteRef}
+                  onChange={(e) => setDeliveryNoteRef(e.target.value)}
+                  placeholder="e.g., DN-2024-001"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              {/* Surcharge Percentage (Optional) */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="edit-surcharge"
+                  className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  Surcharge (%) - Optional
+                </label>
+                <input
+                  type="number"
+                  id="edit-surcharge"
+                  value={surcharge}
+                  onChange={(e) => setSurcharge(e.target.value)}
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Concepts (Payment Components) */}
@@ -634,27 +684,6 @@ export default function PaymentDetailModal({
             placeholder="0"
             className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             required
-          />
-        </div>
-
-        {/* Surcharge Percentage (Optional) */}
-        <div className="space-y-2">
-          <label
-            htmlFor="edit-surcharge"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Surcharge (%) - Optional
-          </label>
-          <input
-            type="number"
-            id="edit-surcharge"
-            value={surcharge}
-            onChange={(e) => setSurcharge(e.target.value)}
-            step="0.1"
-            min="0"
-            max="100"
-            placeholder="0"
-            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </div>
 
