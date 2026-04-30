@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import PaymentForm from "./PaymentForm";
 import MonthlyPaymentsView from "./MonthlyPaymentsView";
@@ -9,6 +9,7 @@ import MonthSelector from "./MonthSelector";
 
 export default function MonthPageContent() {
   const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
@@ -29,7 +30,9 @@ export default function MonthPageContent() {
 
       // Validate month is 1-12
       if (month >= 1 && month <= 12 && year > 0) {
-        setSelectedDate(new Date(year, month - 1, 1));
+        startTransition(() => {
+          setSelectedDate(new Date(year, month - 1, 1));
+        });
       }
     }
   }, [searchParams]);
