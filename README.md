@@ -1,126 +1,49 @@
 # Billing POC
 
-A proof of concept billing system built with [Next.js](https://nextjs.org) for managing and tracking income and outcome payments with real-time visualization and MongoDB storage.
+A proof-of-concept billing system for managing and tracking income and outcome payments with real-time visualization, built with Next.js 16, TypeScript, React 19, and MongoDB.
 
 ## Features
 
-- **Payment Browser** - Dynamic list view with:
-  - Summary cards showing total income, total outcome, and net balance
-  - Sortable payment table with date, type, amounts, and totals
-  - Real-time updates when new payments are added
-  - Responsive table design with proper currency formatting
-  
-- **Payment Entry Form** - Intuitive form to add new transactions:
-  - Type selector (Income/Outcome)
-  - Date picker
-  - Net Amount and VAT inputs
-  - Auto-calculated total amount
-  
-- **MongoDB Storage** - Persistent data storage using MongoDB Atlas or local instance
-- **RESTful API** - API routes for payment CRUD operations (GET, POST)
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
-- **Dark Mode Support** - Automatic theme switching with Tailwind CSS
-- **Form Validation** - Client-side and server-side validation
-- **Type Safety** - Full TypeScript support throughout
+- **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
+- **Payment Entry Form** - Quick form to add new income/outcome transactions with auto-calculated totals
+- **Type Safety** - Full TypeScript with strict mode throughout the codebase
+- **RESTful API** - GET and POST endpoints for payment operations
+- **Responsive Design** - Works on desktop, tablet, and mobile devices
+- **Form & Server Validation** - Client and server-side validation for data integrity
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js 20+ and pnpm installed
-- MongoDB running locally on port 27017 (or MongoDB Atlas for cloud storage)
+- Node.js 20+ and pnpm
+- MongoDB running locally or MongoDB Atlas account
 
 ### Installation
 
-1. Clone the repository and install dependencies:
-
 ```bash
+# 1. Install dependencies
 pnpm install
-```
 
-2. Set up your MongoDB connection:
+# 2. Start MongoDB (if using local)
+docker run -d -p 27017:27017 --name mongodb mongo:latest
 
-   **Option A: Local MongoDB (Development) - Default**
-   
-   The project is preconfigured to use local MongoDB at `mongodb://localhost:27017/billing-poc`. Just ensure MongoDB is running:
-   
-   ```bash
-   # macOS (with Homebrew)
-   brew services start mongodb-community
-   
-   # Or using Docker
-   docker run -d -p 27017:27017 --name mongodb mongo:latest
-   ```
-   
-   The `.env.local` file is already configured. If needed, you can copy the example:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-   **Option B: MongoDB Atlas (Production)**
-   
-   - Create a MongoDB Atlas cluster at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
-   - Get your connection string
-   - Update `.env.local`:
-   ```bash
-   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority
-   ```
-
-3. Run the development server:
-
-```bash
+# 3. Run development server
 pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-## Usage
+For detailed setup instructions including MongoDB Atlas configuration, see [AGENTS.md](./AGENTS.md#setup).
 
-### Landing Page Layout
+## Development
 
-The home page is organized into two main sections:
+For detailed development guidelines, code patterns, TypeScript conventions, and architectural patterns, see [AGENTS.md](./AGENTS.md).
 
-**Left Column (Form):**
-- Use the "New Payment" form to quickly add income or outcome transactions
-- Select the payment type, date, and amounts
-- The form automatically calculates the total (net + VAT)
-- Click "Save Payment" to submit
-
-**Right Column (Payment Browser):**
-- View all payments in a clean, sortable table
-- Summary cards at the top show key metrics:
-  - Total Income (green)
-  - Total Outcome (red)
-  - Net Balance (blue)
-- Each payment row displays date, type, net amount, VAT, and total
-- The list updates in real-time when new payments are added
-
-## Project Structure
-
-```
-app/
-├── api/
-│   └── payments/
-│       └── route.ts              # Payment API endpoints (GET, POST)
-├── components/
-│   ├── PaymentForm.tsx           # Payment entry form component
-│   └── PaymentsList.tsx          # Payment browser/list component with summary
-├── layout.tsx                    # Root layout with metadata
-├── page.tsx                      # Home page with form and list layout
-└── globals.css                   # Global styles and typography
-lib/
-├── mongodb.ts                    # MongoDB connection utility
-└── types.ts                      # TypeScript type definitions
-public/                           # Static assets
-```
+For GitHub Copilot context and quick reference, see [.github/copilot-instructions.md](./.github/copilot-instructions.md).
 
 ## API Endpoints
 
-### `POST /api/payments`
+### `POST /api/payments` - Create Payment
 
-Create a new payment entry.
-
-**Request Body:**
 ```json
 {
   "type": "income" | "outcome",
@@ -130,35 +53,9 @@ Create a new payment entry.
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "id": "payment_id"
-}
-```
+### `GET /api/payments` - Get All Payments
 
-### `GET /api/payments`
-
-Retrieve all payment entries, sorted by date (descending).
-
-**Response:**
-```json
-{
-  "payments": [
-    {
-      "_id": "payment_id",
-      "type": "income",
-      "date": "2026-01-24",
-      "netAmount": 100,
-      "vat": 21,
-      "total": 121,
-      "createdAt": "2026-01-24T10:00:00Z",
-      "updatedAt": "2026-01-24T10:00:00Z"
-    }
-  ]
-}
-```
+Returns array of payments sorted by date (descending).
 
 ## Tech Stack
 
