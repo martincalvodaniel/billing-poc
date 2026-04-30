@@ -123,7 +123,9 @@ export default function DayDetailModal({
           comment: data.comment,
         })
         showToast("Absence updated successfully!")
-        setFormState({ mode: "create" })
+        // iter12: hide the inline form on successful EDIT (mirrors Cancel UX).
+        // Add success keeps the form open (iter7 behavior preserved below).
+        handleCancelForm()
       } else {
         await createAbsence({
           type: data.type,

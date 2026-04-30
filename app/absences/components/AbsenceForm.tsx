@@ -34,6 +34,13 @@ interface AbsenceFormProps {
    * Defaults to `false`.
    */
   hideTypeAndPartOfDay?: boolean
+  /**
+   * When true, hide the student-name autocomplete input. The underlying
+   * `studentName` state is still seeded from `initialStudentName` and
+   * submitted as-is. Use this in contexts where the student is already
+   * implicit (e.g., a per-student modal). Defaults to `false`.
+   */
+  hideStudentName?: boolean
 }
 
 function todayISO(): string {
@@ -58,6 +65,7 @@ export default function AbsenceForm({
   errorMessage,
   shakeKey,
   hideTypeAndPartOfDay = false,
+  hideStudentName = false,
 }: AbsenceFormProps) {
   const id = useId()
   const datalistId = `${id}-students`
@@ -113,11 +121,13 @@ export default function AbsenceForm({
       comment: trimmedComment,
     }
     await onSubmit(data)
-    if (!initial) {
+    if (!initial && !hideStudentName) {
       // Create mode: clear ONLY the student name so the user can quickly
       // add another record for a different student. Date, type, partOfDay
       // and comment stay sticky. If `onSubmit` throws (validation/conflict),
       // this block is skipped and the user's input is preserved.
+      // When the student-name input is hidden (per-student context), the
+      // student is implicit and must remain seeded — skip the reset+focus.
       setStudentName("")
       requestAnimationFrame(() => {
         studentNameRef.current?.focus()
@@ -165,15 +175,21 @@ export default function AbsenceForm({
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StudentNameAutocomplete
-            id={`${id}-studentName`}
-            datalistId={datalistId}
-            value={studentName}
-            onChange={setStudentName}
-            disabled={isSubmitting}
-            inputRef={studentNameRef}
-          />
+        <div
+          className={
+            hideStudentName ? "grid gap-3" : "grid gap-3 sm:grid-cols-2"
+          }
+        >
+          {!hideStudentName && (
+            <StudentNameAutocomplete
+              id={`${id}-studentName`}
+              datalistId={datalistId}
+              value={studentName}
+              onChange={setStudentName}
+              disabled={isSubmitting}
+              inputRef={studentNameRef}
+            />
+          )}
 
           <div className="space-y-2">
             <label

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import Modal from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
 import type {
@@ -53,6 +53,10 @@ export default function StudentDetailModal({
   const [shakeKey, setShakeKey] = useState(0)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  // Best-effort focus restoration after closing the inline form on a
+  // successful edit — mirrors the iter9 Cancel UX in DayDetailModal.
+  const lastTriggerRef = useRef<HTMLElement | null>(null)
+
   const { trigger: createAbsence, isMutating: isCreating } = useCreateAbsence()
   const { trigger: updateAbsence, isMutating: isUpdating } = useUpdateAbsence()
   const { trigger: deleteAbsence, isMutating: isDeleting } = useDeleteAbsence()
@@ -98,6 +102,17 @@ export default function StudentDetailModal({
     setTimeout(() => setToastMessage(null), 4000)
   }
 
+  const handleCloseEditForm = () => {
+    setFormError(null)
+    setFormState({ mode: "create" })
+    requestAnimationFrame(() => {
+      const trigger = lastTriggerRef.current
+      if (trigger?.isConnected) {
+        trigger.focus()
+      }
+    })
+  }
+
   const handleSubmit = async (data: {
     type: Absence["type"]
     studentName: string
@@ -117,7 +132,11 @@ export default function StudentDetailModal({
           comment: data.comment,
         })
         showToast("Absence updated successfully!")
-        setFormState({ mode: "create" })
+        // iter12: hide the inline form on successful EDIT (clear editing
+        // state + restore focus to the originating trigger). Add success
+        // keeps the form open so the user can keep adding records for the
+        // same student.
+        handleCloseEditForm()
       } else {
         await createAbsence({
           type: data.type,
@@ -264,6 +283,10 @@ export default function StudentDetailModal({
                                     </div>
                                     <RecordRowActions
                                       onEdit={() => {
+                                        lastTriggerRef.current =
+                                          typeof document !== "undefined"
+                                            ? (document.activeElement as HTMLElement | null)
+                                            : null
                                         setFormError(null)
                                         setFormState({
                                           mode: "edit",
@@ -298,11 +321,16 @@ export default function StudentDetailModal({
                   ? `edit-${formState.target?._id}`
                   : "create"
               }
-              title={formState.mode === "edit" ? "Edit record" : "Add record"}
+              title={
+                formState.mode === "edit"
+                  ? `Edit record for ${studentName}`
+                  : `Add record for ${studentName}`
+              }
               submitTooltip={
                 formState.mode === "edit" ? "Save changes" : "Add record"
               }
               initialStudentName={studentName}
+              hideStudentName
               initial={formState.mode === "edit" ? formState.target : undefined}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
