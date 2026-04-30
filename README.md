@@ -5,11 +5,11 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ## Features
 
 - **Payment Browser** - View all transactions with summary cards (total income, outcome, balance) and real-time updates
-- **Month Navigation** - View payments from any month with calendar picker, prev/next buttons, and dynamic summary calculation per month. Automatically navigates to the saved payment's month after creating a new payment
+- **Month Navigation** - View payments from any month with calendar picker (closes when clicking outside), prev/next buttons, and dynamic summary calculation per month. Automatically navigates to the saved payment's month after creating a new payment
 - **Payment Entry Form** - Quick form to add payments with gross/net calculation (enter total with VAT %, system calculates net) — VAT defaults to 21%. Form type and date are sticky after saving to speed up batch entry. Supports negative amounts for refunds, corrections, and chargebacks
 - **Payment Tags** - Add optional tags to categorize payments (e.g., "Client A", "Rent"). Autocomplete suggests previously used tags after 1 second of typing. Tags are filtered by payment type — income and outcome tags are separate
 - **Donut Charts by Tag** - View visual breakdown of income and outcome by tag with percentage distribution. Charts appear between summary cards and payment list for quick insights
-- **Modal Payment Editing** - Click any date, type, tag, total, or VAT in the payment list to open a centered edit modal. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
+- **Modal Payment Editing** - Click any date (shows day only since month/year are in calendar picker), type, tag, total, or VAT in the payment list to open a centered edit modal. VAT displays as `(percentage%) amount`. Input controls and autocomplete for tags adapt to field type. All related fields (net amount, VAT amount) automatically recalculate
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, and PUT endpoints for payment operations

@@ -24,6 +24,7 @@ export default forwardRef(function PaymentsList(props, ref) {
   const [suggestedTagsForEdit, setSuggestedTagsForEdit] = useState<string[]>([]);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
   
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -43,6 +44,21 @@ export default forwardRef(function PaymentsList(props, ref) {
   useEffect(() => {
     fetchPayments();
   }, []);
+
+  useEffect(() => {
+    if (!showCalendar) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setShowCalendar(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showCalendar]);
 
   useImperativeHandle(ref, () => ({
     refreshPayments: fetchPayments,
@@ -532,7 +548,7 @@ export default forwardRef(function PaymentsList(props, ref) {
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Payments ({filteredPayments.length})
             </h2>
-            <div className="relative">
+            <div className="relative" ref={calendarRef}>
               <button
                 onClick={() => setShowCalendar(!showCalendar)}
                 className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
@@ -594,7 +610,7 @@ export default forwardRef(function PaymentsList(props, ref) {
                         onClick={() => handleEditDate(payment)}
                         className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
                       >
-                        {formatDate(payment.date)}
+                        {new Date(payment.date).getDate()}
                       </button>
                     </td>
                     <td className="px-6 py-4">
@@ -635,9 +651,9 @@ export default forwardRef(function PaymentsList(props, ref) {
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
                       <button
                         onClick={() => handleEditVat(payment)}
-                        className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                        className="text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 whitespace-nowrap"
                       >
-                        {formatCurrency(payment.vat)}
+                        ({((payment.vat / payment.netAmount) * 100).toFixed(2)}%) {formatCurrency(payment.vat)}
                       </button>
                     </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">

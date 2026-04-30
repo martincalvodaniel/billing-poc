@@ -238,13 +238,14 @@ This reflects real-world salary/invoice scenarios where you know the total amoun
 ### Month Navigation Pattern (Filter by Month)
 For displaying payments filtered by month with navigation controls and calendar picker:
 
-1. **State Management** - Track selected month with `selectedDate` state (set to 1st of current month) and `showCalendar` state for dropdown visibility
+1. **State Management** - Track selected month with `selectedDate` state (set to 1st of current month) and `showCalendar` state for dropdown visibility. Add `calendarRef` to detect outside clicks
 2. **Filter Logic** - Create `getFilteredPayments()` to match payment dates against selected month/year
 3. **Calendar Picker** - Render clickable month grid (4 columns) showing all 12 months of the selected year with selection highlighting
 4. **Inside Calendar** - Implement prev/next month buttons and year navigation controls
 5. **Display Toggle** - Show formatted month/year button with calendar icon (📅) that toggles calendar dropdown
-6. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
-7. **Empty State** - Show custom message when no payments in selected month
+6. **Click-Outside Behavior** - Attach a `useEffect` hook to detect clicks outside the calendar and close it automatically
+7. **Recalculate Summaries** - Update income/outcome/balance based on filtered payments
+8. **Empty State** - Show custom message when no payments in selected month
 
 Example pattern:
 ```typescript
@@ -375,11 +376,38 @@ const filteredPayments = getFilteredPayments();
 
 **Features:**
 - Calendar dropdown toggles with button click
+- Closes automatically when clicking outside the calendar container
 - 4-column grid of months for easy selection
 - Navigate months while calendar is open with prev/next buttons in header
 - Year navigation controls at bottom
 - Selected month highlighted in blue for visual feedback
 - Click any month to select and auto-close calendar
+
+**Click-Outside Implementation:**
+```typescript
+const calendarRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  if (!showCalendar) return;
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+      setShowCalendar(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [showCalendar]);
+```
+
+Apply `ref={calendarRef}` to the div wrapping both the button and rendered calendar picker.
+
+**Payment Table Display:**
+- **Date column**: Shows day only (1-31) since month and year are visible in the calendar picker button, reducing visual clutter
+- **VAT column**: Displays as `(percentage%) amount` (e.g., `(21%) €71.24`) on a single line with `whitespace-nowrap` to keep values together
 
 **Summary recalculation** - Use `filteredPayments` instead of all `payments` when calculating totals
 
@@ -1070,6 +1098,12 @@ const vatAmount = totalAmount - netAmount;
 - Payment summaries (income, outcome, balance) calculated per month
 - Formatted month/year display in English locale
 - Empty state message when no payments in selected month
+- **Calendar Picker Features**:
+  - 4-column month grid with prev/next navigation
+  - Year selection controls
+  - Closes automatically when clicking outside the calendar
+- **Date Display**: Shows day only (1-31) in payment table since month/year are visible in calendar picker button
+- **VAT Display**: Shows as `(percentage%) amount` (e.g., `(21%) €71.24`) on single line for compact display
 - **Auto-navigate on save**: Automatically switches to the saved payment's month when a new payment is created
   - `PaymentForm` passes date to `onPaymentSaved` callback
   - `PaymentsList` exposes `navigateToMonth(dateString)` via ref for parent component
