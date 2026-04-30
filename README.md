@@ -14,9 +14,10 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Payment Detail Modal** - View full details of any payment from the monthly list via an action button with an icon. The modal shows date, type, tag, total, VAT (percentage and amount), net amount, and all payment components with names, amounts, and optional concept-level VAT. Keyboard shortcut: **ESC** or **ENTER** to close
 - **Delete Payments** - Remove payments with a confirmation modal that displays payment details (date, type, tag, total) before deletion to prevent accidental removal. Keyboard shortcuts: **ENTER** to confirm deletion, **ESC** to cancel
 - **Year Summary View** - Dedicated yearly page with prev/next/current year controls, inline year picker (grid + manual entry), yearly totals with payment counts, tag donuts, and monthly breakdown cards with clickable month names that navigate to the month detail view; top navigation links between monthly list and yearly summary
+- **Client Management** - Manage business contacts with full name/surname (individuals) or business name (companies), Tax ID (NIF/CIF/NIE), and tax address. Search clients by name or tax ID with real-time filtering. Create, edit, and delete client records. Support for both individual freelancers and company entities.
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
-- **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment operations with support for payment components
+- **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment and client operations with support for payment components
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 - **Form & Server Validation** - Client and server-side validation for data integrity
 - **Accessibility Compliant** - WCAG 2.1 Level A compliant with ARIA labels, live regions, keyboard navigation, screen reader support, and keyboard shortcuts for all modal interactions (ESC to cancel/close, ENTER to confirm/save)
@@ -154,6 +155,81 @@ When `vat` is updated, net amount and VAT amount are recalculated based on total
 
 When filtered by type, returns only tags used by payments of that type.
 
+### `GET /api/clients` - Get Clients
+
+**Query Parameters:**
+- `search`: Optional search term to filter by client name or tax ID (case-insensitive)
+
+**Response:** Returns array of clients sorted by name.
+
+Each client includes:
+- `_id`: MongoDB ObjectId
+- `clientType`: Either "individual" or "company"
+- `name`: Full name (individual) or business name (company)
+- `taxId`: Tax ID (NIF/CIF/NIE)
+- `address`: Tax address with postal code and city
+- `createdAt`: Creation timestamp
+- `updatedAt`: Last update timestamp
+
+**Examples:**
+- `GET /api/clients` - All clients
+- `GET /api/clients?search=John` - Clients matching "John" in name or tax ID
+
+### `POST /api/clients` - Create Client
+
+```json
+{
+  "clientType": "individual" | "company",
+  "name": "John Doe",
+  "taxId": "12345678A",
+  "address": "Calle Principal 123, 28001 Madrid"
+}
+```
+
+**Parameters:**
+- `clientType`: Client type (required) - "individual" for persons/freelancers, "company" for businesses
+- `name`: Full name or business name (required)
+- `taxId`: Tax ID: NIF/CIF/NIE (required)
+- `address`: Tax address with postal code and city (required)
+
+**Response:** Success status with inserted client ID
+
+### `PUT /api/clients` - Update Client
+
+```json
+{
+  "id": "client_id",
+  "clientType": "individual" | "company",
+  "name": "Jane Doe",
+  "taxId": "87654321B",
+  "address": "Nueva Calle 456, 28002 Madrid"
+}
+```
+
+**Parameters:**
+- `id`: MongoDB ObjectId of the client (required)
+- `clientType`: Client type (optional)
+- `name`: Full name or business name (optional)
+- `taxId`: Tax ID (optional)
+- `address`: Tax address (optional)
+
+At least one of `clientType`, `name`, `taxId`, or `address` must be provided.
+
+**Response:** Success status
+
+### `DELETE /api/clients` - Delete Client
+
+```json
+{
+  "id": "client_id"
+}
+```
+
+**Parameters:**
+- `id`: MongoDB ObjectId of the client to delete (required)
+
+**Response:** Success status
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
@@ -182,6 +258,7 @@ Vercel will automatically detect Next.js and configure the build settings.
 - [x] Edit payment amount and VAT fields inline with auto-recalculation
 - [x] Delete payments with confirmation modal
 - [x] View payment details in modal from monthly list
+- [x] Add client management with search and filtering
 - [ ] Add advanced filtering and search capabilities
 - [ ] Export payments to CSV/PDF
 - [ ] Add more payment fields (description, invoice number, etc.)

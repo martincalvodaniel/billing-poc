@@ -1,8 +1,12 @@
-# Payment Data Loading Scripts
+# Data Loading Scripts
 
 This directory contains utilities for loading payment data into the billing application.
 
-## loadRandomDataForMonth.ts
+For **client data loading**, see [`../clients/README.md`](../clients/README.md).
+
+## Payment Scripts
+
+### loadRandomDataForMonth.ts
 
 Generates and loads random payment data for a specified year and month via the application API.
 

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const db = await getDatabase();
     
     // Build filter based on query parameters
-    let filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {};
     
     if (year && month) {
       // Filter by specific month and year

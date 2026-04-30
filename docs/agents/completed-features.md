@@ -9,6 +9,16 @@
 - Form validates at least one component has non-zero amount
 - API supports both new concepts format and legacy single-total format (backward compatible)
 
+## Client Management
+- Full CRUD operations for managing business contacts
+- Support for two client types: individuals/freelancers and companies
+- Store client information: name/business name, tax ID (NIF/CIF/NIE), and tax address
+- Search clients by name or tax ID with real-time filtering (case-insensitive)
+- Client list view with edit and delete functionality
+- Create and edit client records via form modal
+- Delete confirmation modal for safety
+- Sorted client display (by name ascending)
+
 ## Accessibility (WCAG 2.1 A)
 - Icon-only buttons labeled; modals with dialog roles; alert/status live regions; focus rings; aria-expanded on toggles; color-scheme meta
 

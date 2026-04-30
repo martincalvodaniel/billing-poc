@@ -36,14 +36,48 @@ export interface Payment {
 - **VAT Application**: Applied uniformly at payment level to total amount; no concept-level overrides
 - **Calculated Fields**: `netAmount`, `vatAmount`, `total` are computed server-side
 
+## Client Entity Structure
+
+### Type Definitions (lib/types.ts)
+
+```typescript
+export type ClientType = "individual" | "company";
+
+export interface Client {
+  _id?: ObjectId;
+  clientType: ClientType;  // "individual" for persons/freelancers, "company" for businesses
+  name: string;            // Full name (individual) or Business name (company)
+  taxId: string;           // NIF/CIF/NIE (Tax identification number)
+  address: string;         // Domicilio Fiscal (full address with CP and city)
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ClientFormData {
+  clientType: ClientType;
+  name: string;
+  taxId: string;
+  address: string;
+}
+```
+
+### Client Entity Pattern
+- **Client Types**: Distinguish between individual persons/freelancers and business entities
+- **Tax ID**: Required field for all clients (NIF for individuals, CIF for companies, NIE for foreigners)
+- **Name**: Full name for individuals or business/company name (Razón Social) for companies
+- **Address**: Complete tax address including postal code and city (Domicilio Fiscal)
+- **Timestamp Tracking**: Each client tracks creation and last update time for audit purposes
+
 ## Database Operations
-- Use getDatabase(); typed collections db.collection<Payment>("payments")
-- Common ops: find/insertOne/updateOne/deleteOne; sort by date desc
+- Use getDatabase(); typed collections db.collection<Payment>("payments") and db.collection<Client>("clients")
+- Common ops: find/insertOne/updateOne/deleteOne; sort by date desc (payments), sort by name asc (clients)
 - Calculations: Always recompute net/vat on create/update based on concepts
 
 ## Validation
 
 ### Server Validation (API Routes)
+
+#### Payment Validation
 - **Required**: type, date, concepts[] (at least one), vat
 - **Concepts**: Each must have name (non-empty string) and amount (number); quantity defaults to 1 if omitted
 - **Numeric**: Parse amounts and quantities with parseFloat(); check !isNaN
@@ -52,7 +86,19 @@ export interface Payment {
 - **Concept Amounts**: Reject if any amount is NaN
 - **Legacy Support**: Single `total` field converts to single unnamed concept for backward compatibility (deprecated)
 
-### Client Validation (PaymentForm)
+#### Client Validation
+- **Required**: clientType, name, taxId, address (all fields required on create)
+- **Client Type**: Must be either "individual" or "company"
+- **Field Validation**: All fields must be non-empty strings (after trim)
+- **Optional on Update**: Any field can be updated individually; at least one field required to avoid no-op updates
+
+### Client Validation (ClientForm)
+- Use HTML required attributes on all form fields
+- Validate on submit before API call
+- Show field-specific error messages
+- Disable submit button while processing
+
+### Payment Validation (PaymentForm)
 - Use HTML required/type="number"/step="0.01" attributes
 - All concept name fields are required; show validation error if empty
 - Disable submit during processing (isSubmitting state)
@@ -144,6 +190,58 @@ const filteredPayments = data.payments; // Already filtered by server
 - Invalid year (non-numeric): Returns 400 error  
 - Month without year: Month parameter is ignored
 
+### Fetching Clients with Search Filtering
+
+Use search query parameter to filter clients at database level by name or tax ID.
+
+**API Endpoint:**
+```typescript
+// GET /api/clients?search={searchTerm}
+// search: optional search term (case-insensitive, searches name and taxId)
+```
+
+**Implementation in GET /api/clients:**
+```typescript
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search");
+
+  let filter: Record<string, unknown> = {};
+
+  if (search && search.trim()) {
+    // Search by name or taxId (case-insensitive)
+    const searchPattern = { $regex: search.trim(), $options: "i" };
+    filter.$or = [
+      { name: searchPattern },
+      { taxId: searchPattern },
+    ];
+  }
+
+  const clients = await db
+    .collection<Client>("clients")
+    .find(filter)
+    .sort({ name: 1 })
+    .toArray();
+
+  return NextResponse.json({ clients }, { status: 200 });
+}
+```
+
+**Client-Side Usage:**
+```typescript
+// Fetch clients matching search term
+const searchTerm = "John";
+const response = await fetch(`/api/clients?search=${encodeURIComponent(searchTerm)}`);
+const data = await response.json();
+const filteredClients = data.clients; // Already filtered by server (sorted by name)
+```
+
+**Benefits:**
+- ✅ Case-insensitive search across name and tax ID
+- ✅ Returns clients sorted by name
+- ✅ Filters at database level for performance
+- ✅ No search results returns empty array (not an error)
+
 ### POST /api/payments
 **Request with Multiple Concepts:**
 ```json
@@ -181,11 +279,48 @@ const filteredPayments = data.payments; // Already filtered by server
 - Concepts array included in response
 - Sorted by date descending
 
+### POST /api/clients
+**Request:**
+```json
+{
+  "clientType": "individual",
+  "name": "John Doe",
+  "taxId": "12345678A",
+  "address": "Calle Principal 123, 28001 Madrid"
+}
+```
+- All fields required
+- Trims whitespace from string fields
+- Returns insertedId on success
+
+### PUT /api/clients
+**Update Client:**
+```json
+{
+  "id": "ObjectId",
+  "name": "Jane Doe",
+  "taxId": "87654321B"
+}
+```
+- Can update any field individually
+- At least one field required (other than updatedAt)
+- Validates field values before update
+
+### GET /api/clients
+- Returns all clients sorted by name ascending
+- Optional search parameter filters by name or taxId (case-insensitive)
+- Clients array in response
+
+### DELETE /api/clients
+- Requires client ID
+- Returns success on deletion
+
 ## Error Handling
 - Wrap DB ops in try/catch
 - Log with template literals; return friendly JSON error
 - Use proper status codes (400 validation, 404 not found, 500 server)
 - Validate concept amounts are numbers (isNaN checks)
+- For clients, validate string fields are not empty after trim
 
 ## Environment
 - MONGODB_URI required (.env.local for dev)
@@ -194,9 +329,11 @@ const filteredPayments = data.payments; // Already filtered by server
 - Typed queries; avoid extra libs; no external UI kits
 - Mongo connection singleton
 - Calculations in-memory (no DB aggregation for now)
+- Search filtering at database level using regex patterns
 
 ## Security
 - Validate all user input server-side
 - Validate vat percentage range
 - Parse amounts safely with parseFloat
+- Trim string fields to prevent leading/trailing whitespace attacks
 - Mongo driver mitigates injection; keep env vars server-side

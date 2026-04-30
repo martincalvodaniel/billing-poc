@@ -17,8 +17,9 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
     return `${base} ${isActive ? active : inactive}`;
   };
 
-  const isMonthlyActive = pathname === "/";
+  const isMonthlyActive = pathname === "/" || pathname === "/month";
   const isYearActive = pathname === "/year";
+  const isClientsActive = pathname === "/clients";
 
   return (
     <nav className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -40,6 +41,13 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
           aria-current={isYearActive ? "page" : undefined}
         >
           Year summary
+        </Link>
+        <Link
+          href="/clients"
+          className={buildLinkClass(isClientsActive)}
+          aria-current={isClientsActive ? "page" : undefined}
+        >
+          Clients
         </Link>
       </div>
     </nav>

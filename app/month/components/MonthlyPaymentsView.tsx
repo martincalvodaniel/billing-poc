@@ -42,28 +42,7 @@ export default forwardRef(function MonthlyPaymentsView(
   // Details modal state
   const [detailPaymentId, setDetailPaymentId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPayments();
-  }, [selectedDate]);
-
-  // Notify parent when month changes so form date can be synced
-  useEffect(() => {
-    const year = selectedDate.getFullYear();
-    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-    const day = String(selectedDate.getDate()).padStart(2, "0");
-    const dateString = `${year}-${month}-${day}`;
-    onMonthChange?.(dateString);
-  }, [selectedDate, onMonthChange]);
-
-  useImperativeHandle(ref, () => ({
-    refreshPayments: fetchPayments,
-    navigateToMonth: () => {
-      // Month navigation is now handled by parent component via selectedDate prop
-    },
-    getFilteredPaymentsCount: () => getFilteredPayments().length,
-  }));
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -86,7 +65,28 @@ export default forwardRef(function MonthlyPaymentsView(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  // Notify parent when month changes so form date can be synced
+  useEffect(() => {
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
+    const dateString = `${year}-${month}-${day}`;
+    onMonthChange?.(dateString);
+  }, [selectedDate, onMonthChange]);
+
+  useImperativeHandle(ref, () => ({
+    refreshPayments: fetchPayments,
+    navigateToMonth: () => {
+      // Month navigation is now handled by parent component via selectedDate prop
+    },
+    getFilteredPaymentsCount: () => getFilteredPayments().length,
+  }));
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-ES", {

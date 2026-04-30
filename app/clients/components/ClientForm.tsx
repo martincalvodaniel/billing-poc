@@ -1,0 +1,162 @@
+"use client";
+
+import { useState } from "react";
+import { Client, ClientFormData } from "@/lib/types";
+
+interface ClientFormProps {
+  client?: Client;
+  onSubmit: (data: ClientFormData) => Promise<void>;
+  onCancel: () => void;
+}
+
+export default function ClientForm({ client, onSubmit, onCancel }: ClientFormProps) {
+  const [formData, setFormData] = useState<ClientFormData>({
+    clientType: client?.clientType || "individual",
+    name: client?.name || "",
+    taxId: client?.taxId || "",
+    address: client?.address || "",
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validate form data
+    if (!formData.name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    if (!formData.taxId.trim()) {
+      setError("Tax ID is required");
+      return;
+    }
+    if (!formData.address.trim()) {
+      setError("Address is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4"
+    >
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            Type
+          </label>
+          <select
+            name="clientType"
+            value={formData.clientType}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:ring-offset-zinc-900"
+            disabled={isSubmitting}
+          >
+            <option value="individual">Individual / Freelancer</option>
+            <option value="company">Company</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          {formData.clientType === "individual" ? "Name & Surname" : "Business Name"}
+        </label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder={
+            formData.clientType === "individual"
+              ? "E.g., John Doe"
+              : "E.g., Empresa, S.L."
+          }
+          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
+          required
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          Tax ID (NIF/CIF/NIE)
+        </label>
+        <input
+          type="text"
+          name="taxId"
+          value={formData.taxId}
+          onChange={handleChange}
+          placeholder={formData.clientType === "individual" ? "E.g., 12345678A" : "E.g., A12345678"}
+          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
+          required
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          Tax Address (with postal code and city)
+        </label>
+        <textarea
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          placeholder="E.g., Calle Principal 123, 28001 Madrid"
+          rows={3}
+          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
+          required
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-zinc-900"
+        >
+          {isSubmitting ? "Saving..." : client ? "Update" : "Create"} Client
+        </button>
+      </div>
+    </form>
+  );
+}
