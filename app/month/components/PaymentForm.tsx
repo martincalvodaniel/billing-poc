@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
 import { PaymentFormData } from "@/lib/types";
+import ClientSelector from "@/app/components/ClientSelector";
 
 interface PaymentFormProps {
   onPaymentSaved?: (date: string) => void;
@@ -17,6 +18,7 @@ const PaymentForm = forwardRef(function PaymentForm(
     vat: "21",
     type: "income",
     tag: "",
+    clientId: undefined,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,11 +97,12 @@ const PaymentForm = forwardRef(function PaymentForm(
         setAvailableTags((prev) => [...prev, formData.tag!].sort());
       }
 
-      // Reset concepts while keeping type and date sticky
+      // Reset concepts and client while keeping type and date sticky
       setFormData((prev) => ({
         ...prev,
         concepts: [{ name: "", amount: 0, quantity: 1 }],
         tag: "",
+        clientId: undefined,
       }));
 
       // Show success toast
@@ -208,6 +211,10 @@ const PaymentForm = forwardRef(function PaymentForm(
     setTimeout(() => {
       setShowTagSuggestions(false);
     }, 200);
+  };
+
+  const handleClientChange = (clientId: string | undefined) => {
+    setFormData((prev) => ({ ...prev, clientId }));
   };
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -335,6 +342,14 @@ const PaymentForm = forwardRef(function PaymentForm(
             <option value="outcome">Outcome</option>
           </select>
         </div>
+
+        {/* Client Selector */}
+        <ClientSelector
+          value={formData.clientId}
+          onChange={handleClientChange}
+          label="Client (Optional)"
+          required={false}
+        />
 
         {/* Date */}
         <div className="space-y-2">

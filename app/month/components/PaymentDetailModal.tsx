@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Payment } from "@/lib/types";
 import Modal from "@/app/components/Modal";
+import ClientSelector from "@/app/components/ClientSelector";
 
 interface PaymentDetailModalProps {
   payment: Payment;
@@ -26,6 +27,7 @@ export default function PaymentDetailModal({
   const [date, setDate] = useState(payment.date);
   const [type, setType] = useState(payment.type);
   const [tag, setTag] = useState(payment.tag || "");
+  const [clientId, setClientId] = useState(payment.clientId?.toString() || "");
   const [concepts, setConcepts] = useState(
     payment.concepts && payment.concepts.length > 0
       ? payment.concepts
@@ -82,6 +84,10 @@ export default function PaymentDetailModal({
     setTag(selectedTag);
     setShowTagSuggestions(false);
     setSuggestedTags([]);
+  };
+
+  const handleClientChange = (newClientId: string | undefined) => {
+    setClientId(newClientId || "");
   };
 
   const handleConceptChange = (
@@ -165,6 +171,7 @@ export default function PaymentDetailModal({
           date,
           type,
           tag: tag || undefined,
+          clientId: clientId || undefined,
           concepts,
           vat: vatNumber,
         }),
@@ -283,6 +290,14 @@ export default function PaymentDetailModal({
             <option value="outcome">Outcome</option>
           </select>
         </div>
+
+        {/* Client Selector */}
+        <ClientSelector
+          value={clientId}
+          onChange={handleClientChange}
+          label="Client (Optional)"
+          required={false}
+        />
 
         {/* Date */}
         <div className="space-y-2">

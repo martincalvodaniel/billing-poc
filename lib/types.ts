@@ -7,7 +7,7 @@ export type ClientType = "individual" | "company";
 export interface PaymentConcept {
   name: string;
   amount: number;
-  quantity: number; // Quantity/multiplier for the concept (1 or more)
+  quantity: number;
 }
 
 export interface Payment {
@@ -15,8 +15,9 @@ export interface Payment {
   type: PaymentType;
   date: string;
   tag?: string;
-  concepts: PaymentConcept[]; // Array of line items/concepts
-  vat: number; // Default VAT percentage applied to payment
+  clientId?: ObjectId;
+  concepts: PaymentConcept[];
+  vat: number;
   netAmount: number;
   vatAmount: number;
   total: number;
@@ -30,16 +31,17 @@ export interface PaymentFormData {
   concepts: PaymentConcept[];
   vat: string;
   tag?: string;
+  clientId?: string;
 }
 
 export interface Client {
   _id?: ObjectId;
-  clientType: ClientType; // "individual" for persons/freelancers, "company" for businesses
-  name: string; // Nombre y Apellidos (individual) or Razón Social (company)
-  taxId: string; // NIF/CIF/NIE (Tax ID)
-  address: string; // Domicilio Fiscal (full address with postal code and city)
-  phone?: string; // Optional phone number
-  email?: string; // Optional email address
+  clientType: ClientType;
+  name: string;
+  taxId: string;
+  address: string;
+  phone?: string;
+  email?: string;
   createdAt: Date;
   updatedAt: Date;
 }

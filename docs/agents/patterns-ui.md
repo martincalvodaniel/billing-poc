@@ -192,6 +192,72 @@ return (
 - Updates trigger data refiltering based on paymentsForYear memo
 - Place year selector in layout with consistent button styling
 
+## ClientSelector Component
+
+Reusable component for searching and selecting clients in forms. Provides debounced search, dropdown suggestions, and visual client selection feedback. Used in payment creation and editing to associate a client with a payment.
+
+### Props
+```typescript
+interface ClientSelectorProps {
+  value?: string;           // Client ID (MongoDB ObjectId as string)
+  onChange: (clientId: string | undefined, clientName: string | undefined) => void;
+  label?: string;           // Optional custom label (default: "Client (Optional)")
+  required?: boolean;       // Whether client selection is required (default: false)
+}
+```
+
+### Features
+- Debounced search (300ms) with real-time filtering
+- Dropdown suggestions showing client name, tax ID, and type
+- Shows first 20 matching clients (pageSize: 20)
+- Fetches client by ID on mount if value is provided
+- Selected client visual indicator (blue background badge)
+- Clear button to remove selection
+- Click-outside detection for closing dropdown
+- Loading state during API calls
+- Empty state messages ("Start typing to search", "No clients found")
+- Full keyboard/screen reader accessibility
+- Dark mode support with consistent styling
+
+### Usage Example in Forms
+```typescript
+const [clientId, setClientId] = useState<string | undefined>(undefined);
+
+const handleClientChange = (newClientId: string | undefined, clientName: string | undefined) => {
+  setClientId(newClientId);
+  // clientName parameter available if needed for display
+};
+
+<ClientSelector
+  value={clientId}
+  onChange={handleClientChange}
+  label="Client (Optional)"
+  required={false}
+/>
+```
+
+### API Integration
+- GET `/api/clients?search=${query}&pageSize=20` - Search clients by name or tax ID
+- Returns paginated response with items array
+- Handles both empty search (shows first 20) and filtered search
+
+### Integration Notes
+- Used in PaymentForm (app/month/components/PaymentForm.tsx) for creation
+- Used in PaymentDetailModal (app/month/components/PaymentDetailModal.tsx) for editing
+- Positioned after payment type selector, before date field
+- Stores clientId as string (MongoDB ObjectId) in form state
+- Sends clientId to API on payment creation/update
+- API validates clientId exists before saving
+- Clear button allows removing client association
+
+### Styling & Design
+- Input field matches form input styling across the app
+- Dropdown positioned absolutely below input with z-index handling
+- Selected client shows as colored badge (blue-50 background)
+- Suggestion items show name (bold) + tax ID and type (smaller text)
+- Clear button (×) appears when selection exists
+- Consistent spacing and padding with other form controls
+
 ## MonthlyBreakdown Component
 
 Reusable component for displaying monthly totals breakdown in year view. Shows income, outcome, and net balance for each month with visual progress bars.

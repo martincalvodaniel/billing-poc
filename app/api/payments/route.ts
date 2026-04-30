@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, date, concepts, vat, tag } = body;
+    const { type, date, concepts, vat, tag, clientId } = body;
 
     // Validate required fields
     if (!type || !date) {
@@ -150,10 +150,33 @@ export async function POST(request: NextRequest) {
     const netAmount = totalAmount / (1 + vatPercentage / 100);
     const vatAmount = totalAmount - netAmount;
 
+    // Validate clientId if provided
+    let clientObjectId: ObjectId | undefined;
+    if (clientId) {
+      try {
+        clientObjectId = new ObjectId(clientId);
+        // Optionally verify client exists
+        const db = await getDatabase();
+        const clientExists = await db.collection("clients").findOne({ _id: clientObjectId });
+        if (!clientExists) {
+          return NextResponse.json(
+            { error: "Client not found" },
+            { status: 404 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid client ID" },
+          { status: 400 }
+        );
+      }
+    }
+
     const payment: Omit<Payment, "_id"> = {
       type,
       date,
       tag: tag || undefined,
+      clientId: clientObjectId,
       concepts: normalizedConcepts,
       vat: vatPercentage,
       netAmount,
@@ -182,7 +205,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, date, type, tag, concepts, vat, total } = body;
+    const { id, date, type, tag, clientId, concepts, vat, total } = body;
 
     // Validate required fields
     if (!id) {
@@ -238,6 +261,33 @@ export async function PUT(request: NextRequest) {
     // Handle tag update
     if (tag !== undefined) {
       updateData.tag = tag ? tag : null;
+    }
+
+    // Handle clientId update
+    if (clientId !== undefined) {
+      if (clientId) {
+        try {
+          const clientObjectId = new ObjectId(clientId);
+          // Verify client exists
+          const db = await getDatabase();
+          const clientExists = await db.collection("clients").findOne({ _id: clientObjectId });
+          if (!clientExists) {
+            return NextResponse.json(
+              { error: "Client not found" },
+              { status: 404 }
+            );
+          }
+          updateData.clientId = clientObjectId;
+        } catch {
+          return NextResponse.json(
+            { error: "Invalid client ID" },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Clear clientId if empty string or null
+        updateData.clientId = null;
+      }
     }
 
     // Handle concepts update
@@ -334,6 +384,7 @@ export async function PUT(request: NextRequest) {
       date === undefined &&
       type === undefined &&
       tag === undefined &&
+      clientId === undefined &&
       concepts === undefined &&
       total === undefined &&
       vat === undefined
