@@ -73,6 +73,7 @@ export const absenceQuerySchema = z.object({
     .min(1, "Invalid month")
     .max(12, "Invalid month")
     .optional(),
+  studentName: z.string().trim().min(1).optional(),
 })
 
 export const absenceStudentsQuerySchema = z.object({
