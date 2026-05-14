@@ -187,6 +187,38 @@ export function buildGenerateEventPaymentsRequest(
 }
 
 // ---------------------------------------------------------------------------
+// Invoice-guard error detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Detects the 409 "cannot-modify-invoiced-payment" response from the
+ * `PUT /api/events/[id]/attendees/[clientId]` endpoint and returns its
+ * structured payload. Returns `null` for any other error shape.
+ *
+ * The server emits exactly:
+ *   { error: "cannot-modify-invoiced-payment",
+ *     paymentId: string,
+ *     invoiceSeries: string,
+ *     invoiceNumber: number }
+ * with HTTP 409, wrapped here as `FetchError(status=409, info=<body>)`.
+ */
+export function isInvoiceGuardError(
+  err: unknown
+): { invoiceSeries: string; invoiceNumber: number; paymentId: string } | null {
+  if (!(err instanceof FetchError)) return null
+  if (err.status !== 409) return null
+  const info = err.info
+  if (!info || typeof info !== "object") return null
+  const record = info as Record<string, unknown>
+  if (record.error !== "cannot-modify-invoiced-payment") return null
+  const { invoiceSeries, invoiceNumber, paymentId } = record
+  if (typeof invoiceSeries !== "string") return null
+  if (typeof invoiceNumber !== "number") return null
+  if (typeof paymentId !== "string") return null
+  return { invoiceSeries, invoiceNumber, paymentId }
+}
+
+// ---------------------------------------------------------------------------
 // Fetcher
 // ---------------------------------------------------------------------------
 

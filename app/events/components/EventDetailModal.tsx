@@ -4,7 +4,7 @@ import Modal from "@/app/components/Modal"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatCurrency } from "@/lib/formatters"
 import AttendeesPanel from "./AttendeesPanel"
-import { formatDuration, formatEventDateTime, totalSeats } from "./eventsUi"
+import { formatDuration, formatEventDateTime } from "./eventsUi"
 
 interface EventDetailModalProps {
   event: Event
@@ -23,8 +23,6 @@ export default function EventDetailModal({
   onActionSuccess,
   onActionError,
 }: EventDetailModalProps) {
-  const seats = totalSeats(event.attendees)
-
   return (
     <Modal
       isOpen={isOpen}
@@ -35,6 +33,12 @@ export default function EventDetailModal({
       closeOnBackdropClick
     >
       <div className="space-y-4">
+        <AttendeesPanel
+          event={event}
+          onActionSuccess={onActionSuccess}
+          onActionError={onActionError}
+        />
+
         {event.description && (
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             {event.description}
@@ -46,18 +50,6 @@ export default function EventDetailModal({
           <SummaryItem
             label="Duration"
             value={formatDuration(event.durationMinutes)}
-          />
-          <SummaryItem
-            label="Attendees"
-            value={`${event.attendees.length} clients / ${seats} seats`}
-          />
-          <SummaryItem
-            label="Max attendees"
-            value={
-              event.maxAttendees !== undefined
-                ? String(event.maxAttendees)
-                : "—"
-            }
           />
           <SummaryItem
             label="Net / seat"
@@ -78,12 +70,6 @@ export default function EventDetailModal({
             Edit event
           </button>
         </div>
-
-        <AttendeesPanel
-          event={event}
-          onActionSuccess={onActionSuccess}
-          onActionError={onActionError}
-        />
       </div>
     </Modal>
   )

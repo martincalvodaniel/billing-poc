@@ -72,3 +72,41 @@ export function totalSeats(attendees: EventAttendee[]): number {
 export function eventIsPlottable(event: Pick<Event, "date">): boolean {
   return Boolean(event.date)
 }
+
+/**
+ * Format an optional hour + minute pair as "HH:MM" for `<input type="time">`.
+ * Returns an empty string when `hour` is not a finite integer; missing minute
+ * is treated as 0 when hour is present.
+ */
+export function formatTimeOfDay(
+  hour: number | undefined,
+  minute: number | undefined
+): string {
+  if (typeof hour !== "number" || !Number.isFinite(hour)) return ""
+  const hh = String(Math.trunc(hour)).padStart(2, "0")
+  const minuteValue =
+    typeof minute === "number" && Number.isFinite(minute)
+      ? Math.trunc(minute)
+      : 0
+  const mm = String(minuteValue).padStart(2, "0")
+  return `${hh}:${mm}`
+}
+
+/**
+ * Parse a `<input type="time">` value ("HH:MM") into hour/minute numbers.
+ * An empty or unparseable value clears both fields.
+ */
+export function parseTimeOfDay(value: string): {
+  hour?: number
+  minute?: number
+} {
+  const trimmed = value.trim()
+  if (trimmed.length === 0) return {}
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(trimmed)
+  if (!match) return {}
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return {}
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return {}
+  return { hour, minute }
+}

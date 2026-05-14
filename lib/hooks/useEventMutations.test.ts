@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { FetchError } from "../swr-fetcher"
 import {
   buildAddAttendeeRequest,
   buildCreateEventRequest,
@@ -8,6 +9,7 @@ import {
   buildRemoveAttendeeRequest,
   buildUpdateAttendeeRequest,
   buildUpdateEventRequest,
+  isInvoiceGuardError,
 } from "./useEventMutations"
 
 describe("buildCreateEventRequest", () => {
@@ -113,5 +115,90 @@ describe("buildGenerateEventPaymentsRequest", () => {
     expect(req.url).toBe("/api/events/ev1/payments")
     expect(req.method).toBe("POST")
     expect(req.body).toBeUndefined()
+  })
+})
+
+describe("isInvoiceGuardError", () => {
+  test("returns payload for a matching FetchError", () => {
+    const err = new FetchError("conflict", 409, {
+      error: "cannot-modify-invoiced-payment",
+      paymentId: "pay1",
+      invoiceSeries: "Invoice",
+      invoiceNumber: 42,
+    })
+    expect(isInvoiceGuardError(err)).toEqual({
+      paymentId: "pay1",
+      invoiceSeries: "Invoice",
+      invoiceNumber: 42,
+    })
+  })
+
+  test("returns null when error code is different", () => {
+    const err = new FetchError("conflict", 409, {
+      error: "some-other-error",
+      paymentId: "pay1",
+      invoiceSeries: "Invoice",
+      invoiceNumber: 42,
+    })
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null when status is not 409", () => {
+    const err = new FetchError("bad", 400, {
+      error: "cannot-modify-invoiced-payment",
+      paymentId: "pay1",
+      invoiceSeries: "Invoice",
+      invoiceNumber: 42,
+    })
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null when paymentId is missing", () => {
+    const err = new FetchError("conflict", 409, {
+      error: "cannot-modify-invoiced-payment",
+      invoiceSeries: "Invoice",
+      invoiceNumber: 42,
+    })
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null when invoiceSeries is missing", () => {
+    const err = new FetchError("conflict", 409, {
+      error: "cannot-modify-invoiced-payment",
+      paymentId: "pay1",
+      invoiceNumber: 42,
+    })
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null when invoiceNumber is not a number", () => {
+    const err = new FetchError("conflict", 409, {
+      error: "cannot-modify-invoiced-payment",
+      paymentId: "pay1",
+      invoiceSeries: "Invoice",
+      invoiceNumber: "42",
+    })
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null when info is null", () => {
+    const err = new FetchError("conflict", 409, null)
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null when info is a string", () => {
+    const err = new FetchError("conflict", 409, "not json")
+    expect(isInvoiceGuardError(err)).toBeNull()
+  })
+
+  test("returns null for a non-FetchError", () => {
+    expect(isInvoiceGuardError(new Error("boom"))).toBeNull()
+  })
+
+  test("returns null for unknown values", () => {
+    expect(isInvoiceGuardError(null)).toBeNull()
+    expect(isInvoiceGuardError(undefined)).toBeNull()
+    expect(isInvoiceGuardError("nope")).toBeNull()
+    expect(isInvoiceGuardError(42)).toBeNull()
   })
 })

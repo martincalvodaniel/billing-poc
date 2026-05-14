@@ -1,9 +1,12 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
 import ClientSelector from "@/app/components/ClientSelector"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
+import { useClients } from "@/lib/hooks/useClients"
 import {
+  isInvoiceGuardError,
   useAddEventAttendee,
   useGenerateEventPayment,
   useGenerateEventPayments,
@@ -11,12 +14,19 @@ import {
   useUpdateEventAttendee,
 } from "@/lib/hooks/useEventMutations"
 import { FetchError } from "@/lib/swr-fetcher"
+import CapacityBar from "./CapacityBar"
 import { totalSeats } from "./eventsUi"
+import InvoiceGuardModal from "./InvoiceGuardModal"
 
 interface AttendeesPanelProps {
   event: Event
   onActionSuccess: (message: string) => void
   onActionError: (message: string) => void
+}
+
+interface InvoiceGuardState {
+  invoiceSeries: string
+  invoiceNumber: number
 }
 
 function extractErrorMessage(error: unknown, fallback: string): string {
@@ -38,10 +48,23 @@ export default function AttendeesPanel({
   const eventId = event._id
   const [addClientId, setAddClientId] = useState<string | undefined>(undefined)
   const [addSeats, setAddSeats] = useState<string>("1")
-  const [editingClientId, setEditingClientId] = useState<string | null>(null)
-  const [editingSeats, setEditingSeats] = useState<string>("1")
   const [pendingPayment, setPendingPayment] = useState<string | null>(null)
   const [pendingBulk, setPendingBulk] = useState(false)
+  const [savingClientId, setSavingClientId] = useState<string | null>(null)
+  const [invoiceGuard, setInvoiceGuard] = useState<InvoiceGuardState | null>(
+    null
+  )
+
+  // 500 is far above any realistic attendee count in this POC; pagination
+  // doesn't apply for the lookup use-case.
+  const { clients } = useClients({ pageSize: 500 })
+  const clientNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of clients) {
+      if (c._id) map.set(String(c._id), c.name)
+    }
+    return map
+  }, [clients])
 
   const addMutation = useAddEventAttendee()
   const updateMutation = useUpdateEventAttendee()
@@ -80,28 +103,40 @@ export default function AttendeesPanel({
     }
   }
 
-  const handleStartEdit = (attendee: EventAttendee) => {
-    setEditingClientId(attendee.clientId)
-    setEditingSeats(String(attendee.seats))
-  }
-
-  const handleCancelEdit = () => {
-    setEditingClientId(null)
-  }
-
-  const handleSaveEdit = async (clientId: string) => {
+  const commitSeats = async (
+    attendee: EventAttendee,
+    nextSeatsRaw: string,
+    revert: () => void
+  ) => {
     if (!eventId) return
-    const seatsNum = Number(editingSeats)
-    if (!Number.isFinite(seatsNum) || seatsNum < 1) {
+    const nextSeats = Number(nextSeatsRaw)
+    if (!Number.isFinite(nextSeats) || nextSeats < 1) {
       onActionError("Seats must be at least 1")
+      revert()
       return
     }
+    if (nextSeats === attendee.seats) return
+    setSavingClientId(attendee.clientId)
     try {
-      await updateMutation.trigger({ eventId, clientId, seats: seatsNum })
-      setEditingClientId(null)
+      await updateMutation.trigger({
+        eventId,
+        clientId: attendee.clientId,
+        seats: nextSeats,
+      })
       onActionSuccess("Attendee updated")
     } catch (error) {
-      onActionError(extractErrorMessage(error, "Failed to update attendee"))
+      const guard = isInvoiceGuardError(error)
+      if (guard) {
+        setInvoiceGuard({
+          invoiceSeries: guard.invoiceSeries,
+          invoiceNumber: guard.invoiceNumber,
+        })
+      } else {
+        onActionError(extractErrorMessage(error, "Failed to update attendee"))
+      }
+      revert()
+    } finally {
+      setSavingClientId(null)
     }
   }
 
@@ -149,14 +184,11 @@ export default function AttendeesPanel({
 
   return (
     <section className="space-y-3">
+      <CapacityBar used={seats} max={event.maxAttendees} />
+
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Attendees
-          <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-            ({event.attendees.length} clients / {seats} seats
-            {event.maxAttendees !== undefined && ` / max ${event.maxAttendees}`}
-            )
-          </span>
         </h3>
         {event.attendees.length > 0 && (
           <button
@@ -177,103 +209,24 @@ export default function AttendeesPanel({
       ) : (
         <ul className="divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
           {event.attendees.map((attendee) => {
-            const isEditing = editingClientId === attendee.clientId
+            const name =
+              clientNameById.get(attendee.clientId) ?? "Unknown client"
+            const isSaving = savingClientId === attendee.clientId
             const isGenerating = pendingPayment === attendee.clientId
             const hasPayment = Boolean(attendee.paymentId)
             return (
-              <li
+              <AttendeeRow
                 key={attendee.clientId}
-                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
-              >
-                <div className="min-w-0 flex-1">
-                  <p
-                    className="truncate font-medium text-zinc-900 dark:text-zinc-100"
-                    title={attendee.clientId}
-                  >
-                    {attendee.clientId}
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {isEditing ? (
-                      <>
-                        <label
-                          htmlFor={`${id}-seats-${attendee.clientId}`}
-                          className="mr-1"
-                        >
-                          Seats:
-                        </label>
-                        <input
-                          id={`${id}-seats-${attendee.clientId}`}
-                          type="number"
-                          min={1}
-                          value={editingSeats}
-                          onChange={(e) => setEditingSeats(e.target.value)}
-                          className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        {attendee.seats} seat{attendee.seats === 1 ? "" : "s"}
-                        {hasPayment && (
-                          <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                            Payment ✓
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  {isEditing ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleSaveEdit(attendee.clientId)}
-                        disabled={updateMutation.isMutating}
-                        className="rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCancelEdit}
-                        className="rounded-md px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleStartEdit(attendee)}
-                        className="rounded-md px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleGenerateOne(attendee.clientId)}
-                        disabled={isGenerating || hasPayment}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-                      >
-                        {hasPayment
-                          ? "Paid"
-                          : isGenerating
-                            ? "Generating…"
-                            : "Generate payment"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(attendee.clientId)}
-                        aria-label={`Remove attendee ${attendee.clientId}`}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
-                      >
-                        Remove
-                      </button>
-                    </>
-                  )}
-                </div>
-              </li>
+                rowIdPrefix={id}
+                attendee={attendee}
+                name={name}
+                isSaving={isSaving}
+                isGenerating={isGenerating}
+                hasPayment={hasPayment}
+                onCommit={commitSeats}
+                onGenerate={handleGenerateOne}
+                onRemove={handleRemove}
+              />
             )
           })}
         </ul>
@@ -302,13 +255,13 @@ export default function AttendeesPanel({
             >
               Seats
             </label>
-            <input
+            <NumberStepperInput
               id={`${id}-add-seats`}
-              type="number"
-              min={1}
               value={addSeats}
-              onChange={(e) => setAddSeats(e.target.value)}
-              className="w-24 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              onChange={(next) => setAddSeats(next)}
+              min={1}
+              step={1}
+              ariaLabel="Seats to add"
             />
           </div>
           <div className="flex items-end">
@@ -323,6 +276,138 @@ export default function AttendeesPanel({
           </div>
         </div>
       </div>
+
+      {invoiceGuard && (
+        <InvoiceGuardModal
+          isOpen
+          onClose={() => setInvoiceGuard(null)}
+          invoiceSeries={invoiceGuard.invoiceSeries}
+          invoiceNumber={invoiceGuard.invoiceNumber}
+        />
+      )}
     </section>
+  )
+}
+
+interface AttendeeRowProps {
+  rowIdPrefix: string
+  attendee: EventAttendee
+  name: string
+  isSaving: boolean
+  isGenerating: boolean
+  hasPayment: boolean
+  onCommit: (
+    attendee: EventAttendee,
+    nextSeats: string,
+    revert: () => void
+  ) => Promise<void>
+  onGenerate: (clientId: string) => void
+  onRemove: (clientId: string) => void
+}
+
+function AttendeeRow({
+  rowIdPrefix,
+  attendee,
+  name,
+  isSaving,
+  isGenerating,
+  hasPayment,
+  onCommit,
+  onGenerate,
+  onRemove,
+}: AttendeeRowProps) {
+  const [seatsValue, setSeatsValue] = useState<string>(String(attendee.seats))
+  const lastSyncedRef = useRef<number>(attendee.seats)
+
+  // Keep the local value in sync when the upstream attendee.seats changes
+  // (e.g. after a successful mutation triggers a re-render).
+  useEffect(() => {
+    if (attendee.seats !== lastSyncedRef.current) {
+      lastSyncedRef.current = attendee.seats
+      setSeatsValue(String(attendee.seats))
+    }
+  }, [attendee.seats])
+
+  const revert = () => {
+    setSeatsValue(String(attendee.seats))
+  }
+
+  const handleCommit = () => {
+    if (seatsValue === String(attendee.seats)) return
+    void onCommit(attendee, seatsValue, revert)
+  }
+
+  // Commit when focus leaves the stepper region entirely.
+  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+    handleCommit()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      handleCommit()
+    }
+  }
+
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+      <div className="min-w-0 flex-1">
+        <p
+          className="truncate font-medium text-zinc-900 dark:text-zinc-100"
+          title={attendee.clientId}
+        >
+          {name}
+        </p>
+        <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <label
+            htmlFor={`${rowIdPrefix}-seats-${attendee.clientId}`}
+            className="sr-only"
+          >
+            Seats for {name}
+          </label>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: focus/keyboard handlers on a wrapper to detect blur/Enter on the stepper region */}
+          <div className="w-40" onBlur={handleBlur} onKeyDown={handleKeyDown}>
+            <NumberStepperInput
+              id={`${rowIdPrefix}-seats-${attendee.clientId}`}
+              value={seatsValue}
+              onChange={(next) => setSeatsValue(next)}
+              min={1}
+              step={1}
+              disabled={isSaving}
+              ariaLabel={`Seats for ${name}`}
+            />
+          </div>
+          {isSaving && <span aria-live="polite">Saving…</span>}
+          {hasPayment && !isSaving && (
+            <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              Payment ✓
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onGenerate(attendee.clientId)}
+          disabled={isGenerating || hasPayment}
+          className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+        >
+          {hasPayment
+            ? "Paid"
+            : isGenerating
+              ? "Generating…"
+              : "Generate payment"}
+        </button>
+        <button
+          type="button"
+          onClick={() => onRemove(attendee.clientId)}
+          aria-label={`Remove attendee ${name}`}
+          className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+        >
+          Remove
+        </button>
+      </div>
+    </li>
   )
 }

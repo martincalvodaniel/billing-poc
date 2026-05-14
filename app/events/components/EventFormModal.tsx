@@ -2,7 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from "react"
 import Modal from "@/app/components/Modal"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
+import PartialDatePicker, {
+  type PartialDateValue,
+} from "@/app/components/PartialDatePicker"
 import type { Event } from "@/lib/domain/entities/event"
+import { formatTimeOfDay, parseTimeOfDay } from "./eventsUi"
 
 export interface EventFormValues {
   title: string
@@ -26,6 +31,11 @@ interface EventFormModalProps {
   onSubmit: (values: EventFormValues) => Promise<void>
   isSubmitting: boolean
   errorMessage?: string | null
+  /**
+   * Field-level defaults applied ONLY in create mode and ONLY to fields that
+   * are empty after `emptyValues()`. Ignored in edit mode.
+   */
+  defaults?: Partial<EventFormValues>
 }
 
 function emptyValues(): EventFormValues {
@@ -42,6 +52,21 @@ function emptyValues(): EventFormValues {
     netAmount: "",
     vatAmount: "",
   }
+}
+
+function applyDefaults(
+  base: EventFormValues,
+  defaults: Partial<EventFormValues> | undefined
+): EventFormValues {
+  if (!defaults) return base
+  const merged: EventFormValues = { ...base }
+  for (const key of Object.keys(defaults) as Array<keyof EventFormValues>) {
+    const incoming = defaults[key]
+    if (typeof incoming !== "string") continue
+    if (merged[key].length > 0) continue
+    merged[key] = incoming
+  }
+  return merged
 }
 
 function valuesFromEvent(event: Event): EventFormValues {
@@ -62,6 +87,25 @@ function valuesFromEvent(event: Event): EventFormValues {
   return v
 }
 
+function round2(n: number): number {
+  return Math.round(n * 100) / 100
+}
+
+function stringToOptionalNumber(value: string): number | undefined {
+  const trimmed = value.trim()
+  if (trimmed.length === 0) return undefined
+  const n = Number(trimmed)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function partialDateFromValues(values: EventFormValues): PartialDateValue {
+  return {
+    year: stringToOptionalNumber(values.year),
+    month: stringToOptionalNumber(values.month),
+    day: stringToOptionalNumber(values.day),
+  }
+}
+
 export default function EventFormModal({
   mode,
   event,
@@ -70,19 +114,27 @@ export default function EventFormModal({
   onSubmit,
   isSubmitting,
   errorMessage,
+  defaults,
 }: EventFormModalProps) {
   const id = useId()
   const titleRef = useRef<HTMLInputElement>(null)
   const [values, setValues] = useState<EventFormValues>(() =>
-    mode === "edit" && event ? valuesFromEvent(event) : emptyValues()
+    mode === "edit" && event
+      ? valuesFromEvent(event)
+      : applyDefaults(emptyValues(), defaults)
   )
+  const [vatRate, setVatRate] = useState<string>("21")
 
   // Reset form whenever the modal opens or the event identity changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: deliberate reset on open/identity change only
   useEffect(() => {
     if (!isOpen) return
-    setValues(mode === "edit" && event ? valuesFromEvent(event) : emptyValues())
-    // Focus the first input shortly after the modal mounts.
+    setValues(
+      mode === "edit" && event
+        ? valuesFromEvent(event)
+        : applyDefaults(emptyValues(), defaults)
+    )
+    setVatRate("21")
     const t = setTimeout(() => titleRef.current?.focus(), 0)
     return () => clearTimeout(t)
   }, [isOpen, mode, event?._id])
@@ -98,6 +150,47 @@ export default function EventFormModal({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setValues((prev) => ({ ...prev, [field]: e.target.value }))
 
+  const handleDateChange = (next: PartialDateValue) => {
+    setValues((prev) => ({
+      ...prev,
+      year: typeof next.year === "number" ? String(next.year) : "",
+      month: typeof next.month === "number" ? String(next.month) : "",
+      day: typeof next.day === "number" ? String(next.day) : "",
+    }))
+  }
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const parsed = parseTimeOfDay(e.target.value)
+    setValues((prev) => ({
+      ...prev,
+      hour: typeof parsed.hour === "number" ? String(parsed.hour) : "",
+      minute: typeof parsed.minute === "number" ? String(parsed.minute) : "",
+    }))
+  }
+
+  const recomputeVat = (nextNet: string, nextRate: string) => {
+    const net = Number(nextNet)
+    const rate = Number(nextRate)
+    if (!Number.isFinite(net) || !Number.isFinite(rate)) return
+    const vat = round2(net * (rate / 100))
+    setValues((prev) => ({ ...prev, vatAmount: String(vat) }))
+  }
+
+  const handleNetChange = (next: string) => {
+    setValues((prev) => ({ ...prev, netAmount: next }))
+    if (next.trim().length > 0) {
+      recomputeVat(next, vatRate)
+    }
+  }
+
+  const handleVatRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextRate = e.target.value
+    setVatRate(nextRate)
+    if (values.netAmount.trim().length > 0) {
+      recomputeVat(values.netAmount, nextRate)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
@@ -105,7 +198,6 @@ export default function EventFormModal({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    // ENTER submits when valid (textarea retains its native newline behavior).
     if (
       e.key === "Enter" &&
       !(e.target instanceof HTMLTextAreaElement) &&
@@ -115,6 +207,11 @@ export default function EventFormModal({
       void handleSubmit(e)
     }
   }
+
+  const timeValue = formatTimeOfDay(
+    stringToOptionalNumber(values.hour),
+    stringToOptionalNumber(values.minute)
+  )
 
   return (
     <Modal
@@ -166,130 +263,121 @@ export default function EventFormModal({
           />
         </Field>
 
-        <fieldset className="grid grid-cols-3 gap-3">
-          <legend className="col-span-3 mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
             Date (optional)
-          </legend>
-          <Field id={`${id}-year`} label="Year">
-            <input
-              id={`${id}-year`}
-              type="number"
-              min={1900}
-              max={2999}
-              value={values.year}
-              onChange={handleChange("year")}
-              disabled={isSubmitting}
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-month`} label="Month">
-            <input
-              id={`${id}-month`}
-              type="number"
-              min={1}
-              max={12}
-              value={values.month}
-              onChange={handleChange("month")}
-              disabled={isSubmitting}
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-day`} label="Day">
-            <input
-              id={`${id}-day`}
-              type="number"
-              min={1}
-              max={31}
-              value={values.day}
-              onChange={handleChange("day")}
-              disabled={isSubmitting}
-              className={inputClass}
-            />
-          </Field>
-        </fieldset>
+          </span>
+          <PartialDatePicker
+            value={partialDateFromValues(values)}
+            onChange={handleDateChange}
+            disabled={isSubmitting}
+            ariaLabelPrefix="Event date"
+          />
+        </div>
 
-        <fieldset className="grid grid-cols-2 gap-3">
-          <legend className="col-span-2 mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Time (optional)
-          </legend>
-          <Field id={`${id}-hour`} label="Hour">
-            <input
-              id={`${id}-hour`}
-              type="number"
-              min={0}
-              max={23}
-              value={values.hour}
-              onChange={handleChange("hour")}
-              disabled={isSubmitting}
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-minute`} label="Minute">
-            <input
-              id={`${id}-minute`}
-              type="number"
-              min={0}
-              max={59}
-              value={values.minute}
-              onChange={handleChange("minute")}
-              disabled={isSubmitting}
-              className={inputClass}
-            />
-          </Field>
-        </fieldset>
+        <Field id={`${id}-time`} label="Time (optional)">
+          <input
+            id={`${id}-time`}
+            type="time"
+            step={60}
+            value={timeValue}
+            onChange={handleTimeChange}
+            disabled={isSubmitting}
+            className={inputClass}
+          />
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field id={`${id}-duration`} label="Duration (minutes)">
-            <input
+            <NumberStepperInput
               id={`${id}-duration`}
-              type="number"
-              min={1}
               value={values.durationMinutes}
-              onChange={handleChange("durationMinutes")}
+              onChange={(next) =>
+                setValues((prev) => ({ ...prev, durationMinutes: next }))
+              }
+              min={1}
+              step={5}
               disabled={isSubmitting}
-              className={inputClass}
+              suffix="min"
+              ariaLabel="Duration in minutes"
             />
           </Field>
           <Field id={`${id}-max`} label="Max attendees">
-            <input
+            <NumberStepperInput
               id={`${id}-max`}
-              type="number"
-              min={1}
               value={values.maxAttendees}
-              onChange={handleChange("maxAttendees")}
+              onChange={(next) =>
+                setValues((prev) => ({ ...prev, maxAttendees: next }))
+              }
+              min={1}
+              step={1}
               disabled={isSubmitting}
-              className={inputClass}
+              ariaLabel="Max attendees"
             />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field id={`${id}-net`} label="Net amount / seat" required>
-            <input
-              id={`${id}-net`}
-              type="number"
-              step="0.01"
-              min={0}
-              value={values.netAmount}
-              onChange={handleChange("netAmount")}
-              disabled={isSubmitting}
-              required
-              className={inputClass}
-            />
-          </Field>
-          <Field id={`${id}-vat`} label="VAT amount / seat" required>
-            <input
-              id={`${id}-vat`}
-              type="number"
-              step="0.01"
-              min={0}
-              value={values.vatAmount}
-              onChange={handleChange("vatAmount")}
-              disabled={isSubmitting}
-              required
-              className={inputClass}
-            />
-          </Field>
+          <div className="space-y-1">
+            <Field id={`${id}-net`} label="Net amount / seat" required>
+              <NumberStepperInput
+                id={`${id}-net`}
+                value={values.netAmount}
+                onChange={handleNetChange}
+                min={0}
+                step={0.01}
+                disabled={isSubmitting}
+                required
+                suffix="€"
+                ariaLabel="Net amount per seat"
+              />
+            </Field>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Per seat. Multiplied by duration/60 when generating payments.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <Field id={`${id}-vat`} label="VAT amount / seat" required>
+              <NumberStepperInput
+                id={`${id}-vat`}
+                value={values.vatAmount}
+                onChange={(next) =>
+                  setValues((prev) => ({ ...prev, vatAmount: next }))
+                }
+                min={0}
+                step={0.01}
+                disabled={isSubmitting}
+                required
+                suffix="€"
+                ariaLabel="VAT amount per seat"
+              />
+            </Field>
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor={`${id}-vat-rate`}
+                className="text-xs font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                VAT rate
+              </label>
+              <input
+                id={`${id}-vat-rate`}
+                type="number"
+                min={0}
+                max={100}
+                step={0.1}
+                value={vatRate}
+                onChange={handleVatRateChange}
+                disabled={isSubmitting}
+                className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                %
+              </span>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Changing Net or VAT rate recomputes VAT as Net × rate/100.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-2">

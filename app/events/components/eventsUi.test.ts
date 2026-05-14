@@ -4,6 +4,8 @@ import {
   eventIsPlottable,
   formatDuration,
   formatEventDateTime,
+  formatTimeOfDay,
+  parseTimeOfDay,
   totalSeats,
 } from "./eventsUi"
 
@@ -114,5 +116,44 @@ describe("eventIsPlottable", () => {
   test("returns false when date is undefined or empty", () => {
     expect(eventIsPlottable({ date: undefined })).toBe(false)
     expect(eventIsPlottable({ date: "" })).toBe(false)
+  })
+})
+
+describe("formatTimeOfDay", () => {
+  test("returns empty string when hour is undefined", () => {
+    expect(formatTimeOfDay(undefined, undefined)).toBe("")
+    expect(formatTimeOfDay(undefined, 30)).toBe("")
+  })
+
+  test("formats hour with zero padding and defaults minute to 0", () => {
+    expect(formatTimeOfDay(9, undefined)).toBe("09:00")
+    expect(formatTimeOfDay(0, 0)).toBe("00:00")
+  })
+
+  test("formats hour and minute with zero padding", () => {
+    expect(formatTimeOfDay(18, 5)).toBe("18:05")
+    expect(formatTimeOfDay(23, 59)).toBe("23:59")
+  })
+})
+
+describe("parseTimeOfDay", () => {
+  test("returns empty object for empty string", () => {
+    expect(parseTimeOfDay("")).toEqual({})
+    expect(parseTimeOfDay("   ")).toEqual({})
+  })
+
+  test("parses HH:MM", () => {
+    expect(parseTimeOfDay("09:05")).toEqual({ hour: 9, minute: 5 })
+    expect(parseTimeOfDay("23:59")).toEqual({ hour: 23, minute: 59 })
+  })
+
+  test("parses HH:MM:SS by ignoring seconds", () => {
+    expect(parseTimeOfDay("18:30:00")).toEqual({ hour: 18, minute: 30 })
+  })
+
+  test("returns empty object for malformed values", () => {
+    expect(parseTimeOfDay("abc")).toEqual({})
+    expect(parseTimeOfDay("25:00")).toEqual({})
+    expect(parseTimeOfDay("12:60")).toEqual({})
   })
 })

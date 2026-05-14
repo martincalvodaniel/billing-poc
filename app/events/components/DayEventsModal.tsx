@@ -1,5 +1,6 @@
 "use client"
 
+import AddButton from "@/app/components/AddButton"
 import Modal from "@/app/components/Modal"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatCurrency, formatDate } from "@/lib/formatters"
@@ -12,6 +13,7 @@ interface DayEventsModalProps {
   onEdit: (event: Event) => void
   onDelete: (event: Event) => void
   onOpenDetail: (event: Event) => void
+  onAddEventForDay: (day: number) => void
 }
 
 export default function DayEventsModal({
@@ -21,16 +23,32 @@ export default function DayEventsModal({
   onEdit,
   onDelete,
   onOpenDetail,
+  onAddEventForDay,
 }: DayEventsModalProps) {
+  const dateLabel = formatDate(dateKey)
+  const handleAdd = () => {
+    onAddEventForDay(Number(dateKey.slice(8, 10)))
+  }
+
   return (
     <Modal
       isOpen
       onClose={onClose}
-      title={formatDate(dateKey)}
+      title={dateLabel}
       maxWidth="lg"
       closeOnEscape
       closeOnBackdropClick
     >
+      <div className="-mt-2 mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          {dateLabel}
+        </h3>
+        <AddButton
+          ariaLabel={`Add event on ${dateLabel}`}
+          onClick={handleAdd}
+        />
+      </div>
+
       {events.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           No events on this day.

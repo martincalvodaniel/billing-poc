@@ -89,6 +89,16 @@ describe("computeEventPaymentAmount", () => {
     )
     expect(r).toEqual({ netAmount: 10, vatAmount: 2, total: 12 })
   })
+
+  test("inversion guard: net 50 / 120 min / 1 seat → 100 (not 25)", () => {
+    // Pins the convention that stored amount is per-seat FLAT and that
+    // duration scales the Payment UP (>1h ⇒ multiplier > 1), not DOWN.
+    const r = computeEventPaymentAmount(
+      { netAmount: 50, vatAmount: 0, durationMinutes: 120 },
+      1
+    )
+    expect(r).toEqual({ netAmount: 100, vatAmount: 0, total: 100 })
+  })
 })
 
 describe("deriveEventDate", () => {

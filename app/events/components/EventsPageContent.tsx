@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import AddButton from "@/app/components/AddButton"
 import PageLayout from "@/app/components/PageLayout"
 import Toast from "@/app/components/Toast"
 import MonthPicker from "@/app/month/components/MonthPicker"
@@ -65,6 +66,7 @@ export default function EventsPageContent() {
   const [pendingGenerateAllId, setPendingGenerateAllId] = useState<
     string | null
   >(null)
+  const [prefillDay, setPrefillDay] = useState<number | null>(null)
 
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1
@@ -102,8 +104,9 @@ export default function EventsPageContent() {
     return events.find((e) => e._id === detailEventId) ?? null
   }, [events, detailEventId])
 
-  const openCreate = () => {
+  const openCreate = (prefill?: number) => {
     setFormError(null)
+    setPrefillDay(prefill ?? null)
     setFormState({ open: true, mode: "create" })
   }
   const openEdit = (event: Event) => {
@@ -113,7 +116,18 @@ export default function EventsPageContent() {
   const closeForm = () => {
     setFormState((prev) => ({ ...prev, open: false }))
     setFormError(null)
+    setPrefillDay(null)
   }
+
+  const formDefaults = useMemo<Partial<EventFormValues>>(
+    () => ({
+      year: String(selectedDate.getFullYear()),
+      month: String(selectedDate.getMonth() + 1),
+      day: prefillDay ? String(prefillDay) : "",
+      maxAttendees: "10",
+    }),
+    [selectedDate, prefillDay]
+  )
 
   const handleSubmit = async (values: EventFormValues) => {
     setFormError(null)
@@ -205,6 +219,7 @@ export default function EventsPageContent() {
               </h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <AddButton ariaLabel="Add event" onClick={() => openCreate()} />
               <MonthPicker
                 selectedDate={selectedDate}
                 onMonthChange={handleMonthChange}
@@ -213,13 +228,6 @@ export default function EventsPageContent() {
                 isViewingCurrentMonth={isViewingCurrentMonth}
                 onGoToCurrentMonth={handleGoToCurrentMonth}
               />
-              <button
-                type="button"
-                onClick={openCreate}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
-              >
-                New event
-              </button>
             </div>
           </div>
         </div>
@@ -251,6 +259,7 @@ export default function EventsPageContent() {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         errorMessage={formError}
+        defaults={formDefaults}
       />
 
       {dayModalKey && (
@@ -268,6 +277,10 @@ export default function EventsPageContent() {
           onOpenDetail={(e) => {
             setDayModalKey(null)
             setDetailEventId(e._id ?? null)
+          }}
+          onAddEventForDay={(day) => {
+            setDayModalKey(null)
+            openCreate(day)
           }}
         />
       )}

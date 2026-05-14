@@ -4,6 +4,28 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+/**
+ * Computes the Payment monetary fields for an Event attendee.
+ *
+ * Pricing convention (binding):
+ * - `event.netAmount` and `event.vatAmount` are the **flat per-seat** prices.
+ *   They are NOT per hour. A stored value of 50 means "50 € per seat".
+ * - `event.durationMinutes` scales the resulting **Payment**, not the stored
+ *   per-seat price. The multiplier is `durationMinutes / 60` when duration
+ *   is set and > 0; otherwise it is `1`.
+ *
+ * Formula:
+ *   multiplier = (durationMinutes && durationMinutes > 0) ? durationMinutes/60 : 1
+ *   netAmount  = round2(event.netAmount * seats * multiplier)
+ *   vatAmount  = round2(event.vatAmount * seats * multiplier)
+ *   total      = round2(netAmount + vatAmount)
+ *
+ * Example: netAmount=50, vatAmount=0, durationMinutes=120, seats=1
+ *   → Payment netAmount = 50 * 1 * 2 = 100 (NOT 25).
+ *
+ * This function only computes amounts; it never mutates the Event's stored
+ * per-seat fields.
+ */
 export function computeEventPaymentAmount(
   event: Pick<Event, "netAmount" | "vatAmount" | "durationMinutes">,
   seats: number

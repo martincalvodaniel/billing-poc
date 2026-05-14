@@ -17,8 +17,8 @@ export interface Event {
   date?: string // derived YYYY-MM-DD when year+month+day all set
   durationMinutes?: number
   maxAttendees?: number
-  netAmount: number // per seat (per hour if duration set)
-  vatAmount: number // per seat (per hour if duration set)
+  netAmount: number // per seat (flat — Payment scales by duration/60 when generating)
+  vatAmount: number // per seat (flat — Payment scales by duration/60 when generating)
   attendees: EventAttendee[]
   createdAt: Date
   updatedAt: Date
