@@ -7,7 +7,7 @@ Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 
 ## direct
 ```
-Execute .agents/agents/orchestrator.agent.md for agent-iterations/260507-2257_fix-users-to-instance-3/main.prompt.md
+Execute .agents/agents/orchestrator.agent.md for agent-iterations/260508-0937_fix-client-absences-retrieval/main.prompt.md
 
 Do not create nor ask for clarifications in this iteration. Let the subagents decide if they need to ask for clarifications or not. Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 

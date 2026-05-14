@@ -117,10 +117,7 @@ export class MongoAbsenceRepository implements AbsenceRepository {
     }
 
     if (filter.studentName && filter.studentName.trim() !== "") {
-      query.studentName = {
-        $regex: escapeRegex(filter.studentName),
-        $options: "i",
-      }
+      query.studentNameLower = filter.studentName.trim().toLowerCase()
     }
 
     const docs = await col
