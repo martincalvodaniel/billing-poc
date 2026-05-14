@@ -122,3 +122,43 @@ export interface AbsenceFormData {
   partOfDay: PartOfDay
   comment?: string
 }
+
+export interface EventAttendee {
+  clientId: ObjectId
+  seats: number
+  paymentId?: ObjectId
+  addedAt: Date
+}
+
+export interface Event {
+  _id?: ObjectId
+  title: string
+  description?: string
+  year?: number
+  month?: number
+  day?: number
+  hour?: number
+  minute?: number
+  date?: string
+  durationMinutes?: number
+  maxAttendees?: number
+  netAmount: number
+  vatAmount: number
+  attendees: EventAttendee[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface EventFormData {
+  title: string
+  description?: string
+  year?: string
+  month?: string
+  day?: string
+  hour?: string
+  minute?: string
+  durationMinutes?: string
+  maxAttendees?: string
+  netAmount: string
+  vatAmount: string
+}
