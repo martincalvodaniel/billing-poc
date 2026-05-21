@@ -197,7 +197,6 @@ export default function EventFormModal({
       closeOnEscape
       closeOnBackdropClick
     >
-
       {mode === "edit" && event?._id && (
         <div className="pb-4">
           <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
