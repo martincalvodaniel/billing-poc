@@ -197,6 +197,19 @@ export default function EventFormModal({
       closeOnEscape
       closeOnBackdropClick
     >
+
+      {mode === "edit" && event?._id && (
+        <div className="pb-4">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Attendees
+          </h3>
+          <AttendeesPanel
+            event={event}
+            onActionSuccess={onAttendeeSuccess ?? (() => {})}
+            onActionError={onAttendeeError ?? (() => {})}
+          />
+        </div>
+      )}
       {/*
         `noValidate` disables the browser's native form validation popups
         (e.g. "the two nearest valid values are X and Y" when typing values
@@ -365,19 +378,6 @@ export default function EventFormModal({
           </button>
         </div>
       </form>
-
-      {mode === "edit" && event?._id && (
-        <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Attendees
-          </h3>
-          <AttendeesPanel
-            event={event}
-            onActionSuccess={onAttendeeSuccess ?? (() => {})}
-            onActionError={onAttendeeError ?? (() => {})}
-          />
-        </div>
-      )}
     </Modal>
   )
 }
