@@ -16,26 +16,18 @@ function round2(value: number): number {
  * - `conceptName`: defaults to `event.title` (with `" (no date)"` suffix
  *   when the event has no date). Callers may override with an existing
  *   concept name to preserve user edits on update paths.
- * - `conceptAmount`: per-line amount = (net + vat) per seat × duration
- *   multiplier (where multiplier mirrors `computeEventPaymentAmount`).
- * - `vat`: rate back-computed from absolute vatAmount/netAmount.
+ * - `conceptAmount`: per-line amount = gross `pricePerSeat` (duration is
+ *   informational only and does NOT scale the price).
+ * - `vat`: the event's VAT rate (percentage), mirrored as-is.
  */
 function buildPaymentLineParts(event: Event): {
   conceptName: string
   conceptAmount: number
   vat: number
-  multiplier: number
 } {
-  const multiplier =
-    event.durationMinutes && event.durationMinutes > 0
-      ? event.durationMinutes / 60
-      : 1
-  const perSeatRate = event.netAmount + event.vatAmount
-  const conceptAmount = round2(perSeatRate * multiplier)
+  const conceptAmount = round2(event.pricePerSeat)
   const conceptName = event.date ? event.title : `${event.title} (no date)`
-  const vat =
-    event.netAmount > 0 ? round2((event.vatAmount / event.netAmount) * 100) : 0
-  return { conceptName, conceptAmount, vat, multiplier }
+  return { conceptName, conceptAmount, vat: event.vatRate }
 }
 
 /**
@@ -47,10 +39,10 @@ function buildPaymentLineParts(event: Event): {
  * - type: "income", tag: "event"
  * - date: event.date if set, otherwise today's ISO date
  * - concepts: one line, name = event title (+ " (no date)" if event has no
- *   date), amount = (netAmount+vatAmount) * durationMultiplier, quantity =
- *   seats
+ *   date), amount = pricePerSeat (gross per-seat; duration does NOT scale
+ *   the price), quantity = seats
  * - netAmount/vatAmount/total: from `computeEventPaymentAmount` directly
- * - vat: back-computed as (vatAmount/netAmount)*100 (0 if netAmount=0)
+ * - vat: the event's VAT rate (percentage), mirrored as-is
  */
 export async function generateAttendeePayment(
   event: Event,

@@ -36,6 +36,11 @@ function attendeeToMongo(a: EventAttendee): MongoEventAttendee {
   }
 }
 
+// Migration note: documents predating iteration 260514-1802 stored
+// `netAmount` (per-seat NET euros) and `vatAmount` (per-seat absolute VAT
+// euros). They now store `pricePerSeat` (gross euros/seat, VAT included)
+// and `vatRate` (percentage). Legacy documents are NOT auto-migrated; see
+// the iteration plan §3.4 for the one-off Mongo shell update.
 function toDomain(doc: MongoEvent): Event {
   return {
     _id: doc._id?.toString(),
@@ -49,8 +54,8 @@ function toDomain(doc: MongoEvent): Event {
     date: doc.date,
     durationMinutes: doc.durationMinutes,
     maxAttendees: doc.maxAttendees,
-    netAmount: doc.netAmount,
-    vatAmount: doc.vatAmount,
+    pricePerSeat: doc.pricePerSeat,
+    vatRate: doc.vatRate,
     attendees: (doc.attendees ?? []).map(attendeeToDomain),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -135,8 +140,8 @@ export class MongoEventRepository implements EventRepository {
       date: event.date,
       durationMinutes: event.durationMinutes,
       maxAttendees: event.maxAttendees,
-      netAmount: event.netAmount,
-      vatAmount: event.vatAmount,
+      pricePerSeat: event.pricePerSeat,
+      vatRate: event.vatRate,
       attendees: (event.attendees ?? []).map(attendeeToMongo),
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
@@ -189,8 +194,9 @@ export class MongoEventRepository implements EventRepository {
     setOrUnset("date", data.date)
     setOrUnset("durationMinutes", data.durationMinutes)
     setOrUnset("maxAttendees", data.maxAttendees)
-    if (data.netAmount !== undefined) setData.netAmount = data.netAmount
-    if (data.vatAmount !== undefined) setData.vatAmount = data.vatAmount
+    if (data.pricePerSeat !== undefined)
+      setData.pricePerSeat = data.pricePerSeat
+    if (data.vatRate !== undefined) setData.vatRate = data.vatRate
 
     const updateOps: Record<string, unknown> = { $set: setData }
     if (Object.keys(unsetData).length > 0) {

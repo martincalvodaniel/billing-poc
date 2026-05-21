@@ -142,8 +142,8 @@ export interface Event {
   date?: string
   durationMinutes?: number
   maxAttendees?: number
-  netAmount: number
-  vatAmount: number
+  pricePerSeat: number
+  vatRate: number
   attendees: EventAttendee[]
   createdAt: Date
   updatedAt: Date
@@ -159,6 +159,6 @@ export interface EventFormData {
   minute?: string
   durationMinutes?: string
   maxAttendees?: string
-  netAmount: string
-  vatAmount: string
+  pricePerSeat: string
+  vatRate: string
 }

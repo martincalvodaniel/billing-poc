@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from "react"
 import Modal from "@/app/components/Modal"
-import NumberStepperInput from "@/app/components/NumberStepperInput"
 import PartialDatePicker, {
   type PartialDateValue,
 } from "@/app/components/PartialDatePicker"
@@ -19,8 +18,8 @@ export interface EventFormValues {
   minute: string
   durationMinutes: string
   maxAttendees: string
-  netAmount: string
-  vatAmount: string
+  pricePerSeat: string
+  vatRate: string
 }
 
 interface EventFormModalProps {
@@ -49,8 +48,8 @@ function emptyValues(): EventFormValues {
     minute: "",
     durationMinutes: "",
     maxAttendees: "",
-    netAmount: "",
-    vatAmount: "",
+    pricePerSeat: "",
+    vatRate: "21",
   }
 }
 
@@ -82,13 +81,9 @@ function valuesFromEvent(event: Event): EventFormValues {
     event.durationMinutes !== undefined ? String(event.durationMinutes) : ""
   v.maxAttendees =
     event.maxAttendees !== undefined ? String(event.maxAttendees) : ""
-  v.netAmount = String(event.netAmount)
-  v.vatAmount = String(event.vatAmount)
+  v.pricePerSeat = String(event.pricePerSeat)
+  v.vatRate = String(event.vatRate)
   return v
-}
-
-function round2(n: number): number {
-  return Math.round(n * 100) / 100
 }
 
 function stringToOptionalNumber(value: string): number | undefined {
@@ -123,7 +118,6 @@ export default function EventFormModal({
       ? valuesFromEvent(event)
       : applyDefaults(emptyValues(), defaults)
   )
-  const [vatRate, setVatRate] = useState<string>("21")
 
   // Reset form whenever the modal opens or the event identity changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: deliberate reset on open/identity change only
@@ -134,15 +128,14 @@ export default function EventFormModal({
         ? valuesFromEvent(event)
         : applyDefaults(emptyValues(), defaults)
     )
-    setVatRate("21")
     const t = setTimeout(() => titleRef.current?.focus(), 0)
     return () => clearTimeout(t)
   }, [isOpen, mode, event?._id])
 
   const canSubmit =
     values.title.trim().length > 0 &&
-    values.netAmount.trim().length > 0 &&
-    values.vatAmount.trim().length > 0 &&
+    values.pricePerSeat.trim().length > 0 &&
+    values.vatRate.trim().length > 0 &&
     !isSubmitting
 
   const handleChange =
@@ -166,29 +159,6 @@ export default function EventFormModal({
       hour: typeof parsed.hour === "number" ? String(parsed.hour) : "",
       minute: typeof parsed.minute === "number" ? String(parsed.minute) : "",
     }))
-  }
-
-  const recomputeVat = (nextNet: string, nextRate: string) => {
-    const net = Number(nextNet)
-    const rate = Number(nextRate)
-    if (!Number.isFinite(net) || !Number.isFinite(rate)) return
-    const vat = round2(net * (rate / 100))
-    setValues((prev) => ({ ...prev, vatAmount: String(vat) }))
-  }
-
-  const handleNetChange = (next: string) => {
-    setValues((prev) => ({ ...prev, netAmount: next }))
-    if (next.trim().length > 0) {
-      recomputeVat(next, vatRate)
-    }
-  }
-
-  const handleVatRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const nextRate = e.target.value
-    setVatRate(nextRate)
-    if (values.netAmount.trim().length > 0) {
-      recomputeVat(values.netAmount, nextRate)
-    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -222,10 +192,18 @@ export default function EventFormModal({
       closeOnEscape
       closeOnBackdropClick
     >
+      {/*
+        `noValidate` disables the browser's native form validation popups
+        (e.g. "the two nearest valid values are X and Y" when typing values
+        that don't match the input's `step`). We still validate server-side
+        via Zod schemas; `step` here is only a UX convenience for keyboard
+        arrows / spinner increments.
+      */}
       <form
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
         className="space-y-4"
+        noValidate
       >
         {errorMessage && (
           <div
@@ -289,94 +267,74 @@ export default function EventFormModal({
 
         <div className="grid grid-cols-2 gap-3">
           <Field id={`${id}-duration`} label="Duration (minutes)">
-            <NumberStepperInput
+            <input
               id={`${id}-duration`}
+              type="number"
+              inputMode="numeric"
+              min={30}
+              step={30}
               value={values.durationMinutes}
-              onChange={(next) =>
-                setValues((prev) => ({ ...prev, durationMinutes: next }))
-              }
-              min={1}
-              step={5}
+              onChange={handleChange("durationMinutes")}
               disabled={isSubmitting}
-              suffix="min"
-              ariaLabel="Duration in minutes"
+              aria-label="Duration in minutes"
+              className={inputClass}
             />
           </Field>
           <Field id={`${id}-max`} label="Max attendees">
-            <NumberStepperInput
+            <input
               id={`${id}-max`}
-              value={values.maxAttendees}
-              onChange={(next) =>
-                setValues((prev) => ({ ...prev, maxAttendees: next }))
-              }
+              type="number"
+              inputMode="numeric"
               min={1}
               step={1}
+              value={values.maxAttendees}
+              onChange={handleChange("maxAttendees")}
               disabled={isSubmitting}
-              ariaLabel="Max attendees"
+              aria-label="Max attendees"
+              className={inputClass}
             />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Field id={`${id}-net`} label="Net amount / seat" required>
-              <NumberStepperInput
-                id={`${id}-net`}
-                value={values.netAmount}
-                onChange={handleNetChange}
+            <Field id={`${id}-price`} label="Price per seat (gross)" required>
+              <input
+                id={`${id}-price`}
+                type="number"
+                inputMode="numeric"
                 min={0}
-                step={0.01}
+                step={5}
+                value={values.pricePerSeat}
+                onChange={handleChange("pricePerSeat")}
                 disabled={isSubmitting}
                 required
-                suffix="€"
-                ariaLabel="Net amount per seat"
+                aria-label="Price per seat (gross)"
+                className={inputClass}
               />
             </Field>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Per seat. Multiplied by duration/60 when generating payments.
+              Price the attendee pays per seat (VAT included). Net and VAT are
+              derived using the VAT rate.
             </p>
           </div>
           <div className="space-y-1">
-            <Field id={`${id}-vat`} label="VAT amount / seat" required>
-              <NumberStepperInput
-                id={`${id}-vat`}
-                value={values.vatAmount}
-                onChange={(next) =>
-                  setValues((prev) => ({ ...prev, vatAmount: next }))
-                }
-                min={0}
-                step={0.01}
-                disabled={isSubmitting}
-                required
-                suffix="€"
-                ariaLabel="VAT amount per seat"
-              />
-            </Field>
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor={`${id}-vat-rate`}
-                className="text-xs font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                VAT rate
-              </label>
+            <Field id={`${id}-vat-rate`} label="VAT rate (%)" required>
               <input
                 id={`${id}-vat-rate`}
                 type="number"
+                inputMode="numeric"
                 min={0}
                 max={100}
-                step={0.1}
-                value={vatRate}
-                onChange={handleVatRateChange}
+                step={1}
+                value={values.vatRate}
+                onChange={handleChange("vatRate")}
                 disabled={isSubmitting}
-                className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                required
+                aria-label="VAT rate percentage"
+                className={inputClass}
               />
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                %
-              </span>
-            </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Changing Net or VAT rate recomputes VAT as Net × rate/100.
-            </p>
+            </Field>
           </div>
         </div>
 

@@ -124,7 +124,9 @@ export default function EventsPageContent() {
       year: String(selectedDate.getFullYear()),
       month: String(selectedDate.getMonth() + 1),
       day: prefillDay ? String(prefillDay) : "",
+      durationMinutes: "120",
       maxAttendees: "10",
+      vatRate: "21",
     }),
     [selectedDate, prefillDay]
   )
@@ -144,8 +146,8 @@ export default function EventsPageContent() {
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
           maxAttendees: toOptionalNumber(values.maxAttendees),
-          netAmount: toRequiredNumber(values.netAmount),
-          vatAmount: toRequiredNumber(values.vatAmount),
+          pricePerSeat: toRequiredNumber(values.pricePerSeat),
+          vatRate: toRequiredNumber(values.vatRate),
         })
         setToast("Event updated")
       } else {
@@ -159,8 +161,8 @@ export default function EventsPageContent() {
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
           maxAttendees: toOptionalNumber(values.maxAttendees),
-          netAmount: toRequiredNumber(values.netAmount),
-          vatAmount: toRequiredNumber(values.vatAmount),
+          pricePerSeat: toRequiredNumber(values.pricePerSeat),
+          vatRate: toRequiredNumber(values.vatRate),
         })
         setToast("Event created")
       }

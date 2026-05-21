@@ -18,8 +18,8 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
     date: "2026-05-14",
     durationMinutes: 60,
     maxAttendees: 10,
-    netAmount: 50,
-    vatAmount: 0,
+    pricePerSeat: 50,
+    vatRate: 0,
     attendees: [],
     createdAt: now,
     updatedAt: now,
@@ -135,7 +135,7 @@ describe("recomputeAttendeePayment", () => {
     const payment = makePayment()
     const { repo, updates } = makeFakeRepo(payment)
     const result = await recomputeAttendeePayment(
-      makeEvent({ netAmount: 50, vatAmount: 0, durationMinutes: 60 }),
+      makeEvent({ pricePerSeat: 50, vatRate: 0, durationMinutes: 60 }),
       makeAttendee({ paymentId: "pay1", seats: 1 }),
       3,
       { payments: repo }
@@ -175,12 +175,13 @@ describe("recomputeAttendeePayment", () => {
     ])
   })
 
-  test("'updated' applies duration multiplier to per-line amount", async () => {
-    // 50 € net per seat, 120 min duration, 1 seat → per-line = 50 * 2 = 100
+  test("'updated' does NOT scale per-line amount by duration", async () => {
+    // 50 € gross per seat, 120 min duration, 2 seats → per-line = 50 (duration ignored)
+    // total = 50 * 2 = 100
     const payment = makePayment({ concepts: [] })
     const { repo, updates } = makeFakeRepo(payment)
     const result = await recomputeAttendeePayment(
-      makeEvent({ netAmount: 50, vatAmount: 0, durationMinutes: 120 }),
+      makeEvent({ pricePerSeat: 50, vatRate: 0, durationMinutes: 120 }),
       makeAttendee({ paymentId: "pay1" }),
       2,
       { payments: repo }
@@ -188,12 +189,12 @@ describe("recomputeAttendeePayment", () => {
     expect(result).toEqual({
       status: "updated",
       paymentId: "pay1",
-      netAmount: 200,
+      netAmount: 100,
       vatAmount: 0,
-      total: 200,
+      total: 100,
     })
     expect(updates[0].data.concepts).toEqual([
-      { name: "Workshop", amount: 100, quantity: 2 },
+      { name: "Workshop", amount: 50, quantity: 2 },
     ])
   })
 

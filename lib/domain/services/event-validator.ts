@@ -52,12 +52,13 @@ const baseFields = {
     .int()
     .min(1, "Max attendees must be at least 1")
     .optional(),
-  netAmount: z.coerce
-    .number({ message: "Invalid net amount" })
-    .min(0, "Net amount must be non-negative"),
-  vatAmount: z.coerce
-    .number({ message: "Invalid VAT amount" })
-    .min(0, "VAT amount must be non-negative"),
+  pricePerSeat: z.coerce
+    .number({ message: "Invalid price per seat" })
+    .min(0, "Price per seat must be non-negative"),
+  vatRate: z.coerce
+    .number({ message: "Invalid VAT rate" })
+    .min(0, "VAT rate must be 0 or more")
+    .max(100, "VAT rate must be 100 or less"),
 }
 
 function applyDateRefinements<T extends z.ZodTypeAny>(schema: T): T {
@@ -118,13 +119,14 @@ export const updateEventSchema = applyDateRefinements(
       minute: baseFields.minute,
       durationMinutes: baseFields.durationMinutes,
       maxAttendees: baseFields.maxAttendees,
-      netAmount: z.coerce
-        .number({ message: "Invalid net amount" })
-        .min(0, "Net amount must be non-negative")
+      pricePerSeat: z.coerce
+        .number({ message: "Invalid price per seat" })
+        .min(0, "Price per seat must be non-negative")
         .optional(),
-      vatAmount: z.coerce
-        .number({ message: "Invalid VAT amount" })
-        .min(0, "VAT amount must be non-negative")
+      vatRate: z.coerce
+        .number({ message: "Invalid VAT rate" })
+        .min(0, "VAT rate must be 0 or more")
+        .max(100, "VAT rate must be 100 or less")
         .optional(),
     })
     .refine(

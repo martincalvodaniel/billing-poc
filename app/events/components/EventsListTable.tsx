@@ -57,8 +57,8 @@ export default function EventsListTable({
             <Th>Duration</Th>
             <Th>Attendees</Th>
             <Th>Max</Th>
-            <Th>Net / seat</Th>
-            <Th>VAT / seat</Th>
+            <Th>Price / seat (gross)</Th>
+            <Th>VAT rate</Th>
             <Th align="right">Actions</Th>
           </tr>
         </thead>
@@ -101,10 +101,10 @@ export default function EventsListTable({
                   {event.maxAttendees ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {formatCurrency(event.netAmount)}
+                  {formatCurrency(event.pricePerSeat)}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {formatCurrency(event.vatAmount)}
+                  {event.vatRate}%
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-2">

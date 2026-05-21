@@ -11,8 +11,8 @@ import {
 function makeEvent(partial: Partial<Event> & { title: string }): Event {
   return {
     title: partial.title,
-    netAmount: 0,
-    vatAmount: 0,
+    pricePerSeat: 0,
+    vatRate: 0,
     attendees: [],
     createdAt: new Date(),
     updatedAt: new Date(),

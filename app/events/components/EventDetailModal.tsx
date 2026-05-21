@@ -52,13 +52,10 @@ export default function EventDetailModal({
             value={formatDuration(event.durationMinutes)}
           />
           <SummaryItem
-            label="Net / seat"
-            value={formatCurrency(event.netAmount)}
+            label="Price / seat (gross)"
+            value={formatCurrency(event.pricePerSeat)}
           />
-          <SummaryItem
-            label="VAT / seat"
-            value={formatCurrency(event.vatAmount)}
-          />
+          <SummaryItem label="VAT rate" value={`${event.vatRate}%`} />
         </dl>
 
         <div className="flex items-center justify-end gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">

@@ -11,8 +11,8 @@ import {
 describe("createEventSchema", () => {
   const valid = {
     title: "Workshop",
-    netAmount: 50,
-    vatAmount: 10.5,
+    pricePerSeat: 50,
+    vatRate: 21,
   }
 
   test("accepts minimal valid event", () => {
@@ -51,18 +51,44 @@ describe("createEventSchema", () => {
     expect(result.success).toBe(false)
   })
 
-  test("rejects negative netAmount", () => {
-    const result = createEventSchema.safeParse({ ...valid, netAmount: -1 })
+  test("rejects negative pricePerSeat", () => {
+    const result = createEventSchema.safeParse({ ...valid, pricePerSeat: -1 })
     expect(result.success).toBe(false)
   })
 
-  test("rejects negative vatAmount", () => {
-    const result = createEventSchema.safeParse({ ...valid, vatAmount: -1 })
+  test("accepts pricePerSeat = 0", () => {
+    const result = createEventSchema.safeParse({ ...valid, pricePerSeat: 0 })
+    expect(result.success).toBe(true)
+  })
+
+  test("rejects vatRate < 0", () => {
+    const result = createEventSchema.safeParse({ ...valid, vatRate: -1 })
     expect(result.success).toBe(false)
   })
 
-  test("rejects missing netAmount", () => {
-    const { netAmount: _n, ...rest } = valid
+  test("rejects vatRate > 100", () => {
+    const result = createEventSchema.safeParse({ ...valid, vatRate: 101 })
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts vatRate = 0", () => {
+    const result = createEventSchema.safeParse({ ...valid, vatRate: 0 })
+    expect(result.success).toBe(true)
+  })
+
+  test("accepts vatRate = 100", () => {
+    const result = createEventSchema.safeParse({ ...valid, vatRate: 100 })
+    expect(result.success).toBe(true)
+  })
+
+  test("rejects missing pricePerSeat", () => {
+    const { pricePerSeat: _p, ...rest } = valid
+    const result = createEventSchema.safeParse(rest)
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects missing vatRate", () => {
+    const { vatRate: _v, ...rest } = valid
     const result = createEventSchema.safeParse(rest)
     expect(result.success).toBe(false)
   })
@@ -204,6 +230,39 @@ describe("updateEventSchema", () => {
       year: 2026,
       month: 5,
       day: 14,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  test("rejects negative pricePerSeat in update", () => {
+    const result = updateEventSchema.safeParse({
+      id: "abc",
+      pricePerSeat: -1,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects vatRate > 100 in update", () => {
+    const result = updateEventSchema.safeParse({
+      id: "abc",
+      vatRate: 101,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects vatRate < 0 in update", () => {
+    const result = updateEventSchema.safeParse({
+      id: "abc",
+      vatRate: -1,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts pricePerSeat and vatRate update", () => {
+    const result = updateEventSchema.safeParse({
+      id: "abc",
+      pricePerSeat: 12.5,
+      vatRate: 10,
     })
     expect(result.success).toBe(true)
   })

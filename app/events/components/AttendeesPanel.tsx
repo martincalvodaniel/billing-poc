@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import ClientSelector from "@/app/components/ClientSelector"
-import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import { useClients } from "@/lib/hooks/useClients"
 import {
@@ -255,13 +254,15 @@ export default function AttendeesPanel({
             >
               Seats
             </label>
-            <NumberStepperInput
+            <input
+              type="number"
               id={`${id}-add-seats`}
               value={addSeats}
-              onChange={(next) => setAddSeats(next)}
+              onChange={(event) => setAddSeats(event.currentTarget.value)}
               min={1}
               step={1}
-              ariaLabel="Seats to add"
+              aria-label="Seats to add"
+              className="w-20 rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
           <div className="flex items-end">
@@ -366,16 +367,18 @@ function AttendeeRow({
           >
             Seats for {name}
           </label>
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: focus/keyboard handlers on a wrapper to detect blur/Enter on the stepper region */}
-          <div className="w-40" onBlur={handleBlur} onKeyDown={handleKeyDown}>
-            <NumberStepperInput
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: focus/keyboard handlers on a wrapper to detect blur/Enter on the seats input */}
+          <div className="w-20" onBlur={handleBlur} onKeyDown={handleKeyDown}>
+            <input
+              type="number"
               id={`${rowIdPrefix}-seats-${attendee.clientId}`}
               value={seatsValue}
-              onChange={(next) => setSeatsValue(next)}
+              onChange={(event) => setSeatsValue(event.currentTarget.value)}
               min={1}
               step={1}
               disabled={isSaving}
-              ariaLabel={`Seats for ${name}`}
+              aria-label={`Seats for ${name}`}
+              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
           {isSaving && <span aria-live="polite">Saving…</span>}

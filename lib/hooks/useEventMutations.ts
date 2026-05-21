@@ -20,8 +20,8 @@ export interface CreateEventInput {
   minute?: number
   durationMinutes?: number
   maxAttendees?: number
-  netAmount: number
-  vatAmount: number
+  pricePerSeat: number
+  vatRate: number
 }
 
 export interface UpdateEventInput {
@@ -35,8 +35,8 @@ export interface UpdateEventInput {
   minute?: number
   durationMinutes?: number
   maxAttendees?: number
-  netAmount?: number
-  vatAmount?: number
+  pricePerSeat?: number
+  vatRate?: number
 }
 
 export interface DeleteEventInput {

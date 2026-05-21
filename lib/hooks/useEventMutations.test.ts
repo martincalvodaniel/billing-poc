@@ -16,13 +16,13 @@ describe("buildCreateEventRequest", () => {
   test("POSTs to /api/events with JSON body", () => {
     const req = buildCreateEventRequest({
       title: "Workshop",
-      netAmount: 10,
-      vatAmount: 2,
+      pricePerSeat: 10,
+      vatRate: 21,
     })
     expect(req.url).toBe("/api/events")
     expect(req.method).toBe("POST")
     expect(req.body).toBe(
-      JSON.stringify({ title: "Workshop", netAmount: 10, vatAmount: 2 })
+      JSON.stringify({ title: "Workshop", pricePerSeat: 10, vatRate: 21 })
     )
   })
 })

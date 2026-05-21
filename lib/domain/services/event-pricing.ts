@@ -1,6 +1,6 @@
 import type { Event } from "../entities/event"
 
-function round2(value: number): number {
+export function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
@@ -8,36 +8,34 @@ function round2(value: number): number {
  * Computes the Payment monetary fields for an Event attendee.
  *
  * Pricing convention (binding):
- * - `event.netAmount` and `event.vatAmount` are the **flat per-seat** prices.
- *   They are NOT per hour. A stored value of 50 means "50 € per seat".
- * - `event.durationMinutes` scales the resulting **Payment**, not the stored
- *   per-seat price. The multiplier is `durationMinutes / 60` when duration
- *   is set and > 0; otherwise it is `1`.
+ * - `event.pricePerSeat` is the **gross** price per seat (VAT included),
+ *   in euros. A stored value of 10 means "the customer pays 10 € per seat"
+ *   regardless of the event's duration.
+ * - `event.vatRate` is the VAT rate as a percentage (0–100). The net and
+ *   VAT amounts are **extracted** from the gross total.
+ * - `event.durationMinutes` is purely informational (used by the calendar
+ *   and listings); it does NOT scale the price.
  *
  * Formula:
- *   multiplier = (durationMinutes && durationMinutes > 0) ? durationMinutes/60 : 1
- *   netAmount  = round2(event.netAmount * seats * multiplier)
- *   vatAmount  = round2(event.vatAmount * seats * multiplier)
- *   total      = round2(netAmount + vatAmount)
+ *   total      = round2(pricePerSeat * seats)
+ *   net        = round2(total / (1 + vatRate/100))
+ *   vatAmount  = round2(total - net)
  *
- * Example: netAmount=50, vatAmount=0, durationMinutes=120, seats=1
- *   → Payment netAmount = 50 * 1 * 2 = 100 (NOT 25).
+ * Example: pricePerSeat=10, vatRate=21, seats=1, durationMinutes=180
+ *   → total=10.00, net=8.26, vatAmount=1.74.
  *
- * This function only computes amounts; it never mutates the Event's stored
- * per-seat fields.
+ * The returned `vatRate` mirrors `event.vatRate` and is stored on
+ * `Payment.vat` (which represents the rate, not an absolute amount).
  */
 export function computeEventPaymentAmount(
-  event: Pick<Event, "netAmount" | "vatAmount" | "durationMinutes">,
+  event: Pick<Event, "pricePerSeat" | "vatRate" | "durationMinutes">,
   seats: number
-): { netAmount: number; vatAmount: number; total: number } {
-  const multiplier =
-    event.durationMinutes && event.durationMinutes > 0
-      ? event.durationMinutes / 60
-      : 1
-  const netAmount = round2(event.netAmount * seats * multiplier)
-  const vatAmount = round2(event.vatAmount * seats * multiplier)
-  const total = round2(netAmount + vatAmount)
-  return { netAmount, vatAmount, total }
+): { netAmount: number; vatAmount: number; total: number; vatRate: number } {
+  const total = round2(event.pricePerSeat * seats)
+  const rate = event.vatRate
+  const netAmount = round2(total / (1 + rate / 100))
+  const vatAmount = round2(total - netAmount)
+  return { netAmount, vatAmount, total, vatRate: rate }
 }
 
 export function deriveEventDate(

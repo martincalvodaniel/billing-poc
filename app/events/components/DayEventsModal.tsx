@@ -74,8 +74,8 @@ export default function DayEventsModal({
                     {formatEventDateTime(event)} ·{" "}
                     {formatDuration(event.durationMinutes)} ·{" "}
                     {event.attendees.length} clients / {seats} seats ·{" "}
-                    {formatCurrency(event.netAmount)} net /{" "}
-                    {formatCurrency(event.vatAmount)} VAT per seat
+                    {formatCurrency(event.pricePerSeat)} / seat (VAT{" "}
+                    {event.vatRate}%)
                   </p>
                 </div>
                 <div className="flex items-center gap-1">

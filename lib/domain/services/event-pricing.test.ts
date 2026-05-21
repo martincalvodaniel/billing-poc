@@ -2,104 +2,115 @@ import { describe, expect, test } from "bun:test"
 import { computeEventPaymentAmount, deriveEventDate } from "./event-pricing"
 
 describe("computeEventPaymentAmount", () => {
-  test("multiplier 1 when duration is absent", () => {
+  test("bug-report regression: pricePerSeat=10, vatRate=21, seats=1, no duration", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: undefined },
+      { pricePerSeat: 10, vatRate: 21, durationMinutes: undefined },
       1
     )
-    expect(r).toEqual({ netAmount: 10, vatAmount: 2, total: 12 })
+    expect(r).toEqual({
+      netAmount: 8.26,
+      vatAmount: 1.74,
+      total: 10,
+      vatRate: 21,
+    })
   })
 
-  test("multiplier 1 for 60 minutes", () => {
+  test("bug-report regression: pricePerSeat=10, vatRate=21, seats=1, durationMinutes=180 → total=10 (duration does NOT scale price)", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: 60 },
+      { pricePerSeat: 10, vatRate: 21, durationMinutes: 180 },
       1
     )
-    expect(r).toEqual({ netAmount: 10, vatAmount: 2, total: 12 })
+    expect(r).toEqual({
+      netAmount: 8.26,
+      vatAmount: 1.74,
+      total: 10,
+      vatRate: 21,
+    })
   })
 
-  test("multiplier 0.5 for 30 minutes", () => {
+  test("3 seats: total=30, net=24.79, vat=5.21", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: 30 },
-      1
-    )
-    expect(r).toEqual({ netAmount: 5, vatAmount: 1, total: 6 })
-  })
-
-  test("multiplier 1.5 for 90 minutes", () => {
-    const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: 90 },
-      1
-    )
-    expect(r).toEqual({ netAmount: 15, vatAmount: 3, total: 18 })
-  })
-
-  test("scales with seats (3 seats, 60 min)", () => {
-    const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: 60 },
+      { pricePerSeat: 10, vatRate: 21, durationMinutes: undefined },
       3
     )
-    expect(r).toEqual({ netAmount: 30, vatAmount: 6, total: 36 })
+    expect(r).toEqual({
+      netAmount: 24.79,
+      vatAmount: 5.21,
+      total: 30,
+      vatRate: 21,
+    })
   })
 
-  test("scales with seats and 90 min duration", () => {
+  test("vatRate=0 → net equals total, vat=0", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: 90 },
-      3
+      { pricePerSeat: 10, vatRate: 0, durationMinutes: undefined },
+      1
     )
-    expect(r).toEqual({ netAmount: 45, vatAmount: 9, total: 54 })
+    expect(r).toEqual({
+      netAmount: 10,
+      vatAmount: 0,
+      total: 10,
+      vatRate: 0,
+    })
   })
 
-  test("net 0 → only vat contributes to total", () => {
+  test("pricePerSeat=0 → all zero", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 0, vatAmount: 5, durationMinutes: 60 },
-      2
-    )
-    expect(r).toEqual({ netAmount: 0, vatAmount: 10, total: 10 })
-  })
-
-  test("vat 0 → only net contributes to total", () => {
-    const r = computeEventPaymentAmount(
-      { netAmount: 7, vatAmount: 0, durationMinutes: 60 },
-      2
-    )
-    expect(r).toEqual({ netAmount: 14, vatAmount: 0, total: 14 })
-  })
-
-  test("both 0 → zero totals", () => {
-    const r = computeEventPaymentAmount(
-      { netAmount: 0, vatAmount: 0, durationMinutes: 60 },
+      { pricePerSeat: 0, vatRate: 21, durationMinutes: undefined },
       5
     )
-    expect(r).toEqual({ netAmount: 0, vatAmount: 0, total: 0 })
+    expect(r).toEqual({
+      netAmount: 0,
+      vatAmount: 0,
+      total: 0,
+      vatRate: 21,
+    })
   })
 
-  test("rounds to 2 decimals (10.005 → 10.01)", () => {
-    const r = computeEventPaymentAmount(
-      { netAmount: 10.005, vatAmount: 0, durationMinutes: 60 },
+  test("durationMinutes is informational and does not affect totals", () => {
+    const base = { pricePerSeat: 10, vatRate: 21 }
+    const r30 = computeEventPaymentAmount({ ...base, durationMinutes: 30 }, 1)
+    const r60 = computeEventPaymentAmount({ ...base, durationMinutes: 60 }, 1)
+    const r90 = computeEventPaymentAmount({ ...base, durationMinutes: 90 }, 1)
+    const r180 = computeEventPaymentAmount({ ...base, durationMinutes: 180 }, 1)
+    const rNone = computeEventPaymentAmount(
+      { ...base, durationMinutes: undefined },
       1
     )
-    expect(r.netAmount).toBe(10.01)
+    expect(r30).toEqual(rNone)
+    expect(r60).toEqual(rNone)
+    expect(r90).toEqual(rNone)
+    expect(r180).toEqual(rNone)
   })
 
-  test("duration 0 falls back to multiplier 1", () => {
+  test("returned vatRate mirrors event.vatRate exactly", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 10, vatAmount: 2, durationMinutes: 0 },
+      { pricePerSeat: 10, vatRate: 10, durationMinutes: 60 },
       1
     )
-    expect(r).toEqual({ netAmount: 10, vatAmount: 2, total: 12 })
+    expect(r.vatRate).toBe(10)
   })
 
-  test("inversion guard: net 50 / 120 min / 1 seat → 100 (not 25)", () => {
-    // Pins the convention that stored amount is per-seat FLAT and that
-    // duration scales the Payment UP (>1h ⇒ multiplier > 1), not DOWN.
+  test("net + vatAmount equals total (within rounding)", () => {
     const r = computeEventPaymentAmount(
-      { netAmount: 50, vatAmount: 0, durationMinutes: 120 },
+      { pricePerSeat: 33.33, vatRate: 21, durationMinutes: 75 },
+      4
+    )
+    expect(round2(r.netAmount + r.vatAmount)).toBe(r.total)
+  })
+
+  test("rounds to 2 decimals (10.005 input)", () => {
+    const r = computeEventPaymentAmount(
+      { pricePerSeat: 10.005, vatRate: 21, durationMinutes: undefined },
       1
     )
-    expect(r).toEqual({ netAmount: 100, vatAmount: 0, total: 100 })
+    expect(r.total).toBe(10.01)
   })
 })
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100
+}
 
 describe("deriveEventDate", () => {
   test("returns ISO YYYY-MM-DD for valid date", () => {
