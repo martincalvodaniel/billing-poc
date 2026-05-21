@@ -13,7 +13,7 @@ export function formatEventDateTime(
   event: Pick<Event, "date" | "year" | "month" | "day" | "hour" | "minute">
 ): string {
   const datePart = formatEventDate(event)
-  const timePart = formatEventTime(event)
+  const timePart = formatEventTime(event) ?? ""
   if (datePart === "" && timePart === "") return "No date"
   if (datePart === "") return timePart
   if (timePart === "") return datePart
@@ -41,11 +41,27 @@ function formatEventDate(
   return ""
 }
 
-function formatEventTime(event: Pick<Event, "hour" | "minute">): string {
-  if (event.hour === undefined) return ""
-  const hh = String(event.hour).padStart(2, "0")
-  const mm = String(event.minute ?? 0).padStart(2, "0")
+function formatEventTime(
+  event: Pick<Event, "hour" | "minute">
+): string | undefined {
+  if (event.hour === undefined || event.hour === null) return undefined
+  const hour = Number(event.hour)
+  if (!Number.isFinite(hour)) return undefined
+  const minuteValue =
+    event.minute === undefined || event.minute === null
+      ? 0
+      : Number(event.minute)
+  if (!Number.isFinite(minuteValue)) return undefined
+  const hh = String(Math.trunc(hour)).padStart(2, "0")
+  const mm = String(Math.trunc(minuteValue)).padStart(2, "0")
   return `${hh}:${mm}`
+}
+
+export function formatEventTimeAndTitle(
+  event: Pick<Event, "hour" | "minute" | "title">
+): string {
+  const time = formatEventTime(event)
+  return time ? `${time} - ${event.title}` : event.title
 }
 
 /** Format an integer number of minutes as e.g. "1h 30m", "45m", "2h". */

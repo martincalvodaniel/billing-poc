@@ -1,4 +1,5 @@
 import type { Event } from "@/lib/domain/entities/event"
+import { formatEventTimeAndTitle } from "../eventsUi"
 
 interface EventDayCellProps {
   date: Date
@@ -52,15 +53,18 @@ export default function EventDayCell({
         )}
       </span>
       <div className="mt-1 flex flex-1 flex-col gap-0.5">
-        {preview.map((event) => (
-          <span
-            key={event._id ?? event.title}
-            className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-[11px] font-medium text-purple-800 dark:bg-purple-950/40 dark:text-purple-200"
-            title={event.title}
-          >
-            {event.title}
-          </span>
-        ))}
+        {preview.map((event) => {
+          const eventTitle = formatEventTimeAndTitle(event) //time ? `${time} - ${event.title}` : event.title
+          return (
+            <span
+              key={event._id ?? eventTitle}
+              className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-[11px] font-medium text-purple-800 dark:bg-purple-950/40 dark:text-purple-200"
+              title={eventTitle}
+            >
+              {eventTitle}
+            </span>
+          )
+        })}
         {extra > 0 && (
           <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
             +{extra} more
