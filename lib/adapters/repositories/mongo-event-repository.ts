@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb"
+import { type Filter, ObjectId } from "mongodb"
 import type { Event, EventAttendee } from "../../domain/entities/event"
 import type {
   EventFilter,
@@ -70,6 +70,34 @@ function lastDayOfMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate()
 }
 
+export function buildEventListQuery(filter: EventFilter): Filter<MongoEvent> {
+  if (filter.year && filter.month) {
+    const last = lastDayOfMonth(filter.year, filter.month)
+    const start = `${filter.year}-${pad2(filter.month)}-01`
+    const end = `${filter.year}-${pad2(filter.month)}-${pad2(last)}`
+    // `day: null` matches both BSON null and missing field.
+    const query: Record<string, unknown> = {
+      $or: [
+        { date: { $gte: start, $lte: end } },
+        { year: filter.year, month: filter.month, day: null },
+      ],
+    }
+    return query as Filter<MongoEvent>
+  }
+  if (filter.year) {
+    const start = `${filter.year}-01-01`
+    const end = `${filter.year}-12-31`
+    const query: Record<string, unknown> = {
+      $or: [
+        { date: { $gte: start, $lte: end } },
+        { year: filter.year, date: null },
+      ],
+    }
+    return query as Filter<MongoEvent>
+  }
+  return {}
+}
+
 export class MongoEventRepository implements EventRepository {
   private async collection() {
     const db = await getDatabase()
@@ -77,40 +105,13 @@ export class MongoEventRepository implements EventRepository {
   }
 
   /**
-   * findAll query strategy:
-   * - (year, month): match events whose stored derived `date` falls within
-   *   that month. We also OR-include partially-dated events (those that
-   *   have `year` and `month` set but no `day`, so no derived `date`) so the
-   *   list view surfaces them. The calendar UI re-filters on `date`.
-   * - (year only): match events whose stored `date` falls within that year,
-   *   OR events whose `year` field equals it (covers undated-by-day events
-   *   that still belong to that year and events with only `year` set).
-   * - (no filter): return all events.
+   * findAll: matches events whose derived `date` falls in the requested
+   * range, OR partially-dated events with missing or null `day`/`date`
+   * (Mongo `field: null` matches both BSON null and absent fields).
    */
   async findAll(filter: EventFilter): Promise<Event[]> {
     const col = await this.collection()
-    let query: Record<string, unknown> = {}
-
-    if (filter.year && filter.month) {
-      const last = lastDayOfMonth(filter.year, filter.month)
-      const start = `${filter.year}-${pad2(filter.month)}-01`
-      const end = `${filter.year}-${pad2(filter.month)}-${pad2(last)}`
-      query = {
-        $or: [
-          { date: { $gte: start, $lte: end } },
-          { year: filter.year, month: filter.month, day: { $exists: false } },
-        ],
-      }
-    } else if (filter.year) {
-      const start = `${filter.year}-01-01`
-      const end = `${filter.year}-12-31`
-      query = {
-        $or: [
-          { date: { $gte: start, $lte: end } },
-          { year: filter.year, date: { $exists: false } },
-        ],
-      }
-    }
+    const query = buildEventListQuery(filter)
 
     const docs = await col
       .find(query)
