@@ -16,7 +16,6 @@ import {
 import { useEvents } from "@/lib/hooks/useEvents"
 import { FetchError } from "@/lib/swr-fetcher"
 import DayEventsModal from "./DayEventsModal"
-import EventDetailModal from "./EventDetailModal"
 import EventFormModal, { type EventFormValues } from "./EventFormModal"
 import EventsListTable from "./EventsListTable"
 import EventsMonthCalendar from "./EventsMonthCalendar"
@@ -61,7 +60,6 @@ export default function EventsPageContent() {
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [dayModalKey, setDayModalKey] = useState<string | null>(null)
-  const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [pendingGenerateAllId, setPendingGenerateAllId] = useState<
     string | null
@@ -98,11 +96,6 @@ export default function EventsPageContent() {
     if (!dayModalKey) return []
     return events.filter((e) => e.date === dayModalKey)
   }, [events, dayModalKey])
-
-  const detailEvent = useMemo(() => {
-    if (!detailEventId) return null
-    return events.find((e) => e._id === detailEventId) ?? null
-  }, [events, detailEventId])
 
   const openCreate = (prefill?: number) => {
     setFormError(null)
@@ -247,7 +240,7 @@ export default function EventsPageContent() {
           events={events}
           onEdit={openEdit}
           onDelete={handleDelete}
-          onOpenDetail={(e) => setDetailEventId(e._id ?? null)}
+          onOpenDetail={openEdit}
           onGenerateAllPayments={handleGenerateAllPayments}
           pendingGenerateAllId={pendingGenerateAllId}
         />
@@ -262,6 +255,8 @@ export default function EventsPageContent() {
         isSubmitting={isSubmitting}
         errorMessage={formError}
         defaults={formDefaults}
+        onAttendeeSuccess={(msg) => setToast(msg)}
+        onAttendeeError={(msg) => setToast(msg)}
       />
 
       {dayModalKey && (
@@ -278,26 +273,14 @@ export default function EventsPageContent() {
           }}
           onOpenDetail={(e) => {
             setDayModalKey(null)
-            setDetailEventId(e._id ?? null)
+            openEdit(e)
           }}
           onAddEventForDay={(day) => {
             setDayModalKey(null)
             openCreate(day)
           }}
-        />
-      )}
-
-      {detailEvent && (
-        <EventDetailModal
-          event={detailEvent}
-          isOpen
-          onClose={() => setDetailEventId(null)}
-          onEdit={(e) => {
-            setDetailEventId(null)
-            openEdit(e)
-          }}
-          onActionSuccess={(message) => setToast(message)}
-          onActionError={(message) => setToast(message)}
+          onGenerateAllPayments={handleGenerateAllPayments}
+          pendingGenerateAllId={pendingGenerateAllId}
         />
       )}
     </PageLayout>

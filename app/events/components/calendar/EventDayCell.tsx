@@ -1,5 +1,9 @@
+import { useMemo } from "react"
 import type { Event } from "@/lib/domain/entities/event"
-import { formatEventTimeAndTitle } from "../eventsUi"
+import {
+  compareEventsChronologicalAsc,
+  formatEventTimeAndTitle,
+} from "../eventsUi"
 
 interface EventDayCellProps {
   date: Date
@@ -21,8 +25,12 @@ export default function EventDayCell({
   onClick,
 }: EventDayCellProps) {
   const dimmed = !inMonth
-  const count = events.length
-  const preview = events.slice(0, TITLE_PREVIEW_LIMIT)
+  const sortedEvents = useMemo(
+    () => events.slice().sort(compareEventsChronologicalAsc),
+    [events]
+  )
+  const count = sortedEvents.length
+  const preview = sortedEvents.slice(0, TITLE_PREVIEW_LIMIT)
   const extra = Math.max(0, count - preview.length)
 
   return (

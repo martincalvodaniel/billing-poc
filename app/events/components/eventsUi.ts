@@ -126,3 +126,38 @@ export function parseTimeOfDay(value: string): {
   if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return {}
   return { hour, minute }
 }
+
+/**
+ * Compare two events chronologically ascending. Undefined parts sort first at
+ * every level (year → month → day → hour → minute). Final tie-break is
+ * `createdAt` ascending; undefined `createdAt` is treated as equal (stable).
+ */
+export function compareEventsChronologicalAsc(
+  a: Pick<Event, "year" | "month" | "day" | "hour" | "minute" | "createdAt">,
+  b: Pick<Event, "year" | "month" | "day" | "hour" | "minute" | "createdAt">
+): number {
+  const byYear = cmpOptUndefinedFirst(a.year, b.year)
+  if (byYear !== 0) return byYear
+  const byMonth = cmpOptUndefinedFirst(a.month, b.month)
+  if (byMonth !== 0) return byMonth
+  const byDay = cmpOptUndefinedFirst(a.day, b.day)
+  if (byDay !== 0) return byDay
+  const byHour = cmpOptUndefinedFirst(a.hour, b.hour)
+  if (byHour !== 0) return byHour
+  const byMinute = cmpOptUndefinedFirst(a.minute, b.minute)
+  if (byMinute !== 0) return byMinute
+  const aT = a.createdAt instanceof Date ? a.createdAt.getTime() : undefined
+  const bT = b.createdAt instanceof Date ? b.createdAt.getTime() : undefined
+  if (aT === undefined || bT === undefined) return 0
+  return aT - bT
+}
+
+function cmpOptUndefinedFirst(
+  a: number | undefined,
+  b: number | undefined
+): number {
+  if (a === b) return 0
+  if (a === undefined) return -1
+  if (b === undefined) return 1
+  return a - b
+}

@@ -6,6 +6,7 @@ import PartialDatePicker, {
   type PartialDateValue,
 } from "@/app/components/PartialDatePicker"
 import type { Event } from "@/lib/domain/entities/event"
+import AttendeesPanel from "./AttendeesPanel"
 import { formatTimeOfDay, parseTimeOfDay } from "./eventsUi"
 
 export interface EventFormValues {
@@ -35,6 +36,8 @@ interface EventFormModalProps {
    * are empty after `emptyValues()`. Ignored in edit mode.
    */
   defaults?: Partial<EventFormValues>
+  onAttendeeSuccess?: (msg: string) => void
+  onAttendeeError?: (msg: string) => void
 }
 
 function emptyValues(): EventFormValues {
@@ -110,6 +113,8 @@ export default function EventFormModal({
   isSubmitting,
   errorMessage,
   defaults,
+  onAttendeeSuccess,
+  onAttendeeError,
 }: EventFormModalProps) {
   const id = useId()
   const titleRef = useRef<HTMLInputElement>(null)
@@ -188,7 +193,7 @@ export default function EventFormModal({
       isOpen={isOpen}
       onClose={onClose}
       title={mode === "edit" ? "Edit event" : "New event"}
-      maxWidth="lg"
+      maxWidth={mode === "edit" ? "xl" : "lg"}
       closeOnEscape
       closeOnBackdropClick
     >
@@ -360,6 +365,19 @@ export default function EventFormModal({
           </button>
         </div>
       </form>
+
+      {mode === "edit" && event?._id && (
+        <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Attendees
+          </h3>
+          <AttendeesPanel
+            event={event}
+            onActionSuccess={onAttendeeSuccess ?? (() => {})}
+            onActionError={onAttendeeError ?? (() => {})}
+          />
+        </div>
+      )}
     </Modal>
   )
 }

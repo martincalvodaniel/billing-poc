@@ -54,9 +54,8 @@ export default function AttendeesPanel({
     null
   )
 
-  // 500 is far above any realistic attendee count in this POC; pagination
-  // doesn't apply for the lookup use-case.
-  const { clients } = useClients({ pageSize: 500 })
+  // 100 is the API max page size; sufficient for the lookup use-case in this POC.
+  const { clients } = useClients({ pageSize: 100 })
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>()
     for (const c of clients) {

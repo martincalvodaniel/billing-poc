@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { computeFillPercent, computeStatus } from "./CapacityBar"
+import { computeFillPercent, computeStatus } from "./capacityBar-utils"
 
 describe("computeFillPercent", () => {
   test("returns 0 when max is undefined", () => {

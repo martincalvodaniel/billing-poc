@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { stepValue } from "./NumberStepperInput"
+import { stepValue } from "./numberStepperInput-utils"
 
 describe("stepValue", () => {
   it("increments by step", () => {

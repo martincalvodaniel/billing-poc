@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test"
-import { coerceValue, daysValidFor, monthsValidFor } from "./PartialDatePicker"
+import {
+  coerceValue,
+  daysValidFor,
+  monthsValidFor,
+} from "./partialDatePicker-utils"
 
 describe("coerceValue", () => {
   it("returns empty when year is undefined", () => {

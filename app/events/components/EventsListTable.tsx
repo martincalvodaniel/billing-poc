@@ -3,7 +3,12 @@
 import { useMemo } from "react"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatCurrency } from "@/lib/formatters"
-import { formatDuration, formatEventDateTime, totalSeats } from "./eventsUi"
+import {
+  compareEventsChronologicalAsc,
+  formatDuration,
+  formatEventDateTime,
+  totalSeats,
+} from "./eventsUi"
 
 interface EventsListTableProps {
   events: Event[]
@@ -14,20 +19,6 @@ interface EventsListTableProps {
   pendingGenerateAllId?: string | null
 }
 
-function compareEvents(a: Event, b: Event): number {
-  // date desc; events without a date sink to the bottom; tie-break createdAt desc.
-  if (a.date && b.date) {
-    if (a.date !== b.date) return a.date < b.date ? 1 : -1
-  } else if (a.date && !b.date) {
-    return -1
-  } else if (!a.date && b.date) {
-    return 1
-  }
-  const aT = a.createdAt instanceof Date ? a.createdAt.getTime() : 0
-  const bT = b.createdAt instanceof Date ? b.createdAt.getTime() : 0
-  return bT - aT
-}
-
 export default function EventsListTable({
   events,
   onEdit,
@@ -36,7 +27,10 @@ export default function EventsListTable({
   onGenerateAllPayments,
   pendingGenerateAllId,
 }: EventsListTableProps) {
-  const sorted = useMemo(() => events.slice().sort(compareEvents), [events])
+  const sorted = useMemo(
+    () => events.slice().sort(compareEventsChronologicalAsc),
+    [events]
+  )
 
   if (sorted.length === 0) {
     return (
