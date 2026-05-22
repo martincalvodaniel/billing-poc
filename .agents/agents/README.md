@@ -1,13 +1,13 @@
 ## with clarifications
 ```
-Execute .agents/agents/orchestrator.agent.md for agent-iterations/260521-1931_events-management-fixes-5/main.prompt.md
+Execute .agents/agents/orchestrator.agent.md for agent-iterations/260521-1954_add-mongo-indexes/main.prompt.md
 
 Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 ```
 
 ## direct
 ```
-Execute .agents/agents/orchestrator.agent.md for agent-iterations/260521-1931_events-management-fixes-5/main.prompt.md
+Execute .agents/agents/orchestrator.agent.md for agent-iterations/260521-1954_add-mongo-indexes/main.prompt.md
 
 Do not create nor ask for clarifications in this iteration. Let the subagents decide if they need to ask for clarifications or not. Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 

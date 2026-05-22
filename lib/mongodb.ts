@@ -1,4 +1,5 @@
 import { type Db, MongoClient } from "mongodb"
+import { ensureIndexes } from "./adapters/repositories/ensure-indexes"
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"')
@@ -32,7 +33,21 @@ if (process.env.NODE_ENV === "development") {
 // separate module, the client can be shared across functions.
 export default clientPromise
 
+let indexesReady: Promise<void> | undefined
+
+async function ensureIndexesOnce(db: Db): Promise<void> {
+  if (!indexesReady) {
+    indexesReady = ensureIndexes(db).catch((err) => {
+      console.error(`ensureIndexes bootstrap failed: ${err}`)
+      indexesReady = undefined
+    })
+  }
+  return indexesReady
+}
+
 export async function getDatabase(): Promise<Db> {
   const client = await clientPromise
-  return client.db(process.env.MONGODB_DB || "billing-poc")
+  const db = client.db(process.env.MONGODB_DB || "billing-poc")
+  await ensureIndexesOnce(db)
+  return db
 }

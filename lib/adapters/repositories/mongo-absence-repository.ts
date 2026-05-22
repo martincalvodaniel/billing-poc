@@ -56,50 +56,12 @@ function lastDayOfMonth(year: number, month: number): number {
 }
 
 export class MongoAbsenceRepository implements AbsenceRepository {
-  private indexesReady?: Promise<void>
-
   private async collection() {
     const db = await getDatabase()
     return db.collection<MongoAbsence>("absences")
   }
 
-  private async ensureIndexes(): Promise<void> {
-    if (!this.indexesReady) {
-      this.indexesReady = (async () => {
-        const db = await getDatabase()
-        const col = db.collection<MongoAbsence>("absences")
-        const specs: Array<{
-          keys: Record<string, 1 | -1>
-          options?: Record<string, unknown>
-        }> = [
-          {
-            keys: {
-              studentNameLower: 1,
-              date: 1,
-              partOfDay: 1,
-            },
-            options: { unique: true, name: "uniq_student_date_part" },
-          },
-          { keys: { date: 1 } },
-          { keys: { studentName: 1 } },
-          { keys: { type: 1 } },
-        ]
-        for (const spec of specs) {
-          try {
-            await col.createIndex(spec.keys, spec.options)
-          } catch (err) {
-            console.error(
-              `MongoAbsenceRepository.ensureIndexes: failed to create index ${JSON.stringify(spec.keys)}: ${err}`
-            )
-          }
-        }
-      })()
-    }
-    return this.indexesReady
-  }
-
   async findAll(filter: AbsenceFilter): Promise<Absence[]> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const query: Record<string, unknown> = {}
 
@@ -130,14 +92,12 @@ export class MongoAbsenceRepository implements AbsenceRepository {
 
   async findById(id: string): Promise<Absence | null> {
     if (!isValidObjectId(id)) return null
-    await this.ensureIndexes()
     const col = await this.collection()
     const doc = await col.findOne({ _id: toObjectId(id) })
     return doc ? toDomain(doc) : null
   }
 
   async create(absence: Omit<Absence, "_id">): Promise<string> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const now = new Date()
     // Preserve historical doc shape: empty/undefined comment is omitted from
@@ -167,7 +127,6 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async update(id: string, data: Partial<Absence>): Promise<boolean> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
@@ -211,14 +170,12 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0
   }
 
   async deleteByStudentName(name: string): Promise<number> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const result = await col.deleteMany({
       studentNameLower: name.trim().toLowerCase(),
@@ -227,7 +184,6 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async findDistinctStudentNames(query?: string): Promise<string[]> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const pipeline: Record<string, unknown>[] = []
 
@@ -248,7 +204,6 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async aggregateSummary(): Promise<AbsenceSummaryRow[]> {
-    await this.ensureIndexes()
     const col = await this.collection()
     const docs = await col
       .aggregate<AbsenceSummaryRow>(
