@@ -1,42 +1,60 @@
-import NextAuth from "next-auth"
-import Google from "next-auth/providers/google"
+import { betterAuth } from "better-auth"
+import { nextCookies } from "better-auth/next-js"
+import { getAuthBaseURL } from "./auth-base-url"
 import { isEmailAllowed } from "./domain/services/auth"
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true, // Important for NextAuth to work correctly behind a proxy (like Vercel's or in local development with ngrok)
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
-  ],
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/signin",
+const secret = process.env.BETTER_AUTH_SECRET
+if (!secret) {
+  throw new Error("BETTER_AUTH_SECRET environment variable is required")
+}
+
+const baseURL = getAuthBaseURL()
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+if (!googleClientId || !googleClientSecret) {
+  throw new Error(
+    "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables are required"
+  )
+}
+
+export const auth = betterAuth({
+  baseURL,
+  secret,
+  trustedOrigins: [baseURL],
+  socialProviders: {
+    google: {
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    },
   },
-  callbacks: {
-    async signIn({ user }) {
-      if (!user.email || !isEmailAllowed(user.email)) {
-        return false
-      }
-      return true
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 7 * 24 * 60 * 60,
+      strategy: "jwt",
+      refreshCache: true,
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.email = user.email
-        token.name = user.name
-        token.picture = user.image
-      }
-      return token
+  },
+  account: {
+    storeStateStrategy: "cookie",
+    storeAccountCookie: true,
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const email = typeof user.email === "string" ? user.email : ""
+          if (!email || !isEmailAllowed(email)) {
+            console.warn(`Sign-in denied for non-allowlisted email: ${email}`)
+            return false
+          }
+        },
+      },
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.email = token.email as string
-        session.user.name = token.name as string
-        session.user.image = token.picture as string
-      }
-      return session
-    },
+    plugins: [nextCookies()],
   },
 })
+
+export type Session = typeof auth.$Infer.Session.session
+export type User = typeof auth.$Infer.Session.user
