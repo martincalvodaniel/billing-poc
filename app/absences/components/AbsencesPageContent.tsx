@@ -7,7 +7,6 @@ import PageLayout from "../../components/PageLayout"
 import MonthPicker from "../../month/components/MonthPicker"
 import AbsencesMonthCalendar from "./AbsencesMonthCalendar"
 import AbsencesSummaryTable from "./AbsencesSummaryTable"
-import AbsencesViewToggle, { type AbsencesView } from "./AbsencesViewToggle"
 import DayDetailModal from "./DayDetailModal"
 import StudentDetailModal from "./StudentDetailModal"
 
@@ -18,8 +17,31 @@ function formatMonthYear(date: Date): string {
   })
 }
 
+interface StudentModalContainerProps {
+  studentName: string
+  onClose: () => void
+}
+
+function StudentModalContainer({
+  studentName,
+  onClose,
+}: StudentModalContainerProps) {
+  const { absences } = useAbsences({ studentName })
+  const sortedRecords = useMemo(
+    () => absences.slice().sort((a, b) => b.date.localeCompare(a.date)),
+    [absences]
+  )
+
+  return (
+    <StudentDetailModal
+      studentName={studentName}
+      records={sortedRecords}
+      onClose={onClose}
+    />
+  )
+}
+
 export default function AbsencesPageContent() {
-  const [view, setView] = useState<AbsencesView>("month")
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const today = new Date()
     return new Date(today.getFullYear(), today.getMonth(), 1)
@@ -56,11 +78,6 @@ export default function AbsencesPageContent() {
     return absences.filter((record) => record.date === dayModalDate)
   }, [absences, dayModalDate])
 
-  const studentModalRecords = useMemo(() => {
-    if (!studentModalName) return []
-    return absences.filter((record) => record.studentName === studentModalName)
-  }, [absences, studentModalName])
-
   return (
     <PageLayout
       navigationSubtitle="Absences"
@@ -76,7 +93,6 @@ export default function AbsencesPageContent() {
               </h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <AbsencesViewToggle value={view} onChange={setView} />
               <MonthPicker
                 selectedDate={selectedDate}
                 onMonthChange={handleMonthChange}
@@ -90,20 +106,16 @@ export default function AbsencesPageContent() {
         </div>
       }
     >
-      <div className="space-y-2">
-        {view === "month" && (
-          <AbsencesMonthCalendar
-            records={absences}
-            selectedDate={selectedDate}
-            onDayClick={setDayModalDate}
-          />
-        )}
-        {view === "summary" && (
-          <AbsencesSummaryTable
-            rows={summaryRows}
-            onStudentClick={setStudentModalName}
-          />
-        )}
+      <div className="space-y-8">
+        <AbsencesMonthCalendar
+          records={absences}
+          selectedDate={selectedDate}
+          onDayClick={setDayModalDate}
+        />
+        <AbsencesSummaryTable
+          rows={summaryRows}
+          onStudentClick={setStudentModalName}
+        />
       </div>
 
       {dayModalDate && (
@@ -115,9 +127,8 @@ export default function AbsencesPageContent() {
       )}
 
       {studentModalName && (
-        <StudentDetailModal
+        <StudentModalContainer
           studentName={studentModalName}
-          records={studentModalRecords}
           onClose={() => setStudentModalName(null)}
         />
       )}

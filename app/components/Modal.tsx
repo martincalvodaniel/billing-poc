@@ -9,7 +9,8 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   footer?: React.ReactNode
-  maxWidth?: "sm" | "md" | "lg"
+  headerActions?: React.ReactNode
+  maxWidth?: "sm" | "md" | "lg" | "xl"
   closeOnEscape?: boolean
   closeOnEnter?: boolean
   closeOnBackdropClick?: boolean
@@ -21,6 +22,7 @@ export default function Modal({
   title,
   children,
   footer,
+  headerActions,
   maxWidth = "md",
   closeOnEscape = true,
   closeOnEnter = false,
@@ -62,6 +64,7 @@ export default function Modal({
     sm: "max-w-sm",
     md: "max-w-md",
     lg: "max-w-lg",
+    xl: "max-w-2xl",
   }[maxWidth]
 
   return (
@@ -89,7 +92,8 @@ export default function Modal({
           >
             {title}
           </h2>
-          <div className="ml-4">
+          <div className="ml-4 flex items-center gap-2">
+            {headerActions}
             <CloseButton onClick={onClose} label="Close dialog" />
           </div>
         </div>

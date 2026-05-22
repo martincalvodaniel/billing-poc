@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import AddButton from "../../components/AddButton"
 import ChartsToggle from "../../components/ChartsToggle"
 import Modal from "../../components/Modal"
 import PageLayout from "../../components/PageLayout"
@@ -110,14 +111,10 @@ export default function MonthPageContent() {
               </h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleAddPaymentClick()}
-                aria-label="Add payment"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-              >
-                <span aria-hidden="true">➕</span>
-              </button>
+              <AddButton
+                ariaLabel="Add payment"
+                onClick={handleAddPaymentClick}
+              />
               <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
               <MonthPicker
                 selectedDate={selectedDate}
