@@ -1,0 +1,58 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { MongoEventRepository } from "@/lib/adapters/repositories/mongo-event-repository"
+import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
+import { requireAuth } from "@/lib/api-auth"
+import { generateAttendeePayment } from "@/lib/domain/services/event-payment-service"
+
+const events = new MongoEventRepository()
+const payments = new MongoPaymentRepository()
+
+export async function POST(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string; clientId: string }> }
+) {
+  try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
+    const { id, clientId } = await params
+    if (!id || !clientId) {
+      return NextResponse.json(
+        { error: "Event ID and Client ID are required" },
+        { status: 400 }
+      )
+    }
+
+    const event = await events.findById(id)
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
+    }
+
+    const attendee = event.attendees.find((a) => a.clientId === clientId)
+    if (!attendee) {
+      return NextResponse.json({ error: "Attendee not found" }, { status: 404 })
+    }
+
+    // Idempotent: do not create a second payment for an attendee that
+    // already has one.
+    if (attendee.paymentId) {
+      return NextResponse.json(
+        { alreadyExists: true, paymentId: attendee.paymentId },
+        { status: 200 }
+      )
+    }
+
+    const paymentId = await generateAttendeePayment(event, attendee, {
+      events,
+      payments,
+    })
+
+    return NextResponse.json({ success: true, paymentId }, { status: 201 })
+  } catch (error) {
+    console.error(`Error generating attendee payment: ${error}`)
+    return NextResponse.json(
+      { error: "Failed to generate payment" },
+      { status: 500 }
+    )
+  }
+}

@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     const result = await absences.findAll({
       year: parsed.data.year,
       month: parsed.data.month,
+      studentName: parsed.data.studentName,
     })
 
     console.log(

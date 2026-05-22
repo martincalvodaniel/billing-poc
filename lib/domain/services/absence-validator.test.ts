@@ -258,6 +258,41 @@ describe("absenceQuerySchema", () => {
     const result = absenceQuerySchema.safeParse({ month: 0 })
     expect(result.success).toBe(false)
   })
+
+  test("accepts studentName", () => {
+    const result = absenceQuerySchema.safeParse({ studentName: "Alice" })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.studentName).toBe("Alice")
+    }
+  })
+
+  test("trims studentName", () => {
+    const result = absenceQuerySchema.safeParse({ studentName: "  Alice  " })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.studentName).toBe("Alice")
+    }
+  })
+
+  test("rejects empty studentName after trim", () => {
+    const result = absenceQuerySchema.safeParse({ studentName: "   " })
+    expect(result.success).toBe(false)
+  })
+
+  test("accepts year, month, and studentName combined", () => {
+    const result = absenceQuerySchema.safeParse({
+      year: "2026",
+      month: "5",
+      studentName: "Alice",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.year).toBe(2026)
+      expect(result.data.month).toBe(5)
+      expect(result.data.studentName).toBe("Alice")
+    }
+  })
 })
 
 describe("absenceStudentsQuerySchema", () => {
