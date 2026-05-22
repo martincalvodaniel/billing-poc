@@ -1,23 +1,46 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import AddButton from "../../components/AddButton"
 import ChartsToggle from "../../components/ChartsToggle"
-import Modal from "../../components/Modal"
+import { Modal } from "../../components/Modal"
 import PageLayout from "../../components/PageLayout"
 import MonthlyPaymentsView from "./MonthlyPaymentsView"
 import MonthPicker from "./MonthPicker"
-import PaymentForm from "./PaymentForm"
+
+const PaymentForm = dynamic(() => import("./PaymentForm"), { ssr: false })
+
+function parseSearchParamsDate(
+  searchParams: ReturnType<typeof useSearchParams>
+): Date {
+  const monthParam = searchParams.get("month")
+  const yearParam = searchParams.get("year")
+  if (monthParam && yearParam) {
+    const month = parseInt(monthParam, 10)
+    const year = parseInt(yearParam, 10)
+    if (month >= 1 && month <= 12 && year > 0) {
+      return new Date(year, month - 1, 1)
+    }
+  }
+  const today = new Date()
+  return new Date(today.getFullYear(), today.getMonth(), 1)
+}
+
+function formatDateString(date: Date): string {
+  const yearStr = date.getFullYear()
+  const monthStr = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${yearStr}-${monthStr}-${day}`
+}
 
 export default function MonthPageContent() {
   const searchParams = useSearchParams()
-  const [, startTransition] = useTransition()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date()
-    return new Date(today.getFullYear(), today.getMonth(), 1)
-  })
+  const [selectedDate, setSelectedDate] = useState(() =>
+    parseSearchParamsDate(searchParams)
+  )
   const [showCalendar, setShowCalendar] = useState(false)
   const [showCharts, setShowCharts] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -25,24 +48,6 @@ export default function MonthPageContent() {
     setFormDate: (dateString: string) => void
     submit: () => void
   }>(null)
-
-  // Initialize from URL parameters if provided
-  useEffect(() => {
-    const monthParam = searchParams.get("month")
-    const yearParam = searchParams.get("year")
-
-    if (monthParam && yearParam) {
-      const month = parseInt(monthParam, 10)
-      const year = parseInt(yearParam, 10)
-
-      // Validate month is 1-12
-      if (month >= 1 && month <= 12 && year > 0) {
-        startTransition(() => {
-          setSelectedDate(new Date(year, month - 1, 1))
-        })
-      }
-    }
-  }, [searchParams])
 
   // On mobile, hide charts by default after mount
   useEffect(() => {
@@ -74,10 +79,6 @@ export default function MonthPageContent() {
     setShowPaymentModal(false)
   }
 
-  const handleMonthChange = (dateString: string) => {
-    formRef.current?.setFormDate(dateString)
-  }
-
   const handleAddPaymentClick = () => {
     setShowPaymentModal(true)
   }
@@ -88,12 +89,15 @@ export default function MonthPageContent() {
   }, [])
 
   const handleCalendarMonthSelect = (year: number, month: number) => {
-    setSelectedDate(new Date(year, month, 1))
+    const nextDate = new Date(year, month, 1)
+    setSelectedDate(nextDate)
+    formRef.current?.setFormDate(formatDateString(nextDate))
   }
 
   const handleGoToCurrentMonth = () => {
     if (isViewingCurrentMonth) return
     setSelectedDate(currentMonthStart)
+    formRef.current?.setFormDate(formatDateString(currentMonthStart))
   }
 
   return (
@@ -131,7 +135,6 @@ export default function MonthPageContent() {
     >
       <div className="space-y-2">
         <MonthlyPaymentsView
-          onMonthChange={handleMonthChange}
           selectedDate={selectedDate}
           showCharts={showCharts}
         />
@@ -143,8 +146,6 @@ export default function MonthPageContent() {
           onClose={handleCloseModal}
           title="New Payment"
           maxWidth="lg"
-          closeOnEscape={true}
-          closeOnBackdropClick={true}
           footer={
             <div className="flex gap-2">
               <button

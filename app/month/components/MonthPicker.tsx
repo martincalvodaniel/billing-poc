@@ -1,9 +1,16 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useCallback, useRef } from "react"
+import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import GoToCurrentButton from "../../components/GoToCurrentButton"
 import NavButton from "../../components/NavButton"
 import PickerOverlay from "../../components/PickerOverlay"
+
+const MONTH_INDEXES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const
+
+const MONTH_SHORT_LABELS: readonly string[] = MONTH_INDEXES.map((m) =>
+  new Date(2000, m).toLocaleDateString("en-US", { month: "short" })
+)
 
 interface MonthPickerProps {
   selectedDate: Date
@@ -24,23 +31,10 @@ export default function MonthPicker({
 }: MonthPickerProps) {
   const calendarRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!showCalendar) return
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        calendarRef.current &&
-        !calendarRef.current.contains(event.target as Node)
-      ) {
-        onShowCalendarChange(false)
-      }
-    }
-
-    document.addEventListener("pointerdown", handleClickOutside)
-    return () => {
-      document.removeEventListener("pointerdown", handleClickOutside)
-    }
-  }, [showCalendar, onShowCalendarChange])
+  const handleOutsideClick = useCallback(() => {
+    onShowCalendarChange(false)
+  }, [onShowCalendarChange])
+  useClickOutside(calendarRef, handleOutsideClick, showCalendar)
 
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -123,9 +117,10 @@ export default function MonthPicker({
 
                 {/* Month Grid */}
                 <div className="grid grid-cols-4 gap-2">
-                  {Array.from({ length: 12 }, (_, i) => i).map((monthIndex) => {
+                  {MONTH_INDEXES.map((monthIndex) => {
                     const year = selectedDate.getFullYear()
                     const month = monthIndex
+                    const label = MONTH_SHORT_LABELS[monthIndex]
                     const isSelected =
                       year === selectedDate.getFullYear() &&
                       month === selectedDate.getMonth()
@@ -133,12 +128,7 @@ export default function MonthPicker({
                     return (
                       <button
                         type="button"
-                        key={new Date(year, monthIndex).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                          }
-                        )}
+                        key={label}
                         onClick={() => {
                           onMonthChange(year, month)
                           onShowCalendarChange(false)
@@ -149,9 +139,7 @@ export default function MonthPicker({
                             : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                         }`}
                       >
-                        {new Date(year, month).toLocaleDateString("en-US", {
-                          month: "short",
-                        })}
+                        {label}
                       </button>
                     )
                   })}

@@ -47,6 +47,7 @@ export default function CommentField({
         <span
           className="text-xs text-zinc-500 dark:text-zinc-400"
           aria-live="polite"
+          aria-atomic="true"
         >
           {value.length}/{max}
         </span>

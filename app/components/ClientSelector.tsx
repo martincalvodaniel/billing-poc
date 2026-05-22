@@ -1,7 +1,9 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { useClients } from "@/lib/hooks/useClients"
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
 import type { Client } from "@/lib/types"
 
 interface ClientSelectorProps {
@@ -25,18 +27,13 @@ export default function ClientSelector({
 }: ClientSelectorProps) {
   const id = useId()
   const [searchQuery, setSearchQuery] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [manuallySelectedId, setManuallySelectedId] = useState<string | null>(
+    null
+  )
   const [showSuggestions, setShowSuggestions] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Inline debounce: mirror previous 300ms behavior.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-    }, SEARCH_DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS)
 
   // Single SWR-backed clients query: powers both the suggestions dropdown
   // and the by-id lookup fallback for a pre-selected `value`. Replaces the
@@ -48,25 +45,32 @@ export default function ClientSelector({
     pageSize: PAGE_SIZE,
   })
 
-  // Resolve the selected client from the cached list (preserves existing
-  // page-1-only lookup behavior; no new endpoint introduced).
+  // Derive the currently selected client from the cached list. When the
+  // user has just made a manual selection we honour it; otherwise we
+  // resolve from `value` against the cached results.
+  const selectedClient = useMemo<Client | null>(() => {
+    if (!value) return null
+    if (manuallySelectedId === value) {
+      return clients.find((c) => c._id?.toString() === value) ?? null
+    }
+    return clients.find((c) => c._id?.toString() === value) ?? null
+  }, [value, clients, manuallySelectedId])
+
+  // Sync the search input with the resolved selected client's name.
+  // We only seed the input on (a) clearing the value externally, or
+  // (b) the first time the selected client resolves for the current value.
+  const resolvedNameRef = useRef<string | null>(null)
   useEffect(() => {
     if (!value) {
-      if (selectedClient) {
-        setSelectedClient(null)
-        setSearchQuery("")
-      }
+      resolvedNameRef.current = null
+      setSearchQuery((q) => (q === "" ? q : ""))
       return
     }
-    if (selectedClient && selectedClient._id?.toString() === value) {
-      return
+    if (selectedClient && resolvedNameRef.current !== value) {
+      resolvedNameRef.current = value
+      setSearchQuery(selectedClient.name)
     }
-    const match = clients.find((c) => c._id?.toString() === value)
-    if (match) {
-      setSelectedClient(match)
-      setSearchQuery(match.name)
-    }
-  }, [value, clients, selectedClient])
+  }, [value, selectedClient])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value
@@ -75,20 +79,24 @@ export default function ClientSelector({
 
     // Clear selection if user is typing
     if (selectedClient) {
-      setSelectedClient(null)
+      setManuallySelectedId(null)
+      resolvedNameRef.current = null
       onChange(undefined, undefined)
     }
   }
 
   const handleClientSelect = (client: Client) => {
-    setSelectedClient(client)
+    const clientId = client._id?.toString()
+    setManuallySelectedId(clientId ?? null)
+    resolvedNameRef.current = clientId ?? null
     setSearchQuery(client.name)
     setShowSuggestions(false)
-    onChange(client._id?.toString(), client.name)
+    onChange(clientId, client.name)
   }
 
   const handleClearSelection = () => {
-    setSelectedClient(null)
+    setManuallySelectedId(null)
+    resolvedNameRef.current = null
     setSearchQuery("")
     onChange(undefined, undefined)
   }
@@ -105,19 +113,10 @@ export default function ClientSelector({
   }
 
   // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false)
-      }
-    }
-
-    document.addEventListener("pointerdown", handleClickOutside)
-    return () => document.removeEventListener("pointerdown", handleClickOutside)
+  const handleOutsideClick = useCallback(() => {
+    setShowSuggestions(false)
   }, [])
+  useClickOutside(containerRef, handleOutsideClick)
 
   return (
     <div ref={containerRef} className="relative space-y-2">

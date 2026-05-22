@@ -1,4 +1,7 @@
-import type { ReactNode } from "react"
+"use client"
+
+import { type ReactNode, useCallback } from "react"
+import { useEscapeKey } from "@/lib/hooks/useEscapeKey"
 import CloseButton from "./CloseButton"
 
 interface PickerOverlayProps {
@@ -16,6 +19,10 @@ export default function PickerOverlay({
   width = "w-72",
   className = "",
 }: PickerOverlayProps) {
+  const handleEscape = useCallback(() => {
+    onClose()
+  }, [onClose])
+  useEscapeKey(handleEscape, true)
   return (
     <div
       className={`fixed left-1/2 top-1/2 z-50 ${width} -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white shadow-lg sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:translate-x-0 sm:translate-y-0 dark:border-zinc-700 dark:bg-zinc-900${className ? ` ${className}` : ""}`}

@@ -1,11 +1,18 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import Modal from "@/app/components/Modal"
+import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
 import type { Absence, AbsenceFormData } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
-import AbsenceForm from "./AbsenceForm"
+import {
+  AbsenceForm,
+  CommentField,
+  DateField,
+  FieldsRow,
+  PartOfDayField,
+  TypeField,
+} from "./AbsenceForm"
 import useAbsenceMutationHandlers from "./hooks/useAbsenceMutationHandlers"
 import useInlineFormController from "./hooks/useInlineFormController"
 import useToast from "./hooks/useToast"
@@ -115,14 +122,7 @@ export default function StudentDetailModal({
     <>
       {toastMessage && <Toast message={toastMessage} onClose={clearToast} />}
 
-      <Modal
-        isOpen
-        onClose={onClose}
-        title={studentName}
-        maxWidth="lg"
-        closeOnEscape
-        closeOnBackdropClick
-      >
+      <Modal isOpen onClose={onClose} title={studentName} maxWidth="lg">
         <div className="space-y-6">
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -197,7 +197,6 @@ export default function StudentDetailModal({
                   formState.mode === "edit" ? "Save changes" : "Add record"
                 }
                 initialStudentName={studentName}
-                hideStudentName
                 initial={
                   formState.mode === "edit" ? formState.target : undefined
                 }
@@ -206,7 +205,14 @@ export default function StudentDetailModal({
                 onCancel={handleCloseEditForm}
                 errorMessage={formError}
                 shakeKey={shakeKey}
-              />
+              >
+                <FieldsRow columns={1}>
+                  <DateField />
+                </FieldsRow>
+                <TypeField />
+                <PartOfDayField />
+                <CommentField />
+              </AbsenceForm>
             </div>
           )}
         </div>

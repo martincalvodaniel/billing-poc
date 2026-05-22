@@ -1,13 +1,15 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import PickerOverlay from "./PickerOverlay"
+import DayPickerPanel from "./DayPickerPanel"
+import MonthPickerPanel from "./MonthPickerPanel"
 import {
   coerceValue,
   daysValidFor,
   monthsValidFor,
   type PartialDateValue,
 } from "./partialDatePicker-utils"
+import YearPickerPanel from "./YearPickerPanel"
 
 export type { PartialDateValue } from "./partialDatePicker-utils"
 
@@ -121,7 +123,6 @@ export default function PartialDatePicker({
   const clearButtonClass =
     "ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
 
-  const years = Array.from({ length: 12 }, (_, i) => yearPageBase + i)
   const months = monthsValidFor(value.year)
   const days = daysValidFor(value.year, value.month)
 
@@ -178,111 +179,31 @@ export default function PartialDatePicker({
       })}
 
       {openSegment === "year" && (
-        <PickerOverlay
+        <YearPickerPanel
+          yearPageBase={yearPageBase}
+          selectedYear={value.year}
+          onSelect={handleSelectYear}
+          onPageChange={setYearPageBase}
           onClose={() => setOpenSegment(null)}
-          closeLabel="Close year picker"
-        >
-          <div className="px-4 pb-4">
-            <div className="mb-3 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setYearPageBase((y) => y - 12)}
-                aria-label="Previous years"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              >
-                ←
-              </button>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {years[0]} – {years[years.length - 1]}
-              </span>
-              <button
-                type="button"
-                onClick={() => setYearPageBase((y) => y + 12)}
-                aria-label="Next years"
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              >
-                →
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {years.map((year) => {
-                const isSelected = value.year === year
-                return (
-                  <button
-                    type="button"
-                    key={year}
-                    onClick={() => handleSelectYear(year)}
-                    className={`rounded px-2 py-2 text-xs font-medium ${
-                      isSelected
-                        ? "bg-blue-600 text-white dark:bg-blue-700"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                    }`}
-                  >
-                    {year}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </PickerOverlay>
+        />
       )}
 
       {openSegment === "month" && (
-        <PickerOverlay
+        <MonthPickerPanel
+          months={months}
+          selectedMonth={value.month}
+          onSelect={handleSelectMonth}
           onClose={() => setOpenSegment(null)}
-          closeLabel="Close month picker"
-        >
-          <div className="px-4 pb-4">
-            <div className="grid grid-cols-4 gap-2">
-              {months.map((month) => {
-                const isSelected = value.month === month
-                return (
-                  <button
-                    type="button"
-                    key={month}
-                    onClick={() => handleSelectMonth(month)}
-                    className={`rounded px-2 py-2 text-xs font-medium ${
-                      isSelected
-                        ? "bg-blue-600 text-white dark:bg-blue-700"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                    }`}
-                  >
-                    {MONTH_NAMES[month - 1]}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </PickerOverlay>
+        />
       )}
 
       {openSegment === "day" && (
-        <PickerOverlay
+        <DayPickerPanel
+          days={days}
+          selectedDay={value.day}
+          onSelect={handleSelectDay}
           onClose={() => setOpenSegment(null)}
-          closeLabel="Close day picker"
-        >
-          <div className="px-4 pb-4">
-            <div className="grid grid-cols-7 gap-1">
-              {days.map((day) => {
-                const isSelected = value.day === day
-                return (
-                  <button
-                    type="button"
-                    key={day}
-                    onClick={() => handleSelectDay(day)}
-                    className={`rounded px-2 py-2 text-xs font-medium ${
-                      isSelected
-                        ? "bg-blue-600 text-white dark:bg-blue-700"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                    }`}
-                  >
-                    {day}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </PickerOverlay>
+        />
       )}
     </div>
   )

@@ -1,15 +1,19 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useEffect, useMemo, useState } from "react"
 import { CHART_COLORS } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import { usePayments } from "@/lib/hooks/usePayments"
 import ChartsToggle from "../components/ChartsToggle"
-import DonutChart from "../components/DonutChart"
 import PageLayout from "../components/PageLayout"
 import SummaryCard from "../components/SummaryCard"
 import MonthlyBreakdown from "./components/MonthlyBreakdown"
 import YearPicker from "./components/YearPicker"
+
+const DonutChart = dynamic(() => import("../components/DonutChart"), {
+  ssr: false,
+})
 
 export default function YearSummaryPage() {
   const [selectedYear, setSelectedYear] = useState(() =>

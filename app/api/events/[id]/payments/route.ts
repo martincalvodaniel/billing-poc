@@ -3,6 +3,7 @@ import { MongoEventRepository } from "@/lib/adapters/repositories/mongo-event-re
 import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
 import { generateAttendeePayment } from "@/lib/domain/services/event-payment-service"
+import { getEventById } from "@/lib/server-cache"
 
 const events = new MongoEventRepository()
 const payments = new MongoPaymentRepository()
@@ -23,28 +24,32 @@ export async function POST(
       )
     }
 
-    const event = await events.findById(id)
+    const event = await getEventById(id)
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    const created: string[] = []
     const skipped: string[] = []
-
-    // Per the iteration plan, this loop is intentionally non-transactional;
-    // each attendee write is individually idempotent (the precheck on
-    // `paymentId` plus the per-attendee Mongo update).
+    const pending: typeof event.attendees = []
     for (const attendee of event.attendees) {
       if (attendee.paymentId) {
         skipped.push(attendee.clientId)
-        continue
+      } else {
+        pending.push(attendee)
       }
-      const paymentId = await generateAttendeePayment(event, attendee, {
-        events,
-        payments,
-      })
-      created.push(paymentId)
     }
+
+    // Per the iteration plan, generation is intentionally non-transactional;
+    // each attendee write is individually idempotent (the precheck on
+    // `paymentId` plus the per-attendee Mongo update). Run pending writes
+    // in parallel — each updateAttendee targets a distinct clientId via
+    // the positional `$` operator, so concurrent writes on the same event
+    // doc are safe.
+    const created = await Promise.all(
+      pending.map((attendee) =>
+        generateAttendeePayment(event, attendee, { events, payments })
+      )
+    )
 
     return NextResponse.json({ created, skipped }, { status: 200 })
   } catch (error) {

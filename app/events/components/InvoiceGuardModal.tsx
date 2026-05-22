@@ -1,6 +1,6 @@
 "use client"
 
-import Modal from "@/app/components/Modal"
+import { Modal } from "@/app/components/Modal"
 
 interface InvoiceGuardModalProps {
   isOpen: boolean
@@ -21,8 +21,6 @@ export default function InvoiceGuardModal({
       onClose={onClose}
       title="Invoice already generated"
       maxWidth="md"
-      closeOnEscape
-      closeOnBackdropClick
     >
       <div className="space-y-4">
         <p className="text-sm text-zinc-700 dark:text-zinc-300">

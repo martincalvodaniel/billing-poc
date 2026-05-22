@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import Modal from "@/app/components/Modal"
+import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
 import type {
   Absence,
@@ -10,7 +10,15 @@ import type {
   PartOfDay,
 } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
-import AbsenceForm from "./AbsenceForm"
+import {
+  AbsenceForm,
+  CommentField,
+  DateField,
+  FieldsRow,
+  PartOfDayField,
+  StudentNameField,
+  TypeField,
+} from "./AbsenceForm"
 import PartSection from "./day-modal/PartSection"
 import useAbsenceMutationHandlers from "./hooks/useAbsenceMutationHandlers"
 import useInlineFormController from "./hooks/useInlineFormController"
@@ -111,14 +119,7 @@ export default function DayDetailModal({
     <>
       {toastMessage && <Toast message={toastMessage} onClose={clearToast} />}
 
-      <Modal
-        isOpen
-        onClose={onClose}
-        title={formatDate(date)}
-        maxWidth="lg"
-        closeOnEscape
-        closeOnBackdropClick
-      >
+      <Modal isOpen onClose={onClose} title={formatDate(date)} maxWidth="lg">
         <div className="space-y-6">
           <PartSection
             part="morning"
@@ -163,13 +164,24 @@ export default function DayDetailModal({
                 initial={
                   formState.mode === "edit" ? formState.target : undefined
                 }
-                hideTypeAndPartOfDay={formState.mode !== "edit"}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 onCancel={handleCancelForm}
                 errorMessage={formError}
                 shakeKey={shakeKey}
-              />
+              >
+                <FieldsRow>
+                  <StudentNameField />
+                  <DateField />
+                </FieldsRow>
+                {formState.mode === "edit" && (
+                  <>
+                    <TypeField />
+                    <PartOfDayField />
+                  </>
+                )}
+                <CommentField />
+              </AbsenceForm>
             </div>
           )}
         </div>

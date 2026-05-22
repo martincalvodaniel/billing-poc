@@ -1,7 +1,7 @@
 "use client"
 
 import AddButton from "@/app/components/AddButton"
-import Modal from "@/app/components/Modal"
+import { Modal } from "@/app/components/Modal"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatDate } from "@/lib/formatters"
 import EventsListTable from "./EventsListTable"
@@ -40,8 +40,6 @@ export default function DayEventsModal({
       onClose={onClose}
       title={dateLabel}
       maxWidth="xl"
-      closeOnEscape
-      closeOnBackdropClick
       headerActions={
         <AddButton
           ariaLabel={`Add event on ${dateLabel}`}

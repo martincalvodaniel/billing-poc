@@ -1,6 +1,6 @@
 import { formatCurrency, formatDate } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
-import Modal from "../../components/Modal"
+import { ConfirmFooter, Modal } from "../../components/Modal"
 
 export default function DeletePaymentModal({
   payment,
@@ -22,24 +22,14 @@ export default function DeletePaymentModal({
       title="Delete Payment"
       maxWidth="sm"
       footer={
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isDeleting}
-            className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
-        </div>
+        <ConfirmFooter
+          onCancel={onClose}
+          onConfirm={onConfirm}
+          isPending={isDeleting}
+          confirmLabel="Delete"
+          pendingLabel="Deleting..."
+          variant="danger"
+        />
       }
     >
       <div className="space-y-4">

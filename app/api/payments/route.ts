@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { MongoClientRepository } from "@/lib/adapters/repositories/mongo-client-repository"
 import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
 import { computePaymentFinancials } from "@/lib/domain/services/payment-calculator"
@@ -9,10 +8,10 @@ import {
   paymentQuerySchema,
   updatePaymentSchema,
 } from "@/lib/domain/services/payment-validator"
+import { getClientById, getPaymentById } from "@/lib/server-cache"
 import { zodError } from "@/lib/validation"
 
 const payments = new MongoPaymentRepository()
-const clients = new MongoClientRepository()
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Verify client exists if provided
     if (clientId) {
-      const client = await clients.findById(clientId)
+      const client = await getClientById(clientId)
       if (!client) {
         return NextResponse.json({ error: "Client not found" }, { status: 404 })
       }
@@ -122,25 +121,27 @@ export async function PUT(request: NextRequest) {
 
     const { id, clientId, ...fields } = parsed.data
 
-    // Verify client if provided
-    if (clientId) {
-      const client = await clients.findById(clientId)
-      if (!client) {
-        return NextResponse.json({ error: "Client not found" }, { status: 404 })
-      }
+    const needsExisting =
+      fields.concepts !== undefined ||
+      fields.vat !== undefined ||
+      fields.surcharge !== undefined ||
+      fields.total !== undefined
+
+    // Parallelize the two independent reads (client existence + existing payment)
+    const [client, existing] = await Promise.all([
+      clientId ? getClientById(clientId) : Promise.resolve(null),
+      needsExisting ? getPaymentById(id) : Promise.resolve(null),
+    ])
+
+    if (clientId && !client) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
 
     // Recalculate financials if concepts, vat, or surcharge changed
     const updateData: Record<string, unknown> = { ...fields }
     if (clientId !== undefined) updateData.clientId = clientId || undefined
 
-    if (
-      fields.concepts !== undefined ||
-      fields.vat !== undefined ||
-      fields.surcharge !== undefined ||
-      fields.total !== undefined
-    ) {
-      const existing = await payments.findById(id)
+    if (needsExisting) {
       if (!existing) {
         return NextResponse.json(
           { error: "Payment not found" },

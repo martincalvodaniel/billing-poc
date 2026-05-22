@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import Modal from "@/app/components/Modal"
+import { ConfirmFooter, Modal } from "@/app/components/Modal"
 
 interface ConfirmDeleteModalProps {
   isOpen: boolean
@@ -42,24 +42,14 @@ export default function ConfirmDeleteModal({
       title={title}
       maxWidth="sm"
       footer={
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isPending}
-            className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isPending}
-            className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
-          >
-            {isPending ? pendingLabel : confirmLabel}
-          </button>
-        </div>
+        <ConfirmFooter
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+          isPending={isPending}
+          confirmLabel={confirmLabel}
+          pendingLabel={pendingLabel}
+          variant="danger"
+        />
       }
     >
       <div className="space-y-3">

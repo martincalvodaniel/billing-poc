@@ -113,6 +113,7 @@ export default function EventsListTable({
                       type="button"
                       onClick={() => onGenerateAllPayments(event)}
                       disabled={generatingAll || event.attendees.length === 0}
+                      aria-label={`Generate payments for ${event.title}`}
                       className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                     >
                       {generatingAll ? "Generating…" : "Generate payments"}

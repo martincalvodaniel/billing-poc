@@ -1,22 +1,26 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import dynamic from "next/dynamic"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
 import { usePayments } from "@/lib/hooks/usePayments"
 import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
-import DeletePaymentModal from "./DeletePaymentModal"
-import PaymentCharts from "./PaymentCharts"
-import PaymentDetailModal from "./PaymentDetailModal"
 import PaymentsSummary from "./PaymentsSummary"
 import PaymentsTable from "./PaymentsTable"
 
+const PaymentCharts = dynamic(() => import("./PaymentCharts"), { ssr: false })
+const DeletePaymentModal = dynamic(() => import("./DeletePaymentModal"), {
+  ssr: false,
+})
+const PaymentDetailModal = dynamic(() => import("./PaymentDetailModal"), {
+  ssr: false,
+})
+
 export default function MonthlyPaymentsView({
-  onMonthChange,
   selectedDate,
   showCharts = true,
 }: {
-  onMonthChange?: (dateString: string) => void
   selectedDate: Date
   showCharts?: boolean
 }) {
@@ -43,20 +47,6 @@ export default function MonthlyPaymentsView({
 
   // Edit modal state (full payment edit)
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null)
-
-  // Notify parent when month changes so form date can be synced
-  useEffect(() => {
-    const yearStr = selectedDate.getFullYear()
-    const monthStr = String(selectedDate.getMonth() + 1).padStart(2, "0")
-    const day = String(selectedDate.getDate()).padStart(2, "0")
-    const dateString = `${yearStr}-${monthStr}-${day}`
-    onMonthChange?.(dateString)
-  }, [selectedDate, onMonthChange])
-
-  const getFilteredPayments = () => {
-    // No client-side filtering needed since API returns only relevant month's payments
-    return payments
-  }
 
   const handleRowClick = (paymentId: string) => {
     setEditPaymentId(paymentId)
@@ -95,58 +85,64 @@ export default function MonthlyPaymentsView({
     }
   }, [deleteConfirmPaymentId, deletePayment])
 
-  const handleDeleteModalKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (deleteConfirmPaymentId) {
-        if (e.key === "Escape") {
-          e.preventDefault()
-          e.stopPropagation()
-          setDeleteConfirmPaymentId(null)
-        } else if (e.key === "Enter") {
-          e.preventDefault()
-          e.stopPropagation()
-          handleConfirmDelete()
-        }
-      }
-    },
-    [deleteConfirmPaymentId, handleConfirmDelete]
-  )
-
-  // Register keyboard handler for delete modal
+  // Enter-to-confirm for the delete modal. ESC is handled by Modal itself.
   useEffect(() => {
     if (!deleteConfirmPaymentId) return
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        e.stopPropagation()
+        handleConfirmDelete()
+      }
+    }
+
     const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleDeleteModalKeyDown)
+      document.addEventListener("keydown", handleKeyDown)
     }, 0)
 
     return () => {
       clearTimeout(timeoutId)
-      document.removeEventListener("keydown", handleDeleteModalKeyDown)
+      document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [deleteConfirmPaymentId, handleDeleteModalKeyDown])
-
-  const filteredPayments = getFilteredPayments()
+  }, [deleteConfirmPaymentId, handleConfirmDelete])
 
   // Combine iterations: compute totals, counts, and tag breakdowns in a single pass (js-combine-iterations)
-  let totalIncome = 0
-  let totalOutcome = 0
-  let incomeCount = 0
-  let outcomeCount = 0
-  const incomeByTag: Record<string, number> = {}
-  const outcomeByTag: Record<string, number> = {}
-  for (const p of filteredPayments) {
-    const tag = p.tag || "Untagged"
-    if (p.type === "income") {
-      totalIncome += p.total
-      incomeByTag[tag] = (incomeByTag[tag] || 0) + p.total
-      incomeCount++
-    } else {
-      totalOutcome += p.total
-      outcomeByTag[tag] = (outcomeByTag[tag] || 0) + p.total
-      outcomeCount++
+  const {
+    totalIncome,
+    totalOutcome,
+    incomeCount,
+    outcomeCount,
+    incomeByTag,
+    outcomeByTag,
+  } = useMemo(() => {
+    let income = 0
+    let outcome = 0
+    let incCount = 0
+    let outCount = 0
+    const incByTag: Record<string, number> = {}
+    const outByTag: Record<string, number> = {}
+    for (const p of payments) {
+      const tag = p.tag || "Untagged"
+      if (p.type === "income") {
+        income += p.total
+        incByTag[tag] = (incByTag[tag] || 0) + p.total
+        incCount++
+      } else {
+        outcome += p.total
+        outByTag[tag] = (outByTag[tag] || 0) + p.total
+        outCount++
+      }
     }
-  }
+    return {
+      totalIncome: income,
+      totalOutcome: outcome,
+      incomeCount: incCount,
+      outcomeCount: outCount,
+      incomeByTag: incByTag,
+      outcomeByTag: outByTag,
+    }
+  }, [payments])
 
   const netBalance = totalIncome - totalOutcome
 
@@ -192,7 +188,7 @@ export default function MonthlyPaymentsView({
 
       <PaymentsTable
         payments={payments}
-        filteredPayments={filteredPayments}
+        filteredPayments={payments}
         selectedDate={selectedDate}
         error={displayError}
         onRowClick={handleRowClick}

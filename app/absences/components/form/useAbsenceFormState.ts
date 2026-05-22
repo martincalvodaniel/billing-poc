@@ -14,7 +14,6 @@ interface UseAbsenceFormStateOptions {
   initialStudentName?: string
   initialPartOfDay?: PartOfDay
   initialType?: AbsenceType
-  hideStudentName: boolean
   onSubmit: (data: AbsenceFormData) => Promise<void>
   isSubmitting: boolean
 }
@@ -68,7 +67,6 @@ export default function useAbsenceFormState(
     initialStudentName,
     initialPartOfDay,
     initialType,
-    hideStudentName,
     onSubmit,
     isSubmitting,
   } = opts
@@ -124,13 +122,14 @@ export default function useAbsenceFormState(
       comment: trimmedComment,
     }
     await onSubmit(data)
-    if (!initial && !hideStudentName) {
-      // Create mode: clear ONLY the student name so the user can quickly
-      // add another record for a different student. Date, type, partOfDay
-      // and comment stay sticky. If `onSubmit` throws (validation/conflict),
-      // this block is skipped and the user's input is preserved.
-      // When the student-name input is hidden (per-student context), the
-      // student is implicit and must remain seeded — skip the reset+focus.
+    if (!initial && !initialStudentName) {
+      // Create mode WITHOUT a seeded student (e.g., DayDetailModal):
+      // clear ONLY the student name so the user can quickly add another
+      // record for a different student. Date, type, partOfDay and comment
+      // stay sticky. If `onSubmit` throws (validation/conflict), this block
+      // is skipped and the user's input is preserved. When `initialStudentName`
+      // is provided (per-student context), the student is implicit and must
+      // remain seeded — skip the reset+focus.
       setStudentName("")
       requestAnimationFrame(() => {
         studentNameRef.current?.focus()

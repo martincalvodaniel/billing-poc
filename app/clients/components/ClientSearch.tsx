@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
 
 interface ClientSearchProps {
   onSearch: (query: string) => void
@@ -8,22 +9,18 @@ interface ClientSearchProps {
 
 export default function ClientSearch({ onSearch }: ClientSearchProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  const debouncedQuery = useDebouncedValue(searchQuery, 300)
   const isInitialMount = useRef(true)
 
+  // Skip the initial mount to avoid duplicate API call (parent handles
+  // initial data fetch). Subsequent debounced values trigger onSearch.
   useEffect(() => {
-    // Skip the initial mount to avoid duplicate API call
-    // Parent component handles initial data fetch
     if (isInitialMount.current) {
       isInitialMount.current = false
       return
     }
-
-    const timer = setTimeout(() => {
-      onSearch(searchQuery)
-    }, 300) // Debounce search
-
-    return () => clearTimeout(timer)
-  }, [searchQuery, onSearch])
+    onSearch(debouncedQuery)
+  }, [debouncedQuery, onSearch])
 
   return (
     <div className="relative">

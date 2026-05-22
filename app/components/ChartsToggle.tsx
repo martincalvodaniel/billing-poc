@@ -17,6 +17,7 @@ export default function ChartsToggle({
       <button
         type="button"
         onClick={() => onToggle(true)}
+        aria-pressed={showCharts}
         className={`min-h-11 px-3 py-2 text-sm font-medium transition ${
           showCharts
             ? "bg-blue-600 text-white dark:bg-blue-700"
@@ -28,6 +29,7 @@ export default function ChartsToggle({
       <button
         type="button"
         onClick={() => onToggle(false)}
+        aria-pressed={!showCharts}
         className={`min-h-11 px-3 py-2 text-sm font-medium transition ${
           !showCharts
             ? "bg-blue-600 text-white dark:bg-blue-700"
