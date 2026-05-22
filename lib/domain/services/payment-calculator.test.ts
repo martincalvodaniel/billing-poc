@@ -97,3 +97,53 @@ describe("computePaymentFinancials", () => {
     expect(result.surchargeAmount).toBeCloseTo(5.2, 0)
   })
 })
+
+describe("discount scenarios", () => {
+  it("discount = 0 equals no-discount baseline", () => {
+    const concepts = [{ name: "Service", amount: 121, quantity: 1 }]
+    const baseline = computePaymentFinancials(concepts, 21)
+    const withZero = computePaymentFinancials(concepts, 21, 0, 0)
+    expect(withZero.total).toBe(baseline.total)
+    expect(withZero.netAmount).toBe(baseline.netAmount)
+    expect(withZero.vatAmount).toBe(baseline.vatAmount)
+    expect(withZero.surchargeAmount).toBe(baseline.surchargeAmount)
+  })
+
+  it("discount = 10 on concepts = 100, vat = 21 yields effectiveTotal 90 and recomputed net/vat", () => {
+    const result = computePaymentFinancials(
+      [{ name: "Service", amount: 100, quantity: 1 }],
+      21,
+      0,
+      10
+    )
+    expect(result.total).toBe(90)
+    expect(result.netAmount).toBeCloseTo(74.38, 2)
+    expect(result.vatAmount).toBeCloseTo(15.62, 2)
+    expect(result.surchargeAmount).toBeUndefined()
+  })
+
+  it("discount equal to concepts total yields total 0", () => {
+    const result = computePaymentFinancials(
+      [{ name: "Service", amount: 100, quantity: 1 }],
+      21,
+      0,
+      100
+    )
+    expect(result.total).toBe(0)
+    expect(result.netAmount).toBe(0)
+    expect(result.vatAmount).toBe(0)
+  })
+
+  it("discount applies before VAT and surcharge extraction", () => {
+    const result = computePaymentFinancials(
+      [{ name: "Service", amount: 126.2, quantity: 1 }],
+      21,
+      5.2,
+      26.2
+    )
+    expect(result.total).toBe(100)
+    expect(result.netAmount).toBeCloseTo(79.24, 2)
+    expect(result.vatAmount).toBeCloseTo(16.64, 2)
+    expect(result.surchargeAmount).toBeCloseTo(4.12, 2)
+  })
+})

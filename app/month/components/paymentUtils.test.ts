@@ -5,6 +5,7 @@ import {
   calculateTotal,
   calculateVatAmount,
   validateConcepts,
+  validateDiscount,
   validateSurcharge,
   validateVat,
 } from "./paymentUtils"
@@ -213,5 +214,49 @@ describe("validateSurcharge", () => {
 
   it("rejects non-numeric", () => {
     expect(validateSurcharge("abc").isValid).toBe(false)
+  })
+})
+
+describe("validateDiscount", () => {
+  it("accepts empty string", () => {
+    expect(validateDiscount("", 100).isValid).toBe(true)
+  })
+
+  it("accepts undefined", () => {
+    expect(validateDiscount(undefined, 100).isValid).toBe(true)
+  })
+
+  it("accepts whitespace-only", () => {
+    expect(validateDiscount("   ", 100).isValid).toBe(true)
+  })
+
+  it("accepts zero", () => {
+    expect(validateDiscount("0", 100).isValid).toBe(true)
+  })
+
+  it("accepts a value below the concepts total", () => {
+    expect(validateDiscount("10", 100).isValid).toBe(true)
+  })
+
+  it("accepts a value equal to the concepts total", () => {
+    expect(validateDiscount("100", 100).isValid).toBe(true)
+  })
+
+  it("rejects negative values", () => {
+    const result = validateDiscount("-1", 100)
+    expect(result.isValid).toBe(false)
+    expect(result.error).toContain("non-negative")
+  })
+
+  it("rejects non-numeric values", () => {
+    const result = validateDiscount("abc", 100)
+    expect(result.isValid).toBe(false)
+    expect(result.error).toContain("non-negative")
+  })
+
+  it("rejects values greater than the concepts total", () => {
+    const result = validateDiscount("150", 100)
+    expect(result.isValid).toBe(false)
+    expect(result.error).toContain("exceed")
   })
 })

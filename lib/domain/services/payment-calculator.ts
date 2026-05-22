@@ -40,9 +40,12 @@ export function calculateNetAmount(
 export function computePaymentFinancials(
   concepts: PaymentConcept[],
   vatPercentage: number,
-  surchargePercentage = 0
+  surchargePercentage = 0,
+  discount = 0
 ) {
-  const total = calculateTotal(concepts)
+  // Discount reduces the concepts subtotal before VAT/surcharge extraction.
+  const conceptsTotal = calculateTotal(concepts)
+  const total = Number.parseFloat((conceptsTotal - discount).toFixed(2))
   const netAmount = calculateNetAmount(
     total,
     vatPercentage,

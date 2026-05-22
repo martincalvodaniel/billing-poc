@@ -19,6 +19,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     concepts: [{ name: "", amount: 0, quantity: 1 }],
     vat: "21",
     surcharge: "",
+    discount: "",
     type: "income",
     tag: "",
     clientId: undefined,
@@ -159,6 +160,11 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     ).toFixed(2)
   }, [formData.vat, formData.surcharge, calculateTotal])
 
+  const calculateDiscount = useCallback(() => {
+    const discount = parseFloat(formData.discount || "0") || 0
+    return discount.toFixed(2)
+  }, [formData.discount])
+
   const resetForm = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
@@ -197,5 +203,6 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     calculateVatAmount: calculateVatAmountValue,
     calculateSurchargeAmount: calculateSurchargeAmountValue,
     calculateNetAmount: calculateNetAmountValue,
+    calculateDiscount,
   }
 }

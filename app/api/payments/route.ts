@@ -65,11 +65,13 @@ export async function POST(request: NextRequest) {
       concepts,
       vat,
       surcharge,
+      discount,
       tag,
       clientId,
       deliveryNoteRef,
     } = parsed.data
     const surchargeVal = surcharge ?? 0
+    const discountVal = discount ?? 0
 
     // Verify client exists if provided
     if (clientId) {
@@ -79,7 +81,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const financials = computePaymentFinancials(concepts, vat, surchargeVal)
+    const financials = computePaymentFinancials(
+      concepts,
+      vat,
+      surchargeVal,
+      discountVal
+    )
 
     const id = await payments.create({
       type,
@@ -90,6 +97,7 @@ export async function POST(request: NextRequest) {
       concepts,
       vat,
       surcharge: surchargeVal > 0 ? surchargeVal : undefined,
+      discount: discountVal > 0 ? discountVal : undefined,
       ...financials,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -125,6 +133,7 @@ export async function PUT(request: NextRequest) {
       fields.concepts !== undefined ||
       fields.vat !== undefined ||
       fields.surcharge !== undefined ||
+      fields.discount !== undefined ||
       fields.total !== undefined
 
     // Parallelize the two independent reads (client existence + existing payment)
@@ -152,11 +161,18 @@ export async function PUT(request: NextRequest) {
       const concepts = fields.concepts ?? existing.concepts
       const vat = fields.vat ?? existing.vat
       const surcharge = fields.surcharge ?? existing.surcharge ?? 0
-      const financials = computePaymentFinancials(concepts, vat, surcharge)
+      const discount = fields.discount ?? existing.discount ?? 0
+      const financials = computePaymentFinancials(
+        concepts,
+        vat,
+        surcharge,
+        discount
+      )
 
       updateData.concepts = concepts
       updateData.vat = vat
       updateData.surcharge = surcharge > 0 ? surcharge : undefined
+      updateData.discount = discount > 0 ? discount : undefined
       updateData.total = financials.total
       updateData.netAmount = financials.netAmount
       updateData.vatAmount = financials.vatAmount
@@ -177,6 +193,7 @@ export async function PUT(request: NextRequest) {
         netAmount: updateData.netAmount,
         vat: updateData.vat,
         surcharge: updateData.surcharge,
+        discount: updateData.discount,
       },
       { status: 200 }
     )

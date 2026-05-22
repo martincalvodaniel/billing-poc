@@ -102,6 +102,52 @@ describe("createPaymentSchema", () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it("defaults discount to 0", () => {
+    const result = createPaymentSchema.safeParse(validPayment)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(0)
+    }
+  })
+
+  it("accepts positive discount", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      discount: 25,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(25)
+    }
+  })
+
+  it("rejects negative discount", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      discount: -1,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects discount greater than concepts total", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      discount: 101,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("coerces string discount to number", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      discount: "5",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(5)
+    }
+  })
 })
 
 describe("updatePaymentSchema", () => {

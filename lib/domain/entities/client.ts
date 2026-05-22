@@ -4,8 +4,8 @@ export interface Client {
   _id?: string
   clientType: ClientType
   name: string
-  taxId: string
-  address: string
+  taxId?: string
+  address?: string
   phone?: string
   email?: string
   createdAt: Date
@@ -15,8 +15,8 @@ export interface Client {
 export interface ClientFormData {
   clientType: ClientType
   name: string
-  taxId: string
-  address: string
+  taxId?: string
+  address?: string
   phone?: string
   email?: string
 }

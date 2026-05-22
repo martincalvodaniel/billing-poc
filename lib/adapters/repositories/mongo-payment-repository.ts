@@ -21,6 +21,7 @@ function toDomain(doc: MongoPayment): Payment {
     concepts: doc.concepts,
     vat: doc.vat,
     surcharge: doc.surcharge,
+    discount: doc.discount,
     deliveryNoteRef: doc.deliveryNoteRef,
     netAmount: doc.netAmount,
     vatAmount: doc.vatAmount,
@@ -84,6 +85,7 @@ export class MongoPaymentRepository implements PaymentRepository {
       concepts: payment.concepts,
       vat: payment.vat,
       surcharge: payment.surcharge,
+      discount: payment.discount,
       deliveryNoteRef: payment.deliveryNoteRef,
       netAmount: payment.netAmount,
       vatAmount: payment.vatAmount,
@@ -112,6 +114,9 @@ export class MongoPaymentRepository implements PaymentRepository {
     if (data.vat !== undefined) updateData.vat = data.vat
     if (data.surcharge !== undefined) {
       updateData.surcharge = data.surcharge || null
+    }
+    if (data.discount !== undefined) {
+      updateData.discount = data.discount || null
     }
     if (data.deliveryNoteRef !== undefined) {
       updateData.deliveryNoteRef = data.deliveryNoteRef

@@ -20,12 +20,32 @@ const paymentBaseSchema = z.object({
     .max(100, "Surcharge must be between 0 and 100")
     .optional()
     .default(0),
+  discount: z.coerce
+    .number()
+    .min(0, "Discount must be non-negative")
+    .optional()
+    .default(0),
   tag: z.string().optional(),
   clientId: z.string().optional(),
   deliveryNoteRef: z.string().optional(),
 })
 
-export const createPaymentSchema = paymentBaseSchema
+export const createPaymentSchema = paymentBaseSchema.superRefine(
+  (data, ctx) => {
+    if (!Array.isArray(data.concepts)) return
+    const conceptsTotal = data.concepts.reduce(
+      (sum, c) => sum + c.amount * (c.quantity ?? 1),
+      0
+    )
+    if (data.discount > conceptsTotal) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discount"],
+        message: "Discount cannot exceed concepts total",
+      })
+    }
+  }
+)
 
 export const updatePaymentSchema = z
   .object({
@@ -45,6 +65,10 @@ export const updatePaymentSchema = z
       .number()
       .min(0, "Surcharge must be between 0 and 100")
       .max(100, "Surcharge must be between 0 and 100")
+      .optional(),
+    discount: z.coerce
+      .number()
+      .min(0, "Discount must be non-negative")
       .optional(),
     tag: z.string().optional(),
     clientId: z.string().nullable().optional(),

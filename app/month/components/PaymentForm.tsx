@@ -14,7 +14,7 @@ import Toast from "../../components/Toast"
 import PaymentFormFields from "./PaymentFormFields"
 import ProviderBillFileInput from "./ProviderBillFileInput"
 import { extractPaymentFormError } from "./paymentForm-utils"
-import { validateConcepts } from "./paymentUtils"
+import { validateConcepts, validateDiscount } from "./paymentUtils"
 import { usePaymentForm } from "./usePaymentForm"
 
 interface PaymentFormProps {
@@ -48,6 +48,7 @@ const PaymentForm = function PaymentForm({
     calculateVatAmount,
     calculateSurchargeAmount,
     calculateNetAmount,
+    calculateDiscount,
   } = usePaymentForm()
 
   const [error, setError] = useState<string | null>(null)
@@ -81,6 +82,15 @@ const PaymentForm = function PaymentForm({
       const validation = validateConcepts(formData.concepts)
       if (!validation.isValid) {
         throw new Error(validation.error || "Validation failed")
+      }
+
+      const conceptsTotal = calculateTotal()
+      const discountValidation = validateDiscount(
+        formData.discount,
+        conceptsTotal
+      )
+      if (!discountValidation.isValid) {
+        throw new Error(discountValidation.error || "Validation failed")
       }
 
       const result = await createPayment(formData)
@@ -230,6 +240,7 @@ const PaymentForm = function PaymentForm({
           calculateVatAmount={calculateVatAmount}
           calculateSurchargeAmount={calculateSurchargeAmount}
           calculateNetAmount={calculateNetAmount}
+          calculateDiscount={calculateDiscount}
         />
 
         {/* Provider Bill Upload (Outcome Only) */}

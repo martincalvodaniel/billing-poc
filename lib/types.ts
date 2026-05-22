@@ -36,6 +36,7 @@ export interface Payment {
   concepts: PaymentConcept[]
   vat: number
   surcharge?: number
+  discount?: number
   deliveryNoteRef?: string
   netAmount: number
   vatAmount: number
@@ -54,6 +55,7 @@ export interface PaymentFormData {
   concepts: PaymentConcept[]
   vat: string
   surcharge?: string
+  discount?: string
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
@@ -63,8 +65,8 @@ export interface Client {
   _id?: ObjectId
   clientType: ClientType
   name: string
-  taxId: string
-  address: string
+  taxId?: string
+  address?: string
   phone?: string
   email?: string
   createdAt: Date
@@ -74,8 +76,8 @@ export interface Client {
 export interface ClientFormData {
   clientType: ClientType
   name: string
-  taxId: string
-  address: string
+  taxId?: string
+  address?: string
   phone?: string
   email?: string
 }

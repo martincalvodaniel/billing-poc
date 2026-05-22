@@ -17,16 +17,20 @@ export function drawClientBlock(
   if (client) {
     page.drawText(client.name, { x: 50, y, size: 11, font })
     y -= 15
-    page.drawText(`Tax ID: ${client.taxId}`, { x: 50, y, size: 11, font })
-    y -= 15
-    page.drawText(client.address, {
-      x: 50,
-      y,
-      size: 11,
-      font,
-      maxWidth: 300,
-    })
-    y -= 15
+    if (client.taxId) {
+      page.drawText(`Tax ID: ${client.taxId}`, { x: 50, y, size: 11, font })
+      y -= 15
+    }
+    if (client.address) {
+      page.drawText(client.address, {
+        x: 50,
+        y,
+        size: 11,
+        font,
+        maxWidth: 300,
+      })
+      y -= 15
+    }
     if (client.email) {
       page.drawText(`Email: ${client.email}`, { x: 50, y, size: 11, font })
       y -= 15

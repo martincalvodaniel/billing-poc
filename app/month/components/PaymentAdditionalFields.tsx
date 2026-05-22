@@ -93,6 +93,26 @@ export default function PaymentAdditionalFields({
               className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor={`${id}-discount`}
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Discount (€) - Optional
+            </label>
+            <input
+              type="number"
+              id={`${id}-discount`}
+              name="discount"
+              value={formData.discount || ""}
+              onChange={onChangeField}
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+          </div>
         </div>
       )}
     </div>

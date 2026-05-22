@@ -30,9 +30,60 @@ describe("createClientSchema", () => {
     expect(result.success).toBe(false)
   })
 
-  it("rejects missing taxId", () => {
-    const { taxId: _, ...rest } = validClient
-    const result = createClientSchema.safeParse(rest)
+  it("accepts client with only name (taxId and address optional)", () => {
+    const result = createClientSchema.safeParse({
+      clientType: "individual",
+      name: "Jane Doe",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.taxId).toBeUndefined()
+      expect(result.data.address).toBeUndefined()
+    }
+  })
+
+  it("accepts taxId-only (without address)", () => {
+    const result = createClientSchema.safeParse({
+      clientType: "company",
+      name: "Acme",
+      taxId: "B123",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.taxId).toBe("B123")
+      expect(result.data.address).toBeUndefined()
+    }
+  })
+
+  it("accepts address-only (without taxId)", () => {
+    const result = createClientSchema.safeParse({
+      clientType: "company",
+      name: "Acme",
+      address: "1 Main St",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.address).toBe("1 Main St")
+      expect(result.data.taxId).toBeUndefined()
+    }
+  })
+
+  it("normalises empty taxId after trim to undefined", () => {
+    const result = createClientSchema.safeParse({
+      ...validClient,
+      taxId: "   ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.taxId).toBeUndefined()
+    }
+  })
+
+  it("rejects missing taxId only when name is also missing", () => {
+    const result = createClientSchema.safeParse({
+      clientType: "company",
+      address: "1 Main St",
+    })
     expect(result.success).toBe(false)
   })
 

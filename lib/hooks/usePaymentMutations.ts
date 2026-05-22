@@ -12,6 +12,7 @@ export interface CreatePaymentInput {
   concepts: PaymentConcept[]
   vat: number | string
   surcharge?: number | string
+  discount?: number | string
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
@@ -24,6 +25,7 @@ export interface UpdatePaymentInput {
   concepts?: PaymentConcept[]
   vat?: number
   surcharge?: number
+  discount?: number
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
@@ -47,6 +49,7 @@ export interface UpdatePaymentResponse {
   netAmount?: number
   vat?: number
   surcharge?: number
+  discount?: number
 }
 
 export interface DeletePaymentResponse {

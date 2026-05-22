@@ -14,6 +14,7 @@ import PaymentProviderBillSection from "./PaymentProviderBillSection"
 import { extractPaymentError } from "./paymentDetailModal-utils"
 import {
   validateConcepts,
+  validateDiscount,
   validateSurcharge,
   validateVat,
 } from "./paymentUtils"
@@ -37,6 +38,7 @@ export default function PaymentDetailModal({
     concepts: payment.concepts || [{ name: "", amount: 0, quantity: 1 }],
     vat: payment.vat.toString(),
     surcharge: payment.surcharge?.toString() || "",
+    discount: payment.discount?.toString() || "",
     tag: payment.tag || "",
     clientId: payment.clientId?.toString() || undefined,
     deliveryNoteRef: payment.deliveryNoteRef || "",
@@ -56,6 +58,7 @@ export default function PaymentDetailModal({
     calculateVatAmount,
     calculateSurchargeAmount,
     calculateNetAmount,
+    calculateDiscount,
   } = usePaymentForm(initialFormData)
 
   const { trigger: updatePayment, isMutating: isSaving } = useUpdatePayment()
@@ -156,10 +159,20 @@ export default function PaymentDetailModal({
       setError(surchargeValidation.error)
       return
     }
+    const conceptsTotal = calculateTotal()
+    const discountValidation = validateDiscount(
+      formData.discount,
+      conceptsTotal
+    )
+    if (!discountValidation.isValid) {
+      setError(discountValidation.error)
+      return
+    }
     const vatNumber = parseFloat(formData.vat)
     const surchargeNumber = surchargeValidation.isValid
       ? parseFloat(formData.surcharge || "0")
       : 0
+    const discountNumber = parseFloat(formData.discount || "0") || 0
 
     try {
       const responseData = await updatePayment({
@@ -171,6 +184,7 @@ export default function PaymentDetailModal({
         concepts: formData.concepts,
         vat: vatNumber,
         surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
+        discount: discountNumber > 0 ? discountNumber : undefined,
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
       })
 
@@ -184,6 +198,9 @@ export default function PaymentDetailModal({
         surcharge:
           responseData.surcharge ??
           (surchargeNumber > 0 ? surchargeNumber : undefined),
+        discount:
+          responseData.discount ??
+          (discountNumber > 0 ? discountNumber : undefined),
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
         total: responseData.total ?? calculateTotal(),
         vatAmount: responseData.vatAmount ?? parseFloat(calculateVatAmount()),
@@ -260,6 +277,7 @@ export default function PaymentDetailModal({
           calculateVatAmount={calculateVatAmount}
           calculateSurchargeAmount={calculateSurchargeAmount}
           calculateNetAmount={calculateNetAmount}
+          calculateDiscount={calculateDiscount}
         />
 
         <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">

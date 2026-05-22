@@ -26,6 +26,7 @@ interface PaymentFormFieldsProps {
   calculateVatAmount: () => string
   calculateSurchargeAmount: () => string
   calculateNetAmount: () => string
+  calculateDiscount: () => string
 }
 
 /**
@@ -48,6 +49,7 @@ export default function PaymentFormFields({
   calculateVatAmount,
   calculateSurchargeAmount,
   calculateNetAmount,
+  calculateDiscount,
 }: PaymentFormFieldsProps) {
   return (
     <div className="space-y-4">
@@ -75,10 +77,12 @@ export default function PaymentFormFields({
       />
       <PaymentTotalsPanel
         surcharge={formData.surcharge || ""}
+        discount={formData.discount || ""}
         calculateTotal={calculateTotal}
         calculateVatAmount={calculateVatAmount}
         calculateSurchargeAmount={calculateSurchargeAmount}
         calculateNetAmount={calculateNetAmount}
+        calculateDiscount={calculateDiscount}
       />
     </div>
   )

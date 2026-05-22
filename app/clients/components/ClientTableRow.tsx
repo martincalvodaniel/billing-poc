@@ -33,13 +33,13 @@ export default function ClientTableRow({
         {client.name}
       </td>
       <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-        {client.taxId}
+        {client.taxId || "—"}
       </td>
       <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
         {getClientType(client.clientType)}
       </td>
       <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
-        {client.address}
+        {client.address || "—"}
       </td>
       <td className="px-6 py-4 text-right">
         <button

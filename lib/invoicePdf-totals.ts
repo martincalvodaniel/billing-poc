@@ -54,6 +54,17 @@ export function drawTotals(
     y -= 20
   }
 
+  if (payment.discount && payment.discount > 0) {
+    page.drawText("Discount:", { x: 350, y, size: 10, font })
+    page.drawText(`-€${payment.discount.toFixed(2)}`, {
+      x: 470,
+      y,
+      size: 10,
+      font,
+    })
+    y -= 20
+  }
+
   page.drawLine({
     start: { x: 350, y },
     end: { x: 540, y },

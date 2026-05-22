@@ -49,14 +49,6 @@ export default function ClientForm({
       setError("Name is required")
       return
     }
-    if (!formData.taxId.trim()) {
-      setError("Tax ID is required")
-      return
-    }
-    if (!formData.address.trim()) {
-      setError("Address is required")
-      return
-    }
 
     setIsSubmitting(true)
     try {
@@ -129,13 +121,13 @@ export default function ClientForm({
           htmlFor={`${id}-client-taxId`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
-          Tax ID (NIF/CIF/NIE)
+          Tax ID (NIF/CIF/NIE) - Optional
         </label>
         <input
           type="text"
           id={`${id}-client-taxId`}
           name="taxId"
-          value={formData.taxId}
+          value={formData.taxId || ""}
           onChange={handleChange}
           placeholder={
             formData.clientType === "individual"
@@ -143,7 +135,6 @@ export default function ClientForm({
               : "E.g., A12345678"
           }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
-          required
           disabled={isSubmitting}
         />
       </div>
@@ -153,17 +144,16 @@ export default function ClientForm({
           htmlFor={`${id}-client-address`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
-          Tax Address (with postal code and city)
+          Tax Address - Optional
         </label>
         <textarea
           id={`${id}-client-address`}
           name="address"
-          value={formData.address}
+          value={formData.address || ""}
           onChange={handleChange}
           placeholder="E.g., Calle Principal 123, 28001 Madrid"
           rows={3}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
-          required
           disabled={isSubmitting}
         />
       </div>

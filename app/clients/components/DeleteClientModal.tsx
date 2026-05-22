@@ -52,7 +52,7 @@ export default function DeleteClientModal({
                 Tax ID:{" "}
               </span>
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {client.taxId}
+                {client.taxId || "—"}
               </span>
             </p>
           </div>
