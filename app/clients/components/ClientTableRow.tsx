@@ -1,16 +1,16 @@
 "use client"
 
+import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { Client } from "@/lib/types"
+import { copyToClipboard } from "./clientTable-utils"
 
 interface ClientTableRowProps {
   client: Client
   index: number
   onEdit: (clientId: string) => void
   onDelete: (clientId: string) => void
-}
-
-function getClientType(type: string): string {
-  return type === "individual" ? "Person / Freelancer" : "Company"
+  onCopy?: (field: string, value: string) => void
 }
 
 export default function ClientTableRow({
@@ -18,28 +18,76 @@ export default function ClientTableRow({
   index,
   onEdit,
   onDelete,
+  onCopy,
 }: ClientTableRowProps) {
   const clientId = client._id?.toString() ?? ""
   const stripe =
     index % 2 === 0
       ? "bg-white dark:bg-zinc-900"
       : "bg-zinc-50 dark:bg-zinc-800/50"
+
+  const handleCopy = async (field: string, value: string) => {
+    const ok = await copyToClipboard(value)
+    if (ok) {
+      onCopy?.(field, value)
+    }
+  }
+
+  const typeLabel =
+    client.clientType === "individual" ? "Person / Freelancer" : "Company"
+
   return (
     <tr
       onClick={() => onEdit(clientId)}
       className={`border-b border-zinc-200 cursor-pointer transition-colors hover:bg-blue-50 dark:border-zinc-700 dark:hover:bg-blue-900/20 ${stripe}`}
     >
       <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
-        {client.name}
+        <span className="inline-flex items-center gap-2">
+          <ClientTypeIcon
+            type={client.clientType}
+            className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400"
+          />
+          <span title={typeLabel}>{client.name}</span>
+        </span>
       </td>
       <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
         {client.taxId || "—"}
       </td>
       <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-        {getClientType(client.clientType)}
+        {client.phone ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleCopy("phone", client.phone ?? "")
+            }}
+            title={client.phone}
+            aria-label={`Copy phone ${client.phone}`}
+            className="rounded px-1 py-0.5 text-left hover:bg-zinc-200/60 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-zinc-700/60"
+          >
+            {client.phone}
+          </button>
+        ) : (
+          "—"
+        )}
       </td>
-      <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
-        {client.address || "—"}
+      <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+        {client.email ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleCopy("email", client.email ?? "")
+            }}
+            title={client.email}
+            aria-label={`Copy email ${client.email}`}
+            className="rounded px-1 py-0.5 text-left hover:bg-zinc-200/60 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-zinc-700/60"
+          >
+            {client.email}
+          </button>
+        ) : (
+          "—"
+        )}
       </td>
       <td className="px-6 py-4 text-right">
         <button
@@ -48,9 +96,10 @@ export default function ClientTableRow({
             e.stopPropagation()
             onDelete(clientId)
           }}
-          className="rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 dark:focus:ring-offset-zinc-900"
+          aria-label={`Delete client ${client.name}`}
+          className="rounded-md p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
         >
-          Delete
+          <TrashIcon />
         </button>
       </td>
     </tr>

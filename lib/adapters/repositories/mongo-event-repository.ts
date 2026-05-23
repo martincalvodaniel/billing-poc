@@ -12,6 +12,7 @@ import {
   toDomain,
   toObjectId,
 } from "./mongo-event-repository-helpers"
+import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
 
 export { buildEventListQuery } from "./mongo-event-repository-helpers"
 
@@ -47,7 +48,7 @@ export class MongoEventRepository implements EventRepository {
 
   async create(event: Omit<Event, "_id">): Promise<string> {
     const col = await this.collection()
-    const doc: Omit<MongoEvent, "_id"> = {
+    const doc = omitNullish({
       title: event.title,
       description: event.description,
       year: event.year,
@@ -63,7 +64,7 @@ export class MongoEventRepository implements EventRepository {
       attendees: (event.attendees ?? []).map(attendeeToMongo),
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
-    }
+    })
     const result = await col.insertOne(doc as MongoEvent)
     return result.insertedId.toString()
   }
@@ -82,46 +83,33 @@ export class MongoEventRepository implements EventRepository {
   ): Promise<boolean> {
     if (!isValidObjectId(id)) return false
     const col = await this.collection()
-    const setData: Record<string, unknown> = {
-      updatedAt: new Date(),
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
+
+    // Empty-string description is treated as a clear request.
+    const normaliseEmpty = (v: unknown): unknown => (v === "" ? undefined : v)
+
+    if (data.title !== undefined) builder.set("title", data.title)
+    if (data.description !== undefined) {
+      builder.setOrUnset("description", normaliseEmpty(data.description))
     }
-    const unsetData: Record<string, ""> = {}
-
-    const setOrUnset = (
-      key: string,
-      value: unknown,
-      treatEmptyStringAsUnset = false
-    ) => {
-      if (value === undefined) return
-      if (value === null) {
-        unsetData[key] = ""
-      } else if (treatEmptyStringAsUnset && value === "") {
-        unsetData[key] = ""
-      } else {
-        setData[key] = value
-      }
+    if (data.year !== undefined) builder.setOrUnset("year", data.year)
+    if (data.month !== undefined) builder.setOrUnset("month", data.month)
+    if (data.day !== undefined) builder.setOrUnset("day", data.day)
+    if (data.hour !== undefined) builder.setOrUnset("hour", data.hour)
+    if (data.minute !== undefined) builder.setOrUnset("minute", data.minute)
+    if (data.date !== undefined) builder.setOrUnset("date", data.date)
+    if (data.durationMinutes !== undefined) {
+      builder.setOrUnset("durationMinutes", data.durationMinutes)
     }
-
-    if (data.title !== undefined) setData.title = data.title
-    setOrUnset("description", data.description, true)
-    setOrUnset("year", data.year)
-    setOrUnset("month", data.month)
-    setOrUnset("day", data.day)
-    setOrUnset("hour", data.hour)
-    setOrUnset("minute", data.minute)
-    setOrUnset("date", data.date)
-    setOrUnset("durationMinutes", data.durationMinutes)
-    setOrUnset("maxAttendees", data.maxAttendees)
-    if (data.pricePerSeat !== undefined)
-      setData.pricePerSeat = data.pricePerSeat
-    if (data.vatRate !== undefined) setData.vatRate = data.vatRate
-
-    const updateOps: Record<string, unknown> = { $set: setData }
-    if (Object.keys(unsetData).length > 0) {
-      updateOps.$unset = unsetData
+    if (data.maxAttendees !== undefined) {
+      builder.setOrUnset("maxAttendees", data.maxAttendees)
     }
+    if (data.pricePerSeat !== undefined) {
+      builder.set("pricePerSeat", data.pricePerSeat)
+    }
+    if (data.vatRate !== undefined) builder.set("vatRate", data.vatRate)
 
-    const result = await col.updateOne({ _id: toObjectId(id) }, updateOps)
+    const result = await col.updateOne({ _id: toObjectId(id) }, builder.build())
     return result.matchedCount > 0
   }
 

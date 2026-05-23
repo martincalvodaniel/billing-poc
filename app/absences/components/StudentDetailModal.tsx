@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
 import type { Absence, AbsenceFormData } from "@/lib/domain/entities/absence"
@@ -16,7 +17,6 @@ import {
 import useAbsenceMutationHandlers from "./hooks/useAbsenceMutationHandlers"
 import useInlineFormController from "./hooks/useInlineFormController"
 import useToast from "./hooks/useToast"
-import { TrashIcon } from "./icons"
 import AddRecordButton from "./shared/AddRecordButton"
 import ConfirmDeleteModal from "./shared/ConfirmDeleteModal"
 import { groupStudentRecords } from "./student-modal/groupStudentRecords"

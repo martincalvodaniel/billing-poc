@@ -184,7 +184,10 @@ export default function PaymentDetailModal({
         concepts: formData.concepts,
         vat: vatNumber,
         surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
-        discount: discountNumber > 0 ? discountNumber : undefined,
+        // Always send the parsed discount (including 0) so the API recompute
+        // uses the user's current value rather than falling back to the
+        // previously stored discount. The repository unsets the field when 0.
+        discount: discountNumber,
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
       })
 

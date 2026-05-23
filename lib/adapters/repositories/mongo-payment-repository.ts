@@ -6,6 +6,7 @@ import type {
 } from "../../domain/ports/payment-repository"
 import { getDatabase } from "../../mongodb"
 import type { Payment as MongoPayment } from "../../types"
+import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
 
 function toObjectId(id: string): ObjectId {
   return new ObjectId(id)
@@ -77,68 +78,80 @@ export class MongoPaymentRepository implements PaymentRepository {
 
   async create(payment: Omit<Payment, "_id">): Promise<string> {
     const col = await this.collection()
-    const doc: Omit<MongoPayment, "_id"> = {
+    const tag = payment.tag?.trim() ? payment.tag.trim() : undefined
+    const deliveryNoteRef = payment.deliveryNoteRef?.trim()
+      ? payment.deliveryNoteRef.trim()
+      : undefined
+    const discount =
+      typeof payment.discount === "number" && payment.discount > 0
+        ? payment.discount
+        : undefined
+    const doc = omitNullish({
       type: payment.type,
       date: payment.date,
-      tag: payment.tag,
+      tag,
       clientId: payment.clientId ? toObjectId(payment.clientId) : undefined,
       concepts: payment.concepts,
       vat: payment.vat,
       surcharge: payment.surcharge,
-      discount: payment.discount,
-      deliveryNoteRef: payment.deliveryNoteRef,
+      discount,
+      deliveryNoteRef,
       netAmount: payment.netAmount,
       vatAmount: payment.vatAmount,
       surchargeAmount: payment.surchargeAmount,
       total: payment.total,
       createdAt: payment.createdAt,
       updatedAt: payment.updatedAt,
-    }
+    })
     const result = await col.insertOne(doc as MongoPayment)
     return result.insertedId.toString()
   }
 
   async update(id: string, data: Partial<Payment>): Promise<boolean> {
     const col = await this.collection()
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    }
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
-    if (data.type !== undefined) updateData.type = data.type
-    if (data.date !== undefined) updateData.date = data.date
-    if (data.tag !== undefined) updateData.tag = data.tag || null
+    if (data.type !== undefined) builder.set("type", data.type)
+    if (data.date !== undefined) builder.set("date", data.date)
+    if (data.tag !== undefined) {
+      const trimmed = data.tag.trim()
+      builder.setOrUnset("tag", trimmed ? trimmed : undefined)
+    }
     if (data.clientId !== undefined) {
-      updateData.clientId = data.clientId ? toObjectId(data.clientId) : null
+      builder.setOrUnset(
+        "clientId",
+        data.clientId ? toObjectId(data.clientId) : undefined
+      )
     }
-    if (data.concepts !== undefined) updateData.concepts = data.concepts
-    if (data.vat !== undefined) updateData.vat = data.vat
-    if (data.surcharge !== undefined) {
-      updateData.surcharge = data.surcharge || null
-    }
+    if (data.concepts !== undefined) builder.set("concepts", data.concepts)
+    if (data.vat !== undefined) builder.set("vat", data.vat)
+    if (data.surcharge !== undefined) builder.set("surcharge", data.surcharge)
     if (data.discount !== undefined) {
-      updateData.discount = data.discount || null
+      // discount === 0 means "no discount" → remove the field entirely.
+      builder.setOrUnset(
+        "discount",
+        data.discount && data.discount > 0 ? data.discount : undefined
+      )
     }
     if (data.deliveryNoteRef !== undefined) {
-      updateData.deliveryNoteRef = data.deliveryNoteRef
+      const trimmed = data.deliveryNoteRef.trim()
+      builder.setOrUnset("deliveryNoteRef", trimmed ? trimmed : undefined)
     }
-    if (data.total !== undefined) updateData.total = data.total
-    if (data.netAmount !== undefined) updateData.netAmount = data.netAmount
-    if (data.vatAmount !== undefined) updateData.vatAmount = data.vatAmount
+    if (data.total !== undefined) builder.set("total", data.total)
+    if (data.netAmount !== undefined) builder.set("netAmount", data.netAmount)
+    if (data.vatAmount !== undefined) builder.set("vatAmount", data.vatAmount)
     if (data.surchargeAmount !== undefined) {
-      updateData.surchargeAmount = data.surchargeAmount
+      builder.set("surchargeAmount", data.surchargeAmount)
     }
-    if (data.invoice !== undefined) updateData.invoice = data.invoice
+    if (data.invoice !== undefined) builder.setOrUnset("invoice", data.invoice)
     if (data.providerBillUrl !== undefined) {
-      updateData.providerBillUrl = data.providerBillUrl
+      builder.setOrUnset("providerBillUrl", data.providerBillUrl)
     }
     if (data.providerBillPathname !== undefined) {
-      updateData.providerBillPathname = data.providerBillPathname
+      builder.setOrUnset("providerBillPathname", data.providerBillPathname)
     }
 
-    const result = await col.updateOne(
-      { _id: toObjectId(id) },
-      { $set: updateData }
-    )
+    const result = await col.updateOne({ _id: toObjectId(id) }, builder.build())
     return result.matchedCount > 0
   }
 

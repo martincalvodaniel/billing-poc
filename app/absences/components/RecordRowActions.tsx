@@ -1,4 +1,5 @@
-import { PencilIcon, TrashIcon } from "./icons"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import { PencilIcon } from "./icons"
 
 interface RecordRowActionsProps {
   onEdit: () => void

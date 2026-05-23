@@ -98,6 +98,9 @@ export default function ClientForm({
           {formData.clientType === "individual"
             ? "Name & Surname"
             : "Business Name"}
+          <span className="ml-0.5 text-red-600" aria-hidden="true">
+            *
+          </span>
         </label>
         <input
           type="text"
@@ -112,6 +115,7 @@ export default function ClientForm({
           }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
           required
+          aria-required="true"
           disabled={isSubmitting}
         />
       </div>
@@ -121,7 +125,7 @@ export default function ClientForm({
           htmlFor={`${id}-client-taxId`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
-          Tax ID (NIF/CIF/NIE) - Optional
+          Tax ID (NIF/CIF/NIE)
         </label>
         <input
           type="text"
@@ -144,7 +148,7 @@ export default function ClientForm({
           htmlFor={`${id}-client-address`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
-          Tax Address - Optional
+          Tax Address
         </label>
         <textarea
           id={`${id}-client-address`}

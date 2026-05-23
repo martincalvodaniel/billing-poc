@@ -114,6 +114,41 @@ describe("createClientSchema", () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it("normalises whitespace-only phone to undefined", () => {
+    const result = createClientSchema.safeParse({
+      ...validClient,
+      phone: "   ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBeUndefined()
+    }
+  })
+
+  it("normalises whitespace-only email to undefined", () => {
+    const result = createClientSchema.safeParse({
+      ...validClient,
+      email: "   ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.email).toBeUndefined()
+    }
+  })
+
+  it("trims phone and email", () => {
+    const result = createClientSchema.safeParse({
+      ...validClient,
+      phone: "  555-0100  ",
+      email: "  info@acme.com  ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBe("555-0100")
+      expect(result.data.email).toBe("info@acme.com")
+    }
+  })
 })
 
 describe("updateClientSchema", () => {
@@ -138,6 +173,30 @@ describe("updateClientSchema", () => {
   it("rejects empty name", () => {
     const result = updateClientSchema.safeParse({ id: "abc123", name: "" })
     expect(result.success).toBe(false)
+  })
+
+  it("normalises whitespace-only phone to undefined", () => {
+    const result = updateClientSchema.safeParse({
+      id: "abc123",
+      name: "Acme",
+      phone: "   ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBeUndefined()
+    }
+  })
+
+  it("normalises whitespace-only email to undefined", () => {
+    const result = updateClientSchema.safeParse({
+      id: "abc123",
+      name: "Acme",
+      email: "   ",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.email).toBeUndefined()
+    }
   })
 })
 

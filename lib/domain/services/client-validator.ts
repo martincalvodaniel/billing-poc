@@ -22,8 +22,20 @@ export const createClientSchema = z.object({
       const trimmed = v?.trim()
       return trimmed ? trimmed : undefined
     }),
-  phone: z.string().optional(),
-  email: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const trimmed = v?.trim()
+      return trimmed ? trimmed : undefined
+    }),
+  email: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const trimmed = v?.trim()
+      return trimmed ? trimmed : undefined
+    }),
 })
 
 export const updateClientSchema = z
@@ -53,8 +65,20 @@ export const updateClientSchema = z
         const trimmed = v?.trim()
         return trimmed ? trimmed : undefined
       }),
-    phone: z.string().optional(),
-    email: z.string().optional(),
+    phone: z
+      .string()
+      .optional()
+      .transform((v) => {
+        const trimmed = v?.trim()
+        return trimmed ? trimmed : undefined
+      }),
+    email: z
+      .string()
+      .optional()
+      .transform((v) => {
+        const trimmed = v?.trim()
+        return trimmed ? trimmed : undefined
+      }),
   })
   .refine(
     (data) => {

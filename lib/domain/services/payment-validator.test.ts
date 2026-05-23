@@ -148,6 +148,28 @@ describe("createPaymentSchema", () => {
       expect(result.data.discount).toBe(5)
     }
   })
+
+  it("accepts explicit discount = 0", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      discount: 0,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(0)
+    }
+  })
+
+  it("coerces empty string discount to 0", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      discount: "",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(0)
+    }
+  })
 })
 
 describe("updatePaymentSchema", () => {
@@ -166,6 +188,36 @@ describe("updatePaymentSchema", () => {
 
   it("rejects id-only (no fields to update)", () => {
     const result = updatePaymentSchema.safeParse({ id: "abc123" })
+    expect(result.success).toBe(false)
+  })
+
+  it("accepts discount = 0 on update", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      discount: 0,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(0)
+    }
+  })
+
+  it("coerces empty string discount to 0 on update", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      discount: "",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.discount).toBe(0)
+    }
+  })
+
+  it("rejects negative discount on update", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      discount: -1,
+    })
     expect(result.success).toBe(false)
   })
 })

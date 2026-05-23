@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatCurrency } from "@/lib/formatters"
 import {
@@ -61,15 +62,33 @@ export default function EventsListTable({
             const seats = totalSeats(event.attendees)
             const eventId = event._id ?? event.title
             const generatingAll = pendingGenerateAllId === event._id
+            const handleRowKeyDown = (
+              e: React.KeyboardEvent<HTMLTableRowElement>
+            ) => {
+              if (e.target !== e.currentTarget) return
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                onEdit(event)
+              }
+            }
             return (
+              // biome-ignore lint/a11y/useSemanticElements: a <tr> cannot be a <button>; role="button" is the accessible pattern for clickable rows
               <tr
                 key={eventId}
-                className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+                onClick={() => onEdit(event)}
+                onKeyDown={handleRowKeyDown}
+                role="button"
+                tabIndex={0}
+                aria-label={`Edit event ${event.title}`}
+                className="cursor-pointer hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:hover:bg-zinc-800/40"
               >
                 <td className="px-3 py-2">
                   <button
                     type="button"
-                    onClick={() => onOpenDetail(event)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOpenDetail(event)
+                    }}
                     className="text-left font-medium text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300"
                   >
                     {event.title}
@@ -104,14 +123,10 @@ export default function EventsListTable({
                   <div className="inline-flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onEdit(event)}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onGenerateAllPayments(event)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onGenerateAllPayments(event)
+                      }}
                       disabled={generatingAll || event.attendees.length === 0}
                       aria-label={`Generate payments for ${event.title}`}
                       className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
@@ -120,11 +135,14 @@ export default function EventsListTable({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onDelete(event)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDelete(event)
+                      }}
                       aria-label={`Delete event ${event.title}`}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30"
+                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30"
                     >
-                      Delete
+                      <TrashIcon />
                     </button>
                   </div>
                 </td>

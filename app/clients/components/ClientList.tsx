@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react"
 import { Modal } from "@/app/components/Modal"
+import Toast from "@/app/components/Toast"
 import {
   useDeleteClient,
   useUpdateClient,
@@ -20,6 +21,7 @@ export default function ClientList({ clients }: ClientListProps) {
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [copyToast, setCopyToast] = useState<string | null>(null)
 
   const { trigger: updateClient } = useUpdateClient()
   const { trigger: deleteClient, isMutating: isDeleting } = useDeleteClient()
@@ -59,6 +61,11 @@ export default function ClientList({ clients }: ClientListProps) {
     }
   }
 
+  const handleCopy = useCallback((field: string, _value: string) => {
+    setCopyToast(`${field.charAt(0).toUpperCase()}${field.slice(1)} copied!`)
+    setTimeout(() => setCopyToast(null), 2000)
+  }, [])
+
   const editingClient = clients.find(
     (c) => c._id?.toString() === editingClientId
   )
@@ -68,6 +75,10 @@ export default function ClientList({ clients }: ClientListProps) {
 
   return (
     <>
+      {copyToast && (
+        <Toast message={copyToast} onClose={() => setCopyToast(null)} />
+      )}
+
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
           {error}
@@ -116,10 +127,10 @@ export default function ClientList({ clients }: ClientListProps) {
                     Tax ID
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                    Type
+                    Phone
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                    Address
+                    Email
                   </th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                     Actions
@@ -134,6 +145,7 @@ export default function ClientList({ clients }: ClientListProps) {
                     index={index}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
+                    onCopy={handleCopy}
                   />
                 ))}
               </tbody>

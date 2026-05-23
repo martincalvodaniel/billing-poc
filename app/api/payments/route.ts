@@ -161,7 +161,12 @@ export async function PUT(request: NextRequest) {
       const concepts = fields.concepts ?? existing.concepts
       const vat = fields.vat ?? existing.vat
       const surcharge = fields.surcharge ?? existing.surcharge ?? 0
-      const discount = fields.discount ?? existing.discount ?? 0
+      // When the client omits `discount`, preserve the stored value; otherwise
+      // honour the submitted number (including 0, which means "no discount").
+      const discountCandidate = fields.discount ?? existing.discount ?? 0
+      const discount = Number.isFinite(discountCandidate)
+        ? discountCandidate
+        : 0
       const financials = computePaymentFinancials(
         concepts,
         vat,

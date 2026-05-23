@@ -6,6 +6,7 @@ import type {
 } from "../../domain/ports/client-repository"
 import { getDatabase } from "../../mongodb"
 import type { Client as MongoClient } from "../../types"
+import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -77,7 +78,7 @@ export class MongoClientRepository implements ClientRepository {
 
   async create(client: Omit<Client, "_id">): Promise<string> {
     const col = await this.collection()
-    const doc: Omit<MongoClient, "_id"> = {
+    const doc = omitNullish({
       clientType: client.clientType,
       name: client.name,
       taxId: client.taxId,
@@ -86,28 +87,24 @@ export class MongoClientRepository implements ClientRepository {
       email: client.email,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
-    }
+    })
     const result = await col.insertOne(doc as MongoClient)
     return result.insertedId.toString()
   }
 
   async update(id: string, data: Partial<Client>): Promise<boolean> {
     const col = await this.collection()
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    }
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
-    if (data.clientType !== undefined) updateData.clientType = data.clientType
-    if (data.name !== undefined) updateData.name = data.name
-    if (data.taxId !== undefined) updateData.taxId = data.taxId
-    if (data.address !== undefined) updateData.address = data.address
-    if (data.phone !== undefined) updateData.phone = data.phone
-    if (data.email !== undefined) updateData.email = data.email
+    if (data.clientType !== undefined)
+      builder.set("clientType", data.clientType)
+    if (data.name !== undefined) builder.set("name", data.name)
+    if (data.taxId !== undefined) builder.setOrUnset("taxId", data.taxId)
+    if (data.address !== undefined) builder.setOrUnset("address", data.address)
+    if (data.phone !== undefined) builder.setOrUnset("phone", data.phone)
+    if (data.email !== undefined) builder.setOrUnset("email", data.email)
 
-    const result = await col.updateOne(
-      { _id: toObjectId(id) },
-      { $set: updateData }
-    )
+    const result = await col.updateOne({ _id: toObjectId(id) }, builder.build())
     return result.matchedCount > 0
   }
 

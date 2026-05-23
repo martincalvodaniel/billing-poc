@@ -1,3 +1,4 @@
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
 
@@ -139,9 +140,9 @@ export default function PaymentsTable({
                         onDeleteClick(e, payment._id?.toString() || "")
                       }
                       aria-label="Delete payment"
-                      className="rounded px-2 py-1 text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
+                      className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
                     >
-                      ✕
+                      <TrashIcon />
                     </button>
                   </td>
                 </tr>
