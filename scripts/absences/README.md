@@ -21,7 +21,6 @@ bun run load-data:absences 2026 4 --baseUrl=http://localhost:3000 --count=30
 - ~60% `type: "absence"`, ~40% `type: "recovery"`
 - Random date inside the requested month
 - `studentName` from a fixed pool of ~12 fictitious Spanish names
-- Optional `comment` (~30% of records)
 
 ## Arguments
 

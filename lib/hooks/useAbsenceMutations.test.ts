@@ -9,7 +9,6 @@ describe("buildAbsencesRequest", () => {
       studentName: "Alice",
       date: "2026-04-29",
       partOfDay: "morning" as const,
-      comment: "Sick",
     }
     const { url, init } = buildAbsencesRequest("POST", body)
 

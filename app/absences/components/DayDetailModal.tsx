@@ -12,7 +12,6 @@ import type {
 import { formatDate } from "@/lib/formatters"
 import {
   AbsenceForm,
-  CommentField,
   DateField,
   FieldsRow,
   PartOfDayField,
@@ -180,7 +179,6 @@ export default function DayDetailModal({
                     <PartOfDayField />
                   </>
                 )}
-                <CommentField />
               </AbsenceForm>
             </div>
           )}

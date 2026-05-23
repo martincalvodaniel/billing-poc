@@ -27,8 +27,6 @@ interface UseAbsenceFormStateResult {
   setType: (v: AbsenceType) => void
   partOfDay: PartOfDay
   setPartOfDay: (v: PartOfDay) => void
-  comment: string
-  setComment: (v: string) => void
   canSubmit: boolean
   formRef: React.RefObject<HTMLFormElement | null>
   studentNameRef: React.RefObject<HTMLInputElement | null>
@@ -83,7 +81,6 @@ export default function useAbsenceFormState(
   const [partOfDay, setPartOfDay] = useState<PartOfDay>(
     initial?.partOfDay ?? initialPartOfDay ?? "morning"
   )
-  const [comment, setComment] = useState<string>(initial?.comment ?? "")
 
   const formRef = useRef<HTMLFormElement>(null)
   const studentNameRef = useRef<HTMLInputElement>(null)
@@ -97,7 +94,6 @@ export default function useAbsenceFormState(
       setDate(initial.date)
       setType(initial.type)
       setPartOfDay(initial.partOfDay)
-      setComment(initial.comment ?? "")
       return
     }
     if (initialPartOfDay) setPartOfDay(initialPartOfDay)
@@ -109,23 +105,17 @@ export default function useAbsenceFormState(
     if (isSubmitting) return
     const trimmedName = studentName.trim()
     if (trimmedName === "" || date === "") return
-    const trimmedComment = comment.trim()
     const data: AbsenceFormData = {
       type,
       studentName: trimmedName,
       date,
       partOfDay,
-      // Always include `comment`. Sending an empty string allows the
-      // backend to clear a previously saved comment on update; sending
-      // `undefined` would cause the adapter to skip the `$set` and the
-      // old value would be preserved.
-      comment: trimmedComment,
     }
     await onSubmit(data)
     if (!initial && !initialStudentName) {
       // Create mode WITHOUT a seeded student (e.g., DayDetailModal):
       // clear ONLY the student name so the user can quickly add another
-      // record for a different student. Date, type, partOfDay and comment
+      // record for a different student. Date, type and partOfDay
       // stay sticky. If `onSubmit` throws (validation/conflict), this block
       // is skipped and the user's input is preserved. When `initialStudentName`
       // is provided (per-student context), the student is implicit and must
@@ -159,8 +149,6 @@ export default function useAbsenceFormState(
     setType,
     partOfDay,
     setPartOfDay,
-    comment,
-    setComment,
     canSubmit,
     formRef,
     studentNameRef,

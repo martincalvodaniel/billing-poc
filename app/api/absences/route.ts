@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
         studentName: parsed.data.studentName,
         date: parsed.data.date,
         partOfDay: parsed.data.partOfDay,
-        comment: parsed.data.comment,
         createdAt: now,
         updatedAt: now,
       })

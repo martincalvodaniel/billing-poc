@@ -8,7 +8,6 @@ import type { Absence, AbsenceFormData } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
 import {
   AbsenceForm,
-  CommentField,
   DateField,
   FieldsRow,
   PartOfDayField,
@@ -211,7 +210,6 @@ export default function StudentDetailModal({
                 </FieldsRow>
                 <TypeField />
                 <PartOfDayField />
-                <CommentField />
               </AbsenceForm>
             </div>
           )}

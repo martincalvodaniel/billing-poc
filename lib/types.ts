@@ -112,7 +112,6 @@ export interface Absence {
   studentNameLower: string
   date: string
   partOfDay: PartOfDay
-  comment?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -122,7 +121,6 @@ export interface AbsenceFormData {
   studentName: string
   date: string
   partOfDay: PartOfDay
-  comment?: string
 }
 
 export interface EventAttendee {

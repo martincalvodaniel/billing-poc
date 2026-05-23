@@ -36,7 +36,6 @@ function toDomain(doc: MongoAbsence): Absence {
     studentName: doc.studentName,
     date: doc.date,
     partOfDay: doc.partOfDay,
-    comment: doc.comment,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
@@ -101,17 +100,12 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   async create(absence: Omit<Absence, "_id">): Promise<string> {
     const col = await this.collection()
     const now = new Date()
-    const comment =
-      absence.comment !== undefined && absence.comment !== ""
-        ? absence.comment
-        : undefined
     const doc = omitNullish({
       type: absence.type,
       studentName: absence.studentName,
       studentNameLower: absence.studentName.trim().toLowerCase(),
       date: absence.date,
       partOfDay: absence.partOfDay,
-      comment,
       createdAt: absence.createdAt ?? now,
       updatedAt: absence.updatedAt ?? now,
     })
@@ -139,13 +133,6 @@ export class MongoAbsenceRepository implements AbsenceRepository {
     }
     if (data.date !== undefined) builder.set("date", data.date)
     if (data.partOfDay !== undefined) builder.set("partOfDay", data.partOfDay)
-    // Treat empty string as a request to clear the comment.
-    if (data.comment !== undefined) {
-      builder.setOrUnset(
-        "comment",
-        data.comment === "" ? undefined : data.comment
-      )
-    }
 
     try {
       const result = await col.updateOne(

@@ -51,7 +51,7 @@ How:
   `payment.surcharge`, `vat`), always `set` 0 explicitly.
 - **Empty-string optional strings**: trim and treat the empty result as
   undefined before passing to `setOrUnset` (applies to `payment.tag`,
-  `payment.deliveryNoteRef`, `event.description`, `absence.comment`,
+  `payment.deliveryNoteRef`, `event.description`,
   `client.taxId`, `client.address`, `client.phone`, `client.email`).
 
 Per-field examples:

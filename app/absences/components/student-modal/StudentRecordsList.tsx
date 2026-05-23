@@ -86,11 +86,6 @@ export default function StudentRecordsList({
                                 {TYPE_LABEL[record.type]}
                               </span>
                             </div>
-                            {record.comment && (
-                              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 break-words">
-                                {record.comment}
-                              </p>
-                            )}
                           </div>
                           <RecordRowActions
                             onEdit={() => onEdit(record)}

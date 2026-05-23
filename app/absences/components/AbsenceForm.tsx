@@ -7,13 +7,10 @@ import type {
   AbsenceType,
   PartOfDay,
 } from "@/lib/domain/entities/absence"
-import CommentFieldBase from "./form/CommentField"
 import FormHeader from "./form/FormHeader"
 import RadioPillGroup from "./form/RadioPillGroup"
 import StudentNameAutocomplete from "./form/StudentNameAutocomplete"
 import useAbsenceFormState from "./form/useAbsenceFormState"
-
-const COMMENT_MAX = 500
 
 type AbsenceFormState = ReturnType<typeof useAbsenceFormState>
 
@@ -52,7 +49,7 @@ interface AbsenceFormProps {
   /**
    * Composed form body. Use `<AbsenceForm.StudentNameField>`,
    * `<AbsenceForm.DateField>`, `<AbsenceForm.TypeField>`,
-   * `<AbsenceForm.PartOfDayField>`, `<AbsenceForm.CommentField>` and
+   * `<AbsenceForm.PartOfDayField>` and
    * `<AbsenceForm.FieldsRow>` to compose the layout.
    */
   children: React.ReactNode
@@ -226,19 +223,6 @@ export function PartOfDayField() {
           ringClass: "text-blue-600 focus:ring-2 focus:ring-blue-500",
         },
       ]}
-    />
-  )
-}
-
-export function CommentField() {
-  const { idPrefix, state, isSubmitting } = useAbsenceFormContext()
-  return (
-    <CommentFieldBase
-      id={`${idPrefix}-comment`}
-      value={state.comment}
-      onChange={state.setComment}
-      disabled={isSubmitting}
-      max={COMMENT_MAX}
     />
   )
 }

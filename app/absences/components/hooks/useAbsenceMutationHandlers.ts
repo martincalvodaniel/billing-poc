@@ -94,7 +94,6 @@ export default function useAbsenceMutationHandlers(
             studentName: data.studentName,
             date: data.date,
             partOfDay: data.partOfDay,
-            comment: data.comment,
           })
           onSuccess("Absence updated successfully!")
           // iter12: hide the inline form on successful EDIT (mirrors Cancel
@@ -106,7 +105,6 @@ export default function useAbsenceMutationHandlers(
             studentName: data.studentName,
             date: data.date,
             partOfDay: data.partOfDay,
-            comment: data.comment,
           })
           onSuccess("Absence saved successfully!")
           // iter14: hide the inline form on successful ADD too (mirrors
