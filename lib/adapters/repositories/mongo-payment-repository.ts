@@ -6,7 +6,7 @@ import type {
 } from "../../domain/ports/payment-repository"
 import { getDatabase } from "../../mongodb"
 import type { Payment as MongoPayment } from "../../types"
-import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
+import { MongoUpdateBuilder, omitNullish, type UpdateOps } from "./mongo-utils"
 
 function toObjectId(id: string): ObjectId {
   return new ObjectId(id)
@@ -34,6 +34,59 @@ function toDomain(doc: MongoPayment): Payment {
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
+}
+
+/**
+ * Pure builder for the Mongo update document used by
+ * `MongoPaymentRepository.update`. Extracted so it can be unit-tested
+ * without touching the driver. Honours the repo conventions: optional
+ * fields use `setOrUnset`, semantic-zero fields (`discount`) map 0 →
+ * `$unset`, and `updatedAt` is always refreshed.
+ */
+export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
+  const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
+
+  if (data.type !== undefined) builder.set("type", data.type)
+  if (data.date !== undefined) builder.set("date", data.date)
+  if (data.tag !== undefined) {
+    const trimmed = data.tag.trim()
+    builder.setOrUnset("tag", trimmed ? trimmed : undefined)
+  }
+  if (data.clientId !== undefined) {
+    builder.setOrUnset(
+      "clientId",
+      data.clientId ? toObjectId(data.clientId) : undefined
+    )
+  }
+  if (data.concepts !== undefined) builder.set("concepts", data.concepts)
+  if (data.vat !== undefined) builder.set("vat", data.vat)
+  if (data.surcharge !== undefined) builder.set("surcharge", data.surcharge)
+  if (data.discount !== undefined) {
+    // discount === 0 means "no discount" → remove the field entirely.
+    builder.setOrUnset(
+      "discount",
+      data.discount && data.discount > 0 ? data.discount : undefined
+    )
+  }
+  if (data.deliveryNoteRef !== undefined) {
+    const trimmed = data.deliveryNoteRef.trim()
+    builder.setOrUnset("deliveryNoteRef", trimmed ? trimmed : undefined)
+  }
+  if (data.total !== undefined) builder.set("total", data.total)
+  if (data.netAmount !== undefined) builder.set("netAmount", data.netAmount)
+  if (data.vatAmount !== undefined) builder.set("vatAmount", data.vatAmount)
+  if (data.surchargeAmount !== undefined) {
+    builder.set("surchargeAmount", data.surchargeAmount)
+  }
+  if (data.invoice !== undefined) builder.setOrUnset("invoice", data.invoice)
+  if (data.providerBillUrl !== undefined) {
+    builder.setOrUnset("providerBillUrl", data.providerBillUrl)
+  }
+  if (data.providerBillPathname !== undefined) {
+    builder.setOrUnset("providerBillPathname", data.providerBillPathname)
+  }
+
+  return builder.build()
 }
 
 export class MongoPaymentRepository implements PaymentRepository {
@@ -109,49 +162,10 @@ export class MongoPaymentRepository implements PaymentRepository {
 
   async update(id: string, data: Partial<Payment>): Promise<boolean> {
     const col = await this.collection()
-    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
-
-    if (data.type !== undefined) builder.set("type", data.type)
-    if (data.date !== undefined) builder.set("date", data.date)
-    if (data.tag !== undefined) {
-      const trimmed = data.tag.trim()
-      builder.setOrUnset("tag", trimmed ? trimmed : undefined)
-    }
-    if (data.clientId !== undefined) {
-      builder.setOrUnset(
-        "clientId",
-        data.clientId ? toObjectId(data.clientId) : undefined
-      )
-    }
-    if (data.concepts !== undefined) builder.set("concepts", data.concepts)
-    if (data.vat !== undefined) builder.set("vat", data.vat)
-    if (data.surcharge !== undefined) builder.set("surcharge", data.surcharge)
-    if (data.discount !== undefined) {
-      // discount === 0 means "no discount" → remove the field entirely.
-      builder.setOrUnset(
-        "discount",
-        data.discount && data.discount > 0 ? data.discount : undefined
-      )
-    }
-    if (data.deliveryNoteRef !== undefined) {
-      const trimmed = data.deliveryNoteRef.trim()
-      builder.setOrUnset("deliveryNoteRef", trimmed ? trimmed : undefined)
-    }
-    if (data.total !== undefined) builder.set("total", data.total)
-    if (data.netAmount !== undefined) builder.set("netAmount", data.netAmount)
-    if (data.vatAmount !== undefined) builder.set("vatAmount", data.vatAmount)
-    if (data.surchargeAmount !== undefined) {
-      builder.set("surchargeAmount", data.surchargeAmount)
-    }
-    if (data.invoice !== undefined) builder.setOrUnset("invoice", data.invoice)
-    if (data.providerBillUrl !== undefined) {
-      builder.setOrUnset("providerBillUrl", data.providerBillUrl)
-    }
-    if (data.providerBillPathname !== undefined) {
-      builder.setOrUnset("providerBillPathname", data.providerBillPathname)
-    }
-
-    const result = await col.updateOne({ _id: toObjectId(id) }, builder.build())
+    const result = await col.updateOne(
+      { _id: toObjectId(id) },
+      buildPaymentUpdateOps(data)
+    )
     return result.matchedCount > 0
   }
 

@@ -176,8 +176,11 @@ export async function PUT(request: NextRequest) {
 
       updateData.concepts = concepts
       updateData.vat = vat
-      updateData.surcharge = surcharge > 0 ? surcharge : undefined
-      updateData.discount = discount > 0 ? discount : undefined
+      // Forward raw numbers (including 0) to the repository so it can decide
+      // whether to `$set` or `$unset`. The response below still surfaces
+      // `undefined` for 0 so client state stays in sync with persistence.
+      updateData.surcharge = surcharge
+      updateData.discount = discount
       updateData.total = financials.total
       updateData.netAmount = financials.netAmount
       updateData.vatAmount = financials.vatAmount
@@ -197,8 +200,14 @@ export async function PUT(request: NextRequest) {
         surchargeAmount: updateData.surchargeAmount,
         netAmount: updateData.netAmount,
         vat: updateData.vat,
-        surcharge: updateData.surcharge,
-        discount: updateData.discount,
+        surcharge:
+          typeof updateData.surcharge === "number" && updateData.surcharge > 0
+            ? updateData.surcharge
+            : undefined,
+        discount:
+          typeof updateData.discount === "number" && updateData.discount > 0
+            ? updateData.discount
+            : undefined,
       },
       { status: 200 }
     )

@@ -227,7 +227,6 @@ export default function EventsPageContent() {
           events={events}
           onEdit={openEdit}
           onDelete={handleDelete}
-          onOpenDetail={openEdit}
           onGenerateAllPayments={handleGenerateAllPayments}
           pendingGenerateAllId={pendingGenerateAllId}
         />
@@ -266,10 +265,6 @@ export default function EventsPageContent() {
           }}
           onDelete={(e) => {
             void handleDelete(e)
-          }}
-          onOpenDetail={(e) => {
-            setDayModalKey(null)
-            openEdit(e)
           }}
           onAddEventForDay={(day) => {
             setDayModalKey(null)

@@ -149,7 +149,7 @@ export default function StudentDetailModal({
                     className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                   >
                     <TrashIcon />
-                    Delete all
+                    All
                   </button>
                 )}
               </div>

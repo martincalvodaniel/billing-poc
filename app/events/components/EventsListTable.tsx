@@ -10,12 +10,12 @@ import {
   formatEventDateTime,
   totalSeats,
 } from "./eventsUi"
+import { GeneratePaymentsIcon } from "./GeneratePaymentsIcon"
 
 interface EventsListTableProps {
   events: Event[]
   onEdit: (event: Event) => void
   onDelete: (event: Event) => void
-  onOpenDetail: (event: Event) => void
   onGenerateAllPayments: (event: Event) => void
   pendingGenerateAllId?: string | null
 }
@@ -24,7 +24,6 @@ export default function EventsListTable({
   events,
   onEdit,
   onDelete,
-  onOpenDetail,
   onGenerateAllPayments,
   pendingGenerateAllId,
 }: EventsListTableProps) {
@@ -53,7 +52,6 @@ export default function EventsListTable({
             <Th>Attendees</Th>
             <Th>Max</Th>
             <Th>Price / seat (gross)</Th>
-            <Th>VAT rate</Th>
             <Th align="right">Actions</Th>
           </tr>
         </thead>
@@ -83,16 +81,9 @@ export default function EventsListTable({
                 className="cursor-pointer hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:hover:bg-zinc-800/40"
               >
                 <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onOpenDetail(event)
-                    }}
-                    className="text-left font-medium text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300"
-                  >
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
                     {event.title}
-                  </button>
+                  </span>
                   {event.description && (
                     <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
                       {event.description}
@@ -116,9 +107,6 @@ export default function EventsListTable({
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
                   {formatCurrency(event.pricePerSeat)}
                 </td>
-                <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {event.vatRate}%
-                </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-2">
                     <button
@@ -129,9 +117,10 @@ export default function EventsListTable({
                       }}
                       disabled={generatingAll || event.attendees.length === 0}
                       aria-label={`Generate payments for ${event.title}`}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                      aria-busy={generatingAll}
+                      className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                     >
-                      {generatingAll ? "Generating…" : "Generate payments"}
+                      <GeneratePaymentsIcon />
                     </button>
                     <button
                       type="button"

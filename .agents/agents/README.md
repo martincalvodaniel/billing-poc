@@ -1,13 +1,13 @@
 ## with clarifications
 ```
-Execute .agents/agents/orchestrator.agent.md for agent-iterations/260522-2340_discount-at-payments-fixes/main.prompt.md
+Execute .agents/agents/orchestrator.agent.md for agent-iterations/260523-1012_discount-at-payments-fixes-2/main.prompt.md
 
 Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 ```
 
 ## direct
 ```
-Execute .agents/agents/orchestrator.agent.md for already created main-plan agent-iterations/260522-2340_discount-at-payments-fixes/main.prompt.md
+Execute .agents/agents/orchestrator.agent.md for already created main-plan agent-iterations/260523-1012_discount-at-payments-fixes-2/main.prompt.md
 
 Do not create nor ask for clarifications in this iteration. Let the subagents decide if they need to ask for clarifications or not. Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 

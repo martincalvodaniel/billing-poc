@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { EventAttendee } from "@/lib/domain/entities/event"
+import { GeneratePaymentsIcon } from "./GeneratePaymentsIcon"
 
 interface AttendeeRowProps {
   rowIdPrefix: string
@@ -110,21 +112,23 @@ export default function AttendeeRow({
           type="button"
           onClick={() => onGenerate(attendee.clientId)}
           disabled={isGenerating || hasPayment}
-          className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+          aria-label={
+            hasPayment
+              ? `Payment already generated for ${name}`
+              : `Generate payment for ${name}`
+          }
+          aria-busy={isGenerating}
+          className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
         >
-          {hasPayment
-            ? "Paid"
-            : isGenerating
-              ? "Generating…"
-              : "Generate payment"}
+          <GeneratePaymentsIcon />
         </button>
         <button
           type="button"
           onClick={() => onRemove(attendee.clientId)}
           aria-label={`Remove attendee ${name}`}
-          className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+          className="rounded-md p-1.5 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30"
         >
-          Remove
+          <TrashIcon />
         </button>
       </div>
     </li>
