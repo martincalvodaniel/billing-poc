@@ -1,6 +1,9 @@
 "use client"
 
 import { useMemo } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
+import { IconButton } from "@/app/components/IconButton"
+import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatCurrency } from "@/lib/formatters"
@@ -10,7 +13,6 @@ import {
   formatEventDateTime,
   totalSeats,
 } from "./eventsUi"
-import { GeneratePaymentsIcon } from "./GeneratePaymentsIcon"
 
 interface EventsListTableProps {
   events: Event[]
@@ -34,10 +36,10 @@ export default function EventsListTable({
 
   if (sorted.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center text-sm text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+      <EmptyState variant="card" className="bg-white dark:bg-zinc-900">
         No events yet. Click <span className="font-medium">New event</span> to
         create one.
-      </div>
+      </EmptyState>
     )
   }
 
@@ -109,30 +111,24 @@ export default function EventsListTable({
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onGenerateAllPayments(event)
-                      }}
-                      disabled={generatingAll || event.attendees.length === 0}
-                      aria-label={`Generate payments for ${event.title}`}
-                      aria-busy={generatingAll}
-                      className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                    <IconButton
+                      variant="success"
+                      stopPropagation
+                      isPending={generatingAll}
+                      disabled={event.attendees.length === 0}
+                      onClick={() => onGenerateAllPayments(event)}
+                      ariaLabel={`Generate payments for ${event.title}`}
                     >
                       <GeneratePaymentsIcon />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDelete(event)
-                      }}
-                      aria-label={`Delete event ${event.title}`}
-                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30"
+                    </IconButton>
+                    <IconButton
+                      variant="danger"
+                      stopPropagation
+                      onClick={() => onDelete(event)}
+                      ariaLabel={`Delete event ${event.title}`}
                     >
                       <TrashIcon />
-                    </button>
+                    </IconButton>
                   </div>
                 </td>
               </tr>

@@ -157,8 +157,7 @@ export default function ClientSelector({
       {/* Selected client indicator */}
       {selectedClient && (
         <div className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-          <span className="font-medium">Selected:</span> {selectedClient.name} (
-          {selectedClient.taxId})
+          <span className="font-medium">Selected:</span> {selectedClient.name}
         </div>
       )}
 

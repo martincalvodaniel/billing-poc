@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useMemo, useState } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import { useClients } from "@/lib/hooks/useClients"
 import {
@@ -192,9 +193,7 @@ export default function AttendeesPanel({
       </div>
 
       {event.attendees.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          No attendees yet.
-        </p>
+        <EmptyState>No attendees yet.</EmptyState>
       ) : (
         <ul className="divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
           {event.attendees.map((attendee) => {

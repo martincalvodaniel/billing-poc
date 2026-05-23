@@ -10,6 +10,7 @@ import {
 } from "react"
 import { useUploadInvoice } from "@/lib/hooks/useInvoiceMutations"
 import { useCreatePayment } from "@/lib/hooks/usePaymentMutations"
+import { ErrorBanner } from "../../components/ErrorBanner"
 import Toast from "../../components/Toast"
 import PaymentFormFields from "./PaymentFormFields"
 import ProviderBillFileInput from "./ProviderBillFileInput"
@@ -213,16 +214,7 @@ const PaymentForm = function PaymentForm({
         onKeyDown={handleKeyDown}
         className="space-y-4"
       >
-        {error && (
-          <div
-            className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-            role="alert"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner>{error}</ErrorBanner>}
 
         <PaymentFormFields
           formData={formData}

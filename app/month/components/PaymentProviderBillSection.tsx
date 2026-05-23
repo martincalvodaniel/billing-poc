@@ -1,5 +1,6 @@
 "use client"
 
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import type { Payment } from "@/lib/types"
 
 interface PaymentProviderBillSectionProps {
@@ -54,14 +55,7 @@ export default function PaymentProviderBillSection({
 
   return (
     <div className="space-y-3">
-      {uploadError && (
-        <div
-          className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-          role="alert"
-        >
-          {uploadError}
-        </div>
-      )}
+      {uploadError && <ErrorBanner>{uploadError}</ErrorBanner>}
       <div>
         <input
           ref={fileInputRef}

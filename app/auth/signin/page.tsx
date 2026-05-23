@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { authClient } from "@/lib/auth-client"
 
 function SignInContent() {
@@ -28,11 +29,11 @@ function SignInContent() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-400">
+          <ErrorBanner className="mb-4">
             {error === "AccessDenied"
               ? "Your email is not authorized to access this application."
               : "Sign-in failed."}
-          </div>
+          </ErrorBanner>
         )}
 
         <button

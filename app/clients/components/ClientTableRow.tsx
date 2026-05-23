@@ -1,5 +1,6 @@
 "use client"
 
+import { IconButton } from "@/app/components/IconButton"
 import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { Client } from "@/lib/types"
@@ -90,17 +91,14 @@ export default function ClientTableRow({
         )}
       </td>
       <td className="px-6 py-4 text-right">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(clientId)
-          }}
-          aria-label={`Delete client ${client.name}`}
-          className="rounded-md p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
+        <IconButton
+          variant="danger"
+          stopPropagation
+          onClick={() => onDelete(clientId)}
+          ariaLabel={`Delete client ${client.name}`}
         >
           <TrashIcon />
-        </button>
+        </IconButton>
       </td>
     </tr>
   )

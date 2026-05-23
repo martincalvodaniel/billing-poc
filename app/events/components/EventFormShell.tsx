@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
 import type { PartialDateValue } from "@/app/components/PartialDatePicker"
 import EventBasicFields from "./EventBasicFields"
@@ -123,16 +124,7 @@ export default function EventFormShell({
         className="space-y-4"
         noValidate
       >
-        {errorMessage && (
-          <div
-            className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-            role="alert"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {errorMessage}
-          </div>
-        )}
+        {errorMessage && <ErrorBanner>{errorMessage}</ErrorBanner>}
 
         <EventBasicFields
           idPrefix={id}

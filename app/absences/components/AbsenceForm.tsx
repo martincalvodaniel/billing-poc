@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, use, useId } from "react"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import type {
   Absence,
   AbsenceFormData,
@@ -106,16 +107,7 @@ export function AbsenceForm({
           onCancel={onCancel}
         />
 
-        {errorMessage && (
-          <div
-            className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-            role="alert"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {errorMessage}
-          </div>
-        )}
+        {errorMessage && <ErrorBanner>{errorMessage}</ErrorBanner>}
 
         <AbsenceFormContext value={ctx}>{children}</AbsenceFormContext>
       </form>

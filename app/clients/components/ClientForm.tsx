@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useState } from "react"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import type { Client, ClientFormData } from "@/lib/types"
 
 interface ClientFormProps {
@@ -62,11 +63,7 @@ export default function ClientForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner bordered>{error}</ErrorBanner>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>

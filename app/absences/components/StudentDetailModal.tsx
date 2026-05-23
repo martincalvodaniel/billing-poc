@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
@@ -154,9 +155,7 @@ export default function StudentDetailModal({
               </div>
             </div>
             {groupedRecords.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No records yet.
-              </p>
+              <EmptyState>No records yet.</EmptyState>
             ) : (
               <StudentRecordsList
                 groups={groupedRecords}

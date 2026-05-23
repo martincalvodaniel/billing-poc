@@ -1,6 +1,6 @@
 "use client"
 
-import { ConfirmFooter, Modal } from "@/app/components/Modal"
+import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import type { Client } from "@/lib/types"
 
 interface DeleteClientModalProps {
@@ -19,48 +19,40 @@ export default function DeleteClientModal({
   onConfirm,
 }: DeleteClientModalProps) {
   return (
-    <Modal
+    <ConfirmDialog
       isOpen={isOpen}
-      onClose={onCancel}
       title="Delete Client"
-      maxWidth="sm"
-      footer={
-        <ConfirmFooter
-          onCancel={onCancel}
-          onConfirm={onConfirm}
-          isPending={isDeleting}
-          confirmLabel="Delete"
-          pendingLabel="Deleting..."
-          variant="danger"
-        />
-      }
+      variant="danger"
+      confirmLabel="Delete"
+      pendingLabel="Deleting..."
+      isPending={isDeleting}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
     >
-      <div className="space-y-4">
-        <p>Are you sure you want to delete this client?</p>
-        {client && (
-          <div className="space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
-            <p>
-              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Name:{" "}
-              </span>
-              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {client.name}
-              </span>
-            </p>
-            <p>
-              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                Tax ID:{" "}
-              </span>
-              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {client.taxId || "—"}
-              </span>
-            </p>
-          </div>
-        )}
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          This action cannot be undone.
-        </p>
-      </div>
-    </Modal>
+      <p>Are you sure you want to delete this client?</p>
+      {client && (
+        <div className="space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+          <p>
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              Name:{" "}
+            </span>
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {client.name}
+            </span>
+          </p>
+          <p>
+            <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              Tax ID:{" "}
+            </span>
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {client.taxId || "—"}
+            </span>
+          </p>
+        </div>
+      )}
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        This action cannot be undone.
+      </p>
+    </ConfirmDialog>
   )
 }

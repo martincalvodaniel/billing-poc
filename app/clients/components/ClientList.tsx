@@ -1,6 +1,8 @@
 "use client"
 
 import { useCallback, useState } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
 import {
@@ -79,11 +81,7 @@ export default function ClientList({ clients }: ClientListProps) {
         <Toast message={copyToast} onClose={() => setCopyToast(null)} />
       )}
 
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner bordered>{error}</ErrorBanner>}
 
       <Modal
         isOpen={!!editingClientId && !!editingClient}
@@ -110,11 +108,9 @@ export default function ClientList({ clients }: ClientListProps) {
 
       <div className="space-y-4">
         {clients.length === 0 ? (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-            <p className="text-zinc-600 dark:text-zinc-400">
-              No clients found. Create your first client to get started.
-            </p>
-          </div>
+          <EmptyState variant="card">
+            No clients found. Create your first client to get started.
+          </EmptyState>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-zinc-200 shadow-sm dark:border-zinc-800">
             <table className="w-full border-collapse">

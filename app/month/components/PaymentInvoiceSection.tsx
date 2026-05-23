@@ -1,5 +1,6 @@
 "use client"
 
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import type { InvoiceSeries, Payment } from "@/lib/types"
 
 interface PaymentInvoiceSectionProps {
@@ -67,14 +68,7 @@ export default function PaymentInvoiceSection({
 
   return (
     <div className="space-y-3">
-      {invoiceError && (
-        <div
-          className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-          role="alert"
-        >
-          {invoiceError}
-        </div>
-      )}
+      {invoiceError && <ErrorBanner>{invoiceError}</ErrorBanner>}
       <div className="space-y-2">
         <label
           htmlFor={`${idPrefix}-invoice-series`}

@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { Badge } from "@/app/components/Badge"
+import { IconButton } from "@/app/components/IconButton"
+import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { EventAttendee } from "@/lib/domain/entities/event"
-import { GeneratePaymentsIcon } from "./GeneratePaymentsIcon"
 
 interface AttendeeRowProps {
   rowIdPrefix: string
@@ -101,35 +103,33 @@ export default function AttendeeRow({
             </span>
           )}
           {hasPayment && !isSaving && (
-            <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+            <Badge tone="success" size="sm">
               Payment ✓
-            </span>
+            </Badge>
           )}
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <button
-          type="button"
+        <IconButton
+          variant="success"
+          isPending={isGenerating}
+          disabled={hasPayment}
           onClick={() => onGenerate(attendee.clientId)}
-          disabled={isGenerating || hasPayment}
-          aria-label={
+          ariaLabel={
             hasPayment
               ? `Payment already generated for ${name}`
               : `Generate payment for ${name}`
           }
-          aria-busy={isGenerating}
-          className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
         >
           <GeneratePaymentsIcon />
-        </button>
-        <button
-          type="button"
+        </IconButton>
+        <IconButton
+          variant="danger"
           onClick={() => onRemove(attendee.clientId)}
-          aria-label={`Remove attendee ${name}`}
-          className="rounded-md p-1.5 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30"
+          ariaLabel={`Remove attendee ${name}`}
         >
           <TrashIcon />
-        </button>
+        </IconButton>
       </div>
     </li>
   )

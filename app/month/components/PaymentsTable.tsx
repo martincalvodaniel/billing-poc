@@ -1,3 +1,7 @@
+import { Badge } from "@/app/components/Badge"
+import { EmptyState } from "@/app/components/EmptyState"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
+import { IconButton } from "@/app/components/IconButton"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
@@ -23,27 +27,16 @@ export default function PaymentsTable({
 
   return (
     <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      {error && (
-        <div
-          className="m-6 rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-          role="alert"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner className="m-6">{error}</ErrorBanner>}
 
       {payments.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <p className="text-zinc-600 dark:text-zinc-400">No payments yet</p>
-        </div>
+        <EmptyState variant="inline" className="px-6 py-12">
+          No payments yet
+        </EmptyState>
       ) : filteredPayments.length === 0 ? (
-        <div className="px-6 py-12 text-center">
-          <p className="text-zinc-600 dark:text-zinc-400">
-            No payments in {formatMonthYear(selectedDate)}
-          </p>
-        </div>
+        <EmptyState variant="inline" className="px-6 py-12">
+          No payments in {formatMonthYear(selectedDate)}
+        </EmptyState>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -88,22 +81,16 @@ export default function PaymentsTable({
                     {new Date(payment.date).getDate()}
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                        payment.type === "income"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      }`}
+                    <Badge
+                      tone={payment.type === "income" ? "success" : "danger"}
                     >
                       {payment.type.charAt(0).toUpperCase() +
                         payment.type.slice(1)}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
                     {payment.tag ? (
-                      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                        {payment.tag}
-                      </span>
+                      <Badge tone="info">{payment.tag}</Badge>
                     ) : (
                       <span className="text-xs text-zinc-500 dark:text-zinc-500">
                         —
@@ -134,16 +121,16 @@ export default function PaymentsTable({
                     {formatCurrency(payment.netAmount)}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      type="button"
+                    <IconButton
+                      variant="danger"
+                      stopPropagation
                       onClick={(e) =>
                         onDeleteClick(e, payment._id?.toString() || "")
                       }
-                      aria-label="Delete payment"
-                      className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300 dark:focus:ring-offset-zinc-900"
+                      ariaLabel="Delete payment"
                     >
                       <TrashIcon />
-                    </button>
+                    </IconButton>
                   </td>
                 </tr>
               ))}
