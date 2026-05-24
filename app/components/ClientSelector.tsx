@@ -178,13 +178,6 @@ export default function ClientSelector({
         )}
       </div>
 
-      {/* Selected client indicator */}
-      {selectedClient && (
-        <div className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-          <span className="font-medium">Selected:</span> {selectedClient.name}
-        </div>
-      )}
-
       {/* Suggestions dropdown */}
       {showSuggestions && (
         <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
@@ -213,13 +206,23 @@ export default function ClientSelector({
               ))}
             </ul>
           ) : searchQuery.trim() !== "" ? (
-            <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-              {canCreateInline
-                ? isCreating
+            canCreateInline && onCreateClient ? (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onCreateClient(trimmed)}
+                disabled={isCreating}
+                className="flex w-full items-center px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              >
+                {isCreating
                   ? "Creating…"
-                  : "No clients found. Press Enter to create a new client."
-                : "No clients found"}
-            </div>
+                  : "No clients found. Press Enter to create a new client."}
+              </button>
+            ) : (
+              <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                No clients found
+              </div>
+            )
           ) : (
             <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
               Start typing to search

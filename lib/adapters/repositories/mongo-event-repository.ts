@@ -50,7 +50,6 @@ export class MongoEventRepository implements EventRepository {
     const col = await this.collection()
     const doc = omitNullish({
       title: event.title,
-      description: event.description,
       year: event.year,
       month: event.month,
       day: event.day,
@@ -85,13 +84,7 @@ export class MongoEventRepository implements EventRepository {
     const col = await this.collection()
     const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
-    // Empty-string description is treated as a clear request.
-    const normaliseEmpty = (v: unknown): unknown => (v === "" ? undefined : v)
-
     if (data.title !== undefined) builder.set("title", data.title)
-    if (data.description !== undefined) {
-      builder.setOrUnset("description", normaliseEmpty(data.description))
-    }
     if (data.year !== undefined) builder.setOrUnset("year", data.year)
     if (data.month !== undefined) builder.setOrUnset("month", data.month)
     if (data.day !== undefined) builder.setOrUnset("day", data.day)

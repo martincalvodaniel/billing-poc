@@ -12,7 +12,6 @@ import { isPaymentsKey } from "./usePayments"
 
 export interface CreateEventInput {
   title: string
-  description?: string
   year?: number
   month?: number
   day?: number
@@ -27,7 +26,6 @@ export interface CreateEventInput {
 export interface UpdateEventInput {
   id: string
   title?: string
-  description?: string
   year?: number
   month?: number
   day?: number

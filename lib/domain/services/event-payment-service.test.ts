@@ -9,7 +9,6 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
   return {
     _id: "ev1",
     title: "Workshop",
-    description: undefined,
     year: 2026,
     month: 5,
     day: 14,

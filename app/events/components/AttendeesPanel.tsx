@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useMemo, useState } from "react"
+import ClientSelector from "@/app/components/ClientSelector"
 import { EmptyState } from "@/app/components/EmptyState"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import { useCreateClient } from "@/lib/hooks/useClientMutations"
@@ -13,7 +14,6 @@ import {
   useRemoveEventAttendee,
   useUpdateEventAttendee,
 } from "@/lib/hooks/useEventMutations"
-import AddAttendeeForm from "./AddAttendeeForm"
 import AttendeeRow from "./AttendeeRow"
 import { extractErrorMessage } from "./attendeesPanel-utils"
 import CapacityBar from "./CapacityBar"
@@ -38,8 +38,6 @@ export default function AttendeesPanel({
 }: AttendeesPanelProps) {
   const id = useId()
   const eventId = event._id
-  const [addClientId, setAddClientId] = useState<string | undefined>(undefined)
-  const [addSeats, setAddSeats] = useState<string>("1")
   const [pendingPayment, setPendingPayment] = useState<string | null>(null)
   const [pendingBulk, setPendingBulk] = useState(false)
   const [savingClientId, setSavingClientId] = useState<string | null>(null)
@@ -47,6 +45,7 @@ export default function AttendeesPanel({
     null
   )
   const [isCreatingClient, setIsCreatingClient] = useState(false)
+  const [selectorResetKey, setSelectorResetKey] = useState(0)
 
   // 100 is the API max page size; sufficient for the lookup use-case in this POC.
   const { clients } = useClients({ pageSize: 100 })
@@ -69,28 +68,12 @@ export default function AttendeesPanel({
   const remaining =
     event.maxAttendees !== undefined ? event.maxAttendees - seats : undefined
 
-  const canAdd =
-    eventId !== undefined &&
-    addClientId !== undefined &&
-    Number(addSeats) >= 1 &&
-    !addMutation.isMutating
-
-  const handleAdd = async () => {
-    if (!eventId || !addClientId) return
-    const seatsNum = Number(addSeats)
-    if (!Number.isFinite(seatsNum) || seatsNum < 1) {
-      onActionError("Seats must be at least 1")
-      return
-    }
+  const handleClientChange = async (clientId: string) => {
+    if (!eventId || addMutation.isMutating) return
     try {
-      await addMutation.trigger({
-        eventId,
-        clientId: addClientId,
-        seats: seatsNum,
-      })
-      setAddClientId(undefined)
-      setAddSeats("1")
+      await addMutation.trigger({ eventId, clientId, seats: 1 })
       onActionSuccess("Attendee added")
+      setSelectorResetKey((k) => k + 1)
     } catch (error) {
       onActionError(extractErrorMessage(error, "Failed to add attendee"))
     }
@@ -100,16 +83,17 @@ export default function AttendeesPanel({
     if (!eventId) return
     setIsCreatingClient(true)
     try {
-      const { id } = await createClient.trigger({
+      const { id: newClientId } = await createClient.trigger({
         name,
         clientType: "individual",
       })
-      const seatsNum = Number(addSeats)
-      const seats = Number.isFinite(seatsNum) && seatsNum >= 1 ? seatsNum : 1
-      await addMutation.trigger({ eventId, clientId: id, seats })
-      setAddClientId(undefined)
-      setAddSeats("1")
+      await addMutation.trigger({
+        eventId,
+        clientId: newClientId,
+        seats: 1,
+      })
       onActionSuccess(`Client "${name}" created and added`)
+      setSelectorResetKey((k) => k + 1)
     } catch (error) {
       onActionError(extractErrorMessage(error, "Failed to create client"))
     } finally {
@@ -244,19 +228,26 @@ export default function AttendeesPanel({
         </ul>
       )}
 
-      <AddAttendeeForm
-        idPrefix={id}
-        addClientId={addClientId}
-        addSeats={addSeats}
-        remaining={remaining}
-        canAdd={canAdd}
-        isMutating={addMutation.isMutating}
-        onClientChange={setAddClientId}
-        onSeatsChange={setAddSeats}
-        onAdd={handleAdd}
-        onCreateClient={handleCreateClient}
-        isCreatingClient={isCreatingClient}
-      />
+      <div className="rounded-md border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Add attendee
+          {remaining !== undefined && (
+            <span className="ml-2 font-normal normal-case">
+              ({remaining} seat{remaining === 1 ? "" : "s"} remaining)
+            </span>
+          )}
+        </p>
+        <ClientSelector
+          key={selectorResetKey}
+          onChange={(clientId) => {
+            if (clientId) void handleClientChange(clientId)
+          }}
+          label="Client"
+          required
+          onCreateClient={(name) => void handleCreateClient(name)}
+          isCreating={isCreatingClient}
+        />
+      </div>
 
       {invoiceGuard && (
         <InvoiceGuardModal

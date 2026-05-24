@@ -29,7 +29,7 @@ Why:
   invariant only holds if writes never emit nulls.
 - Optional domain fields (e.g. `payment.discount`, `payment.surcharge`,
   `payment.tag`, `client.phone`, `client.email`, `client.taxId`,
-  `client.address`, `event.description`) must be absent from the document
+  `client.address`) must be absent from the document
   when not provided — not stored as `null`.
 
 How:
@@ -51,14 +51,14 @@ How:
   `payment.surcharge`, `vat`), always `set` 0 explicitly.
 - **Empty-string optional strings**: trim and treat the empty result as
   undefined before passing to `setOrUnset` (applies to `payment.tag`,
-  `payment.deliveryNoteRef`, `event.description`,
+  `payment.deliveryNoteRef`,
   `client.taxId`, `client.address`, `client.phone`, `client.email`).
 
 Per-field examples:
 - `payments`: `discount`, `surcharge`, `tag`, `clientId`,
   `deliveryNoteRef`, `invoice`, `providerBillUrl`, `providerBillPathname`.
 - `clients`: `phone`, `email`, `taxId`, `address`.
-- `events`: `description`, `day`, `hour`, `minute`, `date`,
+- `events`: `day`, `hour`, `minute`, `date`,
   `durationMinutes`, `maxAttendees`.
 - `invoiceCounters`: only mutate `lastNumber`; no nullable fields.
 

@@ -85,11 +85,6 @@ export default function EventsListTable({
                   <span className="font-medium text-zinc-900 dark:text-zinc-100">
                     {event.title}
                   </span>
-                  {event.description && (
-                    <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {event.description}
-                    </p>
-                  )}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
                   {formatEventDateTime(event)}

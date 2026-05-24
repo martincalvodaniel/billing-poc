@@ -127,7 +127,6 @@ export default function EventsPageContent() {
         await updateMutation.trigger({
           id: formState.event._id,
           title: values.title.trim(),
-          description: values.description.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
@@ -142,7 +141,6 @@ export default function EventsPageContent() {
       } else {
         await createMutation.trigger({
           title: values.title.trim(),
-          description: values.description.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),

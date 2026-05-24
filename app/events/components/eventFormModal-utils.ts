@@ -3,7 +3,6 @@ import type { Event } from "@/lib/domain/entities/event"
 
 export interface EventFormValues {
   title: string
-  description: string
   year: string
   month: string
   day: string
@@ -21,7 +20,6 @@ export const inputClass =
 export function emptyValues(): EventFormValues {
   return {
     title: "",
-    description: "",
     year: "",
     month: "",
     day: "",
@@ -52,7 +50,6 @@ export function applyDefaults(
 export function valuesFromEvent(event: Event): EventFormValues {
   const v = emptyValues()
   v.title = event.title
-  v.description = event.description ?? ""
   v.year = event.year !== undefined ? String(event.year) : ""
   v.month = event.month !== undefined ? String(event.month) : ""
   v.day = event.day !== undefined ? String(event.day) : ""

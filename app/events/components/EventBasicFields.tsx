@@ -57,19 +57,6 @@ export default function EventBasicFields({
           className={inputClass}
         />
       </FormField>
-
-      <FormField id={`${idPrefix}-description`} label="Description">
-        <textarea
-          id={`${idPrefix}-description`}
-          value={values.description}
-          onChange={onChangeField("description")}
-          disabled={isSubmitting}
-          maxLength={2000}
-          rows={2}
-          className={inputClass}
-        />
-      </FormField>
-
       <div className="space-y-1">
         <span className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Date (optional)

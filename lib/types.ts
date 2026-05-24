@@ -136,7 +136,6 @@ export interface EventAttendee {
 export interface Event {
   _id?: ObjectId
   title: string
-  description?: string
   year?: number
   month?: number
   day?: number
@@ -154,7 +153,6 @@ export interface Event {
 
 export interface EventFormData {
   title: string
-  description?: string
   year?: string
   month?: string
   day?: string

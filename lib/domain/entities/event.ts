@@ -8,7 +8,6 @@ export interface EventAttendee {
 export interface Event {
   _id?: string
   title: string
-  description?: string
   year?: number
   month?: number // 1–12
   day?: number // 1–31
@@ -26,7 +25,6 @@ export interface Event {
 
 export interface EventFormData {
   title: string
-  description?: string
   year?: string
   month?: string
   day?: string
