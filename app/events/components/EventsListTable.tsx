@@ -49,12 +49,11 @@ export default function EventsListTable({
         <thead className="bg-zinc-50 dark:bg-zinc-800/50">
           <tr>
             <Th>Title</Th>
-            <Th>Date / Time</Th>
+            <Th>Date & Time</Th>
             <Th>Duration</Th>
-            <Th>Attendees</Th>
-            <Th>Max</Th>
-            <Th>Price / seat (gross)</Th>
-            <Th align="right">Actions</Th>
+            <Th>Capacity</Th>
+            <Th>Price</Th>
+            <th/>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -99,12 +98,7 @@ export default function EventsListTable({
                   {formatDuration(event.durationMinutes)}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {event.attendees.length} client
-                  {event.attendees.length === 1 ? "" : "s"} / {seats} seat
-                  {seats === 1 ? "" : "s"}
-                </td>
-                <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {event.maxAttendees ?? "—"}
+                  {seats} / {event.maxAttendees ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
                   {formatCurrency(event.pricePerSeat)}
