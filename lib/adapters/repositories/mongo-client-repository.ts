@@ -5,12 +5,9 @@ import type {
   ClientRepository,
 } from "../../domain/ports/client-repository"
 import { getDatabase } from "../../mongodb"
+import { buildAccentInsensitivePattern } from "../../text-search"
 import type { Client as MongoClient } from "../../types"
 import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
-
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
 
 function toObjectId(id: string): ObjectId {
   return new ObjectId(id)
@@ -41,8 +38,8 @@ export class MongoClientRepository implements ClientRepository {
     const query: Record<string, unknown> = {}
 
     if (filter.search?.trim()) {
-      const escaped = escapeRegex(filter.search.trim())
-      const searchPattern = { $regex: escaped, $options: "i" }
+      const pattern = buildAccentInsensitivePattern(filter.search.trim())
+      const searchPattern = { $regex: pattern, $options: "i" }
       query.$or = [{ name: searchPattern }, { taxId: searchPattern }]
     }
 
@@ -119,8 +116,8 @@ export class MongoClientRepository implements ClientRepository {
     const filter: Record<string, unknown> = {}
 
     if (query?.trim()) {
-      const escaped = escapeRegex(query.trim())
-      filter.name = { $regex: escaped, $options: "i" }
+      const pattern = buildAccentInsensitivePattern(query.trim())
+      filter.name = { $regex: pattern, $options: "i" }
     }
 
     const docs = await col

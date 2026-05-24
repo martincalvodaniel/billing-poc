@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { useClients } from "@/lib/hooks/useClients"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
@@ -175,14 +176,15 @@ export default function ClientSelector({
                   <button
                     type="button"
                     onClick={() => handleClientSelect(client)}
-                    className="w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
                   >
-                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    <ClientTypeIcon
+                      type={client.clientType}
+                      className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400"
+                    />
+                    <span className="truncate text-zinc-900 dark:text-zinc-100">
                       {client.name}
-                    </div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                      {client.taxId} • {client.clientType}
-                    </div>
+                    </span>
                   </button>
                 </li>
               ))}

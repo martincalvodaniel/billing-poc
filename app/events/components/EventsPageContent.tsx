@@ -84,6 +84,15 @@ export default function EventsPageContent() {
     return events.filter((e) => e.date === dayModalKey)
   }, [events, dayModalKey])
 
+  const editEventSnapshot =
+    formState.mode === "edit" ? formState.event : undefined
+  const liveEditEvent = useMemo<Event | undefined>(() => {
+    if (!editEventSnapshot?._id) return editEventSnapshot
+    return (
+      events.find((e) => e._id === editEventSnapshot._id) ?? editEventSnapshot
+    )
+  }, [events, editEventSnapshot])
+
   const openCreate = (prefill?: number) => {
     setFormError(null)
     setPrefillDay(prefill ?? null)
@@ -222,6 +231,7 @@ export default function EventsPageContent() {
           events={events}
           selectedDate={selectedDate}
           onDayClick={setDayModalKey}
+          onEventClick={openEdit}
         />
         <EventsListTable
           events={events}
@@ -232,9 +242,9 @@ export default function EventsPageContent() {
         />
       </div>
 
-      {formState.mode === "edit" && formState.event ? (
+      {formState.mode === "edit" && formState.event && liveEditEvent ? (
         <EditEventModal
-          event={formState.event}
+          event={liveEditEvent}
           isOpen={formState.open}
           onClose={closeForm}
           onSubmit={handleSubmit}

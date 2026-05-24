@@ -53,7 +53,7 @@ export default function EventsListTable({
             <Th>Duration</Th>
             <Th>Capacity</Th>
             <Th>Price</Th>
-            <th/>
+            <th />
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
