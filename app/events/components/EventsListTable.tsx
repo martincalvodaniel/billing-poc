@@ -51,7 +51,7 @@ export default function EventsListTable({
             <Th>Title</Th>
             <Th>Date & Time</Th>
             <Th>Duration</Th>
-            <Th>Capacity</Th>
+            <Th>Occupancy</Th>
             <Th>Price</Th>
             <th />
           </tr>

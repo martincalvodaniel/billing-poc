@@ -15,6 +15,8 @@ interface ClientSelectorProps {
   ) => void
   label?: string
   required?: boolean
+  onCreateClient?: (name: string) => void | Promise<void>
+  isCreating?: boolean
 }
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -25,6 +27,8 @@ export default function ClientSelector({
   onChange,
   label = "Client (Optional)",
   required = false,
+  onCreateClient,
+  isCreating = false,
 }: ClientSelectorProps) {
   const id = useId()
   const [searchQuery, setSearchQuery] = useState("")
@@ -113,6 +117,24 @@ export default function ClientSelector({
     }, 200)
   }
 
+  const trimmed = searchQuery.trim()
+  const noMatches = !isLoading && clients.length === 0 && trimmed !== ""
+  const canCreateInline = noMatches && Boolean(onCreateClient)
+
+  const handleInputKeyDown = async (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (
+      event.key === "Enter" &&
+      canCreateInline &&
+      !isCreating &&
+      onCreateClient
+    ) {
+      event.preventDefault()
+      await onCreateClient(trimmed)
+    }
+  }
+
   // Close suggestions when clicking outside
   const handleOutsideClick = useCallback(() => {
     setShowSuggestions(false)
@@ -137,6 +159,7 @@ export default function ClientSelector({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
           placeholder="Search clients by name or tax ID..."
           className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           required={required}
@@ -191,7 +214,11 @@ export default function ClientSelector({
             </ul>
           ) : searchQuery.trim() !== "" ? (
             <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-              No clients found
+              {canCreateInline
+                ? isCreating
+                  ? "Creating…"
+                  : "No clients found. Press Enter to create a new client."
+                : "No clients found"}
             </div>
           ) : (
             <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">

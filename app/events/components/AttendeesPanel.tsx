@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
+import { useCreateClient } from "@/lib/hooks/useClientMutations"
 import { useClients } from "@/lib/hooks/useClients"
 import {
   isInvoiceGuardError,
@@ -45,6 +46,7 @@ export default function AttendeesPanel({
   const [invoiceGuard, setInvoiceGuard] = useState<InvoiceGuardState | null>(
     null
   )
+  const [isCreatingClient, setIsCreatingClient] = useState(false)
 
   // 100 is the API max page size; sufficient for the lookup use-case in this POC.
   const { clients } = useClients({ pageSize: 100 })
@@ -61,6 +63,7 @@ export default function AttendeesPanel({
   const removeMutation = useRemoveEventAttendee()
   const generateOne = useGenerateEventPayment()
   const generateAll = useGenerateEventPayments()
+  const createClient = useCreateClient()
 
   const seats = totalSeats(event.attendees)
   const remaining =
@@ -90,6 +93,27 @@ export default function AttendeesPanel({
       onActionSuccess("Attendee added")
     } catch (error) {
       onActionError(extractErrorMessage(error, "Failed to add attendee"))
+    }
+  }
+
+  const handleCreateClient = async (name: string) => {
+    if (!eventId) return
+    setIsCreatingClient(true)
+    try {
+      const { id } = await createClient.trigger({
+        name,
+        clientType: "individual",
+      })
+      const seatsNum = Number(addSeats)
+      const seats = Number.isFinite(seatsNum) && seatsNum >= 1 ? seatsNum : 1
+      await addMutation.trigger({ eventId, clientId: id, seats })
+      setAddClientId(undefined)
+      setAddSeats("1")
+      onActionSuccess(`Client "${name}" created and added`)
+    } catch (error) {
+      onActionError(extractErrorMessage(error, "Failed to create client"))
+    } finally {
+      setIsCreatingClient(false)
     }
   }
 
@@ -230,6 +254,8 @@ export default function AttendeesPanel({
         onClientChange={setAddClientId}
         onSeatsChange={setAddSeats}
         onAdd={handleAdd}
+        onCreateClient={handleCreateClient}
+        isCreatingClient={isCreatingClient}
       />
 
       {invoiceGuard && (

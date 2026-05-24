@@ -12,6 +12,8 @@ interface AddAttendeeFormProps {
   onClientChange: (clientId: string | undefined) => void
   onSeatsChange: (value: string) => void
   onAdd: () => void
+  onCreateClient?: (name: string) => void | Promise<void>
+  isCreatingClient?: boolean
 }
 
 export default function AddAttendeeForm({
@@ -24,6 +26,8 @@ export default function AddAttendeeForm({
   onClientChange,
   onSeatsChange,
   onAdd,
+  onCreateClient,
+  isCreatingClient,
 }: AddAttendeeFormProps) {
   return (
     <div className="rounded-md border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
@@ -41,6 +45,8 @@ export default function AddAttendeeForm({
           onChange={onClientChange}
           label="Client"
           required
+          onCreateClient={onCreateClient}
+          isCreating={isCreatingClient}
         />
         <div className="space-y-1">
           <label

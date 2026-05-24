@@ -36,27 +36,32 @@ export default function EventDayCell({
   const extra = Math.max(0, count - preview.length)
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: keep chip buttons as descendants; rendering a <button> here would nest interactive elements.
     <div
-      className={`group relative flex min-h-24 flex-col items-stretch gap-1 rounded-md border p-2 text-left text-sm ${
+      role="button"
+      tabIndex={0}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          if (event.key === " ") {
+            event.preventDefault()
+          }
+          onClick()
+        }
+      }}
+      className={`group relative flex min-h-24 cursor-pointer flex-col items-stretch gap-1 rounded-md border p-2 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 ${
         isToday
           ? "border-blue-500 ring-1 ring-blue-500 dark:border-blue-400 dark:ring-blue-400"
-          : "border-zinc-200 dark:border-zinc-800"
+          : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
       } ${
         dimmed
           ? "bg-zinc-50/60 text-zinc-400 dark:bg-zinc-900/60 dark:text-zinc-600"
           : "text-zinc-900 dark:text-zinc-100"
       }`}
     >
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={ariaLabel}
-        className={`absolute inset-0 z-0 rounded-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 ${
-          isToday ? "" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-        }`}
-      />
       <span
-        className={`relative z-10 flex items-center justify-between text-xs font-semibold ${
+        className={`flex items-center justify-between text-xs font-semibold ${
           isToday ? "text-blue-600 dark:text-blue-400" : ""
         }`}
       >
@@ -67,7 +72,7 @@ export default function EventDayCell({
           </span>
         )}
       </span>
-      <div className="relative z-10 mt-1 flex flex-1 flex-col gap-0.5">
+      <div className="mt-1 flex flex-1 flex-col gap-0.5">
         {preview.map((event) => {
           const eventTitle = formatEventTimeAndTitle(event)
           return (
@@ -78,7 +83,7 @@ export default function EventDayCell({
                 e.stopPropagation()
                 onEventClick(event)
               }}
-              className="relative z-10 truncate rounded bg-purple-50 px-1.5 py-0.5 text-left text-[11px] font-medium text-purple-800 hover:bg-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60"
+              className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-left text-[11px] font-medium text-purple-800 hover:bg-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60"
               title={eventTitle}
             >
               {eventTitle}
