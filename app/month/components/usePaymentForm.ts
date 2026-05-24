@@ -24,6 +24,7 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     tag: "",
     clientId: undefined,
     deliveryNoteRef: "",
+    paymentMethod: "",
   }
 
   const [formData, setFormData] = useState<PaymentFormData>(

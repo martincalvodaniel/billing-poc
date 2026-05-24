@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { PAYMENT_METHODS } from "../entities/payment"
 
 const conceptSchema = z.object({
   name: z.string().min(1, "Concept name is required"),
@@ -28,6 +29,10 @@ const paymentBaseSchema = z.object({
   tag: z.string().optional(),
   clientId: z.string().optional(),
   deliveryNoteRef: z.string().optional(),
+  paymentMethod: z
+    .union([z.enum(PAYMENT_METHODS), z.literal(""), z.undefined()])
+    .optional()
+    .transform((v) => (v ? v : undefined)),
 })
 
 export const createPaymentSchema = paymentBaseSchema.superRefine(
@@ -73,6 +78,10 @@ export const updatePaymentSchema = z
     tag: z.string().optional(),
     clientId: z.string().nullable().optional(),
     deliveryNoteRef: z.string().optional(),
+    paymentMethod: z
+      .union([z.enum(PAYMENT_METHODS), z.literal(""), z.undefined()])
+      .optional()
+      .transform((v) => (v ? v : undefined)),
     total: z.coerce.number().optional(),
   })
   .refine(

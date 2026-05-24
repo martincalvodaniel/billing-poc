@@ -3,7 +3,7 @@
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
 import { FetchError } from "../swr-fetcher"
-import type { PaymentConcept, PaymentType } from "../types"
+import type { PaymentConcept, PaymentMethod, PaymentType } from "../types"
 import { isPaymentsKey } from "./usePayments"
 
 export interface CreatePaymentInput {
@@ -16,6 +16,7 @@ export interface CreatePaymentInput {
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
+  paymentMethod?: PaymentMethod
 }
 
 export interface UpdatePaymentInput {
@@ -29,6 +30,7 @@ export interface UpdatePaymentInput {
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
+  paymentMethod?: PaymentMethod
   total?: number
 }
 

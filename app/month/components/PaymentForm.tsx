@@ -94,7 +94,10 @@ const PaymentForm = function PaymentForm({
         throw new Error(discountValidation.error || "Validation failed")
       }
 
-      const result = await createPayment(formData)
+      const result = await createPayment({
+        ...formData,
+        paymentMethod: formData.paymentMethod || undefined,
+      })
       const paymentId = result.id
 
       // Upload provider bill if outcome payment and file is selected

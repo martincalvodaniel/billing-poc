@@ -43,6 +43,7 @@ export default function PaymentDetailModal({
     tag: payment.tag || "",
     clientId: payment.clientId?.toString() || undefined,
     deliveryNoteRef: payment.deliveryNoteRef || "",
+    paymentMethod: payment.paymentMethod ?? "",
   }
 
   const {
@@ -190,6 +191,7 @@ export default function PaymentDetailModal({
         // previously stored discount. The repository unsets the field when 0.
         discount: discountNumber,
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
+        paymentMethod: formData.paymentMethod || undefined,
       })
 
       const updatedPayment: Payment = {
@@ -214,6 +216,7 @@ export default function PaymentDetailModal({
             ? parseFloat(calculateSurchargeAmount())
             : undefined),
         netAmount: responseData.netAmount ?? parseFloat(calculateNetAmount()),
+        paymentMethod: formData.paymentMethod || undefined,
         updatedAt: new Date(),
       }
 

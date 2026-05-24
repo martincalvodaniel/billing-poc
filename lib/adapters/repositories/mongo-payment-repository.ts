@@ -31,6 +31,7 @@ function toDomain(doc: MongoPayment): Payment {
     invoice: doc.invoice,
     providerBillUrl: doc.providerBillUrl,
     providerBillPathname: doc.providerBillPathname,
+    paymentMethod: doc.paymentMethod,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
@@ -84,6 +85,12 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
   }
   if (data.providerBillPathname !== undefined) {
     builder.setOrUnset("providerBillPathname", data.providerBillPathname)
+  }
+  if (data.paymentMethod !== undefined) {
+    builder.setOrUnset(
+      "paymentMethod",
+      data.paymentMethod ? data.paymentMethod : undefined
+    )
   }
 
   return builder.build()
@@ -153,6 +160,7 @@ export class MongoPaymentRepository implements PaymentRepository {
       vatAmount: payment.vatAmount,
       surchargeAmount: payment.surchargeAmount,
       total: payment.total,
+      paymentMethod: payment.paymentMethod,
       createdAt: payment.createdAt,
       updatedAt: payment.updatedAt,
     })

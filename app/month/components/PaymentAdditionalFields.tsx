@@ -2,6 +2,10 @@
 
 import { useId } from "react"
 import ClientSelector from "@/app/components/ClientSelector"
+import {
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHODS,
+} from "@/lib/domain/entities/payment"
 import type { PaymentFormData } from "@/lib/types"
 
 interface PaymentAdditionalFieldsProps {
@@ -54,6 +58,29 @@ export default function PaymentAdditionalFields({
             label="Client (Optional)"
             required={false}
           />
+
+          <div className="space-y-2">
+            <label
+              htmlFor={`${id}-paymentMethod`}
+              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Payment Method (Optional)
+            </label>
+            <select
+              id={`${id}-paymentMethod`}
+              name="paymentMethod"
+              value={formData.paymentMethod ?? ""}
+              onChange={onChangeField}
+              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            >
+              <option value="">— Not specified —</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {PAYMENT_METHOD_LABELS[m]}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="space-y-2">
             <label

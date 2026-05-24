@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       tag,
       clientId,
       deliveryNoteRef,
+      paymentMethod,
     } = parsed.data
     const surchargeVal = surcharge ?? 0
     const discountVal = discount ?? 0
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
       tag: tag || undefined,
       clientId: clientId || undefined,
       deliveryNoteRef: deliveryNoteRef || undefined,
+      paymentMethod: paymentMethod || undefined,
       concepts,
       vat,
       surcharge: surchargeVal > 0 ? surchargeVal : undefined,

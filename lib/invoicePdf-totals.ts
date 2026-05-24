@@ -1,5 +1,6 @@
 import type { PDFPage } from "pdf-lib"
 import { rgb } from "pdf-lib"
+import { PAYMENT_METHOD_LABELS } from "./domain/entities/payment"
 import type { InvoicePdfFonts } from "./invoicePdf-header"
 import type { Payment } from "./types"
 
@@ -80,6 +81,14 @@ export function drawTotals(
     size: 14,
     font: boldFont,
   })
+
+  if (payment.paymentMethod) {
+    y -= 25
+    page.drawText(
+      `Payment method: ${PAYMENT_METHOD_LABELS[payment.paymentMethod]}`,
+      { x: 350, y, size: 10, font }
+    )
+  }
 
   return y
 }

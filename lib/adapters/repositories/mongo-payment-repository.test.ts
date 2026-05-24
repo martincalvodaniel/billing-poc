@@ -61,3 +61,25 @@ describe("buildPaymentUpdateOps — invariants", () => {
     expect(ops.$set?.tag).toBeUndefined()
   })
 })
+
+describe("buildPaymentUpdateOps — paymentMethod", () => {
+  test("enum value goes to $set, no $unset", () => {
+    const ops = buildPaymentUpdateOps({ paymentMethod: "cash" })
+    expect(ops.$set?.paymentMethod).toBe("cash")
+    expect(ops.$unset?.paymentMethod).toBeUndefined()
+  })
+
+  test("empty string goes to $unset, no $set", () => {
+    const ops = buildPaymentUpdateOps({
+      paymentMethod: "" as unknown as "cash",
+    })
+    expect(ops.$unset?.paymentMethod).toBe(true)
+    expect(ops.$set?.paymentMethod).toBeUndefined()
+  })
+
+  test("absent key touches neither $set nor $unset", () => {
+    const ops = buildPaymentUpdateOps({ vat: 21 })
+    expect(ops.$set?.paymentMethod).toBeUndefined()
+    expect(ops.$unset?.paymentMethod).toBeUndefined()
+  })
+})

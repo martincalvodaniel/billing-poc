@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import { PAYMENT_METHODS } from "../entities/payment"
 import {
   createPaymentSchema,
   deletePaymentSchema,
@@ -217,6 +218,97 @@ describe("updatePaymentSchema", () => {
     const result = updatePaymentSchema.safeParse({
       id: "abc123",
       discount: -1,
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("paymentMethod field", () => {
+  const baseCreate = {
+    type: "income",
+    date: "2024-01-15",
+    concepts: [{ name: "Service", amount: 100, quantity: 1 }],
+    vat: 21,
+  }
+
+  for (const method of PAYMENT_METHODS) {
+    it(`createPaymentSchema accepts paymentMethod="${method}"`, () => {
+      const result = createPaymentSchema.safeParse({
+        ...baseCreate,
+        paymentMethod: method,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.paymentMethod).toBe(method)
+      }
+    })
+
+    it(`updatePaymentSchema accepts paymentMethod="${method}"`, () => {
+      const result = updatePaymentSchema.safeParse({
+        id: "abc123",
+        paymentMethod: method,
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.paymentMethod).toBe(method)
+      }
+    })
+  }
+
+  it("createPaymentSchema treats empty string as undefined", () => {
+    const result = createPaymentSchema.safeParse({
+      ...baseCreate,
+      paymentMethod: "",
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.paymentMethod).toBeUndefined()
+    }
+  })
+
+  it("updatePaymentSchema treats empty string as undefined", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      paymentMethod: "",
+      vat: 10,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.paymentMethod).toBeUndefined()
+    }
+  })
+
+  it("createPaymentSchema accepts missing paymentMethod", () => {
+    const result = createPaymentSchema.safeParse(baseCreate)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.paymentMethod).toBeUndefined()
+    }
+  })
+
+  it("updatePaymentSchema accepts missing paymentMethod", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      vat: 10,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.paymentMethod).toBeUndefined()
+    }
+  })
+
+  it("createPaymentSchema rejects unknown paymentMethod", () => {
+    const result = createPaymentSchema.safeParse({
+      ...baseCreate,
+      paymentMethod: "foo",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("updatePaymentSchema rejects unknown paymentMethod", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      paymentMethod: "foo",
     })
     expect(result.success).toBe(false)
   })

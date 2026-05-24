@@ -1,7 +1,8 @@
 import type { ObjectId } from "mongodb"
 import type { PartOfDay } from "./domain/entities/absence"
+import type { PaymentMethod } from "./domain/entities/payment"
 
-export type { PartOfDay }
+export type { PartOfDay, PaymentMethod }
 
 export type PaymentType = "income" | "outcome"
 
@@ -45,6 +46,7 @@ export interface Payment {
   invoice?: InvoiceMetadata // Generated invoice (for income payments)
   providerBillUrl?: string // Uploaded provider bill URL (for outcome payments)
   providerBillPathname?: string // Uploaded provider bill storage path
+  paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date
 }
@@ -59,6 +61,7 @@ export interface PaymentFormData {
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
+  paymentMethod?: PaymentMethod | ""
 }
 
 export interface Client {
