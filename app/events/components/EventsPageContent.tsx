@@ -104,7 +104,7 @@ export default function EventsPageContent() {
       year: String(selectedDate.getFullYear()),
       month: String(selectedDate.getMonth() + 1),
       day: prefillDay ? String(prefillDay) : "",
-      durationMinutes: "120",
+      durationMinutes: "180",
       maxAttendees: "10",
       vatRate: "21",
     }),
