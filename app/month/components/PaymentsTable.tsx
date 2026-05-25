@@ -2,6 +2,7 @@ import { Badge } from "@/app/components/Badge"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { IconButton } from "@/app/components/IconButton"
+import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
@@ -13,6 +14,7 @@ export default function PaymentsTable({
   error,
   onRowClick,
   onDeleteClick,
+  onDuplicateClick,
 }: {
   payments: Payment[]
   filteredPayments: Payment[]
@@ -20,6 +22,7 @@ export default function PaymentsTable({
   error: string | null
   onRowClick: (paymentId: string) => void
   onDeleteClick: (e: React.MouseEvent, paymentId: string) => void
+  onDuplicateClick: (e: React.MouseEvent, paymentId: string) => void
 }) {
   const hasSurcharge = filteredPayments.some(
     (p) => p.surcharge && p.surcharge > 0
@@ -65,9 +68,7 @@ export default function PaymentsTable({
                 <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
                   Net
                 </th>
-                <th className="px-6 py-3 text-right font-medium text-zinc-700 dark:text-zinc-300">
-                  Actions
-                </th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -121,16 +122,28 @@ export default function PaymentsTable({
                     {formatCurrency(payment.netAmount)}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <IconButton
-                      variant="danger"
-                      stopPropagation
-                      onClick={(e) =>
-                        onDeleteClick(e, payment._id?.toString() || "")
-                      }
-                      ariaLabel="Delete payment"
-                    >
-                      <TrashIcon />
-                    </IconButton>
+                    <div className="inline-flex items-center justify-end gap-1">
+                      <IconButton
+                        variant="info"
+                        stopPropagation
+                        onClick={(e) =>
+                          onDuplicateClick(e, payment._id?.toString() || "")
+                        }
+                        ariaLabel="Duplicate payment"
+                      >
+                        <DuplicateIcon />
+                      </IconButton>
+                      <IconButton
+                        variant="danger"
+                        stopPropagation
+                        onClick={(e) =>
+                          onDeleteClick(e, payment._id?.toString() || "")
+                        }
+                        ariaLabel="Delete payment"
+                      >
+                        <TrashIcon />
+                      </IconButton>
+                    </div>
                   </td>
                 </tr>
               ))}

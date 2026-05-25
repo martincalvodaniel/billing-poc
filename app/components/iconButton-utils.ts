@@ -1,4 +1,4 @@
-export type IconButtonVariant = "danger" | "neutral" | "success"
+export type IconButtonVariant = "danger" | "neutral" | "success" | "info"
 export type IconButtonSize = "sm" | "md"
 
 const VARIANT_CLASS: Record<IconButtonVariant, string> = {
@@ -8,6 +8,7 @@ const VARIANT_CLASS: Record<IconButtonVariant, string> = {
     "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus-visible:ring-emerald-500",
   neutral:
     "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:ring-zinc-500",
+  info: "text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 focus-visible:ring-blue-500",
 }
 
 const SIZE_CLASS: Record<IconButtonSize, string> = {

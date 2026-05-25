@@ -49,6 +49,9 @@ export default function MonthlyPaymentsView({
   // Edit modal state (full payment edit)
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null)
 
+  // Duplicate modal state — holds the source payment to seed the create form.
+  const [duplicateSeed, setDuplicateSeed] = useState<Payment | null>(null)
+
   // Auto-open the payment-detail modal when arriving with ?payment=<id>.
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -79,6 +82,19 @@ export default function MonthlyPaymentsView({
   const handleDeleteClick = (e: React.MouseEvent, paymentId: string) => {
     e.stopPropagation() // Prevent row click
     setDeleteConfirmPaymentId(paymentId)
+  }
+
+  const handleDuplicateClick = (e: React.MouseEvent, paymentId: string) => {
+    e.stopPropagation()
+    const source = payments.find((p) => p._id?.toString() === paymentId)
+    if (source) setDuplicateSeed(source)
+  }
+
+  const handlePaymentDuplicated = () => {
+    setDuplicateSeed(null)
+    setSuccessMessage("Payment duplicated successfully")
+    setShowSuccess(true)
+    setTimeout(() => setShowSuccess(false), 4000)
   }
 
   const handlePaymentUpdated = (_updatedPayment: Payment) => {
@@ -213,6 +229,7 @@ export default function MonthlyPaymentsView({
         error={displayError}
         onRowClick={handleRowClick}
         onDeleteClick={handleDeleteClick}
+        onDuplicateClick={handleDuplicateClick}
       />
 
       {deleteConfirmPaymentId && (
@@ -240,6 +257,15 @@ export default function MonthlyPaymentsView({
             />
           )
         })()}
+
+      {duplicateSeed && (
+        <PaymentDetailModal
+          payment={duplicateSeed}
+          mode="duplicate"
+          onClose={() => setDuplicateSeed(null)}
+          onCreate={handlePaymentDuplicated}
+        />
+      )}
     </div>
   )
 }
