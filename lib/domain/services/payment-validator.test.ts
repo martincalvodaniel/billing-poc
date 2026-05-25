@@ -221,6 +221,17 @@ describe("updatePaymentSchema", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it("accepts surcharge = 0 on update", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      surcharge: 0,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.surcharge).toBe(0)
+    }
+  })
 })
 
 describe("paymentMethod field", () => {

@@ -185,10 +185,10 @@ export default function PaymentDetailModal({
         clientId: formData.clientId || undefined,
         concepts: formData.concepts,
         vat: vatNumber,
-        surcharge: surchargeNumber > 0 ? surchargeNumber : undefined,
-        // Always send the parsed discount (including 0) so the API recompute
-        // uses the user's current value rather than falling back to the
-        // previously stored discount. The repository unsets the field when 0.
+        // Send raw surcharge (including 0) so the API recompute uses the
+        // user's current value rather than falling back to the previously
+        // stored surcharge. The repository unsets the field when 0.
+        surcharge: surchargeNumber,
         discount: discountNumber,
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
         paymentMethod: formData.paymentMethod || undefined,

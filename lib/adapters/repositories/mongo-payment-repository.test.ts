@@ -34,18 +34,49 @@ describe("buildPaymentUpdateOps — discount removal", () => {
   })
 })
 
-describe("buildPaymentUpdateOps — surcharge passthrough", () => {
-  test("surcharge: 0 is $set as 0 (legitimate value, not unset)", () => {
+describe("buildPaymentUpdateOps — surcharge removal", () => {
+  test("surcharge: 0 emits $unset.surcharge and no $set.surcharge", () => {
     const ops = buildPaymentUpdateOps({ surcharge: 0 })
 
-    expect(ops.$set?.surcharge).toBe(0)
+    expect(ops.$unset?.surcharge).toBe(true)
+    expect(ops.$set?.surcharge).toBeUndefined()
+  })
+
+  test("positive surcharge goes to $set and not $unset", () => {
+    const ops = buildPaymentUpdateOps({ surcharge: 21 })
+
+    expect(ops.$set?.surcharge).toBe(21)
     expect(ops.$unset?.surcharge).toBeUndefined()
   })
 
-  test("positive surcharge is $set", () => {
-    const ops = buildPaymentUpdateOps({ surcharge: 5 })
+  test("omitted surcharge touches neither $set nor $unset", () => {
+    const ops = buildPaymentUpdateOps({ vat: 21 })
 
-    expect(ops.$set?.surcharge).toBe(5)
+    expect(ops.$set?.surcharge).toBeUndefined()
+    expect(ops.$unset?.surcharge).toBeUndefined()
+  })
+})
+
+describe("buildPaymentUpdateOps — surchargeAmount removal", () => {
+  test("surchargeAmount: 0 emits $unset.surchargeAmount", () => {
+    const ops = buildPaymentUpdateOps({ surchargeAmount: 0 })
+
+    expect(ops.$unset?.surchargeAmount).toBe(true)
+    expect(ops.$set?.surchargeAmount).toBeUndefined()
+  })
+
+  test("positive surchargeAmount is $set", () => {
+    const ops = buildPaymentUpdateOps({ surchargeAmount: 2.5 })
+
+    expect(ops.$set?.surchargeAmount).toBe(2.5)
+    expect(ops.$unset?.surchargeAmount).toBeUndefined()
+  })
+
+  test("omitted surchargeAmount touches neither $set nor $unset", () => {
+    const ops = buildPaymentUpdateOps({ vat: 21 })
+
+    expect(ops.$set?.surchargeAmount).toBeUndefined()
+    expect(ops.$unset?.surchargeAmount).toBeUndefined()
   })
 })
 

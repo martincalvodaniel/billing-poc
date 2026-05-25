@@ -35,4 +35,12 @@ describe("buildPaymentsRequest", () => {
     expect(init.method).toBe("DELETE")
     expect(init.body).toBe(JSON.stringify(body))
   })
+
+  test("PUT body with surcharge: 0 serializes raw zero (not stripped)", () => {
+    const body = { id: "abc123", surcharge: 0 }
+    const { init } = buildPaymentsRequest("PUT", body)
+
+    expect(typeof init.body).toBe("string")
+    expect(init.body as string).toContain('"surcharge":0')
+  })
 })

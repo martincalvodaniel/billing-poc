@@ -61,7 +61,13 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
   }
   if (data.concepts !== undefined) builder.set("concepts", data.concepts)
   if (data.vat !== undefined) builder.set("vat", data.vat)
-  if (data.surcharge !== undefined) builder.set("surcharge", data.surcharge)
+  if (data.surcharge !== undefined) {
+    // surcharge === 0 means "no surcharge" → remove the field entirely.
+    builder.setOrUnset(
+      "surcharge",
+      data.surcharge && data.surcharge > 0 ? data.surcharge : undefined
+    )
+  }
   if (data.discount !== undefined) {
     // discount === 0 means "no discount" → remove the field entirely.
     builder.setOrUnset(
@@ -77,7 +83,12 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
   if (data.netAmount !== undefined) builder.set("netAmount", data.netAmount)
   if (data.vatAmount !== undefined) builder.set("vatAmount", data.vatAmount)
   if (data.surchargeAmount !== undefined) {
-    builder.set("surchargeAmount", data.surchargeAmount)
+    builder.setOrUnset(
+      "surchargeAmount",
+      data.surchargeAmount && data.surchargeAmount > 0
+        ? data.surchargeAmount
+        : undefined
+    )
   }
   if (data.invoice !== undefined) builder.setOrUnset("invoice", data.invoice)
   if (data.providerBillUrl !== undefined) {
@@ -146,6 +157,14 @@ export class MongoPaymentRepository implements PaymentRepository {
       typeof payment.discount === "number" && payment.discount > 0
         ? payment.discount
         : undefined
+    const surcharge =
+      typeof payment.surcharge === "number" && payment.surcharge > 0
+        ? payment.surcharge
+        : undefined
+    const surchargeAmount =
+      typeof payment.surchargeAmount === "number" && payment.surchargeAmount > 0
+        ? payment.surchargeAmount
+        : undefined
     const doc = omitNullish({
       type: payment.type,
       date: payment.date,
@@ -153,12 +172,12 @@ export class MongoPaymentRepository implements PaymentRepository {
       clientId: payment.clientId ? toObjectId(payment.clientId) : undefined,
       concepts: payment.concepts,
       vat: payment.vat,
-      surcharge: payment.surcharge,
+      surcharge,
       discount,
       deliveryNoteRef,
       netAmount: payment.netAmount,
       vatAmount: payment.vatAmount,
-      surchargeAmount: payment.surchargeAmount,
+      surchargeAmount,
       total: payment.total,
       paymentMethod: payment.paymentMethod,
       createdAt: payment.createdAt,
