@@ -8,6 +8,14 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+function todayLocalISO(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 /**
  * Internal: shared concept-name + vat-rate + per-line amount derivation.
  * Used by both `generateAttendeePayment` (initial create) and
@@ -37,7 +45,7 @@ function buildPaymentLineParts(event: Event): {
  *
  * The Payment shape is fixed by the iteration plan (§1.5):
  * - type: "income", tag: "event"
- * - date: event.date if set, otherwise today's ISO date
+ * - date: today's local date (yyyy-mm-dd), independent of event.date
  * - concepts: one line, name = event title (+ " (no date)" if event has no
  *   date), amount = pricePerSeat (gross per-seat; duration does NOT scale
  *   the price), quantity = seats
@@ -59,7 +67,7 @@ export async function generateAttendeePayment(
   )
 
   const { conceptName, conceptAmount, vat } = buildPaymentLineParts(event)
-  const date = event.date ?? new Date().toISOString().slice(0, 10)
+  const date = todayLocalISO()
 
   const now = new Date()
   const paymentId = await deps.payments.create({

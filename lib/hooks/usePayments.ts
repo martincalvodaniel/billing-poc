@@ -29,7 +29,58 @@ export function buildPaymentsUrl({ year, month }: UsePaymentsArgs): string {
 }
 
 export function isPaymentsKey(key: unknown): boolean {
-  return Array.isArray(key) && key[0] === "/api/payments"
+  return (
+    Array.isArray(key) &&
+    key.length === 3 &&
+    key[0] === "/api/payments" &&
+    typeof key[1] === "number"
+  )
+}
+
+// Single-payment key/url helpers. The key shape (length 2, string id) is
+// intentionally distinct from the list key (length 3, numeric year/month) so
+// `isPaymentsKey` / `isPaymentKey` discriminate cleanly for cache invalidation.
+export type PaymentKey = readonly ["/api/payments", string]
+
+export function buildPaymentKey(id: string): PaymentKey {
+  return ["/api/payments", id] as const
+}
+
+export function buildPaymentUrl(id: string): string {
+  return `/api/payments/${encodeURIComponent(id)}`
+}
+
+export function isPaymentKey(
+  key: unknown
+): key is readonly ["/api/payments", string] {
+  return (
+    Array.isArray(key) &&
+    key.length === 2 &&
+    key[0] === "/api/payments" &&
+    typeof key[1] === "string"
+  )
+}
+
+export interface PaymentResponse {
+  payment: Payment
+}
+
+export interface UsePaymentResult {
+  payment: Payment | null
+  isLoading: boolean
+  error: unknown
+}
+
+export function usePayment(id: string | null): UsePaymentResult {
+  const { data, error, isLoading } = useSWR<PaymentResponse>(
+    id ? buildPaymentKey(id) : null,
+    id ? () => fetcher<PaymentResponse>(buildPaymentUrl(id)) : null
+  )
+  return {
+    payment: data?.payment ?? null,
+    isLoading,
+    error,
+  }
 }
 
 export interface PaymentsResponse {

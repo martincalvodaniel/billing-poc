@@ -1,8 +1,12 @@
 import { describe, expect, test } from "bun:test"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import type { Payment } from "@/lib/domain/entities/payment"
+import type { EventRepository } from "@/lib/domain/ports/event-repository"
 import type { PaymentRepository } from "@/lib/domain/ports/payment-repository"
-import { recomputeAttendeePayment } from "./event-payment-service"
+import {
+  generateAttendeePayment,
+  recomputeAttendeePayment,
+} from "./event-payment-service"
 
 function makeEvent(overrides: Partial<Event> = {}): Event {
   const now = new Date("2026-05-14T00:00:00Z")
@@ -225,5 +229,102 @@ describe("recomputeAttendeePayment", () => {
       { payments: repo }
     )
     expect(updates[0].data.concepts?.[0].name).toBe("Workshop (no date)")
+  })
+})
+
+interface CreateCall {
+  data: Omit<Payment, "_id">
+}
+
+function makeFakeCreateRepo(): {
+  payments: PaymentRepository
+  events: EventRepository
+  creates: CreateCall[]
+  attendeeUpdates: Array<{
+    eventId: string
+    clientId: string
+    patch: { seats?: number; paymentId?: string | null }
+  }>
+} {
+  const creates: CreateCall[] = []
+  const attendeeUpdates: Array<{
+    eventId: string
+    clientId: string
+    patch: { seats?: number; paymentId?: string | null }
+  }> = []
+  const payments: PaymentRepository = {
+    findAll: async () => [],
+    findById: async () => null,
+    create: async (data) => {
+      creates.push({ data })
+      return "pay-new"
+    },
+    update: async () => true,
+    delete: async () => true,
+    findDistinctTags: async () => [],
+  }
+  const events: EventRepository = {
+    findAll: async () => [],
+    findById: async () => null,
+    create: async () => "ev-new",
+    update: async () => true,
+    delete: async () => true,
+    addAttendee: async () => true,
+    updateAttendee: async (eventId, clientId, patch) => {
+      attendeeUpdates.push({ eventId, clientId, patch })
+      return true
+    },
+    removeAttendee: async () => true,
+  }
+  return { payments, events, creates, attendeeUpdates }
+}
+
+function todayLocalISOForTest(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
+describe("generateAttendeePayment", () => {
+  test("sets payment date to today even when event has a date", async () => {
+    const today = todayLocalISOForTest()
+    const { payments, events, creates, attendeeUpdates } = makeFakeCreateRepo()
+    const event = makeEvent({ date: "2020-01-01" })
+    const attendee = makeAttendee({ paymentId: undefined, seats: 2 })
+
+    const paymentId = await generateAttendeePayment(event, attendee, {
+      payments,
+      events,
+    })
+
+    expect(paymentId).toBe("pay-new")
+    expect(creates).toHaveLength(1)
+    const created = creates[0].data
+    expect(created.date).not.toBe(event.date)
+    expect(created.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(created.date).toBe(today)
+    expect(attendeeUpdates).toEqual([
+      { eventId: "ev1", clientId: "cli1", patch: { paymentId: "pay-new" } },
+    ])
+  })
+
+  test("sets payment date to today when event has no date", async () => {
+    const today = todayLocalISOForTest()
+    const { payments, events, creates } = makeFakeCreateRepo()
+    const event = makeEvent({
+      date: undefined,
+      year: undefined,
+      month: undefined,
+      day: undefined,
+    })
+    const attendee = makeAttendee({ paymentId: undefined })
+
+    await generateAttendeePayment(event, attendee, { payments, events })
+
+    expect(creates).toHaveLength(1)
+    expect(creates[0].data.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(creates[0].data.date).toBe(today)
   })
 })

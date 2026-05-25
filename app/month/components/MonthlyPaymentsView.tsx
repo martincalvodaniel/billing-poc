@@ -1,7 +1,8 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
 import { usePayments } from "@/lib/hooks/usePayments"
 import type { Payment } from "@/lib/types"
@@ -47,6 +48,25 @@ export default function MonthlyPaymentsView({
 
   // Edit modal state (full payment edit)
   const [editPaymentId, setEditPaymentId] = useState<string | null>(null)
+
+  // Auto-open the payment-detail modal when arriving with ?payment=<id>.
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const consumedPaymentRef = useRef<string | null>(null)
+  useEffect(() => {
+    const target = searchParams.get("payment")
+    if (!target) return
+    if (consumedPaymentRef.current === target) return
+    if (isLoading) return
+    if (payments.some((p) => p._id?.toString() === target)) {
+      setEditPaymentId(target)
+    }
+    consumedPaymentRef.current = target
+    router.replace(`${pathname}?year=${year}&month=${month}`, {
+      scroll: false,
+    })
+  }, [payments, isLoading, searchParams, year, month, pathname, router])
 
   const handleRowClick = (paymentId: string) => {
     setEditPaymentId(paymentId)

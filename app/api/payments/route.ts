@@ -186,7 +186,8 @@ export async function PUT(request: NextRequest) {
       updateData.total = financials.total
       updateData.netAmount = financials.netAmount
       updateData.vatAmount = financials.vatAmount
-      updateData.surchargeAmount = financials.surchargeAmount
+      updateData.surchargeAmount =
+        surcharge > 0 ? financials.surchargeAmount : undefined
     }
 
     const updated = await payments.update(id, updateData)
@@ -199,7 +200,10 @@ export async function PUT(request: NextRequest) {
         success: true,
         total: updateData.total,
         vatAmount: updateData.vatAmount,
-        surchargeAmount: updateData.surchargeAmount,
+        surchargeAmount:
+          typeof updateData.surcharge === "number" && updateData.surcharge > 0
+            ? updateData.surchargeAmount
+            : undefined,
         netAmount: updateData.netAmount,
         vat: updateData.vat,
         surcharge:
