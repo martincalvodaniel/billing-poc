@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
 
     const id = await events.create({
       title: data.title,
-      description: data.description,
       year: data.year,
       month: data.month,
       day: data.day,

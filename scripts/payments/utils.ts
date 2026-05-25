@@ -37,6 +37,22 @@ export const CONCEPT_NAMES = [
   "Deployment",
 ]
 
+const PAYMENT_METHODS_SAMPLE = [
+  "cash",
+  "card",
+  "bank_transfer",
+  "direct_debit",
+  "other",
+] as const
+
+function randomPaymentMethod() {
+  return Math.random() < 0.7
+    ? PAYMENT_METHODS_SAMPLE[
+        Math.floor(Math.random() * PAYMENT_METHODS_SAMPLE.length)
+      ]
+    : undefined
+}
+
 /**
  * Generate a random number between min and max (inclusive)
  */
@@ -132,6 +148,7 @@ export function generateIncomes(year: number, month: number) {
       total,
       netAmount,
       vatAmount,
+      paymentMethod: randomPaymentMethod(),
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -164,6 +181,7 @@ export function generateOutcomes(year: number, month: number) {
       total,
       netAmount,
       vatAmount,
+      paymentMethod: randomPaymentMethod(),
       createdAt: new Date(),
       updatedAt: new Date(),
     }

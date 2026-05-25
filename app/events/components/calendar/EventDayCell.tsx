@@ -12,6 +12,7 @@ interface EventDayCellProps {
   events: Event[]
   ariaLabel: string
   onClick: () => void
+  onEventClick: (event: Event) => void
 }
 
 const TITLE_PREVIEW_LIMIT = 2
@@ -23,6 +24,7 @@ export default function EventDayCell({
   events,
   ariaLabel,
   onClick,
+  onEventClick,
 }: EventDayCellProps) {
   const dimmed = !inMonth
   const sortedEvents = useMemo(
@@ -34,11 +36,21 @@ export default function EventDayCell({
   const extra = Math.max(0, count - preview.length)
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    // biome-ignore lint/a11y/useSemanticElements: keep chip buttons as descendants; rendering a <button> here would nest interactive elements.
+    <div
+      role="button"
+      tabIndex={0}
       aria-label={ariaLabel}
-      className={`flex min-h-24 flex-col items-stretch gap-1 rounded-md border p-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 ${
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          if (event.key === " ") {
+            event.preventDefault()
+          }
+          onClick()
+        }
+      }}
+      className={`group relative flex min-h-24 cursor-pointer flex-col items-stretch gap-1 rounded-md border p-2 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 ${
         isToday
           ? "border-blue-500 ring-1 ring-blue-500 dark:border-blue-400 dark:ring-blue-400"
           : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
@@ -62,15 +74,20 @@ export default function EventDayCell({
       </span>
       <div className="mt-1 flex flex-1 flex-col gap-0.5">
         {preview.map((event) => {
-          const eventTitle = formatEventTimeAndTitle(event) //time ? `${time} - ${event.title}` : event.title
+          const eventTitle = formatEventTimeAndTitle(event)
           return (
-            <span
+            <button
               key={event._id ?? eventTitle}
-              className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-[11px] font-medium text-purple-800 dark:bg-purple-950/40 dark:text-purple-200"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEventClick(event)
+              }}
+              className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-left text-[11px] font-medium text-purple-800 hover:bg-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60"
               title={eventTitle}
             >
               {eventTitle}
-            </span>
+            </button>
           )
         })}
         {extra > 0 && (
@@ -79,6 +96,6 @@ export default function EventDayCell({
           </span>
         )}
       </div>
-    </button>
+    </div>
   )
 }

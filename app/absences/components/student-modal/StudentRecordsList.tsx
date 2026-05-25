@@ -1,5 +1,7 @@
 "use client"
 
+import { Badge } from "@/app/components/Badge"
+import { EmptyState } from "@/app/components/EmptyState"
 import type { Absence } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
 import { PART_OF_DAY_LABEL, TYPE_DOT_CLASS, TYPE_LABEL } from "../absencesUi"
@@ -32,11 +34,7 @@ export default function StudentRecordsList({
     groups ?? (records ? groupStudentRecords(records) : [])
 
   if (resolved.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        No records yet.
-      </p>
-    )
+    return <EmptyState>No records yet.</EmptyState>
   }
 
   return (
@@ -78,19 +76,14 @@ export default function StudentRecordsList({
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200">
+                              <Badge tone="neutral">
                                 <span
                                   aria-hidden="true"
-                                  className={`inline-block h-2 w-2 rounded-full ${TYPE_DOT_CLASS[record.type]}`}
+                                  className={`mr-1.5 inline-block h-2 w-2 rounded-full ${TYPE_DOT_CLASS[record.type]}`}
                                 />
                                 {TYPE_LABEL[record.type]}
-                              </span>
+                              </Badge>
                             </div>
-                            {record.comment && (
-                              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 break-words">
-                                {record.comment}
-                              </p>
-                            )}
                           </div>
                           <RecordRowActions
                             onEdit={() => onEdit(record)}

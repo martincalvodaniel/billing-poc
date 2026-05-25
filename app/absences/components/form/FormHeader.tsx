@@ -36,6 +36,7 @@ export default function FormHeader({
         <button
           type="submit"
           disabled={isSubmitting || !canSubmit}
+          aria-busy={isSubmitting}
           title={submitTooltip}
           aria-label={submitTooltip}
           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300"

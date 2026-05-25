@@ -8,7 +8,6 @@ export interface Absence {
   studentName: string
   date: string // YYYY-MM-DD
   partOfDay: PartOfDay
-  comment?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -18,7 +17,6 @@ export interface AbsenceFormData {
   studentName: string
   date: string
   partOfDay: PartOfDay
-  comment?: string
 }
 
 export interface AbsenceSummaryRow {

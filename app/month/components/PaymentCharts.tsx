@@ -1,5 +1,11 @@
+"use client"
+
+import dynamic from "next/dynamic"
 import { CHART_COLORS } from "@/lib/constants"
-import DonutChart from "../../components/DonutChart"
+
+const DonutChart = dynamic(() => import("../../components/DonutChart"), {
+  ssr: false,
+})
 
 export default function PaymentCharts({
   incomeByTag,

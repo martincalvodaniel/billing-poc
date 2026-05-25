@@ -14,6 +14,7 @@ interface EventsMonthCalendarProps {
   events: Event[]
   selectedDate: Date
   onDayClick: (dateKey: string) => void
+  onEventClick: (event: Event) => void
 }
 
 const WEEKDAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -22,6 +23,7 @@ export default function EventsMonthCalendar({
   events,
   selectedDate,
   onDayClick,
+  onEventClick,
 }: EventsMonthCalendarProps) {
   const grouped = useMemo(() => groupEventsByDate(events), [events])
   const todayKey = useMemo(() => toDateKey(new Date()), [])
@@ -54,6 +56,7 @@ export default function EventsMonthCalendar({
               events={dayEvents}
               ariaLabel={buildDayAriaLabel(cell.date, dayEvents.length)}
               onClick={() => onDayClick(cell.key)}
+              onEventClick={onEventClick}
             />
           )
         })}

@@ -1,7 +1,8 @@
 import type { ObjectId } from "mongodb"
 import type { PartOfDay } from "./domain/entities/absence"
+import type { PaymentMethod } from "./domain/entities/payment"
 
-export type { PartOfDay }
+export type { PartOfDay, PaymentMethod }
 
 export type PaymentType = "income" | "outcome"
 
@@ -36,6 +37,7 @@ export interface Payment {
   concepts: PaymentConcept[]
   vat: number
   surcharge?: number
+  discount?: number
   deliveryNoteRef?: string
   netAmount: number
   vatAmount: number
@@ -44,6 +46,7 @@ export interface Payment {
   invoice?: InvoiceMetadata // Generated invoice (for income payments)
   providerBillUrl?: string // Uploaded provider bill URL (for outcome payments)
   providerBillPathname?: string // Uploaded provider bill storage path
+  paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date
 }
@@ -54,17 +57,19 @@ export interface PaymentFormData {
   concepts: PaymentConcept[]
   vat: string
   surcharge?: string
+  discount?: string
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
+  paymentMethod?: PaymentMethod | ""
 }
 
 export interface Client {
   _id?: ObjectId
   clientType: ClientType
   name: string
-  taxId: string
-  address: string
+  taxId?: string
+  address?: string
   phone?: string
   email?: string
   createdAt: Date
@@ -74,8 +79,8 @@ export interface Client {
 export interface ClientFormData {
   clientType: ClientType
   name: string
-  taxId: string
-  address: string
+  taxId?: string
+  address?: string
   phone?: string
   email?: string
 }
@@ -110,7 +115,6 @@ export interface Absence {
   studentNameLower: string
   date: string
   partOfDay: PartOfDay
-  comment?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -120,7 +124,6 @@ export interface AbsenceFormData {
   studentName: string
   date: string
   partOfDay: PartOfDay
-  comment?: string
 }
 
 export interface EventAttendee {
@@ -133,7 +136,6 @@ export interface EventAttendee {
 export interface Event {
   _id?: ObjectId
   title: string
-  description?: string
   year?: number
   month?: number
   day?: number
@@ -151,7 +153,6 @@ export interface Event {
 
 export interface EventFormData {
   title: string
-  description?: string
   year?: string
   month?: string
   day?: string

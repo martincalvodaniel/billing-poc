@@ -6,6 +6,7 @@ import type {
 } from "../../domain/ports/absence-repository"
 import { getDatabase } from "../../mongodb"
 import type { Absence as MongoAbsence } from "../../types"
+import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
 
 export class DuplicateAbsenceError extends Error {
   readonly code = "duplicate_part_of_day" as const
@@ -35,7 +36,6 @@ function toDomain(doc: MongoAbsence): Absence {
     studentName: doc.studentName,
     date: doc.date,
     partOfDay: doc.partOfDay,
-    comment: doc.comment,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
@@ -100,19 +100,15 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   async create(absence: Omit<Absence, "_id">): Promise<string> {
     const col = await this.collection()
     const now = new Date()
-    // Preserve historical doc shape: empty/undefined comment is omitted from
-    // the inserted document (matches optional `comment?: string` entity).
-    const hasComment = absence.comment !== undefined && absence.comment !== ""
-    const doc: Omit<MongoAbsence, "_id"> = {
+    const doc = omitNullish({
       type: absence.type,
       studentName: absence.studentName,
       studentNameLower: absence.studentName.trim().toLowerCase(),
       date: absence.date,
       partOfDay: absence.partOfDay,
-      ...(hasComment ? { comment: absence.comment } : {}),
       createdAt: absence.createdAt ?? now,
       updatedAt: absence.updatedAt ?? now,
-    }
+    })
     try {
       const result = await col.insertOne(doc as MongoAbsence)
       return result.insertedId.toString()
@@ -128,36 +124,21 @@ export class MongoAbsenceRepository implements AbsenceRepository {
 
   async update(id: string, data: Partial<Absence>): Promise<boolean> {
     const col = await this.collection()
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    }
-    const unsetData: Record<string, ""> = {}
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
-    if (data.type !== undefined) updateData.type = data.type
+    if (data.type !== undefined) builder.set("type", data.type)
     if (data.studentName !== undefined) {
-      updateData.studentName = data.studentName
-      updateData.studentNameLower = data.studentName.trim().toLowerCase()
+      builder.set("studentName", data.studentName)
+      builder.set("studentNameLower", data.studentName.trim().toLowerCase())
     }
-    if (data.date !== undefined) updateData.date = data.date
-    if (data.partOfDay !== undefined) updateData.partOfDay = data.partOfDay
-    // Treat empty string as a request to clear the comment: $unset removes
-    // the field so the stored doc matches the optional `comment?: string`
-    // entity shape.
-    if (data.comment !== undefined) {
-      if (data.comment === "") {
-        unsetData.comment = ""
-      } else {
-        updateData.comment = data.comment
-      }
-    }
-
-    const updateOps: Record<string, unknown> = { $set: updateData }
-    if (Object.keys(unsetData).length > 0) {
-      updateOps.$unset = unsetData
-    }
+    if (data.date !== undefined) builder.set("date", data.date)
+    if (data.partOfDay !== undefined) builder.set("partOfDay", data.partOfDay)
 
     try {
-      const result = await col.updateOne({ _id: toObjectId(id) }, updateOps)
+      const result = await col.updateOne(
+        { _id: toObjectId(id) },
+        builder.build()
+      )
       return result.modifiedCount > 0
     } catch (err) {
       if (isDuplicateKeyError(err)) {

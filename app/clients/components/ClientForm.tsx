@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useState } from "react"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import type { Client, ClientFormData } from "@/lib/types"
 
 interface ClientFormProps {
@@ -49,14 +50,6 @@ export default function ClientForm({
       setError("Name is required")
       return
     }
-    if (!formData.taxId.trim()) {
-      setError("Tax ID is required")
-      return
-    }
-    if (!formData.address.trim()) {
-      setError("Address is required")
-      return
-    }
 
     setIsSubmitting(true)
     try {
@@ -70,11 +63,7 @@ export default function ClientForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner bordered>{error}</ErrorBanner>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -106,6 +95,9 @@ export default function ClientForm({
           {formData.clientType === "individual"
             ? "Name & Surname"
             : "Business Name"}
+          <span className="ml-0.5 text-red-600" aria-hidden="true">
+            *
+          </span>
         </label>
         <input
           type="text"
@@ -120,6 +112,7 @@ export default function ClientForm({
           }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
           required
+          aria-required="true"
           disabled={isSubmitting}
         />
       </div>
@@ -135,7 +128,7 @@ export default function ClientForm({
           type="text"
           id={`${id}-client-taxId`}
           name="taxId"
-          value={formData.taxId}
+          value={formData.taxId || ""}
           onChange={handleChange}
           placeholder={
             formData.clientType === "individual"
@@ -143,7 +136,6 @@ export default function ClientForm({
               : "E.g., A12345678"
           }
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
-          required
           disabled={isSubmitting}
         />
       </div>
@@ -153,17 +145,16 @@ export default function ClientForm({
           htmlFor={`${id}-client-address`}
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
-          Tax Address (with postal code and city)
+          Tax Address
         </label>
         <textarea
           id={`${id}-client-address`}
           name="address"
-          value={formData.address}
+          value={formData.address || ""}
           onChange={handleChange}
           placeholder="E.g., Calle Principal 123, 28001 Madrid"
           rows={3}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:ring-offset-zinc-900"
-          required
           disabled={isSubmitting}
         />
       </div>
@@ -220,6 +211,7 @@ export default function ClientForm({
         <button
           type="submit"
           disabled={isSubmitting}
+          aria-busy={isSubmitting}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-zinc-900"
         >
           {isSubmitting ? "Saving..." : client ? "Update" : "Create"} Client

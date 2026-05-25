@@ -59,11 +59,6 @@ export default function RecordSection({
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {record.studentName}
                 </p>
-                {record.comment && (
-                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 break-words">
-                    {record.comment}
-                  </p>
-                )}
               </div>
               <RecordRowActions
                 onEdit={() => onEdit(record)}

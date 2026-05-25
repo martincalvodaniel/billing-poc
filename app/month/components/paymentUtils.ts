@@ -73,3 +73,31 @@ export const validateSurcharge = (
   }
   return { isValid: true, error: null }
 }
+
+/**
+ * Validate discount amount (EUR). Must be non-negative and not exceed the
+ * concepts subtotal. Empty/whitespace is treated as 0 (no discount).
+ */
+export const validateDiscount = (
+  discount: string | undefined,
+  conceptsTotal: number
+): { isValid: boolean; error: string | null } => {
+  if (!discount || discount.trim() === "") {
+    return { isValid: true, error: null }
+  }
+
+  const discountNumber = parseFloat(discount)
+  if (Number.isNaN(discountNumber) || discountNumber < 0) {
+    return {
+      isValid: false,
+      error: "Discount must be a non-negative number",
+    }
+  }
+  if (discountNumber > conceptsTotal) {
+    return {
+      isValid: false,
+      error: "Discount cannot exceed the concepts total",
+    }
+  }
+  return { isValid: true, error: null }
+}

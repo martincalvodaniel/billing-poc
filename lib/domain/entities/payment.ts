@@ -1,5 +1,13 @@
 export type PaymentType = "income" | "outcome"
 
+export const PAYMENT_METHODS = ["cash", "card", "bank_transfer"] as const
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: "Cash",
+  card: "Card",
+  bank_transfer: "Bank transfer",
+}
+
 export type InvoiceSeries =
   | "Invoice"
   | "RectificativeInvoice"
@@ -29,6 +37,7 @@ export interface Payment {
   concepts: PaymentConcept[]
   vat: number
   surcharge?: number
+  discount?: number
   deliveryNoteRef?: string
   netAmount: number
   vatAmount: number
@@ -37,6 +46,7 @@ export interface Payment {
   invoice?: InvoiceMetadata
   providerBillUrl?: string
   providerBillPathname?: string
+  paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date
 }
@@ -47,7 +57,9 @@ export interface PaymentFormData {
   concepts: PaymentConcept[]
   vat: string
   surcharge?: string
+  discount?: string
   tag?: string
   clientId?: string
   deliveryNoteRef?: string
+  paymentMethod?: PaymentMethod | ""
 }

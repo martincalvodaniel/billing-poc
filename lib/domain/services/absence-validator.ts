@@ -9,11 +9,6 @@ const absenceBaseSchema = z.object({
     .max(80, "Student name must be 80 characters or fewer"),
   date: z.string().min(1, "Date is required"),
   partOfDay: z.enum(["morning", "evening"]),
-  comment: z
-    .string()
-    .trim()
-    .max(500, "Comment must be 500 characters or fewer")
-    .optional(),
 })
 
 export const createAbsenceSchema = absenceBaseSchema
@@ -30,11 +25,6 @@ export const updateAbsenceSchema = z
       .optional(),
     date: z.string().min(1, "Date cannot be empty").optional(),
     partOfDay: z.enum(["morning", "evening"]).optional(),
-    comment: z
-      .string()
-      .trim()
-      .max(500, "Comment must be 500 characters or fewer")
-      .optional(),
   })
   .refine(
     (data) => {

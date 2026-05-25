@@ -7,11 +7,6 @@ const baseFields = {
     .trim()
     .min(1, "Title is required")
     .max(200, "Title must be 200 characters or fewer"),
-  description: z
-    .string()
-    .trim()
-    .max(2000, "Description must be 2000 characters or fewer")
-    .optional(),
   year: z.coerce
     .number()
     .int()
@@ -106,11 +101,6 @@ export const updateEventSchema = applyDateRefinements(
         .trim()
         .min(1, "Title cannot be empty")
         .max(200, "Title must be 200 characters or fewer")
-        .optional(),
-      description: z
-        .string()
-        .trim()
-        .max(2000, "Description must be 2000 characters or fewer")
         .optional(),
       year: baseFields.year,
       month: baseFields.month,

@@ -1,7 +1,7 @@
 "use client"
 
 import AddButton from "@/app/components/AddButton"
-import Modal from "@/app/components/Modal"
+import { Modal } from "@/app/components/Modal"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatDate } from "@/lib/formatters"
 import EventsListTable from "./EventsListTable"
@@ -12,7 +12,6 @@ interface DayEventsModalProps {
   onClose: () => void
   onEdit: (event: Event) => void
   onDelete: (event: Event) => void
-  onOpenDetail: (event: Event) => void
   onAddEventForDay: (day: number) => void
   onGenerateAllPayments: (event: Event) => void
   pendingGenerateAllId?: string | null
@@ -24,7 +23,6 @@ export default function DayEventsModal({
   onClose,
   onEdit,
   onDelete,
-  onOpenDetail,
   onAddEventForDay,
   onGenerateAllPayments,
   pendingGenerateAllId,
@@ -40,8 +38,6 @@ export default function DayEventsModal({
       onClose={onClose}
       title={dateLabel}
       maxWidth="xl"
-      closeOnEscape
-      closeOnBackdropClick
       headerActions={
         <AddButton
           ariaLabel={`Add event on ${dateLabel}`}
@@ -53,7 +49,6 @@ export default function DayEventsModal({
         events={events}
         onEdit={onEdit}
         onDelete={onDelete}
-        onOpenDetail={onOpenDetail}
         onGenerateAllPayments={onGenerateAllPayments}
         pendingGenerateAllId={pendingGenerateAllId ?? null}
       />

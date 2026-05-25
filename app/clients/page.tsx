@@ -1,6 +1,8 @@
 "use client"
 
 import { useCallback, useState } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
+import { ErrorBanner } from "@/app/components/ErrorBanner"
 import PageLayout from "@/app/components/PageLayout"
 import { useCreateClient } from "@/lib/hooks/useClientMutations"
 import { useClients } from "@/lib/hooks/useClients"
@@ -73,11 +75,7 @@ export default function ClientsPage() {
 
   return (
     <PageLayout navigationSubtitle="Clients">
-      {errorMessage && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300">
-          {errorMessage}
-        </div>
-      )}
+      {errorMessage && <ErrorBanner bordered>{errorMessage}</ErrorBanner>}
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -107,9 +105,7 @@ export default function ClientsPage() {
       </div>
 
       {isLoading && clients.length === 0 ? (
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-          <p className="text-zinc-600 dark:text-zinc-400">Loading clients...</p>
-        </div>
+        <EmptyState variant="card">Loading clients...</EmptyState>
       ) : (
         <>
           <ClientList clients={clients} />

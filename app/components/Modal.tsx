@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useId } from "react"
+import { useEffect, useId, useRef } from "react"
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap"
 import CloseButton from "./CloseButton"
 
 interface ModalProps {
@@ -11,12 +12,9 @@ interface ModalProps {
   footer?: React.ReactNode
   headerActions?: React.ReactNode
   maxWidth?: "sm" | "md" | "lg" | "xl"
-  closeOnEscape?: boolean
-  closeOnEnter?: boolean
-  closeOnBackdropClick?: boolean
 }
 
-export default function Modal({
+export function Modal({
   isOpen,
   onClose,
   title,
@@ -24,28 +22,22 @@ export default function Modal({
   footer,
   headerActions,
   maxWidth = "md",
-  closeOnEscape = true,
-  closeOnEnter = false,
-  closeOnBackdropClick = true,
 }: ModalProps) {
   const id = useId()
-  // Handle ESC key and optional ENTER key
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useFocusTrap(dialogRef, isOpen)
+
   useEffect(() => {
     if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
       const modalElement = document.querySelector('[role="dialog"]')
       if (!modalElement) return
-
-      if (e.key === "Escape" && closeOnEscape) {
-        e.preventDefault()
-        e.stopPropagation()
-        onClose()
-      } else if (e.key === "Enter" && closeOnEnter) {
-        e.preventDefault()
-        e.stopPropagation()
-        onClose()
-      }
+      e.preventDefault()
+      e.stopPropagation()
+      onClose()
     }
 
     const timeoutId = setTimeout(() => {
@@ -56,7 +48,7 @@ export default function Modal({
       clearTimeout(timeoutId)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isOpen, onClose, closeOnEscape, closeOnEnter])
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -73,12 +65,13 @@ export default function Modal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       role="presentation"
       onClick={(e) => {
-        if (closeOnBackdropClick && e.target === e.currentTarget) {
+        if (e.target === e.currentTarget) {
           onClose()
         }
       }}
     >
       <div
+        ref={dialogRef}
         className={`${maxWidthClass} w-full max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900`}
         role="dialog"
         aria-labelledby={`${id}-modal-title`}
@@ -108,6 +101,52 @@ export default function Modal({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+interface ConfirmFooterProps {
+  onConfirm: () => void
+  onCancel: () => void
+  isPending?: boolean
+  confirmLabel?: string
+  pendingLabel?: string
+  cancelLabel?: string
+  variant?: "danger" | "primary"
+}
+
+export function ConfirmFooter({
+  onConfirm,
+  onCancel,
+  isPending = false,
+  confirmLabel = "Confirm",
+  pendingLabel = "Working…",
+  cancelLabel = "Cancel",
+  variant = "primary",
+}: ConfirmFooterProps) {
+  const confirmClass =
+    variant === "danger"
+      ? "flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800 dark:focus:ring-offset-zinc-900"
+      : "flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-zinc-900"
+  return (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={isPending}
+        className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+      >
+        {cancelLabel}
+      </button>
+      <button
+        type="button"
+        onClick={onConfirm}
+        disabled={isPending}
+        aria-busy={isPending}
+        className={confirmClass}
+      >
+        {isPending ? pendingLabel : confirmLabel}
+      </button>
     </div>
   )
 }

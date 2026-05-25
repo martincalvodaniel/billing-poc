@@ -13,16 +13,21 @@ import {
  * Custom hook managing payment form state and handlers
  * Reduces duplication between PaymentForm and PaymentDetailModal
  */
-export const usePaymentForm = (initialData?: PaymentFormData) => {
+export const usePaymentForm = (
+  initialData?: PaymentFormData,
+  initialDate?: string
+) => {
   const defaultFormData: PaymentFormData = {
-    date: new Date().toISOString().split("T")[0],
+    date: initialDate ?? new Date().toISOString().split("T")[0],
     concepts: [{ name: "", amount: 0, quantity: 1 }],
     vat: "21",
     surcharge: "",
+    discount: "",
     type: "income",
     tag: "",
     clientId: undefined,
     deliveryNoteRef: "",
+    paymentMethod: "",
   }
 
   const [formData, setFormData] = useState<PaymentFormData>(
@@ -159,6 +164,11 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     ).toFixed(2)
   }, [formData.vat, formData.surcharge, calculateTotal])
 
+  const calculateDiscount = useCallback(() => {
+    const discount = parseFloat(formData.discount || "0") || 0
+    return discount.toFixed(2)
+  }, [formData.discount])
+
   const resetForm = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
@@ -197,5 +207,6 @@ export const usePaymentForm = (initialData?: PaymentFormData) => {
     calculateVatAmount: calculateVatAmountValue,
     calculateSurchargeAmount: calculateSurchargeAmountValue,
     calculateNetAmount: calculateNetAmountValue,
+    calculateDiscount,
   }
 }

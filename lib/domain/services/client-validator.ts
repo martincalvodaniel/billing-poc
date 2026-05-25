@@ -10,14 +10,32 @@ export const createClientSchema = z.object({
     .transform((v) => v.trim()),
   taxId: z
     .string()
-    .min(1, "Tax ID is required")
-    .transform((v) => v.trim()),
+    .optional()
+    .transform((v) => {
+      const trimmed = v?.trim()
+      return trimmed ? trimmed : undefined
+    }),
   address: z
     .string()
-    .min(1, "Address is required")
-    .transform((v) => v.trim()),
-  phone: z.string().optional(),
-  email: z.string().optional(),
+    .optional()
+    .transform((v) => {
+      const trimmed = v?.trim()
+      return trimmed ? trimmed : undefined
+    }),
+  phone: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const trimmed = v?.trim()
+      return trimmed ? trimmed : undefined
+    }),
+  email: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const trimmed = v?.trim()
+      return trimmed ? trimmed : undefined
+    }),
 })
 
 export const updateClientSchema = z
@@ -35,16 +53,32 @@ export const updateClientSchema = z
       .optional(),
     taxId: z
       .string()
-      .min(1, "Tax ID cannot be empty")
-      .transform((v) => v.trim())
-      .optional(),
+      .optional()
+      .transform((v) => {
+        const trimmed = v?.trim()
+        return trimmed ? trimmed : undefined
+      }),
     address: z
       .string()
-      .min(1, "Address cannot be empty")
-      .transform((v) => v.trim())
-      .optional(),
-    phone: z.string().optional(),
-    email: z.string().optional(),
+      .optional()
+      .transform((v) => {
+        const trimmed = v?.trim()
+        return trimmed ? trimmed : undefined
+      }),
+    phone: z
+      .string()
+      .optional()
+      .transform((v) => {
+        const trimmed = v?.trim()
+        return trimmed ? trimmed : undefined
+      }),
+    email: z
+      .string()
+      .optional()
+      .transform((v) => {
+        const trimmed = v?.trim()
+        return trimmed ? trimmed : undefined
+      }),
   })
   .refine(
     (data) => {

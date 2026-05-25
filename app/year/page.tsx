@@ -1,15 +1,21 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useEffect, useMemo, useState } from "react"
 import { CHART_COLORS } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import { usePayments } from "@/lib/hooks/usePayments"
 import ChartsToggle from "../components/ChartsToggle"
-import DonutChart from "../components/DonutChart"
+import { EmptyState } from "../components/EmptyState"
+import { ErrorBanner } from "../components/ErrorBanner"
 import PageLayout from "../components/PageLayout"
 import SummaryCard from "../components/SummaryCard"
 import MonthlyBreakdown from "./components/MonthlyBreakdown"
 import YearPicker from "./components/YearPicker"
+
+const DonutChart = dynamic(() => import("../components/DonutChart"), {
+  ssr: false,
+})
 
 export default function YearSummaryPage() {
   const [selectedYear, setSelectedYear] = useState(() =>
@@ -148,9 +154,9 @@ export default function YearSummaryPage() {
         )}
 
         {payments.length === 0 ? (
-          <div className="rounded-md bg-zinc-50 p-6 text-center text-sm text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-300">
+          <EmptyState variant="card">
             No payments recorded in {selectedYear}.
-          </div>
+          </EmptyState>
         ) : (
           <div className="space-y-2">
             {showCharts && (
@@ -177,16 +183,7 @@ export default function YearSummaryPage() {
           </div>
         )}
 
-        {errorMessage && (
-          <div
-            className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
-            role="alert"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {errorMessage}
-          </div>
-        )}
+        {errorMessage && <ErrorBanner>{errorMessage}</ErrorBanner>}
 
         {isLoading && (
           <div className="space-y-4">

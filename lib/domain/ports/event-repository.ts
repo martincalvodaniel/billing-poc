@@ -18,7 +18,7 @@ export interface EventRepository {
   updateAttendee(
     eventId: string,
     clientId: string,
-    patch: Partial<Pick<EventAttendee, "seats" | "paymentId">>
+    patch: { seats?: number; paymentId?: string | null }
   ): Promise<boolean>
   removeAttendee(eventId: string, clientId: string): Promise<boolean>
 }

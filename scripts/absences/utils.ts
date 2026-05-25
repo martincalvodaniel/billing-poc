@@ -19,15 +19,6 @@ export const STUDENT_NAMES = [
   "Andrés Navarro",
 ]
 
-export const COMMENT_POOL = [
-  "Sick leave",
-  "Family appointment",
-  "Medical visit",
-  "Travelling",
-  "Personal matters",
-  "Recovered with extra session",
-]
-
 /**
  * Random integer in [min, max] inclusive.
  */
@@ -68,7 +59,6 @@ export interface GenerateAbsenceRecordsArgs {
  *
  * Distribution:
  * - ~60% absence / ~40% recovery
- * - ~30% include a random comment
  */
 export function generateAbsenceRecords({
   year,
@@ -105,9 +95,6 @@ export function generateAbsenceRecords({
       studentName,
       date,
       partOfDay,
-    }
-    if (Math.random() < 0.3) {
-      record.comment = randomPick(COMMENT_POOL)
     }
     records.push(record)
   }

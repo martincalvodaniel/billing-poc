@@ -6,6 +6,7 @@ import type {
 } from "../../domain/ports/payment-repository"
 import { getDatabase } from "../../mongodb"
 import type { Payment as MongoPayment } from "../../types"
+import { MongoUpdateBuilder, omitNullish, type UpdateOps } from "./mongo-utils"
 
 function toObjectId(id: string): ObjectId {
   return new ObjectId(id)
@@ -21,6 +22,7 @@ function toDomain(doc: MongoPayment): Payment {
     concepts: doc.concepts,
     vat: doc.vat,
     surcharge: doc.surcharge,
+    discount: doc.discount,
     deliveryNoteRef: doc.deliveryNoteRef,
     netAmount: doc.netAmount,
     vatAmount: doc.vatAmount,
@@ -29,9 +31,69 @@ function toDomain(doc: MongoPayment): Payment {
     invoice: doc.invoice,
     providerBillUrl: doc.providerBillUrl,
     providerBillPathname: doc.providerBillPathname,
+    paymentMethod: doc.paymentMethod,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
+}
+
+/**
+ * Pure builder for the Mongo update document used by
+ * `MongoPaymentRepository.update`. Extracted so it can be unit-tested
+ * without touching the driver. Honours the repo conventions: optional
+ * fields use `setOrUnset`, semantic-zero fields (`discount`) map 0 →
+ * `$unset`, and `updatedAt` is always refreshed.
+ */
+export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
+  const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
+
+  if (data.type !== undefined) builder.set("type", data.type)
+  if (data.date !== undefined) builder.set("date", data.date)
+  if (data.tag !== undefined) {
+    const trimmed = data.tag.trim()
+    builder.setOrUnset("tag", trimmed ? trimmed : undefined)
+  }
+  if (data.clientId !== undefined) {
+    builder.setOrUnset(
+      "clientId",
+      data.clientId ? toObjectId(data.clientId) : undefined
+    )
+  }
+  if (data.concepts !== undefined) builder.set("concepts", data.concepts)
+  if (data.vat !== undefined) builder.set("vat", data.vat)
+  if (data.surcharge !== undefined) builder.set("surcharge", data.surcharge)
+  if (data.discount !== undefined) {
+    // discount === 0 means "no discount" → remove the field entirely.
+    builder.setOrUnset(
+      "discount",
+      data.discount && data.discount > 0 ? data.discount : undefined
+    )
+  }
+  if (data.deliveryNoteRef !== undefined) {
+    const trimmed = data.deliveryNoteRef.trim()
+    builder.setOrUnset("deliveryNoteRef", trimmed ? trimmed : undefined)
+  }
+  if (data.total !== undefined) builder.set("total", data.total)
+  if (data.netAmount !== undefined) builder.set("netAmount", data.netAmount)
+  if (data.vatAmount !== undefined) builder.set("vatAmount", data.vatAmount)
+  if (data.surchargeAmount !== undefined) {
+    builder.set("surchargeAmount", data.surchargeAmount)
+  }
+  if (data.invoice !== undefined) builder.setOrUnset("invoice", data.invoice)
+  if (data.providerBillUrl !== undefined) {
+    builder.setOrUnset("providerBillUrl", data.providerBillUrl)
+  }
+  if (data.providerBillPathname !== undefined) {
+    builder.setOrUnset("providerBillPathname", data.providerBillPathname)
+  }
+  if (data.paymentMethod !== undefined) {
+    builder.setOrUnset(
+      "paymentMethod",
+      data.paymentMethod ? data.paymentMethod : undefined
+    )
+  }
+
+  return builder.build()
 }
 
 export class MongoPaymentRepository implements PaymentRepository {
@@ -76,63 +138,41 @@ export class MongoPaymentRepository implements PaymentRepository {
 
   async create(payment: Omit<Payment, "_id">): Promise<string> {
     const col = await this.collection()
-    const doc: Omit<MongoPayment, "_id"> = {
+    const tag = payment.tag?.trim() ? payment.tag.trim() : undefined
+    const deliveryNoteRef = payment.deliveryNoteRef?.trim()
+      ? payment.deliveryNoteRef.trim()
+      : undefined
+    const discount =
+      typeof payment.discount === "number" && payment.discount > 0
+        ? payment.discount
+        : undefined
+    const doc = omitNullish({
       type: payment.type,
       date: payment.date,
-      tag: payment.tag,
+      tag,
       clientId: payment.clientId ? toObjectId(payment.clientId) : undefined,
       concepts: payment.concepts,
       vat: payment.vat,
       surcharge: payment.surcharge,
-      deliveryNoteRef: payment.deliveryNoteRef,
+      discount,
+      deliveryNoteRef,
       netAmount: payment.netAmount,
       vatAmount: payment.vatAmount,
       surchargeAmount: payment.surchargeAmount,
       total: payment.total,
+      paymentMethod: payment.paymentMethod,
       createdAt: payment.createdAt,
       updatedAt: payment.updatedAt,
-    }
+    })
     const result = await col.insertOne(doc as MongoPayment)
     return result.insertedId.toString()
   }
 
   async update(id: string, data: Partial<Payment>): Promise<boolean> {
     const col = await this.collection()
-    const updateData: Record<string, unknown> = {
-      updatedAt: new Date(),
-    }
-
-    if (data.type !== undefined) updateData.type = data.type
-    if (data.date !== undefined) updateData.date = data.date
-    if (data.tag !== undefined) updateData.tag = data.tag || null
-    if (data.clientId !== undefined) {
-      updateData.clientId = data.clientId ? toObjectId(data.clientId) : null
-    }
-    if (data.concepts !== undefined) updateData.concepts = data.concepts
-    if (data.vat !== undefined) updateData.vat = data.vat
-    if (data.surcharge !== undefined) {
-      updateData.surcharge = data.surcharge || null
-    }
-    if (data.deliveryNoteRef !== undefined) {
-      updateData.deliveryNoteRef = data.deliveryNoteRef
-    }
-    if (data.total !== undefined) updateData.total = data.total
-    if (data.netAmount !== undefined) updateData.netAmount = data.netAmount
-    if (data.vatAmount !== undefined) updateData.vatAmount = data.vatAmount
-    if (data.surchargeAmount !== undefined) {
-      updateData.surchargeAmount = data.surchargeAmount
-    }
-    if (data.invoice !== undefined) updateData.invoice = data.invoice
-    if (data.providerBillUrl !== undefined) {
-      updateData.providerBillUrl = data.providerBillUrl
-    }
-    if (data.providerBillPathname !== undefined) {
-      updateData.providerBillPathname = data.providerBillPathname
-    }
-
     const result = await col.updateOne(
       { _id: toObjectId(id) },
-      { $set: updateData }
+      buildPaymentUpdateOps(data)
     )
     return result.matchedCount > 0
   }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
 import type { AbsenceSummaryRow } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
 
@@ -153,11 +154,10 @@ export default function AbsencesSummaryTable({
           <tbody>
             {displayed.length === 0 ? (
               <tr className="bg-white dark:bg-zinc-900">
-                <td
-                  colSpan={COLUMNS.length}
-                  className="px-6 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400"
-                >
-                  {trimmedFilter === "" ? "No students yet" : "No matches"}
+                <td colSpan={COLUMNS.length} className="px-6 py-8">
+                  <EmptyState>
+                    {trimmedFilter === "" ? "No students yet" : "No matches"}
+                  </EmptyState>
                 </td>
               </tr>
             ) : (

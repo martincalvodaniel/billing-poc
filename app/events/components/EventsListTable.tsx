@@ -1,6 +1,10 @@
 "use client"
 
 import { useMemo } from "react"
+import { EmptyState } from "@/app/components/EmptyState"
+import { IconButton } from "@/app/components/IconButton"
+import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatCurrency } from "@/lib/formatters"
 import {
@@ -14,7 +18,6 @@ interface EventsListTableProps {
   events: Event[]
   onEdit: (event: Event) => void
   onDelete: (event: Event) => void
-  onOpenDetail: (event: Event) => void
   onGenerateAllPayments: (event: Event) => void
   pendingGenerateAllId?: string | null
 }
@@ -23,7 +26,6 @@ export default function EventsListTable({
   events,
   onEdit,
   onDelete,
-  onOpenDetail,
   onGenerateAllPayments,
   pendingGenerateAllId,
 }: EventsListTableProps) {
@@ -34,10 +36,10 @@ export default function EventsListTable({
 
   if (sorted.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 text-center text-sm text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+      <EmptyState variant="card" className="bg-white dark:bg-zinc-900">
         No events yet. Click <span className="font-medium">New event</span> to
         create one.
-      </div>
+      </EmptyState>
     )
   }
 
@@ -47,13 +49,11 @@ export default function EventsListTable({
         <thead className="bg-zinc-50 dark:bg-zinc-800/50">
           <tr>
             <Th>Title</Th>
-            <Th>Date / Time</Th>
+            <Th>Date & Time</Th>
             <Th>Duration</Th>
-            <Th>Attendees</Th>
-            <Th>Max</Th>
-            <Th>Price / seat (gross)</Th>
-            <Th>VAT rate</Th>
-            <Th align="right">Actions</Th>
+            <Th>Occupancy</Th>
+            <Th>Price</Th>
+            <th />
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -61,24 +61,30 @@ export default function EventsListTable({
             const seats = totalSeats(event.attendees)
             const eventId = event._id ?? event.title
             const generatingAll = pendingGenerateAllId === event._id
+            const handleRowKeyDown = (
+              e: React.KeyboardEvent<HTMLTableRowElement>
+            ) => {
+              if (e.target !== e.currentTarget) return
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                onEdit(event)
+              }
+            }
             return (
+              // biome-ignore lint/a11y/useSemanticElements: a <tr> cannot be a <button>; role="button" is the accessible pattern for clickable rows
               <tr
                 key={eventId}
-                className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+                onClick={() => onEdit(event)}
+                onKeyDown={handleRowKeyDown}
+                role="button"
+                tabIndex={0}
+                aria-label={`Edit event ${event.title}`}
+                className="cursor-pointer hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:hover:bg-zinc-800/40"
               >
                 <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    onClick={() => onOpenDetail(event)}
-                    className="text-left font-medium text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300"
-                  >
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
                     {event.title}
-                  </button>
-                  {event.description && (
-                    <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {event.description}
-                    </p>
-                  )}
+                  </span>
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
                   {formatEventDateTime(event)}
@@ -87,44 +93,31 @@ export default function EventsListTable({
                   {formatDuration(event.durationMinutes)}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {event.attendees.length} client
-                  {event.attendees.length === 1 ? "" : "s"} / {seats} seat
-                  {seats === 1 ? "" : "s"}
-                </td>
-                <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {event.maxAttendees ?? "—"}
+                  {seats} / {event.maxAttendees ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
                   {formatCurrency(event.pricePerSeat)}
                 </td>
-                <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {event.vatRate}%
-                </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onEdit(event)}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
+                    <IconButton
+                      variant="success"
+                      stopPropagation
+                      isPending={generatingAll}
+                      disabled={event.attendees.length === 0}
                       onClick={() => onGenerateAllPayments(event)}
-                      disabled={generatingAll || event.attendees.length === 0}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                      ariaLabel={`Generate payments for ${event.title}`}
                     >
-                      {generatingAll ? "Generating…" : "Generate payments"}
-                    </button>
-                    <button
-                      type="button"
+                      <GeneratePaymentsIcon />
+                    </IconButton>
+                    <IconButton
+                      variant="danger"
+                      stopPropagation
                       onClick={() => onDelete(event)}
-                      aria-label={`Delete event ${event.title}`}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30"
+                      ariaLabel={`Delete event ${event.title}`}
                     >
-                      Delete
-                    </button>
+                      <TrashIcon />
+                    </IconButton>
                   </div>
                 </td>
               </tr>

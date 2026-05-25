@@ -20,15 +20,6 @@ describe("createAbsenceSchema", () => {
     expect(result.success).toBe(true)
   })
 
-  test("accepts valid recovery with comment", () => {
-    const result = createAbsenceSchema.safeParse({
-      ...valid,
-      type: "recovery",
-      comment: "Made up Tuesday",
-    })
-    expect(result.success).toBe(true)
-  })
-
   test("trims studentName", () => {
     const result = createAbsenceSchema.safeParse({
       ...valid,
@@ -72,14 +63,6 @@ describe("createAbsenceSchema", () => {
 
   test("rejects missing date", () => {
     const result = createAbsenceSchema.safeParse({ ...valid, date: "" })
-    expect(result.success).toBe(false)
-  })
-
-  test("rejects comment over 500 chars", () => {
-    const result = createAbsenceSchema.safeParse({
-      ...valid,
-      comment: "x".repeat(501),
-    })
     expect(result.success).toBe(false)
   })
 
@@ -163,28 +146,6 @@ describe("updateAbsenceSchema", () => {
       partOfDay: "afternoon",
     })
     expect(result.success).toBe(false)
-  })
-
-  test("accepts empty comment (clearing existing comment)", () => {
-    const result = updateAbsenceSchema.safeParse({
-      id: "abc",
-      comment: "",
-    })
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.comment).toBe("")
-    }
-  })
-
-  test("accepts whitespace-only comment as empty (clears comment)", () => {
-    const result = updateAbsenceSchema.safeParse({
-      id: "abc",
-      comment: "   ",
-    })
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.comment).toBe("")
-    }
   })
 })
 

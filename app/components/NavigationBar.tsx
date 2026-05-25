@@ -3,19 +3,32 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 import { signOut, useSession } from "@/lib/auth-client"
+import { useEscapeKey } from "@/lib/hooks/useEscapeKey"
+import MobileMenuOverlay, { type NavItem } from "./MobileMenuOverlay"
 
 interface NavigationBarProps {
   subtitle: string
 }
+
+const NAV_ITEMS: readonly NavItem[] = [
+  {
+    href: "/",
+    label: "Monthly Overview",
+    matches: (p) => p === "/" || p === "/month",
+  },
+  { href: "/year", label: "Yearly Overview", matches: (p) => p === "/year" },
+  { href: "/absences", label: "Absences", matches: (p) => p === "/absences" },
+  { href: "/events", label: "Events", matches: (p) => p === "/events" },
+  { href: "/clients", label: "Clients", matches: (p) => p === "/clients" },
+]
 
 export default function NavigationBar({ subtitle }: NavigationBarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
 
   const handleSignOut = useCallback(() => {
     signOut({
@@ -35,28 +48,10 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
     return `${base} ${isActive ? active : inactive}`
   }
 
-  const isMonthlyActive = pathname === "/" || pathname === "/month"
-  const isYearActive = pathname === "/year"
-  const isAbsencesActive = pathname === "/absences"
-  const isEventsActive = pathname === "/events"
-  const isClientsActive = pathname === "/clients"
-
   const closeMenu = useCallback(() => setMenuOpen(false), [])
 
-  // Close on route change
-  useEffect(() => {
-    setMenuOpen(false)
-  }, [])
-
-  // Close on Escape
-  useEffect(() => {
-    if (!menuOpen) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMenu()
-    }
-    document.addEventListener("keydown", handleKey)
-    return () => document.removeEventListener("keydown", handleKey)
-  }, [menuOpen, closeMenu])
+  // Close on Escape (when the mobile menu is open)
+  useEscapeKey(closeMenu, menuOpen)
 
   return (
     <>
@@ -72,41 +67,19 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
 
         {/* Desktop nav links */}
         <div className="hidden items-center gap-2 sm:flex">
-          <Link
-            href="/"
-            className={buildLinkClass(isMonthlyActive)}
-            aria-current={isMonthlyActive ? "page" : undefined}
-          >
-            Monthly Overview
-          </Link>
-          <Link
-            href="/year"
-            className={buildLinkClass(isYearActive)}
-            aria-current={isYearActive ? "page" : undefined}
-          >
-            Yearly Overview
-          </Link>
-          <Link
-            href="/absences"
-            className={buildLinkClass(isAbsencesActive)}
-            aria-current={isAbsencesActive ? "page" : undefined}
-          >
-            Absences
-          </Link>
-          <Link
-            href="/events"
-            className={buildLinkClass(isEventsActive)}
-            aria-current={isEventsActive ? "page" : undefined}
-          >
-            Events
-          </Link>
-          <Link
-            href="/clients"
-            className={buildLinkClass(isClientsActive)}
-            aria-current={isClientsActive ? "page" : undefined}
-          >
-            Clients
-          </Link>
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.matches(pathname)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={buildLinkClass(isActive)}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
           {session?.user && (
             <>
               <div className="mx-1 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
@@ -155,122 +128,15 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
         </button>
       </nav>
 
-      {/* Mobile sidebar overlay */}
       {menuOpen && (
-        <div ref={overlayRef} className="fixed inset-0 z-50 sm:hidden">
-          {/* Backdrop */}
-          <button
-            type="button"
-            onClick={closeMenu}
-            aria-label="Close navigation menu"
-            className="absolute inset-0 bg-black/50"
-          />
-
-          {/* Sidebar panel */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-            className="absolute bottom-0 right-0 top-0 w-64 bg-white p-6 shadow-xl dark:bg-zinc-900"
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                Billing
-              </p>
-              <button
-                type="button"
-                onClick={closeMenu}
-                aria-label="Close navigation menu"
-                className="min-h-11 min-w-11 rounded-md p-2 text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              <Link
-                href="/"
-                className={buildLinkClass(isMonthlyActive)}
-                aria-current={isMonthlyActive ? "page" : undefined}
-              >
-                Monthly Overview
-              </Link>
-              <Link
-                href="/year"
-                className={buildLinkClass(isYearActive)}
-                aria-current={isYearActive ? "page" : undefined}
-              >
-                Yearly Overview
-              </Link>
-              <Link
-                href="/absences"
-                className={buildLinkClass(isAbsencesActive)}
-                aria-current={isAbsencesActive ? "page" : undefined}
-              >
-                Absences
-              </Link>
-              <Link
-                href="/events"
-                className={buildLinkClass(isEventsActive)}
-                aria-current={isEventsActive ? "page" : undefined}
-              >
-                Events
-              </Link>
-              <Link
-                href="/clients"
-                className={buildLinkClass(isClientsActive)}
-                aria-current={isClientsActive ? "page" : undefined}
-              >
-                Clients
-              </Link>
-            </div>
-
-            {session?.user && (
-              <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-                <div className="mb-3 flex items-center gap-3">
-                  {session.user.image && (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name ?? "User avatar"}
-                      width={32}
-                      height={32}
-                      className="h-8 w-8 rounded-full"
-                      referrerPolicy="no-referrer"
-                    />
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {session.user.name}
-                    </p>
-                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                      {session.user.email}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-950"
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <MobileMenuOverlay
+          items={NAV_ITEMS}
+          pathname={pathname}
+          session={session}
+          buildLinkClass={buildLinkClass}
+          onClose={closeMenu}
+          onSignOut={handleSignOut}
+        />
       )}
     </>
   )

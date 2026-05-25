@@ -1,5 +1,6 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useMemo, useState } from "react"
 import AddButton from "@/app/components/AddButton"
 import PageLayout from "@/app/components/PageLayout"
@@ -14,39 +15,25 @@ import {
   useUpdateEvent,
 } from "@/lib/hooks/useEventMutations"
 import { useEvents } from "@/lib/hooks/useEvents"
-import { FetchError } from "@/lib/swr-fetcher"
-import DayEventsModal from "./DayEventsModal"
-import EventFormModal, { type EventFormValues } from "./EventFormModal"
 import EventsListTable from "./EventsListTable"
 import EventsMonthCalendar from "./EventsMonthCalendar"
+import type { EventFormValues } from "./eventFormModal-utils"
+import {
+  type EventsFormState,
+  extractEventErrorMessage,
+  toOptionalNumber,
+  toRequiredNumber,
+} from "./eventsPageContent-utils"
 
-function toOptionalNumber(value: string): number | undefined {
-  const trimmed = value.trim()
-  if (trimmed.length === 0) return undefined
-  const n = Number(trimmed)
-  return Number.isFinite(n) ? n : undefined
-}
-
-function toRequiredNumber(value: string): number {
-  const n = Number(value.trim())
-  return Number.isFinite(n) ? n : 0
-}
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof FetchError) {
-    const info = error.info as { error?: string } | null
-    if (info && typeof info.error === "string") return info.error
-    return error.message
-  }
-  if (error instanceof Error) return error.message
-  return fallback
-}
-
-interface FormState {
-  open: boolean
-  mode: "create" | "edit"
-  event?: Event
-}
+const DayEventsModal = dynamic(() => import("./DayEventsModal"), {
+  ssr: false,
+})
+const EditEventModal = dynamic(() => import("./EditEventModal"), {
+  ssr: false,
+})
+const NewEventModal = dynamic(() => import("./NewEventModal"), {
+  ssr: false,
+})
 
 export default function EventsPageContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
@@ -54,7 +41,7 @@ export default function EventsPageContent() {
     return new Date(today.getFullYear(), today.getMonth(), 1)
   })
   const [showCalendar, setShowCalendar] = useState(false)
-  const [formState, setFormState] = useState<FormState>({
+  const [formState, setFormState] = useState<EventsFormState>({
     open: false,
     mode: "create",
   })
@@ -97,6 +84,15 @@ export default function EventsPageContent() {
     return events.filter((e) => e.date === dayModalKey)
   }, [events, dayModalKey])
 
+  const editEventSnapshot =
+    formState.mode === "edit" ? formState.event : undefined
+  const liveEditEvent = useMemo<Event | undefined>(() => {
+    if (!editEventSnapshot?._id) return editEventSnapshot
+    return (
+      events.find((e) => e._id === editEventSnapshot._id) ?? editEventSnapshot
+    )
+  }, [events, editEventSnapshot])
+
   const openCreate = (prefill?: number) => {
     setFormError(null)
     setPrefillDay(prefill ?? null)
@@ -117,7 +113,7 @@ export default function EventsPageContent() {
       year: String(selectedDate.getFullYear()),
       month: String(selectedDate.getMonth() + 1),
       day: prefillDay ? String(prefillDay) : "",
-      durationMinutes: "120",
+      durationMinutes: "180",
       maxAttendees: "10",
       vatRate: "21",
     }),
@@ -131,7 +127,6 @@ export default function EventsPageContent() {
         await updateMutation.trigger({
           id: formState.event._id,
           title: values.title.trim(),
-          description: values.description.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
@@ -146,7 +141,6 @@ export default function EventsPageContent() {
       } else {
         await createMutation.trigger({
           title: values.title.trim(),
-          description: values.description.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
@@ -161,7 +155,7 @@ export default function EventsPageContent() {
       }
       closeForm()
     } catch (error) {
-      setFormError(extractErrorMessage(error, "Failed to save event"))
+      setFormError(extractEventErrorMessage(error, "Failed to save event"))
     }
   }
 
@@ -175,7 +169,7 @@ export default function EventsPageContent() {
       await deleteMutation.trigger({ id: event._id })
       setToast("Event deleted")
     } catch (error) {
-      setToast(extractErrorMessage(error, "Failed to delete event"))
+      setToast(extractEventErrorMessage(error, "Failed to delete event"))
     }
   }
 
@@ -188,7 +182,7 @@ export default function EventsPageContent() {
         `${result.created.length} created, ${result.skipped.length} skipped`
       )
     } catch (error) {
-      setToast(extractErrorMessage(error, "Failed to generate payments"))
+      setToast(extractEventErrorMessage(error, "Failed to generate payments"))
     } finally {
       setPendingGenerateAllId(null)
     }
@@ -235,29 +229,38 @@ export default function EventsPageContent() {
           events={events}
           selectedDate={selectedDate}
           onDayClick={setDayModalKey}
+          onEventClick={openEdit}
         />
         <EventsListTable
           events={events}
           onEdit={openEdit}
           onDelete={handleDelete}
-          onOpenDetail={openEdit}
           onGenerateAllPayments={handleGenerateAllPayments}
           pendingGenerateAllId={pendingGenerateAllId}
         />
       </div>
 
-      <EventFormModal
-        mode={formState.mode}
-        event={formState.event}
-        isOpen={formState.open}
-        onClose={closeForm}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        errorMessage={formError}
-        defaults={formDefaults}
-        onAttendeeSuccess={(msg) => setToast(msg)}
-        onAttendeeError={(msg) => setToast(msg)}
-      />
+      {formState.mode === "edit" && formState.event && liveEditEvent ? (
+        <EditEventModal
+          event={liveEditEvent}
+          isOpen={formState.open}
+          onClose={closeForm}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          errorMessage={formError}
+          onAttendeeSuccess={(msg) => setToast(msg)}
+          onAttendeeError={(msg) => setToast(msg)}
+        />
+      ) : (
+        <NewEventModal
+          isOpen={formState.open}
+          onClose={closeForm}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          errorMessage={formError}
+          defaults={formDefaults}
+        />
+      )}
 
       {dayModalKey && (
         <DayEventsModal
@@ -270,10 +273,6 @@ export default function EventsPageContent() {
           }}
           onDelete={(e) => {
             void handleDelete(e)
-          }}
-          onOpenDetail={(e) => {
-            setDayModalKey(null)
-            openEdit(e)
           }}
           onAddEventForDay={(day) => {
             setDayModalKey(null)

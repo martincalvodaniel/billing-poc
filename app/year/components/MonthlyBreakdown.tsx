@@ -56,6 +56,7 @@ export default function MonthlyBreakdown({
             <Link
               key={month.monthIndex}
               href={`/month?month=${month.monthIndex + 1}&year=${selectedYear}`}
+              aria-label={`View ${monthLabel} ${selectedYear}, net ${formatCurrency(month.net)}`}
               className="block rounded-lg border border-zinc-200 p-3 transition hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-blue-700"
             >
               <div className="flex items-center justify-between">

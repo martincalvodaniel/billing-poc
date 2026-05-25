@@ -13,7 +13,6 @@ export interface CreateAbsenceInput {
   studentName: string
   date: string
   partOfDay: PartOfDay
-  comment?: string
 }
 
 export interface UpdateAbsenceInput {
@@ -22,7 +21,6 @@ export interface UpdateAbsenceInput {
   studentName?: string
   date?: string
   partOfDay?: PartOfDay
-  comment?: string
 }
 
 export type DeleteAbsenceInput = { id: string } | { studentName: string }

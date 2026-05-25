@@ -180,14 +180,6 @@ describe("createEventSchema", () => {
     })
     expect(result.success).toBe(false)
   })
-
-  test("rejects description over 2000 chars", () => {
-    const result = createEventSchema.safeParse({
-      ...valid,
-      description: "a".repeat(2001),
-    })
-    expect(result.success).toBe(false)
-  })
 })
 
 describe("updateEventSchema", () => {

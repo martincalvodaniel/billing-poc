@@ -1,15 +1,22 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import Modal from "@/app/components/Modal"
+import { EmptyState } from "@/app/components/EmptyState"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
 import type { Absence, AbsenceFormData } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
-import AbsenceForm from "./AbsenceForm"
+import {
+  AbsenceForm,
+  DateField,
+  FieldsRow,
+  PartOfDayField,
+  TypeField,
+} from "./AbsenceForm"
 import useAbsenceMutationHandlers from "./hooks/useAbsenceMutationHandlers"
 import useInlineFormController from "./hooks/useInlineFormController"
 import useToast from "./hooks/useToast"
-import { TrashIcon } from "./icons"
 import AddRecordButton from "./shared/AddRecordButton"
 import ConfirmDeleteModal from "./shared/ConfirmDeleteModal"
 import { groupStudentRecords } from "./student-modal/groupStudentRecords"
@@ -115,14 +122,7 @@ export default function StudentDetailModal({
     <>
       {toastMessage && <Toast message={toastMessage} onClose={clearToast} />}
 
-      <Modal
-        isOpen
-        onClose={onClose}
-        title={studentName}
-        maxWidth="lg"
-        closeOnEscape
-        closeOnBackdropClick
-      >
+      <Modal isOpen onClose={onClose} title={studentName} maxWidth="lg">
         <div className="space-y-6">
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -149,15 +149,13 @@ export default function StudentDetailModal({
                     className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                   >
                     <TrashIcon />
-                    Delete all
+                    All
                   </button>
                 )}
               </div>
             </div>
             {groupedRecords.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No records yet.
-              </p>
+              <EmptyState>No records yet.</EmptyState>
             ) : (
               <StudentRecordsList
                 groups={groupedRecords}
@@ -197,7 +195,6 @@ export default function StudentDetailModal({
                   formState.mode === "edit" ? "Save changes" : "Add record"
                 }
                 initialStudentName={studentName}
-                hideStudentName
                 initial={
                   formState.mode === "edit" ? formState.target : undefined
                 }
@@ -206,7 +203,13 @@ export default function StudentDetailModal({
                 onCancel={handleCloseEditForm}
                 errorMessage={formError}
                 shakeKey={shakeKey}
-              />
+              >
+                <FieldsRow columns={1}>
+                  <DateField />
+                </FieldsRow>
+                <TypeField />
+                <PartOfDayField />
+              </AbsenceForm>
             </div>
           )}
         </div>

@@ -1,102 +1,20 @@
-import { type Filter, ObjectId } from "mongodb"
 import type { Event, EventAttendee } from "../../domain/entities/event"
 import type {
   EventFilter,
   EventRepository,
 } from "../../domain/ports/event-repository"
 import { getDatabase } from "../../mongodb"
-import type {
-  Event as MongoEvent,
-  EventAttendee as MongoEventAttendee,
-} from "../../types"
+import type { Event as MongoEvent } from "../../types"
+import {
+  attendeeToMongo,
+  buildEventListQuery,
+  isValidObjectId,
+  toDomain,
+  toObjectId,
+} from "./mongo-event-repository-helpers"
+import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
 
-function toObjectId(id: string): ObjectId {
-  return new ObjectId(id)
-}
-
-function isValidObjectId(id: string): boolean {
-  return ObjectId.isValid(id)
-}
-
-function attendeeToDomain(a: MongoEventAttendee): EventAttendee {
-  return {
-    clientId: a.clientId.toString(),
-    seats: a.seats,
-    paymentId: a.paymentId?.toString(),
-    addedAt: a.addedAt,
-  }
-}
-
-function attendeeToMongo(a: EventAttendee): MongoEventAttendee {
-  return {
-    clientId: toObjectId(a.clientId),
-    seats: a.seats,
-    paymentId: a.paymentId ? toObjectId(a.paymentId) : undefined,
-    addedAt: a.addedAt,
-  }
-}
-
-// Migration note: documents predating iteration 260514-1802 stored
-// `netAmount` (per-seat NET euros) and `vatAmount` (per-seat absolute VAT
-// euros). They now store `pricePerSeat` (gross euros/seat, VAT included)
-// and `vatRate` (percentage). Legacy documents are NOT auto-migrated; see
-// the iteration plan §3.4 for the one-off Mongo shell update.
-function toDomain(doc: MongoEvent): Event {
-  return {
-    _id: doc._id?.toString(),
-    title: doc.title,
-    description: doc.description,
-    year: doc.year,
-    month: doc.month,
-    day: doc.day,
-    hour: doc.hour,
-    minute: doc.minute,
-    date: doc.date,
-    durationMinutes: doc.durationMinutes,
-    maxAttendees: doc.maxAttendees,
-    pricePerSeat: doc.pricePerSeat,
-    vatRate: doc.vatRate,
-    attendees: (doc.attendees ?? []).map(attendeeToDomain),
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  }
-}
-
-function pad2(n: number): string {
-  return n.toString().padStart(2, "0")
-}
-
-function lastDayOfMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate()
-}
-
-export function buildEventListQuery(filter: EventFilter): Filter<MongoEvent> {
-  if (filter.year && filter.month) {
-    const last = lastDayOfMonth(filter.year, filter.month)
-    const start = `${filter.year}-${pad2(filter.month)}-01`
-    const end = `${filter.year}-${pad2(filter.month)}-${pad2(last)}`
-    // `day: null` matches both BSON null and missing field.
-    const query: Record<string, unknown> = {
-      $or: [
-        { date: { $gte: start, $lte: end } },
-        { year: filter.year, month: filter.month, day: null },
-      ],
-    }
-    return query as Filter<MongoEvent>
-  }
-  if (filter.year) {
-    const start = `${filter.year}-01-01`
-    const end = `${filter.year}-12-31`
-    const query: Record<string, unknown> = {
-      $or: [
-        { date: { $gte: start, $lte: end } },
-        { year: filter.year, date: null },
-      ],
-    }
-    return query as Filter<MongoEvent>
-  }
-  return {}
-}
+export { buildEventListQuery } from "./mongo-event-repository-helpers"
 
 export class MongoEventRepository implements EventRepository {
   private async collection() {
@@ -130,9 +48,8 @@ export class MongoEventRepository implements EventRepository {
 
   async create(event: Omit<Event, "_id">): Promise<string> {
     const col = await this.collection()
-    const doc: Omit<MongoEvent, "_id"> = {
+    const doc = omitNullish({
       title: event.title,
-      description: event.description,
       year: event.year,
       month: event.month,
       day: event.day,
@@ -146,7 +63,7 @@ export class MongoEventRepository implements EventRepository {
       attendees: (event.attendees ?? []).map(attendeeToMongo),
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
-    }
+    })
     const result = await col.insertOne(doc as MongoEvent)
     return result.insertedId.toString()
   }
@@ -165,46 +82,27 @@ export class MongoEventRepository implements EventRepository {
   ): Promise<boolean> {
     if (!isValidObjectId(id)) return false
     const col = await this.collection()
-    const setData: Record<string, unknown> = {
-      updatedAt: new Date(),
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
+
+    if (data.title !== undefined) builder.set("title", data.title)
+    if (data.year !== undefined) builder.setOrUnset("year", data.year)
+    if (data.month !== undefined) builder.setOrUnset("month", data.month)
+    if (data.day !== undefined) builder.setOrUnset("day", data.day)
+    if (data.hour !== undefined) builder.setOrUnset("hour", data.hour)
+    if (data.minute !== undefined) builder.setOrUnset("minute", data.minute)
+    if (data.date !== undefined) builder.setOrUnset("date", data.date)
+    if (data.durationMinutes !== undefined) {
+      builder.setOrUnset("durationMinutes", data.durationMinutes)
     }
-    const unsetData: Record<string, ""> = {}
-
-    const setOrUnset = (
-      key: string,
-      value: unknown,
-      treatEmptyStringAsUnset = false
-    ) => {
-      if (value === undefined) return
-      if (value === null) {
-        unsetData[key] = ""
-      } else if (treatEmptyStringAsUnset && value === "") {
-        unsetData[key] = ""
-      } else {
-        setData[key] = value
-      }
+    if (data.maxAttendees !== undefined) {
+      builder.setOrUnset("maxAttendees", data.maxAttendees)
     }
-
-    if (data.title !== undefined) setData.title = data.title
-    setOrUnset("description", data.description, true)
-    setOrUnset("year", data.year)
-    setOrUnset("month", data.month)
-    setOrUnset("day", data.day)
-    setOrUnset("hour", data.hour)
-    setOrUnset("minute", data.minute)
-    setOrUnset("date", data.date)
-    setOrUnset("durationMinutes", data.durationMinutes)
-    setOrUnset("maxAttendees", data.maxAttendees)
-    if (data.pricePerSeat !== undefined)
-      setData.pricePerSeat = data.pricePerSeat
-    if (data.vatRate !== undefined) setData.vatRate = data.vatRate
-
-    const updateOps: Record<string, unknown> = { $set: setData }
-    if (Object.keys(unsetData).length > 0) {
-      updateOps.$unset = unsetData
+    if (data.pricePerSeat !== undefined) {
+      builder.set("pricePerSeat", data.pricePerSeat)
     }
+    if (data.vatRate !== undefined) builder.set("vatRate", data.vatRate)
 
-    const result = await col.updateOne({ _id: toObjectId(id) }, updateOps)
+    const result = await col.updateOne({ _id: toObjectId(id) }, builder.build())
     return result.matchedCount > 0
   }
 
@@ -246,18 +144,21 @@ export class MongoEventRepository implements EventRepository {
   async updateAttendee(
     eventId: string,
     clientId: string,
-    patch: Partial<Pick<EventAttendee, "seats" | "paymentId">>
+    patch: { seats?: number; paymentId?: string | null }
   ): Promise<boolean> {
     if (!isValidObjectId(eventId)) return false
     if (!isValidObjectId(clientId)) return false
     const col = await this.collection()
-    const setData: Record<string, unknown> = { updatedAt: new Date() }
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
     if (patch.seats !== undefined) {
-      setData["attendees.$.seats"] = patch.seats
+      builder.set("attendees.$.seats", patch.seats)
     }
     if (patch.paymentId !== undefined) {
-      setData["attendees.$.paymentId"] = toObjectId(patch.paymentId)
+      builder.setOrUnset(
+        "attendees.$.paymentId",
+        patch.paymentId ? toObjectId(patch.paymentId) : null
+      )
     }
 
     const result = await col.updateOne(
@@ -265,7 +166,7 @@ export class MongoEventRepository implements EventRepository {
         _id: toObjectId(eventId),
         "attendees.clientId": toObjectId(clientId),
       },
-      { $set: setData }
+      builder.build()
     )
     return result.matchedCount > 0
   }
