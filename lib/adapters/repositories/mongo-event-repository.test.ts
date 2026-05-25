@@ -1,4 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test"
+import { ObjectId } from "mongodb"
+import { attendeeToMongo } from "./mongo-event-repository-helpers"
 
 process.env.MONGODB_URI ??= "mongodb://localhost:27017/test"
 
@@ -41,5 +43,37 @@ describe("buildEventListQuery", () => {
         { year: 2024, month: 2, day: null },
       ],
     })
+  })
+})
+
+describe("attendeeToMongo", () => {
+  const clientId = new ObjectId().toString()
+  const addedAt = new Date("2026-05-24T12:00:00Z")
+
+  test("omits paymentId key when domain attendee has no paymentId", () => {
+    const doc = attendeeToMongo({ clientId, seats: 2, addedAt })
+    expect(Object.hasOwn(doc, "paymentId")).toBe(false)
+    expect(doc.clientId).toBeInstanceOf(ObjectId)
+    expect(doc.clientId.toString()).toBe(clientId)
+    expect(doc.seats).toBe(2)
+    expect(doc.addedAt).toBe(addedAt)
+  })
+
+  test("includes paymentId as ObjectId when present", () => {
+    const paymentId = new ObjectId().toString()
+    const doc = attendeeToMongo({ clientId, seats: 1, paymentId, addedAt })
+    expect(Object.hasOwn(doc, "paymentId")).toBe(true)
+    expect(doc.paymentId).toBeInstanceOf(ObjectId)
+    expect(doc.paymentId?.toString()).toBe(paymentId)
+  })
+
+  test("omits paymentId key when explicitly undefined", () => {
+    const doc = attendeeToMongo({
+      clientId,
+      seats: 1,
+      paymentId: undefined,
+      addedAt,
+    })
+    expect(Object.hasOwn(doc, "paymentId")).toBe(false)
   })
 })

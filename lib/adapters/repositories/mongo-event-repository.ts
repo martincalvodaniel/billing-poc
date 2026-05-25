@@ -144,18 +144,21 @@ export class MongoEventRepository implements EventRepository {
   async updateAttendee(
     eventId: string,
     clientId: string,
-    patch: Partial<Pick<EventAttendee, "seats" | "paymentId">>
+    patch: { seats?: number; paymentId?: string | null }
   ): Promise<boolean> {
     if (!isValidObjectId(eventId)) return false
     if (!isValidObjectId(clientId)) return false
     const col = await this.collection()
-    const setData: Record<string, unknown> = { updatedAt: new Date() }
+    const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
     if (patch.seats !== undefined) {
-      setData["attendees.$.seats"] = patch.seats
+      builder.set("attendees.$.seats", patch.seats)
     }
     if (patch.paymentId !== undefined) {
-      setData["attendees.$.paymentId"] = toObjectId(patch.paymentId)
+      builder.setOrUnset(
+        "attendees.$.paymentId",
+        patch.paymentId ? toObjectId(patch.paymentId) : null
+      )
     }
 
     const result = await col.updateOne(
@@ -163,7 +166,7 @@ export class MongoEventRepository implements EventRepository {
         _id: toObjectId(eventId),
         "attendees.clientId": toObjectId(clientId),
       },
-      { $set: setData }
+      builder.build()
     )
     return result.matchedCount > 0
   }

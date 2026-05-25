@@ -24,12 +24,13 @@ export function attendeeToDomain(a: MongoEventAttendee): EventAttendee {
 }
 
 export function attendeeToMongo(a: EventAttendee): MongoEventAttendee {
-  return {
+  const doc: MongoEventAttendee = {
     clientId: toObjectId(a.clientId),
     seats: a.seats,
-    paymentId: a.paymentId ? toObjectId(a.paymentId) : undefined,
     addedAt: a.addedAt,
   }
+  if (a.paymentId) doc.paymentId = toObjectId(a.paymentId)
+  return doc
 }
 
 // Migration note: documents predating iteration 260514-1802 stored

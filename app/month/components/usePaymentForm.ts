@@ -13,9 +13,12 @@ import {
  * Custom hook managing payment form state and handlers
  * Reduces duplication between PaymentForm and PaymentDetailModal
  */
-export const usePaymentForm = (initialData?: PaymentFormData) => {
+export const usePaymentForm = (
+  initialData?: PaymentFormData,
+  initialDate?: string
+) => {
   const defaultFormData: PaymentFormData = {
-    date: new Date().toISOString().split("T")[0],
+    date: initialDate ?? new Date().toISOString().split("T")[0],
     concepts: [{ name: "", amount: 0, quantity: 1 }],
     vat: "21",
     surcharge: "",

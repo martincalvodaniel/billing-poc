@@ -66,6 +66,10 @@ export default function MonthPageContent() {
     selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
     selectedDate.getMonth() === currentMonthStart.getMonth()
 
+  const initialDate = isViewingCurrentMonth
+    ? formatDateString(currentMonthDate)
+    : formatDateString(selectedDate)
+
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -172,7 +176,11 @@ export default function MonthPageContent() {
             </div>
           }
         >
-          <PaymentForm ref={formRef} onPaymentSaved={handlePaymentSaved} />
+          <PaymentForm
+            ref={formRef}
+            onPaymentSaved={handlePaymentSaved}
+            initialDate={initialDate}
+          />
         </Modal>
       )}
     </PageLayout>

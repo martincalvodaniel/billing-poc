@@ -20,6 +20,7 @@ import { usePaymentForm } from "./usePaymentForm"
 
 interface PaymentFormProps {
   onPaymentSaved?: (date: string) => void
+  initialDate?: string
   ref?: Ref<{
     setFormDate: (dateString: string) => void
     submit: () => void
@@ -28,6 +29,7 @@ interface PaymentFormProps {
 
 const PaymentForm = function PaymentForm({
   onPaymentSaved,
+  initialDate,
   ref,
 }: PaymentFormProps) {
   const id = useId()
@@ -50,7 +52,7 @@ const PaymentForm = function PaymentForm({
     calculateSurchargeAmount,
     calculateNetAmount,
     calculateDiscount,
-  } = usePaymentForm()
+  } = usePaymentForm(undefined, initialDate)
 
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
