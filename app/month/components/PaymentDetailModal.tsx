@@ -7,11 +7,15 @@ import {
   useGenerateInvoice,
   useUploadInvoice,
 } from "@/lib/hooks/useInvoiceMutations"
-import { useUpdatePayment } from "@/lib/hooks/usePaymentMutations"
+import {
+  useCreatePayment,
+  useUpdatePayment,
+} from "@/lib/hooks/usePaymentMutations"
 import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types"
 import PaymentFormFields from "./PaymentFormFields"
 import PaymentInvoiceSection from "./PaymentInvoiceSection"
 import PaymentProviderBillSection from "./PaymentProviderBillSection"
+import { buildDuplicateSeed } from "./paymentDetailModal-seed"
 import { extractPaymentError } from "./paymentDetailModal-utils"
 import {
   validateConcepts,
@@ -23,28 +27,35 @@ import { usePaymentForm } from "./usePaymentForm"
 
 interface PaymentDetailModalProps {
   payment: Payment
+  mode?: "edit" | "duplicate"
   onClose: () => void
   onUpdate?: (payment: Payment) => void
+  onCreate?: (payment: { id: string }) => void
 }
 
 export default function PaymentDetailModal({
   payment,
+  mode = "edit",
   onClose,
   onUpdate,
+  onCreate,
 }: PaymentDetailModalProps) {
   const id = useId()
-  const initialFormData: PaymentFormData = {
-    type: payment.type,
-    date: payment.date,
-    concepts: payment.concepts || [{ name: "", amount: 0, quantity: 1 }],
-    vat: payment.vat.toString(),
-    surcharge: payment.surcharge?.toString() || "",
-    discount: payment.discount?.toString() || "",
-    tag: payment.tag || "",
-    clientId: payment.clientId?.toString() || undefined,
-    deliveryNoteRef: payment.deliveryNoteRef || "",
-    paymentMethod: payment.paymentMethod ?? "",
-  }
+  const isDuplicate = mode === "duplicate"
+  const initialFormData: PaymentFormData = isDuplicate
+    ? buildDuplicateSeed(payment)
+    : {
+        type: payment.type,
+        date: payment.date,
+        concepts: payment.concepts || [{ name: "", amount: 0, quantity: 1 }],
+        vat: payment.vat.toString(),
+        surcharge: payment.surcharge?.toString() || "",
+        discount: payment.discount?.toString() || "",
+        tag: payment.tag || "",
+        clientId: payment.clientId?.toString() || undefined,
+        deliveryNoteRef: payment.deliveryNoteRef || "",
+        paymentMethod: payment.paymentMethod ?? "",
+      }
 
   const {
     formData,
@@ -63,7 +74,9 @@ export default function PaymentDetailModal({
     calculateDiscount,
   } = usePaymentForm(initialFormData)
 
-  const { trigger: updatePayment, isMutating: isSaving } = useUpdatePayment()
+  const { trigger: updatePayment, isMutating: isUpdating } = useUpdatePayment()
+  const { trigger: createPayment, isMutating: isCreating } = useCreatePayment()
+  const isSaving = isDuplicate ? isCreating : isUpdating
   const { trigger: generateInvoice, isMutating: isGeneratingInvoice } =
     useGenerateInvoice()
   const { trigger: uploadInvoice, isMutating: isUploadingBill } =
@@ -176,6 +189,29 @@ export default function PaymentDetailModal({
       : 0
     const discountNumber = parseFloat(formData.discount || "0") || 0
 
+    if (isDuplicate) {
+      try {
+        const created = await createPayment({
+          type: formData.type,
+          date: formData.date,
+          tag: formData.tag || undefined,
+          clientId: formData.clientId || undefined,
+          concepts: formData.concepts,
+          vat: vatNumber,
+          surcharge: surchargeNumber,
+          discount: discountNumber,
+          deliveryNoteRef: formData.deliveryNoteRef || undefined,
+          paymentMethod: formData.paymentMethod || undefined,
+        })
+        onCreate?.({ id: created.id })
+        onClose()
+      } catch (err) {
+        console.error(`Error duplicating payment: ${err}`)
+        setError(extractPaymentError(err, "An error occurred"))
+      }
+      return
+    }
+
     try {
       const responseData = await updatePayment({
         id: payment._id?.toString() ?? "",
@@ -232,7 +268,7 @@ export default function PaymentDetailModal({
     <Modal
       isOpen={true}
       onClose={onClose}
-      title="Edit Payment"
+      title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
       maxWidth="lg"
       footer={
         <div className="flex gap-2">
@@ -251,7 +287,13 @@ export default function PaymentDetailModal({
             aria-busy={isSaving}
             className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800 dark:focus:ring-offset-zinc-900"
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isDuplicate
+              ? isCreating
+                ? "Creating..."
+                : "Create Payment"
+              : isUpdating
+                ? "Saving..."
+                : "Save Changes"}
           </button>
         </div>
       }
@@ -283,7 +325,7 @@ export default function PaymentDetailModal({
             {formData.type === "income" ? "Invoice" : "Provider Bill"}
           </h3>
 
-          {formData.type === "income" && (
+          {!isDuplicate && formData.type === "income" && (
             <PaymentInvoiceSection
               idPrefix={id}
               payment={payment}
@@ -296,7 +338,7 @@ export default function PaymentDetailModal({
             />
           )}
 
-          {formData.type === "outcome" && (
+          {!isDuplicate && formData.type === "outcome" && (
             <PaymentProviderBillSection
               idPrefix={id}
               payment={payment}
@@ -306,6 +348,14 @@ export default function PaymentDetailModal({
               onUpload={handleUploadProviderBill}
               onDownload={handleDownloadProviderBill}
             />
+          )}
+
+          {isDuplicate && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {formData.type === "income"
+                ? "Invoice generation will be available after the duplicated payment is created."
+                : "Provider bill upload will be available after the duplicated payment is created."}
+            </p>
           )}
         </div>
       </div>
