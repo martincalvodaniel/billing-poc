@@ -1,7 +1,10 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Badge } from "@/app/components/Badge"
+import {
+  getBadgeSizeClass,
+  getBadgeToneClass,
+} from "@/app/components/badge-utils"
 import { IconButton } from "@/app/components/IconButton"
 import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
@@ -14,6 +17,7 @@ interface AttendeeRowProps {
   isSaving: boolean
   isGenerating: boolean
   hasPayment: boolean
+  isOpeningPayment?: boolean
   onCommit: (
     attendee: EventAttendee,
     nextSeats: string,
@@ -21,6 +25,7 @@ interface AttendeeRowProps {
   ) => Promise<void>
   onGenerate: (clientId: string) => void
   onRemove: (clientId: string) => void
+  onOpenPayment: (paymentId: string) => void
 }
 
 export default function AttendeeRow({
@@ -30,9 +35,11 @@ export default function AttendeeRow({
   isSaving,
   isGenerating,
   hasPayment,
+  isOpeningPayment,
   onCommit,
   onGenerate,
   onRemove,
+  onOpenPayment,
 }: AttendeeRowProps) {
   const [seatsValue, setSeatsValue] = useState<string>(String(attendee.seats))
   const lastSyncedRef = useRef<number>(attendee.seats)
@@ -102,10 +109,18 @@ export default function AttendeeRow({
               Saving…
             </span>
           )}
-          {hasPayment && !isSaving && (
-            <Badge tone="success" size="sm">
-              Payment ✓
-            </Badge>
+          {hasPayment && !isSaving && attendee.paymentId && (
+            <button
+              type="button"
+              onClick={() => {
+                if (attendee.paymentId) onOpenPayment(attendee.paymentId)
+              }}
+              disabled={isOpeningPayment}
+              aria-label={`Open payment for ${name}`}
+              className={`inline-flex items-center rounded-full font-medium transition-colors hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-green-900/50 ${getBadgeSizeClass("sm")} ${getBadgeToneClass("success")}`}
+            >
+              {isOpeningPayment ? "Opening…" : "Payment ✓"}
+            </button>
           )}
         </div>
       </div>

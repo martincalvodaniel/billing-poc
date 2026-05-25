@@ -1,6 +1,8 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useId, useMemo, useState } from "react"
+import { useSWRConfig } from "swr"
 import ClientSelector from "@/app/components/ClientSelector"
 import { EmptyState } from "@/app/components/EmptyState"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
@@ -14,6 +16,12 @@ import {
   useRemoveEventAttendee,
   useUpdateEventAttendee,
 } from "@/lib/hooks/useEventMutations"
+import {
+  buildPaymentKey,
+  buildPaymentUrl,
+  type PaymentResponse,
+} from "@/lib/hooks/usePayments"
+import { fetcher } from "@/lib/swr-fetcher"
 import AttendeeRow from "./AttendeeRow"
 import { extractErrorMessage } from "./attendeesPanel-utils"
 import CapacityBar from "./CapacityBar"
@@ -38,9 +46,12 @@ export default function AttendeesPanel({
 }: AttendeesPanelProps) {
   const id = useId()
   const eventId = event._id
+  const router = useRouter()
+  const { mutate } = useSWRConfig()
   const [pendingPayment, setPendingPayment] = useState<string | null>(null)
   const [pendingBulk, setPendingBulk] = useState(false)
   const [savingClientId, setSavingClientId] = useState<string | null>(null)
+  const [openingPaymentId, setOpeningPaymentId] = useState<string | null>(null)
   const [invoiceGuard, setInvoiceGuard] = useState<InvoiceGuardState | null>(
     null
   )
@@ -180,6 +191,27 @@ export default function AttendeesPanel({
     }
   }
 
+  const handleOpenPayment = async (paymentId: string) => {
+    setOpeningPaymentId(paymentId)
+    try {
+      const data = await mutate<PaymentResponse>(
+        buildPaymentKey(paymentId),
+        fetcher<PaymentResponse>(buildPaymentUrl(paymentId)),
+        { revalidate: false, populateCache: true }
+      )
+      if (!data) throw new Error("Payment not found")
+      const { date } = data.payment
+      const year = date.slice(0, 4)
+      const month = parseInt(date.slice(5, 7), 10)
+      router.push(
+        `/month?year=${year}&month=${month}&payment=${encodeURIComponent(paymentId)}`
+      )
+    } catch (error) {
+      onActionError(extractErrorMessage(error, "Failed to open payment"))
+      setOpeningPaymentId(null)
+    }
+  }
+
   return (
     <section className="space-y-3">
       <CapacityBar used={seats} max={event.maxAttendees} />
@@ -219,9 +251,11 @@ export default function AttendeesPanel({
                 isSaving={isSaving}
                 isGenerating={isGenerating}
                 hasPayment={hasPayment}
+                isOpeningPayment={openingPaymentId === attendee.paymentId}
                 onCommit={commitSeats}
                 onGenerate={handleGenerateOne}
                 onRemove={handleRemove}
+                onOpenPayment={handleOpenPayment}
               />
             )
           })}
