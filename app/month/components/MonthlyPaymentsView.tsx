@@ -279,6 +279,8 @@ export default function MonthlyPaymentsView({
           netBalance={netBalance}
           incomeCount={incomeCount}
           outcomeCount={outcomeCount}
+          typeFilter={filters.type}
+          onTypeFilterToggle={handleTypeFilterToggle}
         />
       )}
 
