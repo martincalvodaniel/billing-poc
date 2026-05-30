@@ -86,8 +86,8 @@ export async function PUT(
           {
             error: "cannot-modify-invoiced-payment",
             paymentId: result.paymentId,
-            invoiceSeries: result.invoiceSeries,
-            invoiceNumber: result.invoiceNumber,
+            invoiceType: result.invoiceType,
+            invoiceId: result.invoiceId,
           },
           { status: 409 }
         )

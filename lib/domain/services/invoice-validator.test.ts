@@ -1,17 +1,17 @@
 import { describe, expect, test } from "bun:test"
-import type { InvoiceMetadata, InvoiceSeries } from "../entities/payment"
+import type { InvoiceMetadata, InvoiceType } from "../entities/payment"
 import {
   assertCanGenerateInvoice,
   generateInvoiceSchema,
   type InvoiceCandidatePayment,
-  REGULAR_INVOICE_SERIES,
+  REGULAR_INVOICE_TYPES,
 } from "./invoice-validator"
 
-function invoice(series: InvoiceSeries, number = 1): InvoiceMetadata {
+function invoice(type: InvoiceType, n = 1): InvoiceMetadata {
+  const id = `${type}-${n}`
   return {
-    series,
-    number,
-    formattedNumber: `${series}-${number}`,
+    type,
+    id,
     generatedAt: new Date("2026-01-01T00:00:00Z"),
     blobUrl: "https://blob.example/x.pdf",
     blobPathname: "x.pdf",
@@ -29,26 +29,26 @@ describe("generateInvoiceSchema", () => {
   test("accepts a valid body", () => {
     const parsed = generateInvoiceSchema.parse({
       paymentId: "507f1f77bcf86cd799439011",
-      series: "Invoice",
+      type: "Invoice",
     })
     expect(parsed.paymentId).toBe("507f1f77bcf86cd799439011")
-    expect(parsed.series).toBe("Invoice")
+    expect(parsed.type).toBe("Invoice")
   })
 
   test("rejects an invalid ObjectId", () => {
     expect(() =>
       generateInvoiceSchema.parse({
         paymentId: "not-an-objectid",
-        series: "Invoice",
+        type: "Invoice",
       })
     ).toThrow()
   })
 
-  test("rejects an unknown series", () => {
+  test("rejects an unknown type", () => {
     expect(() =>
       generateInvoiceSchema.parse({
         paymentId: "507f1f77bcf86cd799439011",
-        series: "NotARealSeries",
+        type: "NotARealType",
       })
     ).toThrow()
   })
@@ -56,7 +56,7 @@ describe("generateInvoiceSchema", () => {
   test("treats persist as optional", () => {
     const parsed = generateInvoiceSchema.parse({
       paymentId: "507f1f77bcf86cd799439011",
-      series: "Invoice",
+      type: "Invoice",
     })
     expect(parsed.persist).toBeUndefined()
   })
@@ -64,7 +64,7 @@ describe("generateInvoiceSchema", () => {
   test("accepts persist: true", () => {
     const parsed = generateInvoiceSchema.parse({
       paymentId: "507f1f77bcf86cd799439011",
-      series: "Invoice",
+      type: "Invoice",
       persist: true,
     })
     expect(parsed.persist).toBe(true)
@@ -73,7 +73,7 @@ describe("generateInvoiceSchema", () => {
   test("accepts persist: false", () => {
     const parsed = generateInvoiceSchema.parse({
       paymentId: "507f1f77bcf86cd799439011",
-      series: "Invoice",
+      type: "Invoice",
       persist: false,
     })
     expect(parsed.persist).toBe(false)
@@ -83,26 +83,32 @@ describe("generateInvoiceSchema", () => {
     expect(() =>
       generateInvoiceSchema.parse({
         paymentId: "507f1f77bcf86cd799439011",
-        series: "Invoice",
+        type: "Invoice",
         persist: "yes",
       })
     ).toThrow()
   })
 })
 
-describe("REGULAR_INVOICE_SERIES", () => {
-  test("contains the regular (client-required) series", () => {
-    expect(REGULAR_INVOICE_SERIES.has("Invoice")).toBe(true)
-    expect(REGULAR_INVOICE_SERIES.has("RectificativeInvoice")).toBe(true)
+describe("REGULAR_INVOICE_TYPES", () => {
+  test("contains the regular (client-required) types", () => {
+    expect(REGULAR_INVOICE_TYPES.has("Invoice")).toBe(true)
+    expect(REGULAR_INVOICE_TYPES.has("RectificativeInvoice")).toBe(true)
   })
 
-  test("excludes the simple series", () => {
-    expect(REGULAR_INVOICE_SERIES.has("SimpleInvoice")).toBe(false)
-    expect(REGULAR_INVOICE_SERIES.has("RectificativeSimpleInvoice")).toBe(false)
+  test("excludes the simple types", () => {
+    expect(REGULAR_INVOICE_TYPES.has("SimpleInvoice")).toBe(false)
+    expect(REGULAR_INVOICE_TYPES.has("RectificativeSimpleInvoice")).toBe(false)
   })
 })
 
 describe("assertCanGenerateInvoice — rejection branches", () => {
+  test("rejects Receipt type (not generated as PDF)", () => {
+    const result = assertCanGenerateInvoice(incomeWithClient, "Receipt")
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.reason).toMatch(/receipt/i)
+  })
+
   test("rejects outcome payments", () => {
     const result = assertCanGenerateInvoice(
       { type: "outcome", clientId: incomeWithClient.clientId },

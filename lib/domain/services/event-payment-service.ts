@@ -1,5 +1,8 @@
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
-import type { InvoiceSeries } from "@/lib/domain/entities/payment"
+import {
+  getPaymentInvoices,
+  type InvoiceType,
+} from "@/lib/domain/entities/payment"
 import type { EventRepository } from "@/lib/domain/ports/event-repository"
 import type { PaymentRepository } from "@/lib/domain/ports/payment-repository"
 import { computeEventPaymentAmount } from "@/lib/domain/services/event-pricing"
@@ -106,8 +109,8 @@ export type RecomputeAttendeePaymentResult =
   | {
       status: "invoiced"
       paymentId: string
-      invoiceSeries: InvoiceSeries
-      invoiceNumber: number
+      invoiceType: InvoiceType
+      invoiceId: string
     }
   | {
       status: "updated"
@@ -130,7 +133,7 @@ export type RecomputeAttendeePaymentResult =
  *   attendee's `paymentId` is left untouched; the caller decides how to
  *   proceed.
  * - If the payment already has an `invoice` → returns
- *   `{ status: "invoiced", paymentId, invoiceSeries, invoiceNumber }`.
+ *   `{ status: "invoiced", paymentId, invoiceType, invoiceId }`.
  *   Nothing is mutated.
  * - Otherwise → recomputes `{ netAmount, vatAmount, total }` via
  *   `computeEventPaymentAmount(event, newSeats)`, rewrites the single
@@ -156,12 +159,14 @@ export async function recomputeAttendeePayment(
     return { status: "missing" }
   }
 
-  if (payment.invoice) {
+  const entries = getPaymentInvoices(payment)
+  const invoiced = [...entries].reverse().find((e) => Boolean(e.id))
+  if (invoiced?.id) {
     return {
       status: "invoiced",
       paymentId,
-      invoiceSeries: payment.invoice.series,
-      invoiceNumber: payment.invoice.number,
+      invoiceType: invoiced.type,
+      invoiceId: invoiced.id,
     }
   }
 

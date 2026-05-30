@@ -42,8 +42,8 @@ interface AttendeesPanelProps {
 }
 
 interface InvoiceGuardState {
-  invoiceSeries: string
-  invoiceNumber: number
+  invoiceType: string
+  invoiceId: string
 }
 
 export default function AttendeesPanel({
@@ -174,8 +174,8 @@ export default function AttendeesPanel({
       const guard = isInvoiceGuardError(error)
       if (guard) {
         setInvoiceGuard({
-          invoiceSeries: guard.invoiceSeries,
-          invoiceNumber: guard.invoiceNumber,
+          invoiceType: guard.invoiceType,
+          invoiceId: guard.invoiceId,
         })
       } else {
         onActionError(extractErrorMessage(error, "Failed to update attendee"))
@@ -358,8 +358,8 @@ export default function AttendeesPanel({
         <InvoiceGuardModal
           isOpen
           onClose={() => setInvoiceGuard(null)}
-          invoiceSeries={invoiceGuard.invoiceSeries}
-          invoiceNumber={invoiceGuard.invoiceNumber}
+          invoiceType={invoiceGuard.invoiceType}
+          invoiceId={invoiceGuard.invoiceId}
         />
       )}
 

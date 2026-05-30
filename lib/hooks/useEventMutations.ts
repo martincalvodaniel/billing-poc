@@ -196,24 +196,24 @@ export function buildGenerateEventPaymentsRequest(
  * The server emits exactly:
  *   { error: "cannot-modify-invoiced-payment",
  *     paymentId: string,
- *     invoiceSeries: string,
- *     invoiceNumber: number }
+ *     invoiceType: string,
+ *     invoiceId: string }
  * with HTTP 409, wrapped here as `FetchError(status=409, info=<body>)`.
  */
 export function isInvoiceGuardError(
   err: unknown
-): { invoiceSeries: string; invoiceNumber: number; paymentId: string } | null {
+): { invoiceType: string; invoiceId: string; paymentId: string } | null {
   if (!(err instanceof FetchError)) return null
   if (err.status !== 409) return null
   const info = err.info
   if (!info || typeof info !== "object") return null
   const record = info as Record<string, unknown>
   if (record.error !== "cannot-modify-invoiced-payment") return null
-  const { invoiceSeries, invoiceNumber, paymentId } = record
-  if (typeof invoiceSeries !== "string") return null
-  if (typeof invoiceNumber !== "number") return null
+  const { invoiceType, invoiceId, paymentId } = record
+  if (typeof invoiceType !== "string") return null
+  if (typeof invoiceId !== "string") return null
   if (typeof paymentId !== "string") return null
-  return { invoiceSeries, invoiceNumber, paymentId }
+  return { invoiceType, invoiceId, paymentId }
 }
 
 // ---------------------------------------------------------------------------

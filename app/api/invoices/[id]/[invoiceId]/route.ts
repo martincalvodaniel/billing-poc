@@ -9,14 +9,14 @@ export async function GET(
   {
     params,
   }: {
-    params: Promise<{ paymentId: string; invoiceId: string }>
+    params: Promise<{ id: string; invoiceId: string }>
   }
 ) {
   try {
     const denied = await requireAuth()
     if (denied) return denied
 
-    const { paymentId, invoiceId: rawInvoiceId } = await params
+    const { id: paymentId, invoiceId: rawInvoiceId } = await params
     if (!paymentId || !rawInvoiceId) {
       return NextResponse.json(
         { error: "Missing path parameter" },

@@ -123,13 +123,13 @@ describe("isInvoiceGuardError", () => {
     const err = new FetchError("conflict", 409, {
       error: "cannot-modify-invoiced-payment",
       paymentId: "pay1",
-      invoiceSeries: "Invoice",
-      invoiceNumber: 42,
+      invoiceType: "Invoice",
+      invoiceId: "F26_042",
     })
     expect(isInvoiceGuardError(err)).toEqual({
       paymentId: "pay1",
-      invoiceSeries: "Invoice",
-      invoiceNumber: 42,
+      invoiceType: "Invoice",
+      invoiceId: "F26_042",
     })
   })
 
@@ -137,8 +137,8 @@ describe("isInvoiceGuardError", () => {
     const err = new FetchError("conflict", 409, {
       error: "some-other-error",
       paymentId: "pay1",
-      invoiceSeries: "Invoice",
-      invoiceNumber: 42,
+      invoiceType: "Invoice",
+      invoiceId: "F26_042",
     })
     expect(isInvoiceGuardError(err)).toBeNull()
   })
@@ -147,8 +147,8 @@ describe("isInvoiceGuardError", () => {
     const err = new FetchError("bad", 400, {
       error: "cannot-modify-invoiced-payment",
       paymentId: "pay1",
-      invoiceSeries: "Invoice",
-      invoiceNumber: 42,
+      invoiceType: "Invoice",
+      invoiceId: "F26_042",
     })
     expect(isInvoiceGuardError(err)).toBeNull()
   })
@@ -156,27 +156,27 @@ describe("isInvoiceGuardError", () => {
   test("returns null when paymentId is missing", () => {
     const err = new FetchError("conflict", 409, {
       error: "cannot-modify-invoiced-payment",
-      invoiceSeries: "Invoice",
-      invoiceNumber: 42,
+      invoiceType: "Invoice",
+      invoiceId: "F26_042",
     })
     expect(isInvoiceGuardError(err)).toBeNull()
   })
 
-  test("returns null when invoiceSeries is missing", () => {
+  test("returns null when invoiceType is missing", () => {
     const err = new FetchError("conflict", 409, {
       error: "cannot-modify-invoiced-payment",
       paymentId: "pay1",
-      invoiceNumber: 42,
+      invoiceId: "F26_042",
     })
     expect(isInvoiceGuardError(err)).toBeNull()
   })
 
-  test("returns null when invoiceNumber is not a number", () => {
+  test("returns null when invoiceId is not a string", () => {
     const err = new FetchError("conflict", 409, {
       error: "cannot-modify-invoiced-payment",
       paymentId: "pay1",
-      invoiceSeries: "Invoice",
-      invoiceNumber: "42",
+      invoiceType: "Invoice",
+      invoiceId: 42,
     })
     expect(isInvoiceGuardError(err)).toBeNull()
   })

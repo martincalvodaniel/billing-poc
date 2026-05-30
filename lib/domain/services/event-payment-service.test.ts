@@ -111,8 +111,8 @@ describe("recomputeAttendeePayment", () => {
   test("returns 'invoiced' when payment has invoice metadata", async () => {
     const payment = makePayment({
       invoice: {
-        series: "Invoice",
-        number: 42,
+        type: "Invoice",
+        id: "F26_042",
         generatedAt: new Date("2026-05-14T10:00:00Z"),
         blobUrl: "https://blob.example/inv.pdf",
         blobPathname: "invoices/inv.pdf",
@@ -128,8 +128,8 @@ describe("recomputeAttendeePayment", () => {
     expect(result).toEqual({
       status: "invoiced",
       paymentId: "pay1",
-      invoiceSeries: "Invoice",
-      invoiceNumber: 42,
+      invoiceType: "Invoice",
+      invoiceId: "F26_042",
     })
     expect(updates).toHaveLength(0)
   })

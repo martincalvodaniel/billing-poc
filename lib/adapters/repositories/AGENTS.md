@@ -56,11 +56,28 @@ How:
 
 Per-field examples:
 - `payments`: `discount`, `surcharge`, `tag`, `clientId`,
-  `deliveryNoteRef`, `invoice`, `providerBillUrl`, `providerBillPathname`.
+  `deliveryNoteRef`, `invoice`.
 - `clients`: `phone`, `email`, `taxId`, `address`.
 - `events`: `day`, `hour`, `minute`, `date`,
   `durationMinutes`, `maxAttendees`.
 - `invoiceCounters`: only mutate `lastNumber`; no nullable fields.
+
+## Read-Time Invoice Migration
+`MongoPaymentRepository.toDomain` delegates to `mapPaymentDocToDomain`
+(see `mongo-payment-repository-utils.ts`), which performs read-time
+migration of legacy persistence shapes onto the unified domain model:
+- Invoice metadata field renames: `series` → `type`,
+  `formattedNumber` → `id`; legacy `number` is dropped (UI shows `id`).
+- Legacy outcome `providerBillLink` (manual URL) and
+  `providerBillUrl` (+ `providerBillPathname`) top-level fields are
+  lifted into the unified `invoices[]` array as
+  `{ type: "Invoice", link, generatedAt }` and
+  `{ type: "Invoice", blobUrl, blobPathname?, generatedAt }` entries
+  respectively. `generatedAt` falls back to `updatedAt` / `createdAt`.
+
+The repository never writes those legacy top-level fields any more; the
+mapper exists so existing documents continue to load without an offline
+backfill.
 
 ## ObjectId Boundary Conversions
 - Inbound (API → repo): incoming IDs are strings. Validate with

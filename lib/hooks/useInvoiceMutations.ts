@@ -2,7 +2,7 @@ import { mutate } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
 import { isPaymentsKey } from "@/lib/hooks/usePayments"
 import { FetchError } from "@/lib/swr-fetcher"
-import type { InvoiceMetadata, InvoiceSeries, Payment } from "@/lib/types"
+import type { InvoiceMetadata, InvoiceType, Payment } from "@/lib/types"
 
 async function invalidatePayments(): Promise<void> {
   await mutate(isPaymentsKey, undefined, { revalidate: true })
@@ -38,7 +38,7 @@ async function parseError(
 
 export interface GenerateInvoiceInput {
   paymentId: string
-  series: InvoiceSeries
+  type: InvoiceType
   persist?: boolean
 }
 
@@ -46,31 +46,32 @@ export interface GenerateInvoiceResult {
   success: boolean
   invoice: Payment["invoice"]
   invoices: InvoiceMetadata[]
+  id: string
+  type: InvoiceType
   downloadUrl: string
 }
 
 export function buildGenerateInvoiceBody(input: GenerateInvoiceInput): {
   paymentId: string
-  series: InvoiceSeries
+  type: InvoiceType
   persist?: boolean
 } {
   return {
     paymentId: input.paymentId,
-    series: input.series,
+    type: input.type,
     ...(input.persist !== undefined ? { persist: input.persist } : {}),
   }
 }
 
 /**
- * Build the precise per-invoice download URL handled by
- * `app/api/invoices/[id]/[series]/[number]/route.ts`.
+ * Build the per-invoice download URL handled by
+ * `app/api/invoices/[paymentId]/[invoiceId]/route.ts`.
  */
 export function buildOpenInvoiceUrl(
   paymentId: string,
-  series: InvoiceSeries,
-  number: number
+  invoiceId: string
 ): string {
-  return `/api/invoices/${encodeURIComponent(paymentId)}/${encodeURIComponent(series)}/${encodeURIComponent(String(number))}`
+  return `/api/invoices/${encodeURIComponent(paymentId)}/${encodeURIComponent(invoiceId)}`
 }
 
 async function generateInvoiceFetcher(
@@ -103,65 +104,6 @@ export function useGenerateInvoice(): UseGenerateInvoiceResult {
     "/api/invoices/generate",
     GenerateInvoiceInput
   >("/api/invoices/generate", generateInvoiceFetcher, {
-    onSuccess: () => {
-      void invalidatePayments()
-    },
-  })
-}
-
-// ---------- Upload provider bill ----------
-
-export interface UploadInvoiceInput {
-  paymentId: string
-  file: File
-}
-
-export interface UploadInvoiceResult {
-  success: boolean
-  billUrl: string
-  pathname: string
-}
-
-export function buildUploadInvoiceFormData(
-  input: UploadInvoiceInput
-): FormData {
-  const formData = new FormData()
-  formData.append("file", input.file)
-  formData.append("paymentId", input.paymentId)
-  return formData
-}
-
-async function uploadInvoiceFetcher(
-  url: string,
-  { arg }: { arg: UploadInvoiceInput }
-): Promise<UploadInvoiceResult> {
-  // IMPORTANT: do NOT set Content-Type — the browser must set the multipart
-  // boundary itself when given a FormData body.
-  const response = await fetch(url, {
-    method: "POST",
-    credentials: "same-origin",
-    body: buildUploadInvoiceFormData(arg),
-  })
-  if (!response.ok) {
-    await parseError(response, "Failed to upload provider bill")
-  }
-  return (await response.json()) as UploadInvoiceResult
-}
-
-export type UseUploadInvoiceResult = SWRMutationResponse<
-  UploadInvoiceResult,
-  Error,
-  "/api/invoices/upload",
-  UploadInvoiceInput
->
-
-export function useUploadInvoice(): UseUploadInvoiceResult {
-  return useSWRMutation<
-    UploadInvoiceResult,
-    Error,
-    "/api/invoices/upload",
-    UploadInvoiceInput
-  >("/api/invoices/upload", uploadInvoiceFetcher, {
     onSuccess: () => {
       void invalidatePayments()
     },

@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test"
 import {
   buildGenerateInvoiceBody,
   buildOpenInvoiceUrl,
-  buildUploadInvoiceFormData,
   type GenerateInvoiceResult,
 } from "./useInvoiceMutations"
 
@@ -10,42 +9,42 @@ describe("buildGenerateInvoiceBody", () => {
   test("returns the exact JSON body shape expected by /api/invoices/generate", () => {
     const body = buildGenerateInvoiceBody({
       paymentId: "abc123",
-      series: "Invoice",
+      type: "Invoice",
     })
-    expect(body).toEqual({ paymentId: "abc123", series: "Invoice" })
+    expect(body).toEqual({ paymentId: "abc123", type: "Invoice" })
   })
 
-  test("preserves the chosen invoice series", () => {
+  test("preserves the chosen invoice type", () => {
     const body = buildGenerateInvoiceBody({
       paymentId: "p1",
-      series: "RectificativeSimpleInvoice",
+      type: "RectificativeSimpleInvoice",
     })
-    expect(body.series).toBe("RectificativeSimpleInvoice")
+    expect(body.type).toBe("RectificativeSimpleInvoice")
   })
 
   test("JSON.stringify round-trips to a stable string", () => {
     const body = buildGenerateInvoiceBody({
       paymentId: "p2",
-      series: "SimpleInvoice",
+      type: "SimpleInvoice",
     })
     expect(JSON.stringify(body)).toBe(
-      '{"paymentId":"p2","series":"SimpleInvoice"}'
+      '{"paymentId":"p2","type":"SimpleInvoice"}'
     )
   })
 
   test("omits persist when not provided", () => {
     const body = buildGenerateInvoiceBody({
       paymentId: "p3",
-      series: "Invoice",
+      type: "Invoice",
     })
     expect("persist" in body).toBe(false)
-    expect(JSON.stringify(body)).toBe('{"paymentId":"p3","series":"Invoice"}')
+    expect(JSON.stringify(body)).toBe('{"paymentId":"p3","type":"Invoice"}')
   })
 
   test("forwards persist: true", () => {
     const body = buildGenerateInvoiceBody({
       paymentId: "p4",
-      series: "Invoice",
+      type: "Invoice",
       persist: true,
     })
     expect(body.persist).toBe(true)
@@ -54,60 +53,27 @@ describe("buildGenerateInvoiceBody", () => {
   test("forwards persist: false", () => {
     const body = buildGenerateInvoiceBody({
       paymentId: "p5",
-      series: "Invoice",
+      type: "Invoice",
       persist: false,
     })
     expect(body.persist).toBe(false)
   })
 })
 
-describe("buildUploadInvoiceFormData", () => {
-  test("FormData is available in the test runtime", () => {
-    expect(typeof FormData !== "undefined").toBe(true)
-  })
-
-  test("builds FormData with file and paymentId entries", () => {
-    const file = new File(["pdf-bytes"], "bill.pdf", {
-      type: "application/pdf",
-    })
-    const formData = buildUploadInvoiceFormData({
-      paymentId: "payment-42",
-      file,
-    })
-
-    expect(formData.get("paymentId")).toBe("payment-42")
-    const uploaded = formData.get("file")
-    expect(uploaded).toBeInstanceOf(File)
-    expect((uploaded as File).name).toBe("bill.pdf")
-    expect((uploaded as File).type).toBe("application/pdf")
-  })
-
-  test("does not include any Content-Type field (browser sets boundary)", () => {
-    const file = new File(["x"], "x.pdf", { type: "application/pdf" })
-    const formData = buildUploadInvoiceFormData({ paymentId: "p", file })
-    expect(formData.get("Content-Type")).toBeNull()
-    expect(formData.get("content-type")).toBeNull()
-  })
-})
-
 describe("buildOpenInvoiceUrl", () => {
-  test("formats the precise per-invoice download URL", () => {
-    const url = buildOpenInvoiceUrl("abc123", "Invoice", 1)
-    expect(url).toBe("/api/invoices/abc123/Invoice/1")
+  test("formats the per-invoice download URL with a single invoice-id segment", () => {
+    const url = buildOpenInvoiceUrl("abc123", "F26_001")
+    expect(url).toBe("/api/invoices/abc123/F26_001")
   })
 
   test("URI-encodes the paymentId segment", () => {
-    const url = buildOpenInvoiceUrl("a/b c", "SimpleInvoice", 42)
-    expect(url).toBe("/api/invoices/a%2Fb%20c/SimpleInvoice/42")
+    const url = buildOpenInvoiceUrl("a/b c", "S26_042")
+    expect(url).toBe("/api/invoices/a%2Fb%20c/S26_042")
   })
 
-  test("preserves each rectificative series in the path", () => {
-    expect(buildOpenInvoiceUrl("p", "RectificativeInvoice", 7)).toBe(
-      "/api/invoices/p/RectificativeInvoice/7"
-    )
-    expect(buildOpenInvoiceUrl("p", "RectificativeSimpleInvoice", 9)).toBe(
-      "/api/invoices/p/RectificativeSimpleInvoice/9"
-    )
+  test("URI-encodes the invoiceId segment", () => {
+    const url = buildOpenInvoiceUrl("p", "F26/001")
+    expect(url).toBe("/api/invoices/p/F26%2F001")
   })
 })
 
@@ -116,27 +82,28 @@ describe("GenerateInvoiceResult", () => {
     const sample: GenerateInvoiceResult = {
       success: true,
       invoice: {
-        series: "Invoice",
-        number: 3,
-        formattedNumber: "F26_003",
+        type: "Invoice",
+        id: "F26_003",
         generatedAt: new Date("2026-05-30T12:00:00Z"),
         blobUrl: "https://blob.example/F26_003.pdf",
         blobPathname: "F26_003.pdf",
       },
       invoices: [
         {
-          series: "Invoice",
-          number: 3,
-          formattedNumber: "F26_003",
+          type: "Invoice",
+          id: "F26_003",
           generatedAt: new Date("2026-05-30T12:00:00Z"),
           blobUrl: "https://blob.example/F26_003.pdf",
           blobPathname: "F26_003.pdf",
         },
       ],
-      downloadUrl: "/api/invoices/pay/Invoice/3",
+      id: "F26_003",
+      type: "Invoice",
+      downloadUrl: "/api/invoices/pay/F26_003",
     }
     expect(sample.invoices).toHaveLength(1)
-    expect(sample.invoices[0]?.formattedNumber).toBe("F26_003")
-    expect(sample.downloadUrl).toBe("/api/invoices/pay/Invoice/3")
+    expect(sample.id).toBe("F26_003")
+    expect(sample.type).toBe("Invoice")
+    expect(sample.downloadUrl).toBe("/api/invoices/pay/F26_003")
   })
 })

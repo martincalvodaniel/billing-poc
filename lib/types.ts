@@ -8,18 +8,27 @@ export type PaymentType = "income" | "outcome"
 
 export type ClientType = "individual" | "company"
 
-export type InvoiceSeries =
+export type InvoiceType =
   | "Invoice"
   | "RectificativeInvoice"
   | "SimpleInvoice"
   | "RectificativeSimpleInvoice"
+  | "Receipt"
 
+/** @deprecated transitional alias — use `InvoiceType`. Retained for the
+ *  invoice-counter document, which is keyed by series. */
+export type InvoiceSeries = InvoiceType
+
+/**
+ * Unified invoice metadata entry. An entry has a `type` plus exactly one
+ * of `id` (generated PDF) or `link` (external URL); generated PDFs may
+ * additionally carry `blobUrl`/`blobPathname` when persisted.
+ */
 export interface InvoiceMetadata {
-  series: InvoiceSeries
-  number: number // Sequential number within the series (per year)
-  formattedNumber: string // e.g. "F26_001"
+  type: InvoiceType
+  id?: string
+  link?: string
   generatedAt: Date
-  // Optional: present only for blob-persisted invoices; absent for on-the-fly entries.
   blobUrl?: string
   blobPathname?: string
 }
@@ -46,10 +55,7 @@ export interface Payment {
   surchargeAmount?: number
   total: number
   invoice?: InvoiceMetadata // Legacy single-invoice field (read-back compat)
-  invoices?: InvoiceMetadata[] // Generated invoices (for income payments)
-  providerBillUrl?: string // Uploaded provider bill URL (for outcome payments)
-  providerBillPathname?: string // Uploaded provider bill storage path
-  providerBillLink?: string // External URL to the provider bill (preferred over blob upload)
+  invoices?: InvoiceMetadata[] // All invoices (generated PDFs + external links)
   paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date
@@ -105,7 +111,7 @@ export interface PaginatedResponse<T> {
 
 export interface InvoiceCounter {
   _id?: ObjectId
-  series: InvoiceSeries
+  series: InvoiceType
   year: number
   lastNumber: number
   updatedAt: Date

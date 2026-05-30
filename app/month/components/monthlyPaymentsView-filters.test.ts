@@ -45,9 +45,8 @@ function makePayment(overrides: Partial<Payment> & { id: string }): Payment {
 }
 
 const sampleInvoice: InvoiceMetadata = {
-  series: "Invoice",
-  number: 1,
-  formattedNumber: "F26_001",
+  type: "Invoice",
+  id: "F26_001",
   generatedAt: new Date("2026-05-10T10:00:00Z"),
 }
 

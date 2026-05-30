@@ -8,10 +8,14 @@ import {
 import type { Client } from "./domain/entities/client"
 import type { CompanyInfo } from "./domain/entities/companyInfo"
 import type {
-  InvoiceSeries,
+  InvoiceType,
   Payment,
   PaymentMethod,
 } from "./domain/entities/payment"
+
+/** PDF rendering applies only to the four generated invoice types;
+ *  `Receipt` is link-only and never renders here. */
+type GeneratedInvoiceType = Exclude<InvoiceType, "Receipt">
 
 const PAGE_WIDTH = 595
 const PAGE_HEIGHT = 842
@@ -32,21 +36,42 @@ const WHITE = rgb(1, 1, 1)
 
 // ---------- Pure helpers (exported for tests) ----------
 
-const SERIES_PREFIX: Record<InvoiceSeries, string> = {
+const SERIES_PREFIX: Record<GeneratedInvoiceType, string> = {
   Invoice: "F",
   SimpleInvoice: "FS",
   RectificativeInvoice: "FR",
   RectificativeSimpleInvoice: "FSR",
 }
 
+const PREFIX_TO_TYPE: Record<string, GeneratedInvoiceType> = {
+  FSR: "RectificativeSimpleInvoice",
+  FS: "SimpleInvoice",
+  FR: "RectificativeInvoice",
+  F: "Invoice",
+}
+
 export function formatInvoiceNumber(
-  series: InvoiceSeries,
+  series: GeneratedInvoiceType,
   year: number,
   n: number
 ): string {
   const yy = String(year % 100).padStart(2, "0")
   const nnn = String(n).padStart(3, "0")
   return `${SERIES_PREFIX[series]}${yy}_${nnn}`
+}
+
+export function parseInvoiceId(
+  id: string
+): { type: GeneratedInvoiceType; year: number; n: number } | null {
+  const match = /^(FSR|FS|FR|F)(\d{2})_(\d{3,})$/.exec(id)
+  if (!match) return null
+  const prefix = match[1]
+  const type = PREFIX_TO_TYPE[prefix]
+  if (!type) return null
+  const yy = Number.parseInt(match[2], 10)
+  const n = Number.parseInt(match[3], 10)
+  if (!Number.isFinite(yy) || !Number.isFinite(n) || n <= 0) return null
+  return { type, year: 2000 + yy, n }
 }
 
 export function formatInvoiceDateES(date: string | Date): string {
@@ -88,7 +113,7 @@ export function formatInvoiceAmount(n: number): string {
   return `${n.toFixed(2).replace(".", ",")}€`
 }
 
-export function invoiceTitle(series: InvoiceSeries): string[] {
+export function invoiceTitle(series: GeneratedInvoiceType): string[] {
   switch (series) {
     case "Invoice":
       return ["FACTURA"]
@@ -101,7 +126,7 @@ export function invoiceTitle(series: InvoiceSeries): string[] {
   }
 }
 
-function isSimpleSeries(series: InvoiceSeries): boolean {
+function isSimpleSeries(series: GeneratedInvoiceType): boolean {
   return series === "SimpleInvoice" || series === "RectificativeSimpleInvoice"
 }
 
@@ -201,7 +226,7 @@ function drawPill(
 export interface InvoiceRenderContext {
   payment: Payment
   client?: Client
-  series: InvoiceSeries
+  series: GeneratedInvoiceType
   invoiceNumber: number
   company: CompanyInfo
 }

@@ -3,15 +3,13 @@
 import { useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
-import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations"
 import {
   useCreatePayment,
   useUpdatePayment,
 } from "@/lib/hooks/usePaymentMutations"
-import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types"
+import type { Payment, PaymentFormData } from "@/lib/types"
 import PaymentFormFields from "./PaymentFormFields"
-import PaymentInvoiceSection from "./PaymentInvoiceSection"
-import PaymentProviderBillSection from "./PaymentProviderBillSection"
+import PaymentInvoicesSection from "./PaymentInvoicesSection"
 import { buildDuplicateSeed } from "./paymentDetailModal-seed"
 import { extractPaymentError } from "./paymentDetailModal-utils"
 import {
@@ -73,33 +71,9 @@ export default function PaymentDetailModal({
   const { trigger: updatePayment, isMutating: isUpdating } = useUpdatePayment()
   const { trigger: createPayment, isMutating: isCreating } = useCreatePayment()
   const isSaving = isDuplicate ? isCreating : isUpdating
-  const { trigger: generateInvoice, isMutating: isGeneratingInvoice } =
-    useGenerateInvoice()
 
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
-  const [invoiceError, setInvoiceError] = useState<string | null>(null)
-
-  const handleGenerateInvoice = async (series: InvoiceSeries) => {
-    setInvoiceError(null)
-    try {
-      const data = await generateInvoice({
-        paymentId: payment._id?.toString() ?? "",
-        series,
-      })
-      const updatedPayment: Payment = {
-        ...payment,
-        invoice: undefined,
-        invoices: data.invoices,
-        updatedAt: new Date(),
-      }
-      onUpdate?.(updatedPayment)
-      window.open(data.downloadUrl, "_blank")
-    } catch (err) {
-      console.error(`Error generating invoice: ${err}`)
-      setInvoiceError(extractPaymentError(err, "An error occurred"))
-    }
-  }
 
   const handleSave = async () => {
     setError(null)
@@ -270,27 +244,18 @@ export default function PaymentDetailModal({
 
         <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
           <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            {formData.type === "income" ? "Invoice" : "Provider Bill"}
+            {formData.type === "income" ? "Invoices" : "Provider Bills"}
           </h3>
 
-          {!isDuplicate && formData.type === "income" && (
-            <PaymentInvoiceSection
-              payment={payment}
-              invoiceError={invoiceError}
-              isGenerating={isGeneratingInvoice}
-              onGenerate={handleGenerateInvoice}
-            />
-          )}
-
-          {!isDuplicate && formData.type === "outcome" && (
-            <PaymentProviderBillSection payment={payment} onUpdate={onUpdate} />
+          {!isDuplicate && (
+            <PaymentInvoicesSection payment={payment} onUpdate={onUpdate} />
           )}
 
           {isDuplicate && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {formData.type === "income"
                 ? "Invoice generation will be available after the duplicated payment is created."
-                : "Provider bill upload will be available after the duplicated payment is created."}
+                : "Provider bill links can be added after the duplicated payment is created."}
             </p>
           )}
         </div>

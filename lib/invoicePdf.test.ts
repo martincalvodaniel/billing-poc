@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test"
+import type { InvoiceType } from "./domain/entities/payment"
 import {
   formatInvoiceAmount,
   formatInvoiceDateES,
   formatInvoiceNumber,
   invoiceTitle,
+  parseInvoiceId,
   paymentMethodLabelES,
 } from "./invoicePdf"
 
@@ -80,5 +82,33 @@ describe("invoiceTitle", () => {
       "FACTURA SIMPLIFICADA",
       "RECTIFICATIVA",
     ])
+  })
+})
+
+describe("parseInvoiceId", () => {
+  const cases: Array<[Exclude<InvoiceType, "Receipt">, number, number]> = [
+    ["Invoice", 2026, 1],
+    ["SimpleInvoice", 2026, 154],
+    ["RectificativeInvoice", 2026, 7],
+    ["RectificativeSimpleInvoice", 2027, 12],
+  ]
+
+  for (const [type, year, n] of cases) {
+    test(`round-trip ${type} ${year}/${n}`, () => {
+      const id = formatInvoiceNumber(type, year, n)
+      const parsed = parseInvoiceId(id)
+      expect(parsed).toEqual({ type, year, n })
+    })
+  }
+
+  test("returns null for malformed id", () => {
+    expect(parseInvoiceId("XX26_001")).toBeNull()
+    expect(parseInvoiceId("F2026_001")).toBeNull()
+    expect(parseInvoiceId("F26-001")).toBeNull()
+    expect(parseInvoiceId("")).toBeNull()
+  })
+
+  test("returns null when sequence is zero", () => {
+    expect(parseInvoiceId("F26_000")).toBeNull()
   })
 })
