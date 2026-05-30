@@ -25,8 +25,9 @@ export interface InvoiceMetadata {
   number: number
   formattedNumber: string
   generatedAt: Date
-  blobUrl: string
-  blobPathname: string
+  // Optional: present only for blob-persisted invoices; absent for on-the-fly entries.
+  blobUrl?: string
+  blobPathname?: string
 }
 
 export interface Payment {
@@ -48,6 +49,7 @@ export interface Payment {
   invoices?: InvoiceMetadata[]
   providerBillUrl?: string
   providerBillPathname?: string
+  providerBillLink?: string
   paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date

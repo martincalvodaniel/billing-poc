@@ -1,12 +1,9 @@
 "use client"
 
-import { useId, useRef, useState } from "react"
+import { useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
-import {
-  useGenerateInvoice,
-  useUploadInvoice,
-} from "@/lib/hooks/useInvoiceMutations"
+import { useGenerateInvoice } from "@/lib/hooks/useInvoiceMutations"
 import {
   useCreatePayment,
   useUpdatePayment,
@@ -40,7 +37,6 @@ export default function PaymentDetailModal({
   onUpdate,
   onCreate,
 }: PaymentDetailModalProps) {
-  const id = useId()
   const isDuplicate = mode === "duplicate"
   const initialFormData: PaymentFormData = isDuplicate
     ? buildDuplicateSeed(payment)
@@ -79,18 +75,10 @@ export default function PaymentDetailModal({
   const isSaving = isDuplicate ? isCreating : isUpdating
   const { trigger: generateInvoice, isMutating: isGeneratingInvoice } =
     useGenerateInvoice()
-  const { trigger: uploadInvoice, isMutating: isUploadingBill } =
-    useUploadInvoice()
 
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleDownloadProviderBill = () => {
-    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank")
-  }
 
   const handleGenerateInvoice = async (series: InvoiceSeries) => {
     setInvoiceError(null)
@@ -110,42 +98,6 @@ export default function PaymentDetailModal({
     } catch (err) {
       console.error(`Error generating invoice: ${err}`)
       setInvoiceError(extractPaymentError(err, "An error occurred"))
-    }
-  }
-
-  const handleUploadProviderBill = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.type !== "application/pdf") {
-      setUploadError("Only PDF files are allowed")
-      return
-    }
-    const maxSize = 10 * 1024 * 1024
-    if (file.size > maxSize) {
-      setUploadError("File size exceeds 10MB limit")
-      return
-    }
-    setUploadError(null)
-    try {
-      const data = await uploadInvoice({
-        paymentId: payment._id?.toString() ?? "",
-        file,
-      })
-      const updatedPayment: Payment = {
-        ...payment,
-        providerBillUrl: data.billUrl,
-        providerBillPathname: data.pathname,
-        updatedAt: new Date(),
-      }
-      onUpdate?.(updatedPayment)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    } catch (err) {
-      console.error(`Error uploading provider bill: ${err}`)
-      setUploadError(extractPaymentError(err, "An error occurred"))
     }
   }
 
@@ -331,15 +283,7 @@ export default function PaymentDetailModal({
           )}
 
           {!isDuplicate && formData.type === "outcome" && (
-            <PaymentProviderBillSection
-              idPrefix={id}
-              payment={payment}
-              uploadError={uploadError}
-              isUploading={isUploadingBill}
-              fileInputRef={fileInputRef}
-              onUpload={handleUploadProviderBill}
-              onDownload={handleDownloadProviderBill}
-            />
+            <PaymentProviderBillSection payment={payment} onUpdate={onUpdate} />
           )}
 
           {isDuplicate && (

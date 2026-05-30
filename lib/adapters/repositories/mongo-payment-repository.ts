@@ -32,6 +32,7 @@ function toDomain(doc: MongoPayment): Payment {
     invoices: doc.invoices,
     providerBillUrl: doc.providerBillUrl,
     providerBillPathname: doc.providerBillPathname,
+    providerBillLink: doc.providerBillLink,
     paymentMethod: doc.paymentMethod,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -97,6 +98,9 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
   }
   if (data.providerBillPathname !== undefined) {
     builder.setOrUnset("providerBillPathname", data.providerBillPathname)
+  }
+  if (data.providerBillLink !== undefined) {
+    builder.setOrUnset("providerBillLink", data.providerBillLink ?? undefined)
   }
   if (data.paymentMethod !== undefined) {
     builder.setOrUnset(
@@ -244,6 +248,19 @@ export class MongoPaymentRepository implements PaymentRepository {
         $set: { updatedAt },
       }
     )
+    return result.matchedCount > 0
+  }
+
+  async setProviderBillLink(
+    paymentId: string,
+    link: string | null
+  ): Promise<boolean> {
+    const col = await this.collection()
+    const ops = new MongoUpdateBuilder()
+      .setOrUnset("providerBillLink", link ?? undefined)
+      .set("updatedAt", new Date())
+      .build()
+    const result = await col.updateOne({ _id: toObjectId(paymentId) }, ops)
     return result.matchedCount > 0
   }
 

@@ -1,9 +1,13 @@
 import { get } from "@vercel/blob"
-import { ObjectId } from "mongodb"
 import { type NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/api-auth"
-import { getDatabase } from "@/lib/mongodb"
-import type { Payment } from "@/lib/types"
+import { REGULAR_INVOICE_SERIES } from "@/lib/domain/services/invoice-validator"
+import { generateInvoicePdf } from "@/lib/invoicePdf"
+import {
+  getClientById,
+  getCompanyInfo,
+  getPaymentById,
+} from "@/lib/server-cache"
 
 export async function GET(
   _request: NextRequest,
@@ -22,58 +26,88 @@ export async function GET(
       )
     }
 
-    const db = await getDatabase()
-
-    // Fetch payment
-    const payment = await db.collection<Payment>("payments").findOne({
-      _id: new ObjectId(id),
-    })
-
+    const payment = await getPaymentById(id)
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 })
     }
-
-    // Resolve which blob URL to stream
-    let blobUrl: string | undefined
-    let filename = "document.pdf"
 
     if (payment.type === "income") {
       const last =
         payment.invoices && payment.invoices.length > 0
           ? payment.invoices[payment.invoices.length - 1]
           : payment.invoice
-      if (last) {
-        blobUrl = last.blobUrl
-        filename = `${last.series}-${String(last.number).padStart(6, "0")}.pdf`
+      if (!last) {
+        return NextResponse.json(
+          { error: "No invoice found for this payment" },
+          { status: 404 }
+        )
       }
-    } else if (payment.type === "outcome" && payment.providerBillUrl) {
-      blobUrl = payment.providerBillUrl
-      filename = "provider-bill.pdf"
+
+      const filename = `${last.formattedNumber}.pdf`
+
+      if (last.blobUrl) {
+        const result = await get(last.blobUrl, { access: "private" })
+        if (result?.statusCode !== 200) {
+          return NextResponse.json(
+            { error: "Failed to retrieve file from storage" },
+            { status: 404 }
+          )
+        }
+        return new NextResponse(result.stream, {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `inline; filename="${filename}"`,
+          },
+        })
+      }
+
+      const [company, client] = await Promise.all([
+        getCompanyInfo(),
+        REGULAR_INVOICE_SERIES.has(last.series) && payment.clientId
+          ? getClientById(payment.clientId)
+          : Promise.resolve(null),
+      ])
+
+      const pdf = await generateInvoicePdf({
+        payment,
+        client: client ?? undefined,
+        series: last.series,
+        invoiceNumber: last.number,
+        company,
+      })
+
+      return new NextResponse(new Uint8Array(pdf), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="${filename}"`,
+        },
+      })
     }
 
-    if (!blobUrl) {
-      return NextResponse.json(
-        { error: "No invoice or provider bill found for this payment" },
-        { status: 404 }
-      )
+    if (payment.providerBillLink) {
+      return NextResponse.redirect(new URL(payment.providerBillLink), 302)
     }
 
-    // Fetch private blob using server-side token and stream to client
-    const result = await get(blobUrl, { access: "private" })
-
-    if (result?.statusCode !== 200) {
-      return NextResponse.json(
-        { error: "Failed to retrieve file from storage" },
-        { status: 404 }
-      )
+    if (payment.providerBillUrl) {
+      const result = await get(payment.providerBillUrl, { access: "private" })
+      if (result?.statusCode !== 200) {
+        return NextResponse.json(
+          { error: "Failed to retrieve file from storage" },
+          { status: 404 }
+        )
+      }
+      return new NextResponse(result.stream, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="provider-bill.pdf"`,
+        },
+      })
     }
 
-    return new NextResponse(result.stream, {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${filename}"`,
-      },
-    })
+    return NextResponse.json(
+      { error: "No invoice or provider bill found for this payment" },
+      { status: 404 }
+    )
   } catch (error) {
     console.error(`Error retrieving invoice: ${error}`)
     return NextResponse.json(

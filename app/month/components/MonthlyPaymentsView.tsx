@@ -7,6 +7,16 @@ import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
 import { usePayments } from "@/lib/hooks/usePayments"
 import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
+import {
+  derivePaymentTagOptions,
+  filterPayments,
+  nextSortState,
+  type PaymentFilters,
+  type PaymentSortKey,
+  type PaymentSortState,
+  sortPayments,
+} from "./monthlyPaymentsView-filters"
+import PaymentsFilters from "./PaymentsFilters"
 import PaymentsSummary from "./PaymentsSummary"
 import PaymentsTable from "./PaymentsTable"
 
@@ -51,6 +61,35 @@ export default function MonthlyPaymentsView({
 
   // Duplicate modal state — holds the source payment to seed the create form.
   const [duplicateSeed, setDuplicateSeed] = useState<Payment | null>(null)
+
+  const [sort, setSort] = useState<PaymentSortState>({
+    sortBy: "day",
+    sortDir: "desc",
+  })
+  const [filters, setFilters] = useState<PaymentFilters>({
+    type: "all",
+    hasInvoice: "all",
+    tags: [],
+  })
+
+  const tagOptions = useMemo(
+    () => derivePaymentTagOptions(payments),
+    [payments]
+  )
+
+  const filteredPayments = useMemo(
+    () =>
+      sortPayments(
+        filterPayments(payments, filters),
+        sort.sortBy,
+        sort.sortDir
+      ),
+    [payments, filters, sort.sortBy, sort.sortDir]
+  )
+
+  const handleSortChange = useCallback((key: PaymentSortKey) => {
+    setSort((prev) => nextSortState(prev, key))
+  }, [])
 
   // Auto-open the payment-detail modal when arriving with ?payment=<id>.
   const searchParams = useSearchParams()
@@ -222,14 +261,22 @@ export default function MonthlyPaymentsView({
         <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
       )}
 
+      <PaymentsFilters
+        tagOptions={tagOptions}
+        value={filters}
+        onChange={setFilters}
+      />
+
       <PaymentsTable
         payments={payments}
-        filteredPayments={payments}
+        filteredPayments={filteredPayments}
         selectedDate={selectedDate}
         error={displayError}
         onRowClick={handleRowClick}
         onDeleteClick={handleDeleteClick}
         onDuplicateClick={handleDuplicateClick}
+        sort={sort}
+        onSortChange={handleSortChange}
       />
 
       {deleteConfirmPaymentId && (

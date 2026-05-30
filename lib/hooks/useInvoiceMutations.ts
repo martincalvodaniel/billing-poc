@@ -39,6 +39,7 @@ async function parseError(
 export interface GenerateInvoiceInput {
   paymentId: string
   series: InvoiceSeries
+  persist?: boolean
 }
 
 export interface GenerateInvoiceResult {
@@ -51,8 +52,13 @@ export interface GenerateInvoiceResult {
 export function buildGenerateInvoiceBody(input: GenerateInvoiceInput): {
   paymentId: string
   series: InvoiceSeries
+  persist?: boolean
 } {
-  return { paymentId: input.paymentId, series: input.series }
+  return {
+    paymentId: input.paymentId,
+    series: input.series,
+    ...(input.persist !== undefined ? { persist: input.persist } : {}),
+  }
 }
 
 /**

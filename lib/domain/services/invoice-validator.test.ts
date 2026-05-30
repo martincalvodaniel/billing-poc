@@ -4,6 +4,7 @@ import {
   assertCanGenerateInvoice,
   generateInvoiceSchema,
   type InvoiceCandidatePayment,
+  REGULAR_INVOICE_SERIES,
 } from "./invoice-validator"
 
 function invoice(series: InvoiceSeries, number = 1): InvoiceMetadata {
@@ -50,6 +51,54 @@ describe("generateInvoiceSchema", () => {
         series: "NotARealSeries",
       })
     ).toThrow()
+  })
+
+  test("treats persist as optional", () => {
+    const parsed = generateInvoiceSchema.parse({
+      paymentId: "507f1f77bcf86cd799439011",
+      series: "Invoice",
+    })
+    expect(parsed.persist).toBeUndefined()
+  })
+
+  test("accepts persist: true", () => {
+    const parsed = generateInvoiceSchema.parse({
+      paymentId: "507f1f77bcf86cd799439011",
+      series: "Invoice",
+      persist: true,
+    })
+    expect(parsed.persist).toBe(true)
+  })
+
+  test("accepts persist: false", () => {
+    const parsed = generateInvoiceSchema.parse({
+      paymentId: "507f1f77bcf86cd799439011",
+      series: "Invoice",
+      persist: false,
+    })
+    expect(parsed.persist).toBe(false)
+  })
+
+  test("rejects non-boolean persist", () => {
+    expect(() =>
+      generateInvoiceSchema.parse({
+        paymentId: "507f1f77bcf86cd799439011",
+        series: "Invoice",
+        persist: "yes",
+      })
+    ).toThrow()
+  })
+})
+
+describe("REGULAR_INVOICE_SERIES", () => {
+  test("contains the regular (client-required) series", () => {
+    expect(REGULAR_INVOICE_SERIES.has("Invoice")).toBe(true)
+    expect(REGULAR_INVOICE_SERIES.has("RectificativeInvoice")).toBe(true)
+  })
+
+  test("excludes the simple series", () => {
+    expect(REGULAR_INVOICE_SERIES.has("SimpleInvoice")).toBe(false)
+    expect(REGULAR_INVOICE_SERIES.has("RectificativeSimpleInvoice")).toBe(false)
   })
 })
 

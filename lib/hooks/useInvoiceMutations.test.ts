@@ -32,6 +32,33 @@ describe("buildGenerateInvoiceBody", () => {
       '{"paymentId":"p2","series":"SimpleInvoice"}'
     )
   })
+
+  test("omits persist when not provided", () => {
+    const body = buildGenerateInvoiceBody({
+      paymentId: "p3",
+      series: "Invoice",
+    })
+    expect("persist" in body).toBe(false)
+    expect(JSON.stringify(body)).toBe('{"paymentId":"p3","series":"Invoice"}')
+  })
+
+  test("forwards persist: true", () => {
+    const body = buildGenerateInvoiceBody({
+      paymentId: "p4",
+      series: "Invoice",
+      persist: true,
+    })
+    expect(body.persist).toBe(true)
+  })
+
+  test("forwards persist: false", () => {
+    const body = buildGenerateInvoiceBody({
+      paymentId: "p5",
+      series: "Invoice",
+      persist: false,
+    })
+    expect(body.persist).toBe(false)
+  })
 })
 
 describe("buildUploadInvoiceFormData", () => {

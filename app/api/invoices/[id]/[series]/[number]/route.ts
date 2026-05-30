@@ -5,7 +5,13 @@ import {
   getPaymentInvoices,
   type InvoiceSeries,
 } from "@/lib/domain/entities/payment"
-import { getPaymentById } from "@/lib/server-cache"
+import { REGULAR_INVOICE_SERIES } from "@/lib/domain/services/invoice-validator"
+import { generateInvoicePdf } from "@/lib/invoicePdf"
+import {
+  getClientById,
+  getCompanyInfo,
+  getPaymentById,
+} from "@/lib/server-cache"
 
 const VALID_SERIES = new Set<InvoiceSeries>([
   "Invoice",
@@ -59,15 +65,38 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 
-    const result = await get(invoice.blobUrl, { access: "private" })
-    if (result?.statusCode !== 200) {
-      return NextResponse.json(
-        { error: "Failed to retrieve file from storage" },
-        { status: 404 }
-      )
+    if (invoice.blobUrl) {
+      const result = await get(invoice.blobUrl, { access: "private" })
+      if (result?.statusCode !== 200) {
+        return NextResponse.json(
+          { error: "Failed to retrieve file from storage" },
+          { status: 404 }
+        )
+      }
+      return new NextResponse(result.stream, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="${invoice.formattedNumber}.pdf"`,
+        },
+      })
     }
 
-    return new NextResponse(result.stream, {
+    const [company, client] = await Promise.all([
+      getCompanyInfo(),
+      REGULAR_INVOICE_SERIES.has(invoice.series) && payment.clientId
+        ? getClientById(payment.clientId)
+        : Promise.resolve(null),
+    ])
+
+    const pdf = await generateInvoicePdf({
+      payment,
+      client: client ?? undefined,
+      series: invoice.series,
+      invoiceNumber: invoice.number,
+      company,
+    })
+
+    return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="${invoice.formattedNumber}.pdf"`,

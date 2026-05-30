@@ -19,8 +19,9 @@ export interface InvoiceMetadata {
   number: number // Sequential number within the series (per year)
   formattedNumber: string // e.g. "F26_001"
   generatedAt: Date
-  blobUrl: string // Vercel Blob URL
-  blobPathname: string // Storage path for retrieval
+  // Optional: present only for blob-persisted invoices; absent for on-the-fly entries.
+  blobUrl?: string
+  blobPathname?: string
 }
 
 export interface PaymentConcept {
@@ -48,6 +49,7 @@ export interface Payment {
   invoices?: InvoiceMetadata[] // Generated invoices (for income payments)
   providerBillUrl?: string // Uploaded provider bill URL (for outcome payments)
   providerBillPathname?: string // Uploaded provider bill storage path
+  providerBillLink?: string // External URL to the provider bill (preferred over blob upload)
   paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date

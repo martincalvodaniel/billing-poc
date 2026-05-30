@@ -11,6 +11,7 @@ import {
 import {
   assertCanGenerateInvoice,
   generateInvoiceSchema,
+  REGULAR_INVOICE_SERIES,
 } from "@/lib/domain/services/invoice-validator"
 import { getNextInvoiceNumber } from "@/lib/invoiceCounters"
 import { formatInvoiceNumber, generateInvoicePdf } from "@/lib/invoicePdf"
@@ -19,8 +20,6 @@ import { zodError } from "@/lib/validation"
 
 const paymentRepo = new MongoPaymentRepository()
 const clientRepo = new MongoClientRepository()
-
-const REGULAR_SERIES = new Set(["Invoice", "RectificativeInvoice"])
 
 function paymentYearFromDate(date: string): number {
   const head = date.slice(0, 4)
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { paymentId, series } = parsed.data
+    const { paymentId, series, persist } = parsed.data
 
     const [payment, company] = await Promise.all([
       paymentRepo.findById(paymentId),
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     let client: Client | undefined
-    if (REGULAR_SERIES.has(series) && payment.clientId) {
+    if (REGULAR_INVOICE_SERIES.has(series) && payment.clientId) {
       const clientDoc = await clientRepo.findById(payment.clientId)
       if (!clientDoc) {
         return NextResponse.json({ error: "Client not found" }, { status: 404 })
@@ -78,19 +77,25 @@ export async function POST(request: NextRequest) {
       company,
     })
 
-    const filename = `${formattedNumber}-${paymentId}.pdf`
-    const blob = await put(filename, pdfBuffer, {
-      access: "private",
-      contentType: "application/pdf",
-    })
+    let blobUrl: string | undefined
+    let blobPathname: string | undefined
+    if (persist === true) {
+      const filename = `${formattedNumber}-${paymentId}.pdf`
+      const blob = await put(filename, pdfBuffer, {
+        access: "private",
+        contentType: "application/pdf",
+      })
+      blobUrl = blob.url
+      blobPathname = blob.pathname
+    }
 
     const invoiceMetadata: InvoiceMetadata = {
       series,
       number: invoiceNumber,
       formattedNumber,
       generatedAt: new Date(),
-      blobUrl: blob.url,
-      blobPathname: blob.pathname,
+      ...(blobUrl ? { blobUrl } : {}),
+      ...(blobPathname ? { blobPathname } : {}),
     }
 
     const appended = await paymentRepo.appendInvoice(paymentId, invoiceMetadata)

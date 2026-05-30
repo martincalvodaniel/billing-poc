@@ -25,6 +25,7 @@ export const generateInvoiceSchema = z.object({
     "SimpleInvoice",
     "RectificativeSimpleInvoice",
   ]),
+  persist: z.boolean().optional(),
 })
 
 export type GenerateInvoiceInput = z.infer<typeof generateInvoiceSchema>
@@ -34,6 +35,10 @@ const SIMPLE_SERIES: InvoiceSeries[] = [
   "RectificativeSimpleInvoice",
 ]
 const REGULAR_SERIES: InvoiceSeries[] = ["Invoice", "RectificativeInvoice"]
+
+export const REGULAR_INVOICE_SERIES: ReadonlySet<InvoiceSeries> = new Set(
+  REGULAR_SERIES
+)
 const RECTIFICATIVE_TO_BASE: Partial<Record<InvoiceSeries, InvoiceSeries>> = {
   RectificativeInvoice: "Invoice",
   RectificativeSimpleInvoice: "SimpleInvoice",
