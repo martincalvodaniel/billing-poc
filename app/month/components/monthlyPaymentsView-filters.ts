@@ -27,6 +27,27 @@ export interface PaymentSortState {
   sortDir: PaymentSortDir
 }
 
+export function toggleTypeFilter(
+  current: PaymentTypeFilter,
+  clicked: Exclude<PaymentTypeFilter, "all">
+): PaymentTypeFilter {
+  return current === clicked ? "all" : clicked
+}
+
+export function toggleInvoiceFilter(
+  current: PaymentInvoiceFilter,
+  hasInvoice: boolean
+): PaymentInvoiceFilter {
+  const next: PaymentInvoiceFilter = hasInvoice ? "yes" : "no"
+  return current === next ? "all" : next
+}
+
+export function toggleTagFilter(current: string[], tag: string): string[] {
+  return current.includes(tag)
+    ? current.filter((value) => value !== tag)
+    : [...current, tag]
+}
+
 export function paymentHasInvoice(payment: Payment): boolean {
   return (payment.invoices?.length ?? 0) > 0 || payment.invoice !== undefined
 }

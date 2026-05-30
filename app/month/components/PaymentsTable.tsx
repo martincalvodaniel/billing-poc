@@ -7,8 +7,10 @@ import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
 import type { Payment } from "@/lib/types"
 import {
+  type PaymentInvoiceFilter,
   type PaymentSortKey,
   type PaymentSortState,
+  type PaymentTypeFilter,
   paymentHasInvoice,
 } from "./monthlyPaymentsView-filters"
 
@@ -126,6 +128,38 @@ function InvoiceMarker() {
   )
 }
 
+function WithoutInvoiceMarker() {
+  return (
+    <span
+      role="img"
+      aria-label="Without invoice"
+      className="inline-flex items-center text-rose-600 dark:text-rose-400"
+    >
+      <svg
+        aria-hidden="true"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12h6m-6 4h4m1-12H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 9l6 6m0-6l-6 6"
+        />
+      </svg>
+      <span className="sr-only">Without invoice</span>
+    </span>
+  )
+}
+
 export default function PaymentsTable({
   payments,
   filteredPayments,
@@ -136,6 +170,10 @@ export default function PaymentsTable({
   onDuplicateClick,
   sort,
   onSortChange,
+  typeFilter,
+  hasInvoiceFilter,
+  onTypeFilterToggle,
+  onInvoiceFilterToggle,
 }: {
   payments: Payment[]
   filteredPayments: Payment[]
@@ -146,6 +184,10 @@ export default function PaymentsTable({
   onDuplicateClick: (e: React.MouseEvent, paymentId: string) => void
   sort?: PaymentSortState
   onSortChange?: (key: PaymentSortKey) => void
+  typeFilter: PaymentTypeFilter
+  hasInvoiceFilter: PaymentInvoiceFilter
+  onTypeFilterToggle: (type: "income" | "outcome") => void
+  onInvoiceFilterToggle: (hasInvoice: boolean) => void
 }) {
   const hasSurcharge = filteredPayments.some(
     (p) => p.surcharge && p.surcharge > 0
@@ -232,16 +274,60 @@ export default function PaymentsTable({
                   <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
                     <span className="inline-flex items-center gap-1.5">
                       <span>{new Date(payment.date).getDate()}</span>
-                      {paymentHasInvoice(payment) && <InvoiceMarker />}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onInvoiceFilterToggle(paymentHasInvoice(payment))
+                        }}
+                        aria-label={
+                          paymentHasInvoice(payment)
+                            ? "Filter by payments with invoice"
+                            : "Filter by payments without invoice"
+                        }
+                        className={`rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                          (
+                            paymentHasInvoice(payment) &&
+                              hasInvoiceFilter === "yes"
+                          ) ||
+                          (
+                            !paymentHasInvoice(payment) &&
+                              hasInvoiceFilter === "no"
+                          )
+                            ? "ring-1 ring-blue-500"
+                            : ""
+                        }`}
+                      >
+                        {paymentHasInvoice(payment) ? (
+                          <InvoiceMarker />
+                        ) : (
+                          <WithoutInvoiceMarker />
+                        )}
+                      </button>
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge
-                      tone={payment.type === "income" ? "success" : "danger"}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onTypeFilterToggle(payment.type)
+                      }}
+                      aria-label={`Filter by ${payment.type}`}
+                      className="rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      {payment.type.charAt(0).toUpperCase() +
-                        payment.type.slice(1)}
-                    </Badge>
+                      <Badge
+                        tone={payment.type === "income" ? "success" : "danger"}
+                        className={
+                          typeFilter === payment.type
+                            ? "ring-1 ring-blue-500"
+                            : undefined
+                        }
+                      >
+                        {payment.type.charAt(0).toUpperCase() +
+                          payment.type.slice(1)}
+                      </Badge>
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
                     {payment.tag ? (

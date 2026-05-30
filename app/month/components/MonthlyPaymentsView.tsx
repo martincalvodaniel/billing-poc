@@ -8,15 +8,17 @@ import { usePayments } from "@/lib/hooks/usePayments"
 import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
 import {
-  derivePaymentTagOptions,
   filterPayments,
   nextSortState,
   type PaymentFilters,
   type PaymentSortKey,
   type PaymentSortState,
+  type PaymentTypeFilter,
   sortPayments,
+  toggleInvoiceFilter,
+  toggleTagFilter,
+  toggleTypeFilter,
 } from "./monthlyPaymentsView-filters"
-import PaymentsFilters from "./PaymentsFilters"
 import PaymentsSummary from "./PaymentsSummary"
 import PaymentsTable from "./PaymentsTable"
 
@@ -72,11 +74,6 @@ export default function MonthlyPaymentsView({
     tags: [],
   })
 
-  const tagOptions = useMemo(
-    () => derivePaymentTagOptions(payments),
-    [payments]
-  )
-
   const filteredPayments = useMemo(
     () =>
       sortPayments(
@@ -89,6 +86,34 @@ export default function MonthlyPaymentsView({
 
   const handleSortChange = useCallback((key: PaymentSortKey) => {
     setSort((prev) => nextSortState(prev, key))
+  }, [])
+
+  const handleTypeFilterToggle = useCallback(
+    (type: Exclude<PaymentTypeFilter, "all">) => {
+      setFilters((prev) => ({
+        ...prev,
+        type: toggleTypeFilter(prev.type, type),
+      }))
+    },
+    []
+  )
+
+  const handleInvoiceFilterToggle = useCallback((hasInvoice: boolean) => {
+    setFilters((prev) => ({
+      ...prev,
+      hasInvoice: toggleInvoiceFilter(prev.hasInvoice, hasInvoice),
+    }))
+  }, [])
+
+  const handleTagToggle = useCallback((tag: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      tags: toggleTagFilter(prev.tags, tag),
+    }))
+  }, [])
+
+  const clearTagFilter = useCallback(() => {
+    setFilters((prev) => ({ ...prev, tags: [] }))
   }, [])
 
   // Auto-open the payment-detail modal when arriving with ?payment=<id>.
@@ -258,14 +283,25 @@ export default function MonthlyPaymentsView({
       )}
 
       {showCharts && (
-        <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
+        <PaymentCharts
+          incomeByTag={incomeByTag}
+          outcomeByTag={outcomeByTag}
+          selectedTags={filters.tags}
+          onToggleTag={handleTagToggle}
+        />
       )}
 
-      <PaymentsFilters
-        tagOptions={tagOptions}
-        value={filters}
-        onChange={setFilters}
-      />
+      {filters.tags.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={clearTagFilter}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Clear tag filter
+          </button>
+        </div>
+      )}
 
       <PaymentsTable
         payments={payments}
@@ -277,6 +313,10 @@ export default function MonthlyPaymentsView({
         onDuplicateClick={handleDuplicateClick}
         sort={sort}
         onSortChange={handleSortChange}
+        typeFilter={filters.type}
+        hasInvoiceFilter={filters.hasInvoice}
+        onTypeFilterToggle={handleTypeFilterToggle}
+        onInvoiceFilterToggle={handleInvoiceFilterToggle}
       />
 
       {deleteConfirmPaymentId && (

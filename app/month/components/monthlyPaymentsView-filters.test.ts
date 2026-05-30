@@ -7,6 +7,9 @@ import {
   nextSortState,
   paymentHasInvoice,
   sortPayments,
+  toggleInvoiceFilter,
+  toggleTagFilter,
+  toggleTypeFilter,
 } from "./monthlyPaymentsView-filters"
 
 function makePayment(overrides: Partial<Payment> & { id: string }): Payment {
@@ -366,5 +369,32 @@ describe("nextSortState", () => {
       sortBy: "total",
       sortDir: "desc",
     })
+  })
+})
+
+describe("toggleTypeFilter", () => {
+  test("toggles selected type back to all", () => {
+    expect(toggleTypeFilter("income", "income")).toBe("all")
+  })
+
+  test("switches to clicked type", () => {
+    expect(toggleTypeFilter("all", "outcome")).toBe("outcome")
+    expect(toggleTypeFilter("income", "outcome")).toBe("outcome")
+  })
+})
+
+describe("toggleInvoiceFilter", () => {
+  test("toggles invoice presence filter", () => {
+    expect(toggleInvoiceFilter("all", true)).toBe("yes")
+    expect(toggleInvoiceFilter("yes", true)).toBe("all")
+    expect(toggleInvoiceFilter("yes", false)).toBe("no")
+  })
+})
+
+describe("toggleTagFilter", () => {
+  test("adds and removes tags from multiselect", () => {
+    expect(toggleTagFilter([], "Food")).toEqual(["Food"])
+    expect(toggleTagFilter(["Food"], "Rent")).toEqual(["Food", "Rent"])
+    expect(toggleTagFilter(["Food", "Rent"], "Food")).toEqual(["Rent"])
   })
 })
