@@ -13,15 +13,11 @@ interface NavigationBarProps {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  {
-    href: "/",
-    label: "Monthly Overview",
-    matches: (p) => p === "/" || p === "/month",
-  },
-  { href: "/year", label: "Yearly Overview", matches: (p) => p === "/year" },
-  { href: "/absences", label: "Absences", matches: (p) => p === "/absences" },
-  { href: "/events", label: "Events", matches: (p) => p === "/events" },
+  { href: "/", label: "Absences", matches: (p) => p === "/" || p === "/absences" },
   { href: "/clients", label: "Clients", matches: (p) => p === "/clients" },
+  { href: "/events", label: "Events", matches: (p) => p === "/events" },
+  { href: "/month", label: "Monthly Overview", matches: (p) => p === "/month" },
+  { href: "/year", label: "Yearly Overview", matches: (p) => p === "/year" },
 ]
 
 export default function NavigationBar({ subtitle }: NavigationBarProps) {
