@@ -23,6 +23,7 @@ export interface PaymentConcept {
 export interface InvoiceMetadata {
   series: InvoiceSeries
   number: number
+  formattedNumber: string
   generatedAt: Date
   blobUrl: string
   blobPathname: string
@@ -44,6 +45,7 @@ export interface Payment {
   surchargeAmount?: number
   total: number
   invoice?: InvoiceMetadata
+  invoices?: InvoiceMetadata[]
   providerBillUrl?: string
   providerBillPathname?: string
   paymentMethod?: PaymentMethod
@@ -62,4 +64,18 @@ export interface PaymentFormData {
   clientId?: string
   deliveryNoteRef?: string
   paymentMethod?: PaymentMethod | ""
+}
+
+/**
+ * Unifies the legacy `payment.invoice` single-field with the new
+ * `payment.invoices` array. Legacy entry (if present) comes first, followed
+ * by the array in stored order.
+ */
+export function getPaymentInvoices(payment: {
+  invoice?: InvoiceMetadata
+  invoices?: InvoiceMetadata[]
+}): InvoiceMetadata[] {
+  const legacy = payment.invoice ? [payment.invoice] : []
+  const arr = payment.invoices ?? []
+  return [...legacy, ...arr]
 }

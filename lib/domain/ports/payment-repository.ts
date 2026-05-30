@@ -1,4 +1,4 @@
-import type { Payment } from "../entities/payment"
+import type { InvoiceMetadata, Payment } from "../entities/payment"
 
 export interface PaymentFilter {
   year?: number
@@ -12,4 +12,5 @@ export interface PaymentRepository {
   update(id: string, data: Partial<Payment>): Promise<boolean>
   delete(id: string): Promise<boolean>
   findDistinctTags(type?: string): Promise<string[]>
+  appendInvoice(paymentId: string, invoice: InvoiceMetadata): Promise<boolean>
 }

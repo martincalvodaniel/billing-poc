@@ -1,17 +1,19 @@
 ## with clarifications
 ```
-Read again and execute .agents/agents/orchestrator.agent.md for agent-iterations/260530-1009_fix-lint/main.prompt.md
+Read again and execute .agents/agents/orchestrator.agent.md for agent-iterations/260530-1017_refactor-invoices/main.prompt.md
 
-Do not ask the user for a new request outside of this #tool:vscode/askQuestions
+Do not ask the user for a new request outside of this #tool:vscode/askQuestions.
+
+The last think you must prompt in this chat (at the end of the iteration) is a question with #tool:vscode/askQuestions asking the user to evaluate and answer if the task was succesfully accomplished. Do not auto-answer this question, only human user can answer.
 ```
 
 ## direct
 ```
-Read again and execute .agents/agents/orchestrator.agent.md for already created main-plan agent-iterations/260530-1009_fix-lint/main.prompt.md
+Read again and execute .agents/agents/orchestrator.agent.md for already created main-plan agent-iterations/260530-1017_refactor-invoices/main.prompt.md
 
 Do not create nor ask for clarifications in this iteration. Let the subagents decide if they need to ask for clarifications or not. Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 
-The last think you should prompt in this chat (at the end of the iteration) is a question with #tool:vscode/askQuestions asking the user to evaluate and answer if the task was succesfully accomplished. Do not auto-answer this question, only human user can answer.
+The last think you must prompt in this chat (at the end of the iteration) is a question with #tool:vscode/askQuestions asking the user to evaluate and answer if the task was succesfully accomplished. Do not auto-answer this question, only human user can answer.
 ```
 
 # common

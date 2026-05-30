@@ -37,9 +37,15 @@ export async function GET(
     let blobUrl: string | undefined
     let filename = "document.pdf"
 
-    if (payment.type === "income" && payment.invoice) {
-      blobUrl = payment.invoice.blobUrl
-      filename = `${payment.invoice.series}-${String(payment.invoice.number).padStart(6, "0")}.pdf`
+    if (payment.type === "income") {
+      const last =
+        payment.invoices && payment.invoices.length > 0
+          ? payment.invoices[payment.invoices.length - 1]
+          : payment.invoice
+      if (last) {
+        blobUrl = last.blobUrl
+        filename = `${last.series}-${String(last.number).padStart(6, "0")}.pdf`
+      }
     } else if (payment.type === "outcome" && payment.providerBillUrl) {
       blobUrl = payment.providerBillUrl
       filename = "provider-bill.pdf"

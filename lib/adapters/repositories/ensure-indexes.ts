@@ -34,8 +34,8 @@ export const INDEX_SPECS: IndexSpec[] = [
   },
   {
     collection: "invoiceCounters",
-    keys: { series: 1 },
-    options: { name: "uniq_series", unique: true },
+    keys: { series: 1, year: 1 },
+    options: { name: "uniq_series_year", unique: true },
   },
 ]
 
