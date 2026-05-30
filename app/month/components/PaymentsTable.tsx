@@ -172,8 +172,10 @@ export default function PaymentsTable({
   onSortChange,
   typeFilter,
   hasInvoiceFilter,
+  selectedTags,
   onTypeFilterToggle,
   onInvoiceFilterToggle,
+  onTagFilterToggle,
 }: {
   payments: Payment[]
   filteredPayments: Payment[]
@@ -186,8 +188,10 @@ export default function PaymentsTable({
   onSortChange?: (key: PaymentSortKey) => void
   typeFilter: PaymentTypeFilter
   hasInvoiceFilter: PaymentInvoiceFilter
+  selectedTags: string[]
   onTypeFilterToggle: (type: "income" | "outcome") => void
   onInvoiceFilterToggle: (hasInvoice: boolean) => void
+  onTagFilterToggle: (tag: string) => void
 }) {
   const hasSurcharge = filteredPayments.some(
     (p) => p.surcharge && p.surcharge > 0
@@ -331,7 +335,26 @@ export default function PaymentsTable({
                   </td>
                   <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
                     {payment.tag ? (
-                      <Badge tone="info">{payment.tag}</Badge>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onTagFilterToggle(payment.tag ?? "")
+                        }}
+                        aria-label={`Filter by tag ${payment.tag}`}
+                        className="rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <Badge
+                          tone="info"
+                          className={
+                            selectedTags.includes(payment.tag)
+                              ? "ring-1 ring-blue-500"
+                              : undefined
+                          }
+                        >
+                          {payment.tag}
+                        </Badge>
+                      </button>
                     ) : (
                       <span className="text-xs text-zinc-500 dark:text-zinc-500">
                         —

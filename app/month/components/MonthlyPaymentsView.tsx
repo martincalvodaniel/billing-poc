@@ -315,8 +315,10 @@ export default function MonthlyPaymentsView({
         onSortChange={handleSortChange}
         typeFilter={filters.type}
         hasInvoiceFilter={filters.hasInvoice}
+        selectedTags={filters.tags}
         onTypeFilterToggle={handleTypeFilterToggle}
         onInvoiceFilterToggle={handleInvoiceFilterToggle}
+        onTagFilterToggle={handleTagToggle}
       />
 
       {deleteConfirmPaymentId && (
