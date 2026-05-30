@@ -84,29 +84,25 @@ export default function PaymentDetailModal({
 
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
-  const [selectedSeries, setSelectedSeries] = useState<InvoiceSeries>("Invoice")
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleDownloadInvoice = () => {
-    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank")
-  }
 
   const handleDownloadProviderBill = () => {
     window.open(`/api/invoices/${payment._id?.toString()}`, "_blank")
   }
 
-  const handleGenerateInvoice = async () => {
+  const handleGenerateInvoice = async (series: InvoiceSeries) => {
     setInvoiceError(null)
     try {
       const data = await generateInvoice({
         paymentId: payment._id?.toString() ?? "",
-        series: selectedSeries,
+        series,
       })
       const updatedPayment: Payment = {
         ...payment,
-        invoice: data.invoice,
+        invoice: undefined,
+        invoices: data.invoices,
         updatedAt: new Date(),
       }
       onUpdate?.(updatedPayment)
@@ -327,14 +323,10 @@ export default function PaymentDetailModal({
 
           {!isDuplicate && formData.type === "income" && (
             <PaymentInvoiceSection
-              idPrefix={id}
               payment={payment}
-              selectedSeries={selectedSeries}
-              onSelectSeries={setSelectedSeries}
               invoiceError={invoiceError}
               isGenerating={isGeneratingInvoice}
               onGenerate={handleGenerateInvoice}
-              onDownload={handleDownloadInvoice}
             />
           )}
 

@@ -2,7 +2,7 @@ import { mutate } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
 import { isPaymentsKey } from "@/lib/hooks/usePayments"
 import { FetchError } from "@/lib/swr-fetcher"
-import type { InvoiceSeries, Payment } from "@/lib/types"
+import type { InvoiceMetadata, InvoiceSeries, Payment } from "@/lib/types"
 
 async function invalidatePayments(): Promise<void> {
   await mutate(isPaymentsKey, undefined, { revalidate: true })
@@ -44,6 +44,7 @@ export interface GenerateInvoiceInput {
 export interface GenerateInvoiceResult {
   success: boolean
   invoice: Payment["invoice"]
+  invoices: InvoiceMetadata[]
   downloadUrl: string
 }
 
@@ -52,6 +53,18 @@ export function buildGenerateInvoiceBody(input: GenerateInvoiceInput): {
   series: InvoiceSeries
 } {
   return { paymentId: input.paymentId, series: input.series }
+}
+
+/**
+ * Build the precise per-invoice download URL handled by
+ * `app/api/invoices/[id]/[series]/[number]/route.ts`.
+ */
+export function buildOpenInvoiceUrl(
+  paymentId: string,
+  series: InvoiceSeries,
+  number: number
+): string {
+  return `/api/invoices/${encodeURIComponent(paymentId)}/${encodeURIComponent(series)}/${encodeURIComponent(String(number))}`
 }
 
 async function generateInvoiceFetcher(

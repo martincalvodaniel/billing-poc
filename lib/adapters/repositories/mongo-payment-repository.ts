@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb"
-import type { Payment } from "../../domain/entities/payment"
+import type { InvoiceMetadata, Payment } from "../../domain/entities/payment"
 import type {
   PaymentFilter,
   PaymentRepository,
@@ -29,6 +29,7 @@ function toDomain(doc: MongoPayment): Payment {
     surchargeAmount: doc.surchargeAmount,
     total: doc.total,
     invoice: doc.invoice,
+    invoices: doc.invoices,
     providerBillUrl: doc.providerBillUrl,
     providerBillPathname: doc.providerBillPathname,
     paymentMethod: doc.paymentMethod,
@@ -200,6 +201,50 @@ export class MongoPaymentRepository implements PaymentRepository {
     const col = await this.collection()
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0
+  }
+
+  /**
+   * Atomically append an invoice to `payment.invoices`. If the legacy
+   * `payment.invoice` single field is still present, lift it into the array
+   * first (in the same write) and unset the legacy field.
+   */
+  async appendInvoice(
+    paymentId: string,
+    invoice: InvoiceMetadata
+  ): Promise<boolean> {
+    const col = await this.collection()
+    const _id = toObjectId(paymentId)
+    const existing = await col.findOne({ _id }, { projection: { invoice: 1 } })
+    if (!existing) return false
+
+    const updatedAt = new Date()
+
+    if (existing.invoice) {
+      // Lift the legacy single-invoice field into the array alongside the
+      // new entry, and unset the legacy field — single atomic write.
+      const each: InvoiceMetadata[] = [
+        existing.invoice as InvoiceMetadata,
+        invoice,
+      ]
+      const result = await col.updateOne(
+        { _id },
+        {
+          $push: { invoices: { $each: each } },
+          $unset: { invoice: "" },
+          $set: { updatedAt },
+        }
+      )
+      return result.matchedCount > 0
+    }
+
+    const result = await col.updateOne(
+      { _id },
+      {
+        $push: { invoices: invoice },
+        $set: { updatedAt },
+      }
+    )
+    return result.matchedCount > 0
   }
 
   async findDistinctTags(type?: string): Promise<string[]> {

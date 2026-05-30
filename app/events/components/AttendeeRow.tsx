@@ -26,6 +26,7 @@ interface AttendeeRowProps {
   onGenerate: (clientId: string) => void
   onRemove: (clientId: string) => void
   onOpenPayment: (paymentId: string) => void
+  onEditClient: (clientId: string) => void
 }
 
 export default function AttendeeRow({
@@ -40,6 +41,7 @@ export default function AttendeeRow({
   onGenerate,
   onRemove,
   onOpenPayment,
+  onEditClient,
 }: AttendeeRowProps) {
   const [seatsValue, setSeatsValue] = useState<string>(String(attendee.seats))
   const lastSyncedRef = useRef<number>(attendee.seats)
@@ -77,12 +79,27 @@ export default function AttendeeRow({
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
       <div className="min-w-0 flex-1">
-        <p
-          className="truncate font-medium text-zinc-900 dark:text-zinc-100"
-          title={attendee.clientId}
-        >
-          {name}
-        </p>
+        {name === "Unknown client" ? (
+          <p
+            className="truncate font-medium text-zinc-900 dark:text-zinc-100"
+            title={attendee.clientId}
+          >
+            {name}
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="truncate rounded-sm text-left font-medium text-emerald-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-emerald-400"
+            aria-label={`Edit client ${name}`}
+            title={attendee.clientId}
+            onClick={(e) => {
+              e.stopPropagation()
+              onEditClient(attendee.clientId)
+            }}
+          >
+            {name}
+          </button>
+        )}
         <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <label
             htmlFor={`${rowIdPrefix}-seats-${attendee.clientId}`}

@@ -9,27 +9,30 @@ export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
     return db.collection<InvoiceCounter>("invoiceCounters")
   }
 
-  async getNextNumber(series: InvoiceSeries): Promise<number> {
+  async getNextNumber(series: InvoiceSeries, year: number): Promise<number> {
     const col = await this.collection()
     const result = await col.findOneAndUpdate(
-      { series },
+      { series, year },
       {
         $inc: { lastNumber: 1 },
         $set: { updatedAt: new Date() },
+        $setOnInsert: { series, year },
       },
       { upsert: true, returnDocument: "after" }
     )
 
     if (!result) {
-      throw new Error(`Failed to get invoice number for series: ${series}`)
+      throw new Error(
+        `Failed to get invoice number for series: ${series}, year: ${year}`
+      )
     }
 
     return result.lastNumber
   }
 
-  async getCurrentNumber(series: InvoiceSeries): Promise<number> {
+  async getCurrentNumber(series: InvoiceSeries, year: number): Promise<number> {
     const col = await this.collection()
-    const counter = await col.findOne({ series })
+    const counter = await col.findOne({ series, year })
     return counter?.lastNumber || 0
   }
 }

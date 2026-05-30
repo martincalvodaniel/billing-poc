@@ -16,7 +16,8 @@ export type InvoiceSeries =
 
 export interface InvoiceMetadata {
   series: InvoiceSeries
-  number: number // Sequential number within the series
+  number: number // Sequential number within the series (per year)
+  formattedNumber: string // e.g. "F26_001"
   generatedAt: Date
   blobUrl: string // Vercel Blob URL
   blobPathname: string // Storage path for retrieval
@@ -43,7 +44,8 @@ export interface Payment {
   vatAmount: number
   surchargeAmount?: number
   total: number
-  invoice?: InvoiceMetadata // Generated invoice (for income payments)
+  invoice?: InvoiceMetadata // Legacy single-invoice field (read-back compat)
+  invoices?: InvoiceMetadata[] // Generated invoices (for income payments)
   providerBillUrl?: string // Uploaded provider bill URL (for outcome payments)
   providerBillPathname?: string // Uploaded provider bill storage path
   paymentMethod?: PaymentMethod
@@ -102,6 +104,7 @@ export interface PaginatedResponse<T> {
 export interface InvoiceCounter {
   _id?: ObjectId
   series: InvoiceSeries
+  year: number
   lastNumber: number
   updatedAt: Date
 }

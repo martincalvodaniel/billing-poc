@@ -35,6 +35,6 @@ describe("INDEX_SPECS", () => {
     const uniques = INDEX_SPECS.filter((s) => s.options?.unique)
     const names = uniques.map((s) => `${s.collection}.${s.options?.name}`)
     expect(names).toContain("absences.uniq_student_date_part")
-    expect(names).toContain("invoiceCounters.uniq_series")
+    expect(names).toContain("invoiceCounters.uniq_series_year")
   })
 })

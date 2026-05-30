@@ -37,9 +37,15 @@ export async function GET(
     let blobUrl: string | undefined
     let filename = "document.pdf"
 
-    if (payment.type === "income" && payment.invoice) {
-      blobUrl = payment.invoice.blobUrl
-      filename = `${payment.invoice.series}-${String(payment.invoice.number).padStart(6, "0")}.pdf`
+    if (payment.type === "income") {
+      const last =
+        payment.invoices && payment.invoices.length > 0
+          ? payment.invoices[payment.invoices.length - 1]
+          : payment.invoice
+      if (last) {
+        blobUrl = last.blobUrl
+        filename = `${last.series}-${String(last.number).padStart(6, "0")}.pdf`
+      }
     } else if (payment.type === "outcome" && payment.providerBillUrl) {
       blobUrl = payment.providerBillUrl
       filename = "provider-bill.pdf"
@@ -55,7 +61,7 @@ export async function GET(
     // Fetch private blob using server-side token and stream to client
     const result = await get(blobUrl, { access: "private" })
 
-    if (!result || result.statusCode !== 200) {
+    if (result?.statusCode !== 200) {
       return NextResponse.json(
         { error: "Failed to retrieve file from storage" },
         { status: 404 }
