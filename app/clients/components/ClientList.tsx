@@ -3,14 +3,10 @@
 import { useCallback, useState } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
-import { Modal } from "@/app/components/Modal"
 import Toast from "@/app/components/Toast"
-import {
-  useDeleteClient,
-  useUpdateClient,
-} from "@/lib/hooks/useClientMutations"
-import type { Client, ClientFormData } from "@/lib/types"
-import ClientForm from "./ClientForm"
+import { useDeleteClient } from "@/lib/hooks/useClientMutations"
+import type { Client } from "@/lib/types"
+import ClientFormModal from "./ClientFormModal"
 import ClientTableRow from "./ClientTableRow"
 import { extractClientApiError } from "./clientList-utils"
 import DeleteClientModal from "./DeleteClientModal"
@@ -25,7 +21,6 @@ export default function ClientList({ clients }: ClientListProps) {
   const [error, setError] = useState<string | null>(null)
   const [copyToast, setCopyToast] = useState<string | null>(null)
 
-  const { trigger: updateClient } = useUpdateClient()
   const { trigger: deleteClient, isMutating: isDeleting } = useDeleteClient()
 
   const handleEdit = (clientId: string) => {
@@ -37,16 +32,6 @@ export default function ClientList({ clients }: ClientListProps) {
     setEditingClientId(null)
     setError(null)
   }, [])
-
-  const handleUpdate = async (data: ClientFormData) => {
-    if (!editingClientId) return
-    try {
-      await updateClient({ id: editingClientId, ...data })
-    } catch (err) {
-      throw new Error(extractClientApiError(err, "Failed to update client"))
-    }
-    setEditingClientId(null)
-  }
 
   const handleDeleteClick = (clientId: string) => {
     setDeletingClientId(clientId)
@@ -83,20 +68,11 @@ export default function ClientList({ clients }: ClientListProps) {
 
       {error && <ErrorBanner bordered>{error}</ErrorBanner>}
 
-      <Modal
+      <ClientFormModal
+        client={editingClient}
         isOpen={!!editingClientId && !!editingClient}
         onClose={handleCancelEdit}
-        title="Edit Client"
-        maxWidth="md"
-      >
-        {editingClient && (
-          <ClientForm
-            client={editingClient}
-            onSubmit={handleUpdate}
-            onCancel={handleCancelEdit}
-          />
-        )}
-      </Modal>
+      />
 
       <DeleteClientModal
         client={deletingClient}

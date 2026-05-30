@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useSWRConfig } from "swr"
+import ClientFormModal from "@/app/clients/components/ClientFormModal"
 import { copyToClipboard } from "@/app/clients/components/clientTable-utils"
 import ClientSelector from "@/app/components/ClientSelector"
 import { EmptyState } from "@/app/components/EmptyState"
@@ -65,6 +66,7 @@ export default function AttendeesPanel({
   const [selectorResetKey, setSelectorResetKey] = useState(0)
   const [copied, setCopied] = useState(false)
   const copiedTimeoutRef = useRef<number | null>(null)
+  const [editingClientId, setEditingClientId] = useState<string | null>(null)
 
   useEffect(
     () => () => {
@@ -84,6 +86,18 @@ export default function AttendeesPanel({
     }
     return map
   }, [clients])
+
+  const editingClient = useMemo(
+    () =>
+      editingClientId
+        ? clients.find((c) => String(c._id) === editingClientId)
+        : undefined,
+    [clients, editingClientId]
+  )
+
+  const handleEditClient = (clientId: string) => {
+    setEditingClientId(clientId)
+  }
 
   const emailsString = useMemo(
     () => buildAttendeeEmailsString(event.attendees, clients),
@@ -312,6 +326,7 @@ export default function AttendeesPanel({
                 onGenerate={handleGenerateOne}
                 onRemove={handleRemove}
                 onOpenPayment={handleOpenPayment}
+                onEditClient={handleEditClient}
               />
             )
           })}
@@ -347,6 +362,12 @@ export default function AttendeesPanel({
           invoiceNumber={invoiceGuard.invoiceNumber}
         />
       )}
+
+      <ClientFormModal
+        client={editingClient}
+        isOpen={!!editingClient}
+        onClose={() => setEditingClientId(null)}
+      />
     </section>
   )
 }
