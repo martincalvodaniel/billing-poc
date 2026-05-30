@@ -1,10 +1,13 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useId, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useSWRConfig } from "swr"
+import { copyToClipboard } from "@/app/clients/components/clientTable-utils"
 import ClientSelector from "@/app/components/ClientSelector"
 import { EmptyState } from "@/app/components/EmptyState"
+import { CheckIcon } from "@/app/components/icons/CheckIcon"
+import { CopyIcon } from "@/app/components/icons/CopyIcon"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import { useCreateClient } from "@/lib/hooks/useClientMutations"
 import { useClients } from "@/lib/hooks/useClients"
@@ -23,7 +26,10 @@ import {
 } from "@/lib/hooks/usePayments"
 import { fetcher } from "@/lib/swr-fetcher"
 import AttendeeRow from "./AttendeeRow"
-import { extractErrorMessage } from "./attendeesPanel-utils"
+import {
+  buildAttendeeEmailsString,
+  extractErrorMessage,
+} from "./attendeesPanel-utils"
 import CapacityBar from "./CapacityBar"
 import { totalSeats } from "./eventsUi"
 import InvoiceGuardModal from "./InvoiceGuardModal"
@@ -57,6 +63,17 @@ export default function AttendeesPanel({
   )
   const [isCreatingClient, setIsCreatingClient] = useState(false)
   const [selectorResetKey, setSelectorResetKey] = useState(0)
+  const [copied, setCopied] = useState(false)
+  const copiedTimeoutRef = useRef<number | null>(null)
+
+  useEffect(
+    () => () => {
+      if (copiedTimeoutRef.current) {
+        window.clearTimeout(copiedTimeoutRef.current)
+      }
+    },
+    []
+  )
 
   // 100 is the API max page size; sufficient for the lookup use-case in this POC.
   const { clients } = useClients({ pageSize: 100 })
@@ -67,6 +84,12 @@ export default function AttendeesPanel({
     }
     return map
   }, [clients])
+
+  const emailsString = useMemo(
+    () => buildAttendeeEmailsString(event.attendees, clients),
+    [event.attendees, clients]
+  )
+  const hasEmails = emailsString.length > 0
 
   const addMutation = useAddEventAttendee()
   const updateMutation = useUpdateEventAttendee()
@@ -191,6 +214,20 @@ export default function AttendeesPanel({
     }
   }
 
+  const handleCopyEmails = async () => {
+    const ok = await copyToClipboard(emailsString)
+    if (ok) {
+      setCopied(true)
+      onActionSuccess("Emails copied to clipboard")
+      if (copiedTimeoutRef.current) {
+        window.clearTimeout(copiedTimeoutRef.current)
+      }
+      copiedTimeoutRef.current = window.setTimeout(() => setCopied(false), 1500)
+    } else {
+      onActionError("Failed to copy emails")
+    }
+  }
+
   const handleOpenPayment = async (paymentId: string) => {
     setOpeningPaymentId(paymentId)
     try {
@@ -217,9 +254,28 @@ export default function AttendeesPanel({
       <CapacityBar used={seats} max={event.maxAttendees} />
 
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Attendees
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Attendees
+          </h3>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              void handleCopyEmails()
+            }}
+            disabled={!hasEmails}
+            aria-label="Copy attendee emails"
+            title={hasEmails ? "Copy attendee emails" : "No attendees to copy"}
+            className="inline-flex items-center justify-center rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:disabled:hover:bg-transparent dark:disabled:hover:text-zinc-400"
+          >
+            {copied ? (
+              <CheckIcon className="h-4 w-4" />
+            ) : (
+              <CopyIcon className="h-4 w-4" />
+            )}
+          </button>
+        </div>
         {event.attendees.length > 0 && (
           <button
             type="button"

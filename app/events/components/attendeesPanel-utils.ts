@@ -1,3 +1,4 @@
+import type { EventAttendee } from "@/lib/domain/entities/event"
 import { FetchError } from "@/lib/swr-fetcher"
 
 export function extractErrorMessage(error: unknown, fallback: string): string {
@@ -8,4 +9,28 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
   }
   if (error instanceof Error) return error.message
   return fallback
+}
+
+export interface AttendeeEmailClient {
+  _id?: unknown
+  email?: string
+}
+
+export function buildAttendeeEmailsString(
+  attendees: readonly EventAttendee[],
+  clients: readonly AttendeeEmailClient[]
+): string {
+  const emailByClientId = new Map<string, string>()
+  for (const c of clients) {
+    if (c._id === undefined || c._id === null) continue
+    const email = c.email?.trim()
+    if (!email) continue
+    emailByClientId.set(String(c._id), email)
+  }
+  const emails: string[] = []
+  for (const attendee of attendees) {
+    const email = emailByClientId.get(attendee.clientId)
+    if (email) emails.push(email)
+  }
+  return emails.join(", ")
 }
