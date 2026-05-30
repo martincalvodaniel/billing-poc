@@ -13,4 +13,5 @@ export interface PaymentRepository {
   delete(id: string): Promise<boolean>
   findDistinctTags(type?: string): Promise<string[]>
   appendInvoice(paymentId: string, invoice: InvoiceMetadata): Promise<boolean>
+  removeLinkInvoice(paymentId: string, link: string): Promise<boolean>
 }

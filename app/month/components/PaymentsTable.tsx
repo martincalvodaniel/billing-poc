@@ -231,8 +231,8 @@ export default function PaymentsTable({
                 >
                   <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
                     <span className="inline-flex items-center gap-1.5">
-                      {paymentHasInvoice(payment) && <InvoiceMarker />}
                       <span>{new Date(payment.date).getDate()}</span>
+                      {paymentHasInvoice(payment) && <InvoiceMarker />}
                     </span>
                   </td>
                   <td className="px-6 py-4">

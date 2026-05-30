@@ -220,6 +220,30 @@ export class MongoPaymentRepository implements PaymentRepository {
     return result.matchedCount > 0
   }
 
+  /**
+   * Pull a link-only invoice entry (one without an `id`) from
+   * `payment.invoices` matching the given `link`. Returns `true` only when
+   * an entry was actually removed (`modifiedCount > 0`) so the caller can
+   * distinguish "found but nothing pulled" → 404 from a successful delete.
+   */
+  async removeLinkInvoice(paymentId: string, link: string): Promise<boolean> {
+    const col = await this.collection()
+    const _id = toObjectId(paymentId)
+    const result = await col.updateOne(
+      { _id },
+      {
+        $pull: {
+          invoices: {
+            link,
+            $or: [{ id: { $exists: false } }, { id: "" }],
+          },
+        },
+        $set: { updatedAt: new Date() },
+      }
+    )
+    return result.modifiedCount > 0
+  }
+
   async findDistinctTags(type?: string): Promise<string[]> {
     const col = await this.collection()
     const matchStage: Record<string, unknown> = {

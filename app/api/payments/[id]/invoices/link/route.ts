@@ -12,6 +12,10 @@ const bodySchema = z.object({
   link: z.string().url().max(2048),
 })
 
+const deleteBodySchema = z.object({
+  link: z.string().url().max(2048),
+})
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -38,21 +42,6 @@ export async function POST(
     }
     const { type, link } = parsed.data
 
-    const payment = await paymentRepo.findById(id)
-    if (!payment) {
-      return NextResponse.json({ error: "Payment not found" }, { status: 404 })
-    }
-
-    if (payment.type === "income" && type !== "Receipt") {
-      return NextResponse.json(
-        {
-          error:
-            "Income payments can only attach Receipt links via this endpoint",
-        },
-        { status: 400 }
-      )
-    }
-
     // `Receipt` is now part of the `InvoiceType` union (Wave E). Generated
     // PDF rendering excludes it via a narrowed `GeneratedInvoiceType`.
     const entry: InvoiceMetadata = {
@@ -71,6 +60,50 @@ export async function POST(
     console.error(`Error appending link invoice: ${error}`)
     return NextResponse.json(
       { error: "Failed to append link invoice" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
+    const { id } = await params
+    if (!id) {
+      return NextResponse.json(
+        { error: "Payment ID is required" },
+        { status: 400 }
+      )
+    }
+
+    const json = await request.json()
+    const parsed = deleteBodySchema.safeParse(json)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
+    }
+    const { link } = parsed.data
+
+    const removed = await paymentRepo.removeLinkInvoice(id, link)
+    if (!removed) {
+      return NextResponse.json(
+        { error: "Link entry not found" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error(`Error removing link invoice: ${error}`)
+    return NextResponse.json(
+      { error: "Failed to remove link invoice" },
       { status: 500 }
     )
   }

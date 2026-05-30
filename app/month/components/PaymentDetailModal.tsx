@@ -244,7 +244,7 @@ export default function PaymentDetailModal({
 
         <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
           <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            {formData.type === "income" ? "Invoices" : "Provider Bills"}
+            Invoices
           </h3>
 
           {!isDuplicate && (
@@ -253,9 +253,8 @@ export default function PaymentDetailModal({
 
           {isDuplicate && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {formData.type === "income"
-                ? "Invoice generation will be available after the duplicated payment is created."
-                : "Provider bill links can be added after the duplicated payment is created."}
+              Invoice and receipt links can be added after the duplicated
+              payment is created.
             </p>
           )}
         </div>

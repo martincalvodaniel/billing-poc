@@ -91,6 +91,15 @@ describe("migrateInvoiceMetadata", () => {
     expect(migrated.id).toBeUndefined()
     expect(migrated.link).toBe("https://x/y")
   })
+
+  test("preserves Receipt type on read (regression)", () => {
+    const migrated = migrateInvoiceMetadata({
+      type: "Receipt",
+      generatedAt: new Date("2026-04-01"),
+      link: "https://x/y",
+    })
+    expect(migrated.type).toBe("Receipt")
+  })
 })
 
 const baseDoc: MongoPayment = {

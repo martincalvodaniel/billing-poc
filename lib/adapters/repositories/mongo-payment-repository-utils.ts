@@ -41,6 +41,7 @@ const INVOICE_TYPES = [
   "RectificativeInvoice",
   "SimpleInvoice",
   "RectificativeSimpleInvoice",
+  "Receipt",
 ] as const
 
 function asString(value: unknown): string | undefined {
