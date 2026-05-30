@@ -1,20 +1,15 @@
 "use client"
 
-import { useId, useRef, useState } from "react"
+import { useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
-import {
-  useGenerateInvoice,
-  useUploadInvoice,
-} from "@/lib/hooks/useInvoiceMutations"
 import {
   useCreatePayment,
   useUpdatePayment,
 } from "@/lib/hooks/usePaymentMutations"
-import type { InvoiceSeries, Payment, PaymentFormData } from "@/lib/types"
+import type { Payment, PaymentFormData } from "@/lib/types"
 import PaymentFormFields from "./PaymentFormFields"
-import PaymentInvoiceSection from "./PaymentInvoiceSection"
-import PaymentProviderBillSection from "./PaymentProviderBillSection"
+import PaymentInvoicesSection from "./PaymentInvoicesSection"
 import { buildDuplicateSeed } from "./paymentDetailModal-seed"
 import { extractPaymentError } from "./paymentDetailModal-utils"
 import {
@@ -40,7 +35,6 @@ export default function PaymentDetailModal({
   onUpdate,
   onCreate,
 }: PaymentDetailModalProps) {
-  const id = useId()
   const isDuplicate = mode === "duplicate"
   const initialFormData: PaymentFormData = isDuplicate
     ? buildDuplicateSeed(payment)
@@ -77,77 +71,9 @@ export default function PaymentDetailModal({
   const { trigger: updatePayment, isMutating: isUpdating } = useUpdatePayment()
   const { trigger: createPayment, isMutating: isCreating } = useCreatePayment()
   const isSaving = isDuplicate ? isCreating : isUpdating
-  const { trigger: generateInvoice, isMutating: isGeneratingInvoice } =
-    useGenerateInvoice()
-  const { trigger: uploadInvoice, isMutating: isUploadingBill } =
-    useUploadInvoice()
 
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
-  const [invoiceError, setInvoiceError] = useState<string | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleDownloadProviderBill = () => {
-    window.open(`/api/invoices/${payment._id?.toString()}`, "_blank")
-  }
-
-  const handleGenerateInvoice = async (series: InvoiceSeries) => {
-    setInvoiceError(null)
-    try {
-      const data = await generateInvoice({
-        paymentId: payment._id?.toString() ?? "",
-        series,
-      })
-      const updatedPayment: Payment = {
-        ...payment,
-        invoice: undefined,
-        invoices: data.invoices,
-        updatedAt: new Date(),
-      }
-      onUpdate?.(updatedPayment)
-      window.open(data.downloadUrl, "_blank")
-    } catch (err) {
-      console.error(`Error generating invoice: ${err}`)
-      setInvoiceError(extractPaymentError(err, "An error occurred"))
-    }
-  }
-
-  const handleUploadProviderBill = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.type !== "application/pdf") {
-      setUploadError("Only PDF files are allowed")
-      return
-    }
-    const maxSize = 10 * 1024 * 1024
-    if (file.size > maxSize) {
-      setUploadError("File size exceeds 10MB limit")
-      return
-    }
-    setUploadError(null)
-    try {
-      const data = await uploadInvoice({
-        paymentId: payment._id?.toString() ?? "",
-        file,
-      })
-      const updatedPayment: Payment = {
-        ...payment,
-        providerBillUrl: data.billUrl,
-        providerBillPathname: data.pathname,
-        updatedAt: new Date(),
-      }
-      onUpdate?.(updatedPayment)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    } catch (err) {
-      console.error(`Error uploading provider bill: ${err}`)
-      setUploadError(extractPaymentError(err, "An error occurred"))
-    }
-  }
 
   const handleSave = async () => {
     setError(null)
@@ -318,35 +244,17 @@ export default function PaymentDetailModal({
 
         <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
           <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            {formData.type === "income" ? "Invoice" : "Provider Bill"}
+            Invoices
           </h3>
 
-          {!isDuplicate && formData.type === "income" && (
-            <PaymentInvoiceSection
-              payment={payment}
-              invoiceError={invoiceError}
-              isGenerating={isGeneratingInvoice}
-              onGenerate={handleGenerateInvoice}
-            />
-          )}
-
-          {!isDuplicate && formData.type === "outcome" && (
-            <PaymentProviderBillSection
-              idPrefix={id}
-              payment={payment}
-              uploadError={uploadError}
-              isUploading={isUploadingBill}
-              fileInputRef={fileInputRef}
-              onUpload={handleUploadProviderBill}
-              onDownload={handleDownloadProviderBill}
-            />
+          {!isDuplicate && (
+            <PaymentInvoicesSection payment={payment} onUpdate={onUpdate} />
           )}
 
           {isDuplicate && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {formData.type === "income"
-                ? "Invoice generation will be available after the duplicated payment is created."
-                : "Provider bill upload will be available after the duplicated payment is created."}
+              Invoice and receipt links can be added after the duplicated
+              payment is created.
             </p>
           )}
         </div>

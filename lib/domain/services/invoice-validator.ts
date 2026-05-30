@@ -2,39 +2,56 @@ import { z } from "zod"
 import {
   type Payment as DomainPayment,
   getPaymentInvoices,
-  type InvoiceSeries,
+  type InvoiceType,
 } from "../entities/payment"
+
+export type { InvoiceType }
+/** @deprecated transitional alias — use `InvoiceType`. */
+export type InvoiceSeries = InvoiceType
 
 const objectIdPattern = /^[0-9a-fA-F]{24}$/
 
-export const INVOICE_SERIES_VALUES: InvoiceSeries[] = [
+/** The four generated-PDF invoice types. */
+export const INVOICE_TYPE_VALUES: InvoiceType[] = [
   "Invoice",
   "RectificativeInvoice",
   "SimpleInvoice",
   "RectificativeSimpleInvoice",
 ]
 
+/** @deprecated transitional alias — use `INVOICE_TYPE_VALUES`. */
+export const INVOICE_SERIES_VALUES = INVOICE_TYPE_VALUES
+
 export const generateInvoiceSchema = z.object({
   paymentId: z
     .string()
     .min(1, "paymentId is required")
     .regex(objectIdPattern, "paymentId must be a 24-character hex ObjectId"),
-  series: z.enum([
+  type: z.enum([
     "Invoice",
     "RectificativeInvoice",
     "SimpleInvoice",
     "RectificativeSimpleInvoice",
   ]),
+  persist: z.boolean().optional(),
 })
 
 export type GenerateInvoiceInput = z.infer<typeof generateInvoiceSchema>
 
-const SIMPLE_SERIES: InvoiceSeries[] = [
+const SIMPLE_TYPES: InvoiceType[] = [
   "SimpleInvoice",
   "RectificativeSimpleInvoice",
 ]
-const REGULAR_SERIES: InvoiceSeries[] = ["Invoice", "RectificativeInvoice"]
-const RECTIFICATIVE_TO_BASE: Partial<Record<InvoiceSeries, InvoiceSeries>> = {
+const REGULAR_TYPES: InvoiceType[] = ["Invoice", "RectificativeInvoice"]
+
+export const REGULAR_INVOICE_TYPES: ReadonlySet<InvoiceType> = new Set(
+  REGULAR_TYPES
+)
+
+/** @deprecated transitional alias — use `REGULAR_INVOICE_TYPES`. */
+export const REGULAR_INVOICE_SERIES = REGULAR_INVOICE_TYPES
+
+const RECTIFICATIVE_TO_BASE: Partial<Record<InvoiceType, InvoiceType>> = {
   RectificativeInvoice: "Invoice",
   RectificativeSimpleInvoice: "SimpleInvoice",
 }
@@ -55,10 +72,22 @@ export interface InvoiceCandidatePayment {
   invoices?: DomainPayment["invoices"]
 }
 
+function invoiceEntryType(
+  entry: NonNullable<InvoiceCandidatePayment["invoice"]>
+): InvoiceType {
+  return entry.type
+}
+
 export function assertCanGenerateInvoice(
   payment: InvoiceCandidatePayment,
-  series: InvoiceSeries
+  type: InvoiceType
 ): AssertCanGenerateResult {
+  if (type === "Receipt") {
+    return {
+      ok: false,
+      reason: "Receipts cannot be generated as PDFs",
+    }
+  }
   if (payment.type !== "income") {
     return {
       ok: false,
@@ -67,27 +96,27 @@ export function assertCanGenerateInvoice(
   }
 
   const existing = getPaymentInvoices(payment)
-  const isSimple = SIMPLE_SERIES.includes(series)
-  const isRectificative = series in RECTIFICATIVE_TO_BASE
+  const isSimple = SIMPLE_TYPES.includes(type)
+  const isRectificative = type in RECTIFICATIVE_TO_BASE
 
   if (!isRectificative) {
-    if (existing.some((i) => i.series === series)) {
+    if (existing.some((i) => invoiceEntryType(i) === type)) {
       return {
         ok: false,
-        reason: `An invoice of series ${series} has already been generated for this payment`,
+        reason: `An invoice of series ${type} has already been generated for this payment`,
       }
     }
   } else {
-    const base = RECTIFICATIVE_TO_BASE[series]
-    if (!base || !existing.some((i) => i.series === base)) {
+    const base = RECTIFICATIVE_TO_BASE[type]
+    if (!base || !existing.some((i) => invoiceEntryType(i) === base)) {
       return {
         ok: false,
-        reason: `Cannot generate ${series} without the corresponding ${base ?? "base"} invoice`,
+        reason: `Cannot generate ${type} without the corresponding ${base ?? "base"} invoice`,
       }
     }
   }
 
-  if (!isSimple && REGULAR_SERIES.includes(series)) {
+  if (!isSimple && REGULAR_TYPES.includes(type)) {
     if (!payment.clientId) {
       return {
         ok: false,

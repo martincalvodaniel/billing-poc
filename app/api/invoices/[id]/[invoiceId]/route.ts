@@ -6,50 +6,39 @@ import { getCompanyInfo, getPaymentById } from "@/lib/server-cache"
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  {
+    params,
+  }: {
+    params: Promise<{ id: string; invoiceId: string }>
+  }
 ) {
   try {
     const denied = await requireAuth()
     if (denied) return denied
 
-    const { id } = await params
-    if (!id) {
+    const { id: paymentId, invoiceId: rawInvoiceId } = await params
+    if (!paymentId || !rawInvoiceId) {
       return NextResponse.json(
-        { error: "Payment ID is required" },
+        { error: "Missing path parameter" },
         { status: 400 }
       )
     }
+    const invoiceId = decodeURIComponent(rawInvoiceId)
 
-    const payment = await getPaymentById(id)
+    const payment = await getPaymentById(paymentId)
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 })
     }
 
-    if (payment.type !== "income") {
-      return NextResponse.json(
-        { error: "No invoice found for this payment" },
-        { status: 404 }
-      )
-    }
-
-    const entries = getPaymentInvoices(payment)
-    let last: (typeof entries)[number] | undefined
-    for (let i = entries.length - 1; i >= 0; i--) {
-      const candidate = entries[i]
-      if (candidate.id) {
-        last = candidate
-        break
-      }
-    }
-    if (!last) {
-      return NextResponse.json(
-        { error: "No invoice found for this payment" },
-        { status: 404 }
-      )
+    const entry = getPaymentInvoices(payment).find(
+      (i) => i.id !== "" && i.id === invoiceId
+    )
+    if (!entry?.id) {
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 
     const company = await getCompanyInfo()
-    return await buildInvoicePdfResponse(last, payment, company)
+    return await buildInvoicePdfResponse(entry, payment, company)
   } catch (error) {
     console.error(`Error retrieving invoice: ${error}`)
     return NextResponse.json(

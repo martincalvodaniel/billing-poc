@@ -7,6 +7,18 @@ import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
 import { usePayments } from "@/lib/hooks/usePayments"
 import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
+import {
+  filterPayments,
+  nextSortState,
+  type PaymentFilters,
+  type PaymentSortKey,
+  type PaymentSortState,
+  type PaymentTypeFilter,
+  sortPayments,
+  toggleInvoiceFilter,
+  toggleTagFilter,
+  toggleTypeFilter,
+} from "./monthlyPaymentsView-filters"
 import PaymentsSummary from "./PaymentsSummary"
 import PaymentsTable from "./PaymentsTable"
 
@@ -51,6 +63,58 @@ export default function MonthlyPaymentsView({
 
   // Duplicate modal state — holds the source payment to seed the create form.
   const [duplicateSeed, setDuplicateSeed] = useState<Payment | null>(null)
+
+  const [sort, setSort] = useState<PaymentSortState>({
+    sortBy: "day",
+    sortDir: "desc",
+  })
+  const [filters, setFilters] = useState<PaymentFilters>({
+    type: "all",
+    hasInvoice: "all",
+    tags: [],
+  })
+
+  const filteredPayments = useMemo(
+    () =>
+      sortPayments(
+        filterPayments(payments, filters),
+        sort.sortBy,
+        sort.sortDir
+      ),
+    [payments, filters, sort.sortBy, sort.sortDir]
+  )
+
+  const handleSortChange = useCallback((key: PaymentSortKey) => {
+    setSort((prev) => nextSortState(prev, key))
+  }, [])
+
+  const handleTypeFilterToggle = useCallback(
+    (type: Exclude<PaymentTypeFilter, "all">) => {
+      setFilters((prev) => ({
+        ...prev,
+        type: toggleTypeFilter(prev.type, type),
+      }))
+    },
+    []
+  )
+
+  const handleInvoiceFilterToggle = useCallback((hasInvoice: boolean) => {
+    setFilters((prev) => ({
+      ...prev,
+      hasInvoice: toggleInvoiceFilter(prev.hasInvoice, hasInvoice),
+    }))
+  }, [])
+
+  const handleTagToggle = useCallback((tag: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      tags: toggleTagFilter(prev.tags, tag),
+    }))
+  }, [])
+
+  const clearTagFilter = useCallback(() => {
+    setFilters((prev) => ({ ...prev, tags: [] }))
+  }, [])
 
   // Auto-open the payment-detail modal when arriving with ?payment=<id>.
   const searchParams = useSearchParams()
@@ -215,21 +279,48 @@ export default function MonthlyPaymentsView({
           netBalance={netBalance}
           incomeCount={incomeCount}
           outcomeCount={outcomeCount}
+          typeFilter={filters.type}
+          onTypeFilterToggle={handleTypeFilterToggle}
         />
       )}
 
       {showCharts && (
-        <PaymentCharts incomeByTag={incomeByTag} outcomeByTag={outcomeByTag} />
+        <PaymentCharts
+          incomeByTag={incomeByTag}
+          outcomeByTag={outcomeByTag}
+          selectedTags={filters.tags}
+          onToggleTag={handleTagToggle}
+        />
+      )}
+
+      {filters.tags.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={clearTagFilter}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Clear tag filter
+          </button>
+        </div>
       )}
 
       <PaymentsTable
         payments={payments}
-        filteredPayments={payments}
+        filteredPayments={filteredPayments}
         selectedDate={selectedDate}
         error={displayError}
         onRowClick={handleRowClick}
         onDeleteClick={handleDeleteClick}
         onDuplicateClick={handleDuplicateClick}
+        sort={sort}
+        onSortChange={handleSortChange}
+        typeFilter={filters.type}
+        hasInvoiceFilter={filters.hasInvoice}
+        selectedTags={filters.tags}
+        onTypeFilterToggle={handleTypeFilterToggle}
+        onInvoiceFilterToggle={handleInvoiceFilterToggle}
+        onTagFilterToggle={handleTagToggle}
       />
 
       {deleteConfirmPaymentId && (

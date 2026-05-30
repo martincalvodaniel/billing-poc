@@ -1,12 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import type { InvoiceMetadata, InvoiceSeries } from "@/lib/types"
-import { invoiceButtonState, seriesLabel } from "./PaymentInvoiceSection-utils"
+import type { InvoiceMetadata, InvoiceType } from "@/lib/types"
+import { invoiceButtonState, typeLabel } from "./PaymentInvoicesSection-utils"
 
-function invoice(series: InvoiceSeries): InvoiceMetadata {
+function invoice(type: InvoiceType): InvoiceMetadata {
   return {
-    series,
-    number: 1,
-    formattedNumber: `${series}-1`,
+    type,
+    id: `${type}-1`,
     generatedAt: new Date(),
     blobUrl: "x",
     blobPathname: "x",
@@ -68,13 +67,14 @@ describe("invoiceButtonState", () => {
   })
 })
 
-describe("seriesLabel", () => {
-  test("returns the human-readable label for each series", () => {
-    expect(seriesLabel("Invoice")).toBe("Invoice")
-    expect(seriesLabel("SimpleInvoice")).toBe("Simple Invoice")
-    expect(seriesLabel("RectificativeInvoice")).toBe("Rectificative Invoice")
-    expect(seriesLabel("RectificativeSimpleInvoice")).toBe(
+describe("typeLabel", () => {
+  test("returns the human-readable label for each invoice type", () => {
+    expect(typeLabel("Invoice")).toBe("Invoice")
+    expect(typeLabel("SimpleInvoice")).toBe("Simple Invoice")
+    expect(typeLabel("RectificativeInvoice")).toBe("Rectificative Invoice")
+    expect(typeLabel("RectificativeSimpleInvoice")).toBe(
       "Rectificative Simple Invoice"
     )
+    expect(typeLabel("Receipt")).toBe("Receipt")
   })
 })

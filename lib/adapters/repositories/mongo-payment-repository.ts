@@ -6,6 +6,7 @@ import type {
 } from "../../domain/ports/payment-repository"
 import { getDatabase } from "../../mongodb"
 import type { Payment as MongoPayment } from "../../types"
+import { mapPaymentDocToDomain } from "./mongo-payment-repository-utils"
 import { MongoUpdateBuilder, omitNullish, type UpdateOps } from "./mongo-utils"
 
 function toObjectId(id: string): ObjectId {
@@ -13,29 +14,7 @@ function toObjectId(id: string): ObjectId {
 }
 
 function toDomain(doc: MongoPayment): Payment {
-  return {
-    _id: doc._id?.toString(),
-    type: doc.type,
-    date: doc.date,
-    tag: doc.tag,
-    clientId: doc.clientId?.toString(),
-    concepts: doc.concepts,
-    vat: doc.vat,
-    surcharge: doc.surcharge,
-    discount: doc.discount,
-    deliveryNoteRef: doc.deliveryNoteRef,
-    netAmount: doc.netAmount,
-    vatAmount: doc.vatAmount,
-    surchargeAmount: doc.surchargeAmount,
-    total: doc.total,
-    invoice: doc.invoice,
-    invoices: doc.invoices,
-    providerBillUrl: doc.providerBillUrl,
-    providerBillPathname: doc.providerBillPathname,
-    paymentMethod: doc.paymentMethod,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  }
+  return mapPaymentDocToDomain(doc)
 }
 
 /**
@@ -92,12 +71,6 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
     )
   }
   if (data.invoice !== undefined) builder.setOrUnset("invoice", data.invoice)
-  if (data.providerBillUrl !== undefined) {
-    builder.setOrUnset("providerBillUrl", data.providerBillUrl)
-  }
-  if (data.providerBillPathname !== undefined) {
-    builder.setOrUnset("providerBillPathname", data.providerBillPathname)
-  }
   if (data.paymentMethod !== undefined) {
     builder.setOrUnset(
       "paymentMethod",
@@ -245,6 +218,30 @@ export class MongoPaymentRepository implements PaymentRepository {
       }
     )
     return result.matchedCount > 0
+  }
+
+  /**
+   * Pull a link-only invoice entry (one without an `id`) from
+   * `payment.invoices` matching the given `link`. Returns `true` only when
+   * an entry was actually removed (`modifiedCount > 0`) so the caller can
+   * distinguish "found but nothing pulled" → 404 from a successful delete.
+   */
+  async removeLinkInvoice(paymentId: string, link: string): Promise<boolean> {
+    const col = await this.collection()
+    const _id = toObjectId(paymentId)
+    const result = await col.updateOne(
+      { _id },
+      {
+        $pull: {
+          invoices: {
+            link,
+            $or: [{ id: { $exists: false } }, { id: "" }],
+          },
+        },
+        $set: { updatedAt: new Date() },
+      }
+    )
+    return result.modifiedCount > 0
   }
 
   async findDistinctTags(type?: string): Promise<string[]> {

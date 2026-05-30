@@ -11,12 +11,16 @@ interface DonutChartProps {
   data: Record<string, number>
   title: string
   colors: string[]
+  selectedTags?: string[]
+  onToggleTag?: (tag: string) => void
 }
 
 const DonutChart = memo(function DonutChart({
   data,
   title,
   colors,
+  selectedTags = [],
+  onToggleTag,
 }: DonutChartProps) {
   const [sortBy, setSortBy] = useState<DonutSortBy>("percentage")
   const [sortOrder, setSortOrder] = useState<DonutSortOrder>("desc")
@@ -101,11 +105,17 @@ const DonutChart = memo(function DonutChart({
           aria-hidden="true"
         >
           {segments.map((segment) => (
+            // biome-ignore lint/a11y/noStaticElementInteractions: donut segments are intentionally clickable filter controls.
             <path
               key={segment.tag}
               d={segment.path}
               fill={segment.color}
-              className="hover:opacity-80 transition-opacity"
+              onClick={() => onToggleTag?.(segment.tag)}
+              className={`cursor-pointer transition-opacity hover:opacity-80 ${
+                selectedTags.length > 0 && !selectedTags.includes(segment.tag)
+                  ? "opacity-40"
+                  : "opacity-100"
+              }`}
             />
           ))}
         </svg>
@@ -114,25 +124,36 @@ const DonutChart = memo(function DonutChart({
           className="flex-1 space-y-2 overflow-y-auto"
           style={{ maxHeight: "160px" }}
         >
-          {sortedSegments.map((segment) => (
-            <div
-              key={segment.tag}
-              className="flex items-center justify-between text-xs"
-            >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div
-                  className="h-2 w-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: segment.color }}
-                ></div>
-                <span className="truncate text-zinc-700 dark:text-zinc-300">
-                  {segment.tag}
+          {sortedSegments.map((segment) => {
+            const active = selectedTags.includes(segment.tag)
+            const dimmed = selectedTags.length > 0 && !active
+            return (
+              <button
+                key={segment.tag}
+                type="button"
+                onClick={() => onToggleTag?.(segment.tag)}
+                aria-pressed={active}
+                className={`flex w-full items-center justify-between rounded px-1 py-0.5 text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                  dimmed
+                    ? "opacity-50"
+                    : "opacity-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div
+                    className="h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: segment.color }}
+                  ></div>
+                  <span className="truncate text-zinc-700 dark:text-zinc-300">
+                    {segment.tag}
+                  </span>
+                </div>
+                <span className="ml-2 flex-shrink-0 font-medium text-zinc-900 dark:text-zinc-100">
+                  {segment.percentage.toFixed(1)}%
                 </span>
-              </div>
-              <span className="ml-2 flex-shrink-0 font-medium text-zinc-900 dark:text-zinc-100">
-                {segment.percentage.toFixed(1)}%
-              </span>
-            </div>
-          ))}
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>

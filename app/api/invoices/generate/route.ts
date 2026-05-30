@@ -11,6 +11,7 @@ import {
 import {
   assertCanGenerateInvoice,
   generateInvoiceSchema,
+  REGULAR_INVOICE_TYPES,
 } from "@/lib/domain/services/invoice-validator"
 import { getNextInvoiceNumber } from "@/lib/invoiceCounters"
 import { formatInvoiceNumber, generateInvoicePdf } from "@/lib/invoicePdf"
@@ -19,8 +20,6 @@ import { zodError } from "@/lib/validation"
 
 const paymentRepo = new MongoPaymentRepository()
 const clientRepo = new MongoClientRepository()
-
-const REGULAR_SERIES = new Set(["Invoice", "RectificativeInvoice"])
 
 function paymentYearFromDate(date: string): number {
   const head = date.slice(0, 4)
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { paymentId, series } = parsed.data
+    const { paymentId, type, persist } = parsed.data
 
     const [payment, company] = await Promise.all([
       paymentRepo.findById(paymentId),
@@ -52,13 +51,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 })
     }
 
-    const guard = assertCanGenerateInvoice(payment, series)
+    const guard = assertCanGenerateInvoice(payment, type)
     if (!guard.ok) {
       return NextResponse.json({ error: guard.reason }, { status: 400 })
     }
 
     let client: Client | undefined
-    if (REGULAR_SERIES.has(series) && payment.clientId) {
+    if (REGULAR_INVOICE_TYPES.has(type) && payment.clientId) {
       const clientDoc = await clientRepo.findById(payment.clientId)
       if (!clientDoc) {
         return NextResponse.json({ error: "Client not found" }, { status: 404 })
@@ -67,30 +66,35 @@ export async function POST(request: NextRequest) {
     }
 
     const year = paymentYearFromDate(payment.date)
-    const invoiceNumber = await getNextInvoiceNumber(series, year)
-    const formattedNumber = formatInvoiceNumber(series, year, invoiceNumber)
+    const invoiceNumber = await getNextInvoiceNumber(type, year)
+    const id = formatInvoiceNumber(type, year, invoiceNumber)
 
     const pdfBuffer = await generateInvoicePdf({
       payment,
       client,
       invoiceNumber,
-      series,
+      series: type,
       company,
     })
 
-    const filename = `${formattedNumber}-${paymentId}.pdf`
-    const blob = await put(filename, pdfBuffer, {
-      access: "private",
-      contentType: "application/pdf",
-    })
+    let blobUrl: string | undefined
+    let blobPathname: string | undefined
+    if (persist === true) {
+      const filename = `${id}-${paymentId}.pdf`
+      const blob = await put(filename, pdfBuffer, {
+        access: "private",
+        contentType: "application/pdf",
+      })
+      blobUrl = blob.url
+      blobPathname = blob.pathname
+    }
 
     const invoiceMetadata: InvoiceMetadata = {
-      series,
-      number: invoiceNumber,
-      formattedNumber,
+      type,
+      id,
       generatedAt: new Date(),
-      blobUrl: blob.url,
-      blobPathname: blob.pathname,
+      ...(blobUrl ? { blobUrl } : {}),
+      ...(blobPathname ? { blobPathname } : {}),
     }
 
     const appended = await paymentRepo.appendInvoice(paymentId, invoiceMetadata)
@@ -101,13 +105,15 @@ export async function POST(request: NextRequest) {
     const previousInvoices = getPaymentInvoices(payment)
     const invoices: InvoiceMetadata[] = [...previousInvoices, invoiceMetadata]
 
-    const downloadUrl = `/api/invoices/${paymentId}/${series}/${invoiceNumber}`
+    const downloadUrl = `/api/invoices/${paymentId}/${encodeURIComponent(id)}`
 
     return NextResponse.json(
       {
         success: true,
         invoice: invoiceMetadata,
         invoices,
+        id,
+        type,
         downloadUrl,
       },
       { status: 201 }

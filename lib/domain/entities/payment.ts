@@ -8,11 +8,16 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   bank_transfer: "Bank transfer",
 }
 
-export type InvoiceSeries =
+export type InvoiceType =
   | "Invoice"
   | "RectificativeInvoice"
   | "SimpleInvoice"
   | "RectificativeSimpleInvoice"
+  | "Receipt"
+
+/** @deprecated transitional alias — use `InvoiceType`. Retained for the
+ *  invoice-counter document, which is keyed by series. */
+export type InvoiceSeries = InvoiceType
 
 export interface PaymentConcept {
   name: string
@@ -20,13 +25,18 @@ export interface PaymentConcept {
   quantity: number
 }
 
+/**
+ * Unified invoice metadata entry. An entry has a `type` plus exactly one
+ * of `id` (generated PDF) or `link` (external URL); generated PDFs may
+ * additionally carry `blobUrl`/`blobPathname` when persisted.
+ */
 export interface InvoiceMetadata {
-  series: InvoiceSeries
-  number: number
-  formattedNumber: string
+  type: InvoiceType
+  id?: string
+  link?: string
   generatedAt: Date
-  blobUrl: string
-  blobPathname: string
+  blobUrl?: string
+  blobPathname?: string
 }
 
 export interface Payment {
@@ -46,8 +56,6 @@ export interface Payment {
   total: number
   invoice?: InvoiceMetadata
   invoices?: InvoiceMetadata[]
-  providerBillUrl?: string
-  providerBillPathname?: string
   paymentMethod?: PaymentMethod
   createdAt: Date
   updatedAt: Date

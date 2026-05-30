@@ -1,8 +1,8 @@
-import type { InvoiceMetadata, InvoiceSeries } from "@/lib/types"
+import type { InvoiceMetadata, InvoiceType } from "@/lib/types"
 
 export interface InvoiceButtonAction {
   label: string
-  series: InvoiceSeries
+  series: InvoiceType
   rectificative: boolean
 }
 
@@ -11,22 +11,23 @@ export interface InvoiceButtonState {
   simple: InvoiceButtonAction
 }
 
-const SERIES_LABEL: Record<InvoiceSeries, string> = {
+const TYPE_LABEL: Record<InvoiceType, string> = {
   Invoice: "Invoice",
   RectificativeInvoice: "Rectificative Invoice",
   SimpleInvoice: "Simple Invoice",
   RectificativeSimpleInvoice: "Rectificative Simple Invoice",
+  Receipt: "Receipt",
 }
 
-export function seriesLabel(series: InvoiceSeries): string {
-  return SERIES_LABEL[series]
+export function typeLabel(type: InvoiceType): string {
+  return TYPE_LABEL[type]
 }
 
 export function invoiceButtonState(
   invoices: InvoiceMetadata[]
 ): InvoiceButtonState {
-  const hasInvoice = invoices.some((i) => i.series === "Invoice")
-  const hasSimple = invoices.some((i) => i.series === "SimpleInvoice")
+  const hasInvoice = invoices.some((i) => i.type === "Invoice")
+  const hasSimple = invoices.some((i) => i.type === "SimpleInvoice")
   return {
     primary: {
       label: hasInvoice ? "Rectificative Invoice" : "Invoice",

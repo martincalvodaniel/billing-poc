@@ -1,19 +1,11 @@
 "use client"
 
 import type { Ref } from "react"
-import {
-  useCallback,
-  useId,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react"
-import { useUploadInvoice } from "@/lib/hooks/useInvoiceMutations"
+import { useCallback, useImperativeHandle, useRef, useState } from "react"
 import { useCreatePayment } from "@/lib/hooks/usePaymentMutations"
 import { ErrorBanner } from "../../components/ErrorBanner"
 import Toast from "../../components/Toast"
 import PaymentFormFields from "./PaymentFormFields"
-import ProviderBillFileInput from "./ProviderBillFileInput"
 import { extractPaymentFormError } from "./paymentForm-utils"
 import { validateConcepts, validateDiscount } from "./paymentUtils"
 import { usePaymentForm } from "./usePaymentForm"
@@ -32,7 +24,6 @@ const PaymentForm = function PaymentForm({
   initialDate,
   ref,
 }: PaymentFormProps) {
-  const id = useId()
   const {
     formData,
     suggestedTags,
@@ -59,12 +50,6 @@ const PaymentForm = function PaymentForm({
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
 
   const { trigger: createPayment } = useCreatePayment()
-  const { trigger: uploadInvoice } = useUploadInvoice()
-
-  // Provider bill upload state
-  const [providerBillFile, setProviderBillFile] = useState<File | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
   // Expose methods to parent
@@ -78,7 +63,6 @@ const PaymentForm = function PaymentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setUploadError(null)
 
     try {
       // Validate concepts
@@ -96,24 +80,10 @@ const PaymentForm = function PaymentForm({
         throw new Error(discountValidation.error || "Validation failed")
       }
 
-      const result = await createPayment({
+      await createPayment({
         ...formData,
         paymentMethod: formData.paymentMethod || undefined,
       })
-      const paymentId = result.id
-
-      // Upload provider bill if outcome payment and file is selected
-      if (formData.type === "outcome" && providerBillFile) {
-        try {
-          await uploadInvoice({ paymentId, file: providerBillFile })
-        } catch (uploadErr) {
-          console.error(`Error uploading provider bill: ${uploadErr}`)
-          setUploadError(
-            extractPaymentFormError(uploadErr, "Failed to upload provider bill")
-          )
-          // Continue with success since payment was created
-        }
-      }
 
       // Add new tag to available tags if it's not already there
       // Note: availableTags is managed in usePaymentForm hook
@@ -122,12 +92,8 @@ const PaymentForm = function PaymentForm({
         setSuggestedTags([])
       }
 
-      // Reset concepts, client, and provider bill file while keeping type and date sticky
+      // Reset concepts and client while keeping type and date sticky
       resetForm()
-      setProviderBillFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
 
       // Show success toast
       setShowSuccess(true)
@@ -150,38 +116,6 @@ const PaymentForm = function PaymentForm({
     if (e.target.name === "tag") {
       setShowTagSuggestions(true)
     }
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) {
-      setProviderBillFile(null)
-      return
-    }
-
-    // Validate file type
-    if (file.type !== "application/pdf") {
-      setUploadError("Only PDF files are allowed")
-      setProviderBillFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-      return
-    }
-
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024
-    if (file.size > maxSize) {
-      setUploadError("File size exceeds 10MB limit")
-      setProviderBillFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-      return
-    }
-
-    setUploadError(null)
-    setProviderBillFile(file)
   }
 
   const handleKeyDown = useCallback(
@@ -239,17 +173,6 @@ const PaymentForm = function PaymentForm({
           calculateNetAmount={calculateNetAmount}
           calculateDiscount={calculateDiscount}
         />
-
-        {/* Provider Bill Upload (Outcome Only) */}
-        {formData.type === "outcome" && (
-          <ProviderBillFileInput
-            inputId={`${id}-providerBill`}
-            file={providerBillFile}
-            uploadError={uploadError}
-            onChange={handleFileChange}
-            inputRef={fileInputRef}
-          />
-        )}
       </form>
     </>
   )
