@@ -55,7 +55,7 @@ export async function GET(
     // Fetch private blob using server-side token and stream to client
     const result = await get(blobUrl, { access: "private" })
 
-    if (!result || result.statusCode !== 200) {
+    if (result?.statusCode !== 200) {
       return NextResponse.json(
         { error: "Failed to retrieve file from storage" },
         { status: 404 }
