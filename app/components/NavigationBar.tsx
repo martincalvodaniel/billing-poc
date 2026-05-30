@@ -13,7 +13,11 @@ interface NavigationBarProps {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/", label: "Absences", matches: (p) => p === "/" || p === "/absences" },
+  {
+    href: "/",
+    label: "Absences",
+    matches: (p) => p === "/" || p === "/absences",
+  },
   { href: "/clients", label: "Clients", matches: (p) => p === "/clients" },
   { href: "/events", label: "Events", matches: (p) => p === "/events" },
   { href: "/month", label: "Monthly Overview", matches: (p) => p === "/month" },
