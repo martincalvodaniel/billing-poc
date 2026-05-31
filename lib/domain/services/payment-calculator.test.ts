@@ -99,9 +99,9 @@ describe("computePaymentFinancials", () => {
     expect(result.total).toBe(126.2)
     expect(result.surchargeAmount).toBeDefined()
     expect(result.surchargeAmount).toBeCloseTo(5.2, 0)
-    expect(result.netAmount + result.vatAmount + (result.surchargeAmount ?? 0)).toBe(
-      result.total
-    )
+    expect(
+      result.netAmount + result.vatAmount + (result.surchargeAmount ?? 0)
+    ).toBe(result.total)
   })
 
   it("includes negative surchargeAmount and reduces total", () => {

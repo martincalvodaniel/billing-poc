@@ -9,8 +9,8 @@ import {
 import { useEvents } from "@/lib/hooks/useEvents"
 import { type EventFormValues, valuesFromEvent } from "./eventFormModal-utils"
 import {
-  type EventsFormState,
   copyAttendeesToEvent,
+  type EventsFormState,
   extractEventErrorMessage,
   filterDayEvents,
   mapFormValuesToEventInput,
@@ -35,7 +35,9 @@ export function useEventsPageState() {
   const [copyKey, setCopyKey] = useState(0)
   const [copySourceEvent, setCopySourceEvent] = useState<Event | null>(null)
   const [deleteDialogEvent, setDeleteDialogEvent] = useState<Event | null>(null)
-  const [deleteDialogError, setDeleteDialogError] = useState<string | null>(null)
+  const [deleteDialogError, setDeleteDialogError] = useState<string | null>(
+    null
+  )
 
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1

@@ -56,28 +56,28 @@ export const updateClientSchema = z
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
     address: z
       .string()
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
     phone: z
       .string()
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
     email: z
       .string()
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
   })
   .refine(

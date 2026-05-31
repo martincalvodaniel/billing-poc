@@ -60,7 +60,8 @@ export function filterDayEvents(
   const [yStr, mStr, dStr] = dayModalKey.split("-")
   const date = new Date(Number(yStr), Number(mStr) - 1, Number(dStr))
   return events.filter(
-    (e) => e.date === dayModalKey || eventOccursOnRecurringDate(e, date, dayModalKey)
+    (e) =>
+      e.date === dayModalKey || eventOccursOnRecurringDate(e, date, dayModalKey)
   )
 }
 
