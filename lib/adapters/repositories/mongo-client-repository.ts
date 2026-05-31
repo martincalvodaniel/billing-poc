@@ -2,6 +2,7 @@ import type { Client, PaginatedResponse } from "../../domain/entities/client"
 import type {
   ClientFilter,
   ClientRepository,
+  ClientUpdateData,
 } from "../../domain/ports/client-repository"
 import { getDatabase } from "../../mongodb"
 import { buildAccentInsensitivePattern } from "../../text-search"
@@ -90,7 +91,7 @@ export class MongoClientRepository implements ClientRepository {
     return result.insertedId.toString()
   }
 
-  async update(id: string, data: Partial<Client>): Promise<boolean> {
+  async update(id: string, data: ClientUpdateData): Promise<boolean> {
     if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const builder = new MongoUpdateBuilder().set("updatedAt", new Date())

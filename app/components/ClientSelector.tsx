@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
+import { PencilIcon } from "@/app/components/icons/PencilIcon"
 import type { Client } from "@/lib/domain/entities/client"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { useClients } from "@/lib/hooks/useClients"
@@ -17,6 +18,7 @@ interface ClientSelectorProps {
   required?: boolean
   onCreateClient?: (name: string) => void | Promise<void>
   isCreating?: boolean
+  onEditClient?: (client: Client) => void
 }
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -29,6 +31,7 @@ export default function ClientSelector({
   required = false,
   onCreateClient,
   isCreating = false,
+  onEditClient,
 }: ClientSelectorProps) {
   const id = useId()
   const [searchQuery, setSearchQuery] = useState("")
@@ -161,21 +164,33 @@ export default function ClientSelector({
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
           placeholder="Search clients by name or tax ID..."
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="w-full rounded-md border border-zinc-300 bg-white py-2 pl-4 pr-16 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           required={required}
         />
 
-        {/* Clear button */}
-        {(searchQuery || selectedClient) && (
-          <button
-            type="button"
-            onClick={handleClearSelection}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-            aria-label="Clear selection"
-          >
-            ✕
-          </button>
-        )}
+        {/* Edit + Clear buttons */}
+        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+          {selectedClient && onEditClient && (
+            <button
+              type="button"
+              onClick={() => onEditClient(selectedClient)}
+              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              aria-label="Edit selected client"
+            >
+              <PencilIcon className="h-4 w-4" />
+            </button>
+          )}
+          {(searchQuery || selectedClient) && (
+            <button
+              type="button"
+              onClick={handleClearSelection}
+              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              aria-label="Clear selection"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Suggestions dropdown */}

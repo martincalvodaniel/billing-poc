@@ -43,6 +43,7 @@ export default function ClientForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    e.stopPropagation()
     setError(null)
 
     // Validate form data

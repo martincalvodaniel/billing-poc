@@ -1,7 +1,7 @@
 "use client"
 
 import { useId } from "react"
-import ClientSelector from "@/app/components/ClientSelector"
+import ClientSelectorField from "@/app/components/ClientSelectorField"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import {
   PAYMENT_METHOD_LABELS,
@@ -52,7 +52,7 @@ export default function PaymentAdditionalFields({
 
       {showAdditionalFields && (
         <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
-          <ClientSelector
+          <ClientSelectorField
             value={formData.clientId}
             onChange={onClientChange}
             label="Client (Optional)"
