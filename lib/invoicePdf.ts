@@ -28,6 +28,7 @@ const RIGHT_X = MARGIN + COL_WIDTH + COL_GAP
 const BAND_HEIGHT = 18
 const ROW_HEIGHT = 14
 const LOGO_BOX = 70
+const LOGO_CLEARANCE = 20
 
 const SAGE_GREEN = rgb(0xa9 / 255, 0xb7 / 255, 0x86 / 255)
 const SAGE_TEXT = rgb(0x6b / 255, 0x7a / 255, 0x4e / 255)
@@ -296,7 +297,10 @@ export async function generateInvoicePdf(
       }
     }
 
-    let leftY = titleY - 30
+    const logoBottomY = PAGE_HEIGHT - MARGIN - LOGO_BOX
+    const contentTopY = Math.min(titleY - 30, logoBottomY - LOGO_CLEARANCE)
+
+    let leftY = contentTopY
     let rightY = leftY
 
     // LEFT: DATOS DE EMPRESA
