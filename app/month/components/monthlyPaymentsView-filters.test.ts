@@ -207,6 +207,16 @@ describe("filterPayments", () => {
     expect(out.map((p) => p._id)).toEqual(["1"] as unknown as ObjectId[])
   })
 
+  test("tags filter includes payments without tag when Untagged is selected", () => {
+    const out = filterPayments(base, {
+      type: "all",
+      hasInvoice: "all",
+      hasReceipt: "all",
+      tags: ["Untagged"],
+    })
+    expect(out.map((p) => p._id)).toEqual(["4"] as unknown as ObjectId[])
+  })
+
   test("composes all axes", () => {
     const out = filterPayments(base, {
       type: "income",
