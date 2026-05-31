@@ -15,10 +15,6 @@ export type InvoiceType =
   | "RectificativeSimpleInvoice"
   | "Receipt"
 
-/** @deprecated transitional alias — use `InvoiceType`. Retained for the
- *  invoice-counter document, which is keyed by series. */
-export type InvoiceSeries = InvoiceType
-
 export interface PaymentConcept {
   name: string
   amount: number

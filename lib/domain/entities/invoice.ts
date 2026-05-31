@@ -1,8 +1,8 @@
-import type { InvoiceSeries } from "./payment"
+import type { InvoiceType } from "./payment"
 
 export interface InvoiceCounter {
   _id?: string
-  series: InvoiceSeries
+  series: InvoiceType
   year: number
   lastNumber: number
   updatedAt: Date

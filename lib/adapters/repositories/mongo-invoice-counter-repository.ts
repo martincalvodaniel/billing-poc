@@ -1,4 +1,4 @@
-import type { InvoiceSeries } from "../../domain/entities/payment"
+import type { InvoiceType } from "../../domain/entities/payment"
 import type { InvoiceCounterRepository } from "../../domain/ports/invoice-counter-repository"
 import { getDatabase } from "../../mongodb"
 import type { MongoInvoiceCounter } from "../../types"
@@ -9,7 +9,7 @@ export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
     return db.collection<MongoInvoiceCounter>("invoiceCounters")
   }
 
-  async getNextNumber(series: InvoiceSeries, year: number): Promise<number> {
+  async getNextNumber(series: InvoiceType, year: number): Promise<number> {
     const col = await this.collection()
     const result = await col.findOneAndUpdate(
       { series, year },
@@ -30,7 +30,7 @@ export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
     return result.lastNumber
   }
 
-  async getCurrentNumber(series: InvoiceSeries, year: number): Promise<number> {
+  async getCurrentNumber(series: InvoiceType, year: number): Promise<number> {
     const col = await this.collection()
     const counter = await col.findOne({ series, year })
     return counter?.lastNumber || 0
@@ -42,7 +42,7 @@ export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
    */
   async initialize(year: number, startNumber = 0): Promise<void> {
     const col = await this.collection()
-    const series: InvoiceSeries[] = [
+    const series: InvoiceType[] = [
       "Invoice",
       "RectificativeInvoice",
       "SimpleInvoice",

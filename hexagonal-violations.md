@@ -184,7 +184,7 @@ already have:
    ```ts
    export interface InvoiceCounter {
      _id?: string
-     series: InvoiceSeries
+     series: InvoiceType
      lastNumber: number
      updatedAt: Date
    }
@@ -194,7 +194,7 @@ already have:
    and adapter both key by `(series, year)`, so the domain entity is wrong.
 
 2. **Redundant scalar/value types.** `PaymentType`, `InvoiceType`,
-   `InvoiceSeries`, `PaymentConcept`, `InvoiceMetadata`, `PaymentFormData`,
+   `PaymentConcept`, `InvoiceMetadata`, `PaymentFormData`,
    and `ClientFormData` are declared in **both**
    [lib/types.ts](lib/types.ts) and
    [lib/domain/entities/payment.ts](lib/domain/entities/payment.ts) /
@@ -234,8 +234,8 @@ already have:
   `InvoiceCounter` in [lib/domain/entities/invoice.ts](lib/domain/entities/invoice.ts)
   so it matches the port contract and persistence shape.
 
-- Drop the deprecated `InvoiceSeries` alias once the invoice-counter code
-  is consolidated (see V3), keeping `InvoiceType` as the only name.
+- The deprecated `InvoiceSeries` alias has been removed; `InvoiceType` is
+  the only name used by the invoice-counter code.
 
 ---
 
