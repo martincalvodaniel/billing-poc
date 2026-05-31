@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useState } from "react"
+import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { InvoiceType, Payment } from "@/lib/domain/entities/payment"
@@ -70,6 +71,8 @@ export default function PaymentInvoicesSection({
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [linkUrl, setLinkUrl] = useState("")
   const [linkType, setLinkType] = useState<AppendLinkInvoiceType>("Invoice")
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
+  const [pendingRemoveLink, setPendingRemoveLink] = useState<string | null>(null)
 
   const state = invoiceButtonState(invoices)
   const generateDisabled = isGenerating || !paymentId
@@ -116,19 +119,25 @@ export default function PaymentInvoicesSection({
     }
   }
 
-  const handleRemoveLink = async (link: string) => {
-    if (!paymentId) return
-    if (!window.confirm("Delete this invoice link?")) return
+  const handleRemoveLink = (link: string) => {
+    setPendingRemoveLink(link)
+    setShowRemoveConfirm(true)
+  }
+
+  const handleConfirmRemoveLink = async () => {
+    if (!paymentId || !pendingRemoveLink) return
     setRemoveError(null)
     try {
-      await removeLink({ link })
+      await removeLink({ link: pendingRemoveLink })
       onUpdate?.({
         ...payment,
         invoices: (payment.invoices ?? []).filter(
-          (i) => !(i.link === link && !i.id)
+          (i) => !(i.link === pendingRemoveLink && !i.id)
         ),
         updatedAt: new Date(),
       })
+      setShowRemoveConfirm(false)
+      setPendingRemoveLink(null)
     } catch (err) {
       console.error(`Error removing invoice link: ${err}`)
       setRemoveError(extractMessage(err, "Failed to remove invoice link"))
@@ -273,6 +282,29 @@ export default function PaymentInvoicesSection({
       </form>
 
       {removeError && <ErrorBanner>{removeError}</ErrorBanner>}
+
+      <ConfirmDialog
+        isOpen={showRemoveConfirm}
+        title="Delete invoice link"
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        variant="danger"
+        isPending={isRemoving}
+        error={removeError}
+        onCancel={() => {
+          if (isRemoving) return
+          setShowRemoveConfirm(false)
+          setPendingRemoveLink(null)
+          setRemoveError(null)
+        }}
+        onConfirm={() => {
+          void handleConfirmRemoveLink()
+        }}
+      >
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          Delete this invoice link?
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }
