@@ -2,8 +2,12 @@ import { Badge } from "@/app/components/Badge"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { IconButton } from "@/app/components/IconButton"
+import { BankTransferIcon } from "@/app/components/icons/BankTransferIcon"
+import { CardIcon } from "@/app/components/icons/CardIcon"
+import { CashIcon } from "@/app/components/icons/CashIcon"
 import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import { XIcon } from "@/app/components/icons/XIcon"
 import type { Payment } from "@/lib/domain/entities/payment"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
 import {
@@ -124,25 +128,19 @@ function InvoiceMarker({ has }: { has: boolean }) {
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M9 12h6m-6 4h4m1-12H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+          d="M7 2h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"
         />
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M10 10h4"
+          d="M14 2v5h5"
         />
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M10 14h3"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8.2 14c0-1 1-1.6 1.9-1.8m-1.2-2.2c.4-.3 1-.5 1.6-.5 1 0 1.8.5 1.8 1.3 0 1.6-2.2 1.1-2.2 2.7"
+          d="M9 12h6M9 16h6"
         />
       </svg>
       <span className="sr-only">{has ? "Has invoice" : "Without invoice"}</span>
@@ -172,16 +170,52 @@ function ReceiptMarker({ has }: { has: boolean }) {
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M9 12h6m-6 4h4m1-12H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+          d="M7 3h10v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5V5a2 2 0 0 1 2-2z"
         />
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d={has ? "M9.5 12.5l1.6 1.6 3-3" : "M9 9l6 6m0-6l-6 6"}
+          d="M9 9h6M9 12h6M9 15h4"
         />
       </svg>
       <span className="sr-only">{has ? "Has receipt" : "Without receipt"}</span>
+    </span>
+  )
+}
+
+function PaymentMethodMarker({ method }: { method?: Payment["paymentMethod"] }) {
+  if (!method) {
+    return (
+      <span className="inline-flex items-center text-rose-600 dark:text-rose-400">
+        <XIcon className="h-4 w-4" />
+        <span className="sr-only">No payment method</span>
+      </span>
+    )
+  }
+
+  if (method === "cash") {
+    return (
+      <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400">
+        <CashIcon className="h-4 w-4" />
+        <span className="sr-only">Cash</span>
+      </span>
+    )
+  }
+
+  if (method === "card") {
+    return (
+      <span className="inline-flex items-center text-blue-600 dark:text-blue-400">
+        <CardIcon className="h-4 w-4" />
+        <span className="sr-only">Card</span>
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center text-zinc-700 dark:text-zinc-300">
+      <BankTransferIcon className="h-4 w-4" />
+      <span className="sr-only">Bank transfer</span>
     </span>
   )
 }
@@ -357,6 +391,9 @@ export default function PaymentsTable({
                         >
                           <ReceiptMarker has={hasReceipt} />
                         </button>
+                        <span title={payment.paymentMethod ?? "No payment method"}>
+                          <PaymentMethodMarker method={payment.paymentMethod} />
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">

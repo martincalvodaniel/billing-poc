@@ -282,6 +282,32 @@ describe("sortPayments", () => {
     ] as unknown as ObjectId[])
   })
 
+  test("sorts same calendar day by createdAt following day sort direction", () => {
+    const older = new Date("2026-05-10T08:00:00Z")
+    const newer = new Date("2026-05-10T20:00:00Z")
+    const arr = [
+      makePayment({
+        id: "old",
+        date: "2026-05-10T05:00:00Z",
+        createdAt: older,
+      }),
+      makePayment({
+        id: "new",
+        date: "2026-05-10T23:00:00Z",
+        createdAt: newer,
+      }),
+    ]
+
+    expect(sortPayments(arr, "day", "asc").map((p) => p._id)).toEqual([
+      "old",
+      "new",
+    ] as unknown as ObjectId[])
+    expect(sortPayments(arr, "day", "desc").map((p) => p._id)).toEqual([
+      "new",
+      "old",
+    ] as unknown as ObjectId[])
+  })
+
   test("sorts by type", () => {
     const arr = [
       makePayment({ id: "a", type: "outcome" }),

@@ -121,10 +121,27 @@ function toTime(value: Date | string | undefined): number {
   return new Date(value).getTime()
 }
 
+function toCalendarDayTime(value: Date | string | undefined): number {
+  if (!value) return 0
+
+  if (typeof value === "string") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+    if (match) {
+      const year = Number(match[1])
+      const month = Number(match[2]) - 1
+      const day = Number(match[3])
+      return Date.UTC(year, month, day)
+    }
+  }
+
+  const date = value instanceof Date ? value : new Date(value)
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
 function compareByKey(a: Payment, b: Payment, key: PaymentSortKey): number {
   switch (key) {
     case "day":
-      return toTime(a.date) - toTime(b.date)
+      return toCalendarDayTime(a.date) - toCalendarDayTime(b.date)
     case "type":
       return a.type.localeCompare(b.type)
     case "tag": {
@@ -164,6 +181,9 @@ export function sortPayments(
     }
     const primary = compareByKey(a, b, sortBy)
     if (primary !== 0) return primary * dir
+    if (sortBy === "day") {
+      return (toTime(a.createdAt) - toTime(b.createdAt)) * dir
+    }
     return toTime(b.createdAt) - toTime(a.createdAt)
   })
   return copy
