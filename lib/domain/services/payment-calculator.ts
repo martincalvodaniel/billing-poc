@@ -7,11 +7,10 @@ export function calculateTotal(concepts: PaymentConcept[]): number {
 export function calculateVatAmount(
   total: number,
   vatPercentage: number,
-  surchargePercentage = 0
+  _surchargePercentage = 0
 ): number {
-  const vat =
-    (total * (vatPercentage / 100)) /
-    (1 + vatPercentage / 100 + surchargePercentage / 100)
+  const net = calculateNetAmount(total, vatPercentage)
+  const vat = total - net
   return Number.parseFloat(vat.toFixed(2))
 }
 
@@ -21,20 +20,17 @@ export function calculateSurchargeAmount(
   surchargePercentage = 0
 ): number {
   if (surchargePercentage === 0) return 0
-  const surcharge =
-    (total * (surchargePercentage / 100)) /
-    (1 + vatPercentage / 100 + surchargePercentage / 100)
+  const net = calculateNetAmount(total, vatPercentage)
+  const surcharge = net * (surchargePercentage / 100)
   return Number.parseFloat(surcharge.toFixed(2))
 }
 
 export function calculateNetAmount(
   total: number,
   vatPercentage: number,
-  surchargePercentage = 0
+  _surchargePercentage = 0
 ): number {
-  return Number.parseFloat(
-    (total / (1 + vatPercentage / 100 + surchargePercentage / 100)).toFixed(2)
-  )
+  return Number.parseFloat((total / (1 + vatPercentage / 100)).toFixed(2))
 }
 
 export function computePaymentFinancials(
@@ -43,23 +39,22 @@ export function computePaymentFinancials(
   surchargePercentage = 0,
   discount = 0
 ) {
-  // Discount reduces the concepts subtotal before VAT/surcharge extraction.
+  // Discount reduces the concepts subtotal before VAT extraction.
   const conceptsTotal = calculateTotal(concepts)
-  const total = Number.parseFloat((conceptsTotal - discount).toFixed(2))
-  const netAmount = calculateNetAmount(
-    total,
-    vatPercentage,
-    surchargePercentage
-  )
+  const taxableBase = Number.parseFloat((conceptsTotal - discount).toFixed(2))
+  const netAmount = calculateNetAmount(taxableBase, vatPercentage)
   const vatAmount = calculateVatAmount(
-    total,
+    taxableBase,
     vatPercentage,
     surchargePercentage
   )
   const surchargeAmount =
-    surchargePercentage > 0
-      ? calculateSurchargeAmount(total, vatPercentage, surchargePercentage)
+    surchargePercentage !== 0
+      ? calculateSurchargeAmount(taxableBase, vatPercentage, surchargePercentage)
       : undefined
+  const total = Number.parseFloat(
+    (taxableBase + (surchargeAmount ?? 0)).toFixed(2)
+  )
 
   return { total, netAmount, vatAmount, surchargeAmount }
 }

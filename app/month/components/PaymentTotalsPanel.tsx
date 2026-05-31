@@ -19,10 +19,12 @@ export default function PaymentTotalsPanel({
   calculateNetAmount,
   calculateDiscount,
 }: PaymentTotalsPanelProps) {
-  const showSurcharge = parseFloat(surcharge || "0") > 0
+  const showSurcharge = parseFloat(surcharge || "0") !== 0
   const showDiscount = parseFloat(discount || "0") > 0
   const conceptsTotal = calculateTotal()
   const grandTotal = Math.max(conceptsTotal - parseFloat(discount || "0"), 0)
+  const surchargeAmount = parseFloat(calculateSurchargeAmount()) || 0
+  const finalTotal = grandTotal + surchargeAmount
   return (
     <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
       <div className="flex items-center justify-between">
@@ -78,7 +80,7 @@ export default function PaymentTotalsPanel({
             Total
           </span>
           <span className="text-lg font-semibold text-blue-600 dark:text-green-400">
-            €{conceptsTotal.toFixed(2)}
+            €{finalTotal.toFixed(2)}
           </span>
         </div>
       </div>

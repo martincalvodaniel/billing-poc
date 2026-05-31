@@ -17,8 +17,8 @@ const paymentBaseSchema = z.object({
     .max(100, "VAT must be between 0 and 100"),
   surcharge: z.coerce
     .number()
-    .min(0, "Surcharge must be between 0 and 100")
-    .max(100, "Surcharge must be between 0 and 100")
+    .min(-100, "Surcharge must be between -100 and 100")
+    .max(100, "Surcharge must be between -100 and 100")
     .optional()
     .default(0),
   discount: z.coerce
@@ -68,8 +68,8 @@ export const updatePaymentSchema = z
       .optional(),
     surcharge: z.coerce
       .number()
-      .min(0, "Surcharge must be between 0 and 100")
-      .max(100, "Surcharge must be between 0 and 100")
+      .min(-100, "Surcharge must be between -100 and 100")
+      .max(100, "Surcharge must be between -100 and 100")
       .optional(),
     discount: z.coerce
       .number()

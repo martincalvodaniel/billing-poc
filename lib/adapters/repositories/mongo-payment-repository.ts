@@ -79,7 +79,7 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
     // surcharge === 0 means "no surcharge" → remove the field entirely.
     builder.setOrUnset(
       "surcharge",
-      data.surcharge && data.surcharge > 0 ? data.surcharge : undefined
+      data.surcharge !== 0 ? data.surcharge : undefined
     )
   }
   if (data.discount !== undefined) {
@@ -99,7 +99,7 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
   if (data.surchargeAmount !== undefined) {
     builder.setOrUnset(
       "surchargeAmount",
-      data.surchargeAmount && data.surchargeAmount > 0
+      data.surchargeAmount !== 0
         ? data.surchargeAmount
         : undefined
     )
@@ -151,11 +151,11 @@ export class MongoPaymentRepository implements PaymentRepository {
         ? payment.discount
         : undefined
     const surcharge =
-      typeof payment.surcharge === "number" && payment.surcharge > 0
+      typeof payment.surcharge === "number" && payment.surcharge !== 0
         ? payment.surcharge
         : undefined
     const surchargeAmount =
-      typeof payment.surchargeAmount === "number" && payment.surchargeAmount > 0
+      typeof payment.surchargeAmount === "number" && payment.surchargeAmount !== 0
         ? payment.surchargeAmount
         : undefined
     const doc = omitNullish({

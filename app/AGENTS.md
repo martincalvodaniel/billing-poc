@@ -38,5 +38,9 @@ All pages must use `<PageLayout navigationSubtitle headerContent? children />`. 
 ## Forms
 - Controlled inputs; validate on submit
 - VAT is percentage 0–100, default 21%
-- Net = Total / (1 + VAT%/100 + surcharge%/100)
+- Concepts subtotal is VAT-inclusive base (before surcharge)
+- Net = Base / (1 + VAT%/100)
+- Surcharge can be negative (e.g., IRPF withholding)
+- Surcharge amount = Net * (surcharge%/100)
+- Total = Net + VAT amount + Surcharge amount
 - Allow negative totals (refunds); sticky type/date after save, reset amounts

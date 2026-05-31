@@ -25,7 +25,7 @@ Re-exports pure functions from `lib/domain/services/payment-calculator.ts` (99 u
 - `calculateTotal(concepts)` — sum of amount × quantity
 - `calculateVatAmount(total, vat, surcharge?)` — VAT portion
 - `calculateSurchargeAmount(total, vat, surcharge)` — surcharge portion
-- `calculateNetAmount(total, vat, surcharge?)` — net after taxes (returns number)
+- `calculateNetAmount(total, vat, surcharge?)` — net extracted from VAT-inclusive base (returns number)
 - `validateConcepts(concepts)`, `validateVat(vat)`, `validateSurcharge(surcharge)` — local validation helpers
 
 ## API Endpoints

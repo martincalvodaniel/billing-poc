@@ -86,13 +86,17 @@ For detailed development guidelines, code patterns, TypeScript conventions, and 
   - `amount`: Numeric amount in euros per unit (required)
   - `quantity`: Numeric quantity/multiplier (1 or more). Defaults to 1 if omitted. (optional)
 - `vat`: VAT percentage applied to total (e.g., 21 for 21%) (required)
-- `surcharge`: Surcharge percentage (e.g., 5.2 for 5.2%) (optional)
+- `surcharge`: Surcharge percentage (supports negative values, e.g., `-15` for IRPF withholding) (optional)
 - `tag`: Optional tag for categorizing payments (string)
 - `clientId`: Optional MongoDB ObjectId of the associated client (string)
 - `deliveryNoteRef`: Optional reference identifier for a delivery note (string)
 
 **Response:**
-The API calculates `netAmount` from the sum of all concept totals (amount × quantity) and VAT/surcharge percentages using: `netAmount = total / (1 + vat/100 + surcharge/100)` where `total` is the sum of (amount × quantity) for all concepts. When surcharge is provided, both `vatAmount` and `surchargeAmount` are calculated proportionally.
+The API treats the sum of all concept totals (amount × quantity) as the VAT-inclusive base (before surcharge):
+- `netAmount = base / (1 + vat/100)`
+- `vatAmount = base - netAmount`
+- `surchargeAmount = netAmount * (surcharge/100)` (when surcharge is provided)
+- `total = netAmount + vatAmount + surchargeAmount`
 
 ### `GET /api/payments` - Get Payments (With Optional Year/Month Filtering)
 
@@ -104,10 +108,10 @@ The API calculates `netAmount` from the sum of all concept totals (amount × qua
 
 Each payment includes:
 - `concepts`: Array of payment components with amounts, quantities, and optional names
-- `total`: Sum of (amount × quantity) for all concepts
+- `total`: Final total (`netAmount + vatAmount + surchargeAmount`)
 - `vat`: VAT percentage and VAT amount
 - `surcharge`: Optional surcharge percentage and amount
-- `netAmount`: Net amount after VAT and surcharge deduction
+- `netAmount`: Net amount extracted from VAT-inclusive base
 
 **Examples:**
 - `GET /api/payments` - All payments
@@ -140,13 +144,13 @@ Each payment includes:
 - `clientId`: Optional MongoDB ObjectId of the associated client, or empty string to clear (optional)
 - `concepts`: New array of payment components (optional). Each concept supports quantity field.
 - `vat`: New VAT percentage 0-100 (optional)
-- `surcharge`: New surcharge percentage 0-100 (optional)
+- `surcharge`: New surcharge percentage -100 to 100 (optional)
 - `deliveryNoteRef`: Optional reference identifier for a delivery note (optional)
 
 At least one of `date`, `type`, `tag`, `clientId`, `concepts`, `vat`, `surcharge`, or `deliveryNoteRef` must be provided.
 
-When `concepts` are updated, totals are automatically recalculated using amount × quantity.
-When `vat` or `surcharge` are updated, net amount, VAT amount, and surcharge amount are recalculated based on total.
+When `concepts` are updated, the VAT-inclusive base is recalculated from amount × quantity.
+When `vat` or `surcharge` are updated, `netAmount`, `vatAmount`, `surchargeAmount`, and `total` are recalculated using the formulas above.
 
 **Response:** Success status with updated payment values (`total`, `vatAmount`, `surchargeAmount`, `netAmount`, `vat`, `surcharge`)
 

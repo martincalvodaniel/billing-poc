@@ -80,6 +80,13 @@ describe("buildPaymentUpdateOps — surcharge removal", () => {
     expect(ops.$unset?.surcharge).toBeUndefined()
   })
 
+  test("negative surcharge goes to $set and not $unset", () => {
+    const ops = buildPaymentUpdateOps({ surcharge: -15 })
+
+    expect(ops.$set?.surcharge).toBe(-15)
+    expect(ops.$unset?.surcharge).toBeUndefined()
+  })
+
   test("omitted surcharge touches neither $set nor $unset", () => {
     const ops = buildPaymentUpdateOps({ vat: 21 })
 
@@ -100,6 +107,13 @@ describe("buildPaymentUpdateOps — surchargeAmount removal", () => {
     const ops = buildPaymentUpdateOps({ surchargeAmount: 2.5 })
 
     expect(ops.$set?.surchargeAmount).toBe(2.5)
+    expect(ops.$unset?.surchargeAmount).toBeUndefined()
+  })
+
+  test("negative surchargeAmount is $set", () => {
+    const ops = buildPaymentUpdateOps({ surchargeAmount: -15 })
+
+    expect(ops.$set?.surchargeAmount).toBe(-15)
     expect(ops.$unset?.surchargeAmount).toBeUndefined()
   })
 

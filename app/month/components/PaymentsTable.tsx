@@ -224,7 +224,7 @@ export default function PaymentsTable({
   onTagFilterToggle: (tag: string) => void
 }) {
   const hasSurcharge = filteredPayments.some(
-    (p) => p.surcharge && p.surcharge > 0
+    (p) => typeof p.surcharge === "number" && p.surcharge !== 0
   )
 
   return (
@@ -274,6 +274,13 @@ export default function PaymentsTable({
                   align="right"
                 />
                 <SortableHeader
+                  label="Net"
+                  sortKey="net"
+                  sort={sort}
+                  onSortChange={onSortChange}
+                  align="right"
+                />
+                <SortableHeader
                   label="VAT"
                   sortKey="vat"
                   sort={sort}
@@ -289,13 +296,6 @@ export default function PaymentsTable({
                     align="right"
                   />
                 )}
-                <SortableHeader
-                  label="Net"
-                  sortKey="net"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="right"
-                />
                 <th />
               </tr>
             </thead>
@@ -420,12 +420,16 @@ export default function PaymentsTable({
                     <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.total)}
                     </td>
+                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
+                      {formatCurrency(payment.netAmount)}
+                    </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                       ({payment.vat}%) {formatCurrency(payment.vatAmount)}
                     </td>
                     {hasSurcharge && (
                       <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                        {payment.surcharge && payment.surcharge > 0 ? (
+                        {typeof payment.surcharge === "number" &&
+                        payment.surcharge !== 0 ? (
                           <span>
                             ({payment.surcharge}%){" "}
                             {formatCurrency(payment.surchargeAmount || 0)}
@@ -437,9 +441,6 @@ export default function PaymentsTable({
                         )}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.netAmount)}
-                    </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center justify-end gap-1">
                         <IconButton

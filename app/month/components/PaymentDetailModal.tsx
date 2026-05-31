@@ -205,7 +205,7 @@ export default function PaymentDetailModal({
         vat: responseData.vat ?? vatNumber,
         surcharge:
           responseData.surcharge ??
-          (surchargeNumber > 0 ? surchargeNumber : undefined),
+          (surchargeNumber !== 0 ? surchargeNumber : undefined),
         discount:
           responseData.discount ??
           (discountNumber > 0 ? discountNumber : undefined),
@@ -214,7 +214,7 @@ export default function PaymentDetailModal({
         vatAmount: responseData.vatAmount ?? parseFloat(calculateVatAmount()),
         surchargeAmount:
           responseData.surchargeAmount ??
-          (surchargeNumber > 0
+          (surchargeNumber !== 0
             ? parseFloat(calculateSurchargeAmount())
             : undefined),
         netAmount: responseData.netAmount ?? parseFloat(calculateNetAmount()),

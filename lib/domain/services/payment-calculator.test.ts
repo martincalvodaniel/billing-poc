@@ -43,9 +43,9 @@ describe("calculateVatAmount", () => {
     expect(calculateVatAmount(121, 21)).toBe(21)
   })
 
-  it("handles surcharge in denominator", () => {
-    const result = calculateVatAmount(126.2, 21, 5.2)
-    expect(result).toBeCloseTo(21, 0)
+  it("ignores surcharge for VAT extraction from the VAT-inclusive base", () => {
+    const result = calculateVatAmount(121, 21, 5.2)
+    expect(result).toBe(21)
   })
 })
 
@@ -55,7 +55,7 @@ describe("calculateSurchargeAmount", () => {
   })
 
   it("calculates surcharge correctly", () => {
-    const result = calculateSurchargeAmount(126.2, 21, 5.2)
+    const result = calculateSurchargeAmount(121, 21, 5.2)
     expect(result).toBeCloseTo(5.2, 0)
   })
 })
@@ -67,6 +67,10 @@ describe("calculateNetAmount", () => {
 
   it("extracts net from total with 21% VAT", () => {
     expect(calculateNetAmount(121, 21)).toBe(100)
+  })
+
+  it("ignores surcharge when calculating net amount", () => {
+    expect(calculateNetAmount(121, 21, 5.2)).toBe(100)
   })
 
   it("returns a number not a string", () => {
@@ -88,13 +92,28 @@ describe("computePaymentFinancials", () => {
 
   it("includes surchargeAmount when surcharge > 0", () => {
     const result = computePaymentFinancials(
-      [{ name: "Service", amount: 126.2, quantity: 1 }],
+      [{ name: "Service", amount: 121, quantity: 1 }],
       21,
       5.2
     )
     expect(result.total).toBe(126.2)
     expect(result.surchargeAmount).toBeDefined()
     expect(result.surchargeAmount).toBeCloseTo(5.2, 0)
+    expect(result.netAmount + result.vatAmount + (result.surchargeAmount ?? 0)).toBe(
+      result.total
+    )
+  })
+
+  it("includes negative surchargeAmount and reduces total", () => {
+    const result = computePaymentFinancials(
+      [{ name: "Service", amount: 121, quantity: 1 }],
+      21,
+      -15
+    )
+    expect(result.netAmount).toBe(100)
+    expect(result.vatAmount).toBe(21)
+    expect(result.surchargeAmount).toBe(-15)
+    expect(result.total).toBe(106)
   })
 })
 
@@ -141,10 +160,10 @@ describe("discount scenarios", () => {
       5.2,
       26.2
     )
-    expect(result.total).toBe(100)
-    expect(result.netAmount).toBeCloseTo(79.24, 2)
-    expect(result.vatAmount).toBeCloseTo(16.64, 2)
-    expect(result.surchargeAmount).toBeCloseTo(4.12, 2)
+    expect(result.total).toBe(104.3)
+    expect(result.netAmount).toBeCloseTo(82.64, 2)
+    expect(result.vatAmount).toBeCloseTo(17.36, 2)
+    expect(result.surchargeAmount).toBeCloseTo(4.3, 2)
   })
 
   it("regression: 40 discount applied then cleared restores baseline (no oscillation)", () => {
