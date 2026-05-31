@@ -30,7 +30,8 @@ const ROW_HEIGHT = 14
 const LOGO_BOX = 70
 const LOGO_CLEARANCE = 20
 
-const SAGE_GREEN = rgb(0xa9 / 255, 0xb7 / 255, 0x86 / 255)
+const HEADER_BG = rgb(0xe4 / 255, 0xeb / 255, 0xd4 / 255)
+const TOTAL_BG = rgb(0x74 / 255, 0x8f / 255, 0x4a / 255)
 const SAGE_TEXT = rgb(0x6b / 255, 0x7a / 255, 0x4e / 255)
 const BLACK = rgb(0, 0, 0)
 const WHITE = rgb(1, 1, 1)
@@ -145,21 +146,29 @@ function drawSageBand(
   y: number,
   width: number,
   label: string,
-  options: { rightLabel?: string; rightWidth?: number } = {}
+  options: {
+    rightLabel?: string
+    rightWidth?: number
+    backgroundColor?: ReturnType<typeof rgb>
+    textColor?: ReturnType<typeof rgb>
+  } = {}
 ): void {
+  const backgroundColor = options.backgroundColor ?? HEADER_BG
+  const textColor = options.textColor ?? SAGE_TEXT
+
   page.drawRectangle({
     x,
     y: y - BAND_HEIGHT,
     width,
     height: BAND_HEIGHT,
-    color: SAGE_GREEN,
+    color: backgroundColor,
   })
   page.drawText(label, {
     x: x + 6,
     y: y - BAND_HEIGHT + 5,
     size: 9,
     font: fonts.bold,
-    color: SAGE_TEXT,
+    color: textColor,
   })
   if (options.rightLabel && options.rightWidth) {
     const split = x + width - options.rightWidth
@@ -174,7 +183,7 @@ function drawSageBand(
       y: y - BAND_HEIGHT + 5,
       size: 9,
       font: fonts.bold,
-      color: SAGE_TEXT,
+      color: textColor,
     })
   }
 }
@@ -194,31 +203,6 @@ function drawRow(
     font: fonts.font,
     color: BLACK,
     maxWidth: width - 12,
-  })
-}
-
-function drawPill(
-  page: PDFPage,
-  fonts: Fonts,
-  x: number,
-  y: number,
-  width: number,
-  text: string
-): void {
-  const h = ROW_HEIGHT - 2
-  page.drawRectangle({
-    x,
-    y: y - h,
-    width,
-    height: h,
-    color: SAGE_GREEN,
-  })
-  page.drawText(text, {
-    x: x + 8,
-    y: y - h + 4,
-    size: 9,
-    font: fonts.bold,
-    color: WHITE,
   })
 }
 
@@ -327,15 +311,23 @@ export async function generateInvoicePdf(
     })
     rightY -= BAND_HEIGHT
     drawRow(page, fonts, RIGHT_X, rightY, rightHalf, formattedNumber)
-    drawPill(
-      page,
-      fonts,
-      RIGHT_X + rightHalf + 6,
-      rightY - 1,
-      rightHalf - 12,
-      formattedDate
-    )
+    drawRow(page, fonts, RIGHT_X + rightHalf, rightY, rightHalf, formattedDate)
     rightY -= ROW_HEIGHT + 4
+
+    // RIGHT: MÉTODO DE PAGO (all invoice types, plain value)
+    if (payment.paymentMethod) {
+      drawSageBand(page, fonts, RIGHT_X, rightY, COL_WIDTH, "MÉTODO DE PAGO:")
+      rightY -= BAND_HEIGHT
+      drawRow(
+        page,
+        fonts,
+        RIGHT_X,
+        rightY,
+        COL_WIDTH,
+        paymentMethodLabelES(payment.paymentMethod)
+      )
+      rightY -= ROW_HEIGHT + 4
+    }
 
     // RIGHT: DATOS CLIENTE
     drawSageBand(page, fonts, RIGHT_X, rightY, COL_WIDTH, "DATOS CLIENTE:")
@@ -357,22 +349,6 @@ export async function generateInvoicePdf(
       }
     }
 
-    // RIGHT (simple only): MÉTODO DE PAGO band
-    if (isSimpleSeries(series) && payment.paymentMethod) {
-      rightY -= 6
-      drawSageBand(page, fonts, RIGHT_X, rightY, COL_WIDTH, "MÉTODO DE PAGO:")
-      rightY -= BAND_HEIGHT
-      drawPill(
-        page,
-        fonts,
-        RIGHT_X + 6,
-        rightY - 1,
-        COL_WIDTH - 12,
-        paymentMethodLabelES(payment.paymentMethod)
-      )
-      rightY -= ROW_HEIGHT + 4
-    }
-
     // Items table
     let tableY = Math.min(leftY, rightY) - 24
     const colConcept = MARGIN
@@ -385,7 +361,7 @@ export async function generateInvoicePdf(
       y: tableY - BAND_HEIGHT,
       width: CONTENT_WIDTH,
       height: BAND_HEIGHT,
-      color: SAGE_GREEN,
+      color: HEADER_BG,
     })
     const headerY = tableY - BAND_HEIGHT + 5
     page.drawText("Concepto", {
@@ -486,37 +462,28 @@ export async function generateInvoicePdf(
     })
 
     for (const row of totalRows) {
-      drawSageBand(page, fonts, totalsX, totalsY, totalsLabelWidth, row.label)
+      const isTotalRow = row.bold === true
+      drawSageBand(page, fonts, totalsX, totalsY, totalsLabelWidth, row.label, {
+        backgroundColor: isTotalRow ? TOTAL_BG : HEADER_BG,
+        textColor: isTotalRow ? WHITE : SAGE_TEXT,
+      })
       page.drawRectangle({
         x: totalsX + totalsLabelWidth,
         y: totalsY - BAND_HEIGHT,
         width: totalsWidth - totalsLabelWidth,
         height: BAND_HEIGHT,
-        borderColor: SAGE_GREEN,
-        borderWidth: 0.5,
+        ...(isTotalRow
+          ? { color: TOTAL_BG }
+          : { borderColor: HEADER_BG, borderWidth: 0.5 }),
       })
       page.drawText(row.value, {
         x: totalsX + totalsLabelWidth + 8,
         y: totalsY - BAND_HEIGHT + 5,
         size: row.bold ? 10 : 9,
         font: row.bold ? bold : font,
-        color: BLACK,
+        color: isTotalRow ? WHITE : BLACK,
       })
       totalsY -= BAND_HEIGHT + 2
-    }
-
-    // Footer (regular invoices only)
-    if (!isSimpleSeries(series)) {
-      const footerText = paymentMethodLabelES(payment.paymentMethod)
-      if (footerText) {
-        page.drawText(footerText, {
-          x: MARGIN,
-          y: MARGIN,
-          size: 10,
-          font: bold,
-          color: SAGE_TEXT,
-        })
-      }
     }
 
     const pdfBytes = await pdf.save()
