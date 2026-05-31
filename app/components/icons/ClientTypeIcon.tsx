@@ -1,4 +1,4 @@
-import type { ClientType } from "@/lib/types"
+import type { ClientType } from "@/lib/domain/entities/client"
 
 interface ClientTypeIconProps {
   type: ClientType

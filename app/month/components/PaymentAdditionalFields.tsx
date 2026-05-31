@@ -2,11 +2,11 @@
 
 import { useId } from "react"
 import ClientSelector from "@/app/components/ClientSelector"
+import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
 } from "@/lib/domain/entities/payment"
-import type { PaymentFormData } from "@/lib/types"
 
 interface PaymentAdditionalFieldsProps {
   formData: PaymentFormData

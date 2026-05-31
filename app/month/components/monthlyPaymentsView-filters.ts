@@ -1,4 +1,4 @@
-import type { Payment } from "@/lib/types"
+import type { Payment } from "@/lib/domain/entities/payment"
 
 export type PaymentSortKey =
   | "day"

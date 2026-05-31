@@ -1,8 +1,8 @@
 "use client"
 
 import { Modal } from "@/app/components/Modal"
+import type { Client, ClientFormData } from "@/lib/domain/entities/client"
 import { useUpdateClient } from "@/lib/hooks/useClientMutations"
-import type { Client, ClientFormData } from "@/lib/types"
 import ClientForm from "./ClientForm"
 import { extractClientApiError } from "./clientList-utils"
 
@@ -24,7 +24,7 @@ export default function ClientFormModal({
   const handleSubmit = async (data: ClientFormData) => {
     if (!client?._id) return
     try {
-      await updateClient({ id: client._id.toString(), ...data })
+      await updateClient({ id: client._id, ...data })
     } catch (err) {
       throw new Error(extractClientApiError(err, "Failed to update client"))
     }

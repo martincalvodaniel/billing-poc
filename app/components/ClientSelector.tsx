@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
+import type { Client } from "@/lib/domain/entities/client"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { useClients } from "@/lib/hooks/useClients"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
-import type { Client } from "@/lib/types"
 
 interface ClientSelectorProps {
   value?: string // Client ID
@@ -56,9 +56,9 @@ export default function ClientSelector({
   const selectedClient = useMemo<Client | null>(() => {
     if (!value) return null
     if (manuallySelectedId === value) {
-      return clients.find((c) => c._id?.toString() === value) ?? null
+      return clients.find((c) => c._id === value) ?? null
     }
-    return clients.find((c) => c._id?.toString() === value) ?? null
+    return clients.find((c) => c._id === value) ?? null
   }, [value, clients, manuallySelectedId])
 
   // Sync the search input with the resolved selected client's name.
@@ -91,7 +91,7 @@ export default function ClientSelector({
   }
 
   const handleClientSelect = (client: Client) => {
-    const clientId = client._id?.toString()
+    const clientId = client._id
     setManuallySelectedId(clientId ?? null)
     resolvedNameRef.current = clientId ?? null
     setSearchQuery(client.name)
@@ -188,7 +188,7 @@ export default function ClientSelector({
           ) : clients.length > 0 ? (
             <ul className="max-h-60 overflow-y-auto py-1">
               {clients.map((client) => (
-                <li key={client._id?.toString()}>
+                <li key={client._id}>
                   <button
                     type="button"
                     onClick={() => handleClientSelect(client)}

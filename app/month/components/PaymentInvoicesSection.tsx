@@ -3,6 +3,7 @@
 import { useId, useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import type { InvoiceType, Payment } from "@/lib/domain/entities/payment"
 import {
   getPaymentInvoices,
   type InvoiceMetadata,
@@ -17,7 +18,6 @@ import {
 } from "@/lib/hooks/useInvoiceMutations"
 import { useRemoveLinkInvoice } from "@/lib/hooks/useRemoveLinkInvoice"
 import { FetchError } from "@/lib/swr-fetcher"
-import type { InvoiceType, Payment } from "@/lib/types"
 import {
   type InvoiceButtonAction,
   invoiceButtonState,
@@ -54,7 +54,7 @@ export default function PaymentInvoicesSection({
 }: PaymentInvoicesSectionProps) {
   const linkUrlId = useId()
   const linkTypeId = useId()
-  const paymentId = payment._id?.toString() ?? ""
+  const paymentId = payment._id ?? ""
   const isIncome = payment.type === "income"
   const invoices = getPaymentInvoices(payment)
 

@@ -1,4 +1,7 @@
-import type { PaymentConcept, PaymentFormData } from "../../lib/types"
+import type {
+  PaymentConcept,
+  PaymentFormData,
+} from "../../lib/domain/entities/payment"
 
 export const INCOME_NAMES = [
   "Client Invoice",

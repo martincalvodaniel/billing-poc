@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test"
 import type { ObjectId } from "mongodb"
-import type { InvoiceMetadata, Payment, PaymentType } from "@/lib/types"
+import type {
+  InvoiceMetadata,
+  Payment,
+  PaymentType,
+} from "@/lib/domain/entities/payment"
 import {
   derivePaymentTagOptions,
   filterPayments,
@@ -30,7 +34,7 @@ function makePayment(overrides: Partial<Payment> & { id: string }): Payment {
     ...rest
   } = overrides
   return {
-    _id: id as unknown as ObjectId,
+    _id: id,
     type,
     date,
     tag,

@@ -4,8 +4,8 @@ import { useCallback, useState } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import Toast from "@/app/components/Toast"
+import type { Client } from "@/lib/domain/entities/client"
 import { useDeleteClient } from "@/lib/hooks/useClientMutations"
-import type { Client } from "@/lib/types"
 import ClientFormModal from "./ClientFormModal"
 import ClientTableRow from "./ClientTableRow"
 import { extractClientApiError } from "./clientList-utils"
@@ -53,12 +53,8 @@ export default function ClientList({ clients }: ClientListProps) {
     setTimeout(() => setCopyToast(null), 2000)
   }, [])
 
-  const editingClient = clients.find(
-    (c) => c._id?.toString() === editingClientId
-  )
-  const deletingClient = clients.find(
-    (c) => c._id?.toString() === deletingClientId
-  )
+  const editingClient = clients.find((c) => c._id === editingClientId)
+  const deletingClient = clients.find((c) => c._id === deletingClientId)
 
   return (
     <>
@@ -110,7 +106,7 @@ export default function ClientList({ clients }: ClientListProps) {
               <tbody>
                 {clients.map((client, index) => (
                   <ClientTableRow
-                    key={client._id?.toString()}
+                    key={client._id}
                     client={client}
                     index={index}
                     onEdit={handleEdit}

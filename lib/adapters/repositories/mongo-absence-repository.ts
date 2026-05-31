@@ -1,12 +1,16 @@
-import { ObjectId } from "mongodb"
 import type { Absence, AbsenceSummaryRow } from "../../domain/entities/absence"
 import type {
   AbsenceFilter,
   AbsenceRepository,
 } from "../../domain/ports/absence-repository"
 import { getDatabase } from "../../mongodb"
-import type { Absence as MongoAbsence } from "../../types"
-import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
+import type { MongoAbsence } from "../../types"
+import {
+  isValidObjectId,
+  MongoUpdateBuilder,
+  omitNullish,
+  toObjectId,
+} from "./mongo-utils"
 
 export class DuplicateAbsenceError extends Error {
   readonly code = "duplicate_part_of_day" as const
@@ -15,14 +19,6 @@ export class DuplicateAbsenceError extends Error {
     super(message)
     this.name = "DuplicateAbsenceError"
   }
-}
-
-function toObjectId(id: string): ObjectId {
-  return new ObjectId(id)
-}
-
-function isValidObjectId(id: string): boolean {
-  return ObjectId.isValid(id)
 }
 
 function escapeRegex(s: string): string {
@@ -123,6 +119,7 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async update(id: string, data: Partial<Absence>): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
@@ -151,6 +148,7 @@ export class MongoAbsenceRepository implements AbsenceRepository {
   }
 
   async delete(id: string): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0

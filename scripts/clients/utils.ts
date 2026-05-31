@@ -1,4 +1,4 @@
-import type { ClientFormData } from "../../lib/types"
+import type { ClientFormData } from "../../lib/domain/entities/client"
 
 const INDIVIDUAL_FIRST_NAMES = [
   "Juan",

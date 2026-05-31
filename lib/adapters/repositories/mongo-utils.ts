@@ -11,6 +11,22 @@
  * absent fields.
  */
 
+import { ObjectId } from "mongodb"
+
+/**
+ * Single, validated `string` → `ObjectId` coercion for every repository.
+ * Callers must guard untrusted ids with `isValidObjectId` first (returning a
+ * clean `null`/`false`) so a malformed id never reaches `new ObjectId(id)`
+ * and throws a `BSONError` instead of failing gracefully.
+ */
+export function isValidObjectId(id: string): boolean {
+  return ObjectId.isValid(id)
+}
+
+export function toObjectId(id: string): ObjectId {
+  return new ObjectId(id)
+}
+
 export function omitNullish<T extends Record<string, unknown>>(
   obj: T
 ): Partial<T> {

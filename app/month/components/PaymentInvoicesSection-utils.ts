@@ -1,4 +1,7 @@
-import type { InvoiceMetadata, InvoiceType } from "@/lib/types"
+import type {
+  InvoiceMetadata,
+  InvoiceType,
+} from "@/lib/domain/entities/payment"
 
 export interface InvoiceButtonAction {
   label: string

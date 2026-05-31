@@ -1,12 +1,12 @@
 import type { InvoiceSeries } from "../../domain/entities/payment"
 import type { InvoiceCounterRepository } from "../../domain/ports/invoice-counter-repository"
 import { getDatabase } from "../../mongodb"
-import type { InvoiceCounter } from "../../types"
+import type { MongoInvoiceCounter } from "../../types"
 
 export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
   private async collection() {
     const db = await getDatabase()
-    return db.collection<InvoiceCounter>("invoiceCounters")
+    return db.collection<MongoInvoiceCounter>("invoiceCounters")
   }
 
   async getNextNumber(series: InvoiceSeries, year: number): Promise<number> {
@@ -34,5 +34,36 @@ export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
     const col = await this.collection()
     const counter = await col.findOne({ series, year })
     return counter?.lastNumber || 0
+  }
+
+  /**
+   * Initialize all invoice series for a given year with a starting number
+   * (for setup/testing). Idempotent: existing counters are left untouched.
+   */
+  async initialize(year: number, startNumber = 0): Promise<void> {
+    const col = await this.collection()
+    const series: InvoiceSeries[] = [
+      "Invoice",
+      "RectificativeInvoice",
+      "SimpleInvoice",
+      "RectificativeSimpleInvoice",
+    ]
+
+    const operations = series.map((s) => ({
+      updateOne: {
+        filter: { series: s, year },
+        update: {
+          $setOnInsert: {
+            series: s,
+            year,
+            lastNumber: startNumber,
+            updatedAt: new Date(),
+          },
+        },
+        upsert: true,
+      },
+    }))
+
+    await col.bulkWrite(operations)
   }
 }

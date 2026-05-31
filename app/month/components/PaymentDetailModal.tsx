@@ -8,13 +8,13 @@ import { IconButton } from "@/app/components/IconButton"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { Modal } from "@/app/components/Modal"
 import { formatEventDateTime } from "@/app/events/components/eventsUi"
+import type { Payment, PaymentFormData } from "@/lib/domain/entities/payment"
 import { useEventByPayment } from "@/lib/hooks/useEventByPayment"
 import {
   useCreatePayment,
   useDeletePayment,
   useUpdatePayment,
 } from "@/lib/hooks/usePaymentMutations"
-import type { Payment, PaymentFormData } from "@/lib/types"
 import PaymentFormFields from "./PaymentFormFields"
 import PaymentInvoicesSection from "./PaymentInvoicesSection"
 import { buildDuplicateSeed } from "./paymentDetailModal-seed"
@@ -46,7 +46,7 @@ export default function PaymentDetailModal({
 }: PaymentDetailModalProps) {
   const router = useRouter()
   const isDuplicate = mode === "duplicate"
-  const paymentId = payment._id?.toString() ?? null
+  const paymentId = payment._id ?? null
   const { event: linkedEvent } = useEventByPayment(paymentId)
   const initialFormData: PaymentFormData = isDuplicate
     ? buildDuplicateSeed(payment)
@@ -58,7 +58,7 @@ export default function PaymentDetailModal({
         surcharge: payment.surcharge?.toString() || "",
         discount: payment.discount?.toString() || "",
         tag: payment.tag || "",
-        clientId: payment.clientId?.toString() || undefined,
+        clientId: payment.clientId || undefined,
         deliveryNoteRef: payment.deliveryNoteRef || "",
         paymentMethod: payment.paymentMethod ?? "",
       }
@@ -111,7 +111,7 @@ export default function PaymentDetailModal({
     }
 
     try {
-      const id = payment._id.toString()
+      const id = payment._id
       await deletePayment({ id })
       setShowDeleteConfirm(false)
       setDeleteError(null)
@@ -183,7 +183,7 @@ export default function PaymentDetailModal({
 
     try {
       const responseData = await updatePayment({
-        id: payment._id?.toString() ?? "",
+        id: payment._id ?? "",
         date: formData.date,
         type: formData.type,
         tag: formData.tag || undefined,

@@ -4,8 +4,8 @@ import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { IconButton } from "@/app/components/IconButton"
 import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
-import type { Payment } from "@/lib/types"
 import {
   type PaymentInvoiceFilter,
   type PaymentSortKey,
@@ -305,8 +305,8 @@ export default function PaymentsTable({
                 const hasReceipt = paymentHasInvoiceKind(payment, "receipt")
                 return (
                   <tr
-                    key={payment._id?.toString()}
-                    onClick={() => onRowClick(payment._id?.toString() || "")}
+                    key={payment._id}
+                    onClick={() => onRowClick(payment._id || "")}
                     className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
                   >
                     <td className="px-3 py-4 text-zinc-900 dark:text-zinc-100">
@@ -446,7 +446,7 @@ export default function PaymentsTable({
                           variant="info"
                           stopPropagation
                           onClick={(e) =>
-                            onDuplicateClick(e, payment._id?.toString() || "")
+                            onDuplicateClick(e, payment._id || "")
                           }
                           ariaLabel="Duplicate payment"
                         >
@@ -455,9 +455,7 @@ export default function PaymentsTable({
                         <IconButton
                           variant="danger"
                           stopPropagation
-                          onClick={(e) =>
-                            onDeleteClick(e, payment._id?.toString() || "")
-                          }
+                          onClick={(e) => onDeleteClick(e, payment._id || "")}
                           ariaLabel="Delete payment"
                         >
                           <TrashIcon />

@@ -1,7 +1,7 @@
 "use client"
 
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
-import type { Client } from "@/lib/types"
+import type { Client } from "@/lib/domain/entities/client"
 
 interface DeleteClientModalProps {
   client: Client | undefined

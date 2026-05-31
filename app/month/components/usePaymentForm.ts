@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
+import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import { useTags } from "@/lib/hooks/useTags"
-import type { PaymentFormData } from "@/lib/types"
 import {
   calculateNetAmount,
   calculateSurchargeAmount,

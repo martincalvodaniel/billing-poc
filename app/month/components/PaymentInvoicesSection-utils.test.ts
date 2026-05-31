@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import type { InvoiceMetadata, InvoiceType } from "@/lib/types"
+import type {
+  InvoiceMetadata,
+  InvoiceType,
+} from "@/lib/domain/entities/payment"
 import { invoiceButtonState, typeLabel } from "./PaymentInvoicesSection-utils"
 
 function invoice(type: InvoiceType): InvoiceMetadata {

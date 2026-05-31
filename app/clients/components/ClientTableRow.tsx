@@ -3,7 +3,7 @@
 import { IconButton } from "@/app/components/IconButton"
 import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
-import type { Client } from "@/lib/types"
+import type { Client } from "@/lib/domain/entities/client"
 import { copyToClipboard } from "./clientTable-utils"
 
 interface ClientTableRowProps {
@@ -21,7 +21,7 @@ export default function ClientTableRow({
   onDelete,
   onCopy,
 }: ClientTableRowProps) {
-  const clientId = client._id?.toString() ?? ""
+  const clientId = client._id ?? ""
   const stripe =
     index % 2 === 0
       ? "bg-white dark:bg-zinc-900"

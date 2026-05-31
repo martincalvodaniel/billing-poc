@@ -1,6 +1,6 @@
 import useSWR, { type KeyedMutator } from "swr"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { fetcher } from "@/lib/swr-fetcher"
-import type { Payment } from "@/lib/types"
 
 export interface UsePaymentsArgs {
   year: number

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
-import type { Client, ClientFormData } from "@/lib/types"
+import type { Client, ClientFormData } from "@/lib/domain/entities/client"
 
 interface ClientFormProps {
   client?: Client

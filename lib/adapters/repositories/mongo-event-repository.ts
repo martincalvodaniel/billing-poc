@@ -4,7 +4,7 @@ import type {
   EventRepository,
 } from "../../domain/ports/event-repository"
 import { getDatabase } from "../../mongodb"
-import type { Event as MongoEvent } from "../../types"
+import type { MongoEvent } from "../../types"
 import {
   attendeeToMongo,
   buildEventListQuery,

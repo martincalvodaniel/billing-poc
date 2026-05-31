@@ -35,7 +35,9 @@ middleware.ts            → Route protection: redirects unauthenticated users t
 
 ## Universal Rules
 - TypeScript strict mode everywhere; no `any` without `unknown` guard
-- Domain entities in `lib/domain/entities/`; MongoDB types in `lib/types.ts`
+- Domain entities in `lib/domain/entities/`; Mongo persistence shapes
+  (`Mongo*`, derived from the entities via `Omit`) live in `lib/types.ts`
+  and are imported only by repository adapters in `lib/adapters/repositories/`
 - Shared formatting via `lib/formatters.ts`; shared colors via `lib/constants.ts`
 - Tailwind CSS only for styling — no CSS modules, no external UI kits
 - All pages must use the `PageLayout` component (`app/components/PageLayout.tsx`)

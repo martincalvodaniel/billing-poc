@@ -3,9 +3,9 @@
 import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
 import { usePayments } from "@/lib/hooks/usePayments"
-import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
 import {
   filterPayments,
@@ -134,7 +134,7 @@ export default function MonthlyPaymentsView({
     if (!target) return
     if (consumedPaymentRef.current === target) return
     if (isLoading) return
-    if (payments.some((p) => p._id?.toString() === target)) {
+    if (payments.some((p) => p._id === target)) {
       setEditPaymentId(target)
     }
     consumedPaymentRef.current = target
@@ -158,7 +158,7 @@ export default function MonthlyPaymentsView({
 
   const handleDuplicateClick = (e: React.MouseEvent, paymentId: string) => {
     e.stopPropagation()
-    const source = payments.find((p) => p._id?.toString() === paymentId)
+    const source = payments.find((p) => p._id === paymentId)
     if (source) setDuplicateSeed(source)
   }
 
@@ -335,9 +335,7 @@ export default function MonthlyPaymentsView({
 
       {deleteConfirmPaymentId && (
         <DeletePaymentModal
-          payment={payments.find(
-            (p) => p._id?.toString() === deleteConfirmPaymentId
-          )}
+          payment={payments.find((p) => p._id === deleteConfirmPaymentId)}
           isDeleting={isDeleting}
           onClose={() => setDeleteConfirmPaymentId(null)}
           onConfirm={handleConfirmDelete}
@@ -346,9 +344,7 @@ export default function MonthlyPaymentsView({
 
       {editPaymentId &&
         (() => {
-          const selectedPayment = payments.find(
-            (p) => p._id?.toString() === editPaymentId
-          )
+          const selectedPayment = payments.find((p) => p._id === editPaymentId)
           if (!selectedPayment) return null
           return (
             <PaymentDetailModal

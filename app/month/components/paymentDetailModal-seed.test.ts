@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import type { Payment } from "@/lib/types"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { buildDuplicateSeed } from "./paymentDetailModal-seed"
 
 function makePayment(overrides: Partial<Payment> = {}): Payment {
