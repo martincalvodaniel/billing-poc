@@ -6,9 +6,12 @@ import {
   getBadgeToneClass,
 } from "@/app/components/badge-utils"
 import { IconButton } from "@/app/components/IconButton"
-import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
+import { BankTransferIcon } from "@/app/components/icons/BankTransferIcon"
+import { CardIcon } from "@/app/components/icons/CardIcon"
+import { CashIcon } from "@/app/components/icons/CashIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import type { EventAttendee } from "@/lib/domain/entities/event"
+import type { PaymentMethod } from "@/lib/domain/entities/payment"
 
 interface AttendeeRowProps {
   rowIdPrefix: string
@@ -23,7 +26,7 @@ interface AttendeeRowProps {
     nextSeats: string,
     revert: () => void
   ) => Promise<void>
-  onGenerate: (clientId: string) => void
+  onGenerate: (clientId: string, paymentMethod: PaymentMethod) => void
   onRemove: (clientId: string) => void
   onOpenPayment: (paymentId: string) => void
   onEditClient: (clientId: string) => void
@@ -146,14 +149,43 @@ export default function AttendeeRow({
           variant="success"
           isPending={isGenerating}
           disabled={hasPayment}
-          onClick={() => onGenerate(attendee.clientId)}
+          onClick={() => onGenerate(attendee.clientId, "cash")}
           ariaLabel={
             hasPayment
               ? `Payment already generated for ${name}`
-              : `Generate payment for ${name}`
+              : `Generate cash payment for ${name}`
           }
+          title="Generate cash payment"
         >
-          <GeneratePaymentsIcon />
+          <CashIcon />
+        </IconButton>
+        <IconButton
+          variant="info"
+          isPending={isGenerating}
+          disabled={hasPayment}
+          onClick={() => onGenerate(attendee.clientId, "card")}
+          ariaLabel={
+            hasPayment
+              ? `Payment already generated for ${name}`
+              : `Generate card payment for ${name}`
+          }
+          title="Generate card payment"
+        >
+          <CardIcon />
+        </IconButton>
+        <IconButton
+          variant="neutral"
+          isPending={isGenerating}
+          disabled={hasPayment}
+          onClick={() => onGenerate(attendee.clientId, "bank_transfer")}
+          ariaLabel={
+            hasPayment
+              ? `Payment already generated for ${name}`
+              : `Generate bank transfer payment for ${name}`
+          }
+          title="Generate bank transfer payment"
+        >
+          <BankTransferIcon />
         </IconButton>
         <IconButton
           variant="danger"

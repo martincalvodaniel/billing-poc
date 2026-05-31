@@ -2,13 +2,17 @@ import { type NextRequest, NextResponse } from "next/server"
 import { MongoEventRepository } from "@/lib/adapters/repositories/mongo-event-repository"
 import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
+import {
+  PAYMENT_METHODS,
+  type PaymentMethod,
+} from "@/lib/domain/entities/payment"
 import { generateAttendeePayment } from "@/lib/domain/services/event-payment-service"
 
 const events = new MongoEventRepository()
 const payments = new MongoPaymentRepository()
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; clientId: string }> }
 ) {
   try {
@@ -42,9 +46,28 @@ export async function POST(
       )
     }
 
+    let paymentMethod: PaymentMethod | undefined
+    const body = await request.json().catch(() => null)
+    if (body && typeof body === "object") {
+      const maybeMethod = (body as { paymentMethod?: unknown }).paymentMethod
+      if (maybeMethod !== undefined) {
+        if (
+          typeof maybeMethod !== "string" ||
+          !PAYMENT_METHODS.includes(maybeMethod as PaymentMethod)
+        ) {
+          return NextResponse.json(
+            { error: "Invalid payment method" },
+            { status: 400 }
+          )
+        }
+        paymentMethod = maybeMethod as PaymentMethod
+      }
+    }
+
     const paymentId = await generateAttendeePayment(event, attendee, {
       events,
       payments,
+      paymentMethod,
     })
 
     return NextResponse.json({ success: true, paymentId }, { status: 201 })

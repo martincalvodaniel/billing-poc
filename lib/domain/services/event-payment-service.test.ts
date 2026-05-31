@@ -347,4 +347,19 @@ describe("generateAttendeePayment", () => {
     expect(creates[0].data.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(creates[0].data.date).toBe(today)
   })
+
+  test("persists selected payment method when provided", async () => {
+    const { payments, events, creates } = makeFakeCreateRepo()
+    const event = makeEvent({ date: "2026-05-01" })
+    const attendee = makeAttendee({ paymentId: undefined })
+
+    await generateAttendeePayment(event, attendee, {
+      payments,
+      events,
+      paymentMethod: "bank_transfer",
+    })
+
+    expect(creates).toHaveLength(1)
+    expect(creates[0].data.paymentMethod).toBe("bank_transfer")
+  })
 })

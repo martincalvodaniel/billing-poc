@@ -14,8 +14,6 @@ interface DayEventsModalProps {
   onDelete: (event: Event) => void
   onSkipOccurrence?: (event: Event, dateKey: string) => void
   onAddEventForDay: (day: number) => void
-  onGenerateAllPayments: (event: Event) => void
-  pendingGenerateAllId?: string | null
 }
 
 export default function DayEventsModal({
@@ -26,8 +24,6 @@ export default function DayEventsModal({
   onDelete,
   onSkipOccurrence,
   onAddEventForDay,
-  onGenerateAllPayments,
-  pendingGenerateAllId,
 }: DayEventsModalProps) {
   const dateLabel = formatDate(dateKey)
   const handleAdd = () => {
@@ -58,8 +54,6 @@ export default function DayEventsModal({
         onDelete={onDelete}
         onSkipOccurrence={onSkipOccurrence}
         dateKey={dateKey}
-        onGenerateAllPayments={onGenerateAllPayments}
-        pendingGenerateAllId={pendingGenerateAllId ?? null}
       />
     </Modal>
   )

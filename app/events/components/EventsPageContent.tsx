@@ -11,7 +11,6 @@ import { formatMonthYear } from "@/lib/formatters"
 import {
   useCreateEvent,
   useDeleteEvent,
-  useGenerateEventPayments,
   useUpdateEvent,
 } from "@/lib/hooks/useEventMutations"
 import { useEvents } from "@/lib/hooks/useEvents"
@@ -49,9 +48,6 @@ export default function EventsPageContent() {
   const [formError, setFormError] = useState<string | null>(null)
   const [dayModalKey, setDayModalKey] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  const [pendingGenerateAllId, setPendingGenerateAllId] = useState<
-    string | null
-  >(null)
   const [prefillDay, setPrefillDay] = useState<number | null>(null)
   const [copySeed, setCopySeed] = useState<EventFormValues | null>(null)
   const [copyKey, setCopyKey] = useState(0)
@@ -64,7 +60,6 @@ export default function EventsPageContent() {
   const createMutation = useCreateEvent()
   const updateMutation = useUpdateEvent()
   const deleteMutation = useDeleteEvent()
-  const generateAll = useGenerateEventPayments()
 
   const currentMonthStart = useMemo(() => {
     const today = new Date()
@@ -198,21 +193,6 @@ export default function EventsPageContent() {
     }
   }
 
-  const handleGenerateAllPayments = async (event: Event) => {
-    if (!event._id) return
-    setPendingGenerateAllId(event._id)
-    try {
-      const result = await generateAll.trigger({ eventId: event._id })
-      setToast(
-        `${result.created.length} created, ${result.skipped.length} skipped`
-      )
-    } catch (error) {
-      setToast(extractEventErrorMessage(error, "Failed to generate payments"))
-    } finally {
-      setPendingGenerateAllId(null)
-    }
-  }
-
   const handleSkipOccurrence = async (event: Event, key: string) => {
     if (!event._id) return
     const next = Array.from(new Set([...(event.excludedDates ?? []), key]))
@@ -272,8 +252,6 @@ export default function EventsPageContent() {
           onEdit={openEdit}
           onDelete={handleDelete}
           onCopy={openCopy}
-          onGenerateAllPayments={handleGenerateAllPayments}
-          pendingGenerateAllId={pendingGenerateAllId}
         />
       </div>
 
@@ -320,8 +298,6 @@ export default function EventsPageContent() {
             setDayModalKey(null)
             openCreate(day)
           }}
-          onGenerateAllPayments={handleGenerateAllPayments}
-          pendingGenerateAllId={pendingGenerateAllId}
         />
       )}
     </PageLayout>

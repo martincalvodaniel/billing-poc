@@ -4,7 +4,6 @@ import { useMemo } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import { IconButton } from "@/app/components/IconButton"
 import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
-import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { XIcon } from "@/app/components/icons/XIcon"
 import type { Event } from "@/lib/domain/entities/event"
@@ -30,8 +29,6 @@ interface EventsListTableProps {
    */
   onSkipOccurrence?: (event: Event, dateKey: string) => void
   dateKey?: string
-  onGenerateAllPayments: (event: Event) => void
-  pendingGenerateAllId?: string | null
 }
 
 export default function EventsListTable({
@@ -41,8 +38,6 @@ export default function EventsListTable({
   onCopy,
   onSkipOccurrence,
   dateKey,
-  onGenerateAllPayments,
-  pendingGenerateAllId,
 }: EventsListTableProps) {
   const sorted = useMemo(
     () => events.slice().sort(compareEventsChronologicalAsc),
@@ -77,7 +72,6 @@ export default function EventsListTable({
             const monthlyOccurrences = activeMonthlyOccurrencesCount(event)
             const monthlyPrice = event.pricePerSeat * monthlyOccurrences
             const eventId = event._id ?? event.title
-            const generatingAll = pendingGenerateAllId === event._id
             const handleRowKeyDown = (
               e: React.KeyboardEvent<HTMLTableRowElement>
             ) => {
@@ -117,16 +111,6 @@ export default function EventsListTable({
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-2">
-                    <IconButton
-                      variant="success"
-                      stopPropagation
-                      isPending={generatingAll}
-                      disabled={event.attendees.length === 0}
-                      onClick={() => onGenerateAllPayments(event)}
-                      ariaLabel={`Generate payments for ${event.title}`}
-                    >
-                      <GeneratePaymentsIcon />
-                    </IconButton>
                     {onCopy && (
                       <IconButton
                         stopPropagation

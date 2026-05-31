@@ -2,6 +2,7 @@ import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import {
   getPaymentInvoices,
   type InvoiceType,
+  type PaymentMethod,
 } from "@/lib/domain/entities/payment"
 import type { EventRepository } from "@/lib/domain/ports/event-repository"
 import type { PaymentRepository } from "@/lib/domain/ports/payment-repository"
@@ -132,7 +133,11 @@ function buildPaymentLineParts(event: Event): {
 export async function generateAttendeePayment(
   event: Event,
   attendee: EventAttendee,
-  deps: { events: EventRepository; payments: PaymentRepository }
+  deps: {
+    events: EventRepository
+    payments: PaymentRepository
+    paymentMethod?: PaymentMethod
+  }
 ): Promise<string> {
   if (!event._id) {
     throw new Error("Event is missing an id; cannot generate payment")
@@ -160,6 +165,7 @@ export async function generateAttendeePayment(
         quantity: attendee.seats,
       },
     ],
+    paymentMethod: deps.paymentMethod,
     vat,
     netAmount,
     vatAmount,

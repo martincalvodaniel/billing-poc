@@ -2,6 +2,7 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
+import type { PaymentMethod } from "../domain/entities/payment"
 import { FetchError } from "../swr-fetcher"
 import { isEventsKey } from "./useEvents"
 import { isPaymentsKey } from "./usePayments"
@@ -66,6 +67,7 @@ export interface RemoveEventAttendeeInput {
 export interface GenerateEventPaymentInput {
   eventId: string
   clientId: string
+  paymentMethod?: PaymentMethod
 }
 
 export interface GenerateEventPaymentsInput {
@@ -173,10 +175,11 @@ export function buildRemoveAttendeeRequest(
 export function buildGenerateEventPaymentRequest(
   input: GenerateEventPaymentInput
 ): BuiltRequest {
-  const { eventId, clientId } = input
+  const { eventId, clientId, paymentMethod } = input
   return {
     url: `/api/events/${encodeURIComponent(eventId)}/attendees/${encodeURIComponent(clientId)}/payment`,
     method: "POST",
+    body: paymentMethod ? jsonBody({ paymentMethod }) : undefined,
   }
 }
 
