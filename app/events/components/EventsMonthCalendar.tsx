@@ -25,7 +25,15 @@ export default function EventsMonthCalendar({
   onDayClick,
   onEventClick,
 }: EventsMonthCalendarProps) {
-  const grouped = useMemo(() => groupEventsByDate(events), [events])
+  const grouped = useMemo(
+    () =>
+      groupEventsByDate(
+        events,
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1
+      ),
+    [events, selectedDate]
+  )
   const todayKey = useMemo(() => toDateKey(new Date()), [])
   const cells = useMemo(
     () => buildMonthCells(selectedDate, todayKey),

@@ -17,6 +17,7 @@ interface PartialDatePickerProps {
   value: PartialDateValue
   onChange: (next: PartialDateValue) => void
   disabled?: boolean
+  disableDay?: boolean
   ariaLabelPrefix?: string
 }
 
@@ -38,21 +39,22 @@ const MONTH_NAMES = [
 ]
 
 function formatYear(year?: number): string {
-  return typeof year === "number" ? String(year) : "—"
+  return typeof year === "number" ? String(year) : "YEAR"
 }
 
 function formatMonth(month?: number): string {
-  return typeof month === "number" ? MONTH_NAMES[month - 1] : "—"
+  return typeof month === "number" ? MONTH_NAMES[month - 1] : "MONTH"
 }
 
 function formatDay(day?: number): string {
-  return typeof day === "number" ? String(day) : "—"
+  return typeof day === "number" ? String(day) : "DAY"
 }
 
 export default function PartialDatePicker({
   value,
   onChange,
   disabled,
+  disableDay = false,
   ariaLabelPrefix = "Date",
 }: PartialDatePickerProps) {
   const [openSegment, setOpenSegment] = useState<Segment | null>(null)
@@ -87,15 +89,9 @@ export default function PartialDatePicker({
     }
   }
 
-  const handleClear = (segment: Segment) => {
+  const handleClearDay = () => {
     if (disabled) return
-    if (segment === "year") {
-      onChange(coerceValue({}))
-    } else if (segment === "month") {
-      onChange(coerceValue({ year: value.year }))
-    } else {
-      onChange(coerceValue({ year: value.year, month: value.month }))
-    }
+    onChange(coerceValue({ year: value.year, month: value.month }))
   }
 
   const handleSelectYear = (year: number) => {
@@ -120,15 +116,15 @@ export default function PartialDatePicker({
         : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
     } dark:focus:ring-offset-zinc-900`
 
-  const clearButtonClass =
-    "ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+  const dayClearButtonClass =
+    "absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
 
   const months = monthsValidFor(value.year)
   const days = daysValidFor(value.year, value.month)
 
   return (
     <div
-      className="relative inline-flex flex-wrap items-center gap-2"
+      className="relative inline-flex flex-wrap items-center gap-2 md:flex-nowrap"
       ref={containerRef}
     >
       {(["year", "month", "day"] as const).map((segment) => {
@@ -146,30 +142,33 @@ export default function PartialDatePicker({
               : typeof value.day === "number"
         const segmentDisabled =
           disabled ||
+          (segment === "day" && disableDay) ||
           (segment === "month" && typeof value.year !== "number") ||
           (segment === "day" && typeof value.month !== "number")
         return (
-          <div className="flex items-center" key={segment}>
+          <div className="relative flex items-center" key={segment}>
             <button
               type="button"
               onClick={() => toggleSegment(segment)}
               disabled={segmentDisabled}
               aria-label={`${ariaLabelPrefix} ${segment}`}
               aria-expanded={openSegment === segment}
-              className={segmentButtonClass(openSegment === segment)}
+              className={`${segmentButtonClass(openSegment === segment)} ${
+                segment === "day" && hasValue && !disableDay ? "pr-6" : ""
+              }`}
             >
-              <span className="mr-1 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                {segment}
-              </span>
               {display}
             </button>
-            {hasValue && (
+            {segment === "day" && hasValue && !disableDay && (
               <button
                 type="button"
-                onClick={() => handleClear(segment)}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleClearDay()
+                }}
                 disabled={disabled}
                 aria-label={`Clear ${ariaLabelPrefix} ${segment}`}
-                className={clearButtonClass}
+                className={dayClearButtonClass}
               >
                 <span aria-hidden="true">×</span>
               </button>

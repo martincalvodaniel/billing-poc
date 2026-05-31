@@ -197,11 +197,11 @@ describe("recomputeAttendeePayment", () => {
       total: 100,
     })
     expect(updates[0].data.concepts).toEqual([
-      { name: "Workshop", amount: 50, quantity: 2 },
+      { name: "Workshop (Mayo)", amount: 50, quantity: 2 },
     ])
   })
 
-  test("'updated' falls back to event title when concept name absent", async () => {
+  test("'updated' falls back to event title with month when concept name absent", async () => {
     const payment = makePayment({ concepts: [] })
     const { repo, updates } = makeFakeRepo(payment)
     await recomputeAttendeePayment(
@@ -210,10 +210,10 @@ describe("recomputeAttendeePayment", () => {
       1,
       { payments: repo }
     )
-    expect(updates[0].data.concepts?.[0].name).toBe("Yoga class")
+    expect(updates[0].data.concepts?.[0].name).toBe("Yoga class (Mayo)")
   })
 
-  test("'updated' uses '(no date)' suffix when event has no date", async () => {
+  test("'updated' keeps title unchanged when event has no date", async () => {
     const payment = makePayment({ concepts: [] })
     const { repo, updates } = makeFakeRepo(payment)
     await recomputeAttendeePayment(
@@ -228,7 +228,27 @@ describe("recomputeAttendeePayment", () => {
       1,
       { payments: repo }
     )
-    expect(updates[0].data.concepts?.[0].name).toBe("Workshop (no date)")
+    expect(updates[0].data.concepts?.[0].name).toBe("Workshop")
+  })
+
+  test("'updated' includes recurrent weekday in generated concept name", async () => {
+    const payment = makePayment({ concepts: [] })
+    const { repo, updates } = makeFakeRepo(payment)
+    await recomputeAttendeePayment(
+      makeEvent({
+        date: undefined,
+        day: undefined,
+        dayOfWeek: 2,
+        hour: 10,
+        minute: 0,
+      }),
+      makeAttendee({ paymentId: "pay1" }),
+      1,
+      { payments: repo }
+    )
+    expect(updates[0].data.concepts?.[0].name).toBe(
+      "Workshop (Mayo Martes 10:00)"
+    )
   })
 })
 

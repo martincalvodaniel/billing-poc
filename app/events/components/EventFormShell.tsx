@@ -70,8 +70,22 @@ export default function EventFormShell({
 
   const handleChange =
     (field: keyof EventFormValues) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setValues((prev) => ({ ...prev, [field]: e.target.value }))
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >
+    ) =>
+      setValues((prev) => {
+        const nextValue = e.target.value
+        if (field === "dayOfWeek") {
+          return {
+            ...prev,
+            dayOfWeek: nextValue,
+            day: nextValue.length > 0 ? "" : prev.day,
+          }
+        }
+        return { ...prev, [field]: nextValue }
+      })
 
   const handleDateChange = (next: PartialDateValue) => {
     setValues((prev) => ({
@@ -79,6 +93,7 @@ export default function EventFormShell({
       year: typeof next.year === "number" ? String(next.year) : "",
       month: typeof next.month === "number" ? String(next.month) : "",
       day: typeof next.day === "number" ? String(next.day) : "",
+      dayOfWeek: typeof next.day === "number" ? "" : prev.dayOfWeek,
     }))
   }
 
@@ -129,6 +144,7 @@ export default function EventFormShell({
         <EventBasicFields
           idPrefix={id}
           values={values}
+          isRecurring={values.dayOfWeek.length > 0}
           isSubmitting={isSubmitting}
           titleRef={titleRef}
           onChangeField={handleChange}

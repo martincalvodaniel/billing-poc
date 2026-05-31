@@ -50,9 +50,12 @@ export class MongoEventRepository implements EventRepository {
     const col = await this.collection()
     const doc = omitNullish({
       title: event.title,
+      tag: event.tag,
       year: event.year,
       month: event.month,
       day: event.day,
+      dayOfWeek: event.dayOfWeek,
+      excludedDates: event.excludedDates,
       hour: event.hour,
       minute: event.minute,
       date: event.date,
@@ -85,9 +88,16 @@ export class MongoEventRepository implements EventRepository {
     const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
     if (data.title !== undefined) builder.set("title", data.title)
+    if (data.tag !== undefined) builder.setOrUnset("tag", data.tag)
     if (data.year !== undefined) builder.setOrUnset("year", data.year)
     if (data.month !== undefined) builder.setOrUnset("month", data.month)
     if (data.day !== undefined) builder.setOrUnset("day", data.day)
+    if (data.dayOfWeek !== undefined) {
+      builder.setOrUnset("dayOfWeek", data.dayOfWeek)
+    }
+    if (data.excludedDates !== undefined) {
+      builder.setOrUnset("excludedDates", data.excludedDates)
+    }
     if (data.hour !== undefined) builder.setOrUnset("hour", data.hour)
     if (data.minute !== undefined) builder.setOrUnset("minute", data.minute)
     if (data.date !== undefined) builder.setOrUnset("date", data.date)

@@ -1,12 +1,21 @@
 import { z } from "zod"
 import { deriveEventDate } from "./event-pricing"
 
+const isoDateString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid ISO date")
+
 const baseFields = {
   title: z
     .string()
     .trim()
     .min(1, "Title is required")
     .max(200, "Title must be 200 characters or fewer"),
+  tag: z
+    .string()
+    .trim()
+    .max(100, "Tag must be 100 characters or fewer")
+    .optional(),
   year: z.coerce
     .number()
     .int()
@@ -25,6 +34,13 @@ const baseFields = {
     .min(1, "Invalid day")
     .max(31, "Invalid day")
     .optional(),
+  dayOfWeek: z.coerce
+    .number()
+    .int()
+    .min(0, "Invalid day of week")
+    .max(6, "Invalid day of week")
+    .optional(),
+  excludedDates: z.array(isoDateString).optional(),
   hour: z.coerce
     .number()
     .int()
@@ -102,9 +118,12 @@ export const updateEventSchema = applyDateRefinements(
         .min(1, "Title cannot be empty")
         .max(200, "Title must be 200 characters or fewer")
         .optional(),
+      tag: baseFields.tag,
       year: baseFields.year,
       month: baseFields.month,
       day: baseFields.day,
+      dayOfWeek: baseFields.dayOfWeek,
+      excludedDates: baseFields.excludedDates,
       hour: baseFields.hour,
       minute: baseFields.minute,
       durationMinutes: baseFields.durationMinutes,

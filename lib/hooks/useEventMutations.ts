@@ -12,9 +12,11 @@ import { isPaymentsKey } from "./usePayments"
 
 export interface CreateEventInput {
   title: string
+  tag?: string
   year?: number
   month?: number
   day?: number
+  dayOfWeek?: number
   hour?: number
   minute?: number
   durationMinutes?: number
@@ -26,9 +28,12 @@ export interface CreateEventInput {
 export interface UpdateEventInput {
   id: string
   title?: string
+  tag?: string
   year?: number
   month?: number
   day?: number
+  dayOfWeek?: number
+  excludedDates?: string[]
   hour?: number
   minute?: number
   durationMinutes?: number
@@ -317,10 +322,14 @@ export function useUpdateEvent(): MutationResult<
   UpdateEventInput,
   UpdateEventResponse
 > {
-  const invalidate = useInvalidateEvents()
+  const invalidateEvents = useInvalidateEvents()
+  const invalidatePayments = useInvalidatePayments()
   return useEventMutation<UpdateEventInput, UpdateEventResponse>(
     buildUpdateEventRequest,
-    invalidate
+    async () => {
+      await invalidateEvents()
+      await invalidatePayments()
+    }
   )
 }
 

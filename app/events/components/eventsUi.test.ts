@@ -53,6 +53,19 @@ describe("formatEventDateTime", () => {
     )
   })
 
+  test("formats recurring events as 'Month YYYY Weekday(s) HH:MM'", () => {
+    expect(
+      formatEventDateTime({
+        date: undefined,
+        year: 2026,
+        month: 4,
+        dayOfWeek: 2,
+        hour: 9,
+        minute: 5,
+      })
+    ).toBe("April 2026 Tuesdays 09:05")
+  })
+
   test("formats year only", () => {
     expect(formatEventDateTime({ date: undefined, year: 2026 })).toBe("2026")
   })

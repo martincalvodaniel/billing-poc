@@ -5,7 +5,10 @@ import {
 } from "@/lib/domain/entities/payment"
 import type { EventRepository } from "@/lib/domain/ports/event-repository"
 import type { PaymentRepository } from "@/lib/domain/ports/payment-repository"
-import { computeEventPaymentAmount } from "@/lib/domain/services/event-pricing"
+import {
+  activeMonthlyOccurrencesCount,
+  computeEventPaymentAmount,
+} from "@/lib/domain/services/event-pricing"
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100
@@ -19,26 +22,97 @@ function todayLocalISO(): string {
   return `${y}-${m}-${day}`
 }
 
+const DEFAULT_EVENT_TAG = "event"
+
+function eventTag(event: Event): string {
+  const trimmed = event.tag?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : DEFAULT_EVENT_TAG
+}
+
+function eventMonthLabel(event: Event): string {
+  let year = event.year
+  let month = event.month
+
+  if ((!year || !month) && event.date) {
+    const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(event.date)
+    if (match) {
+      year = Number(match[1])
+      month = Number(match[2])
+    }
+  }
+
+  if (!year || !month || month < 1 || month > 12) {
+    return ""
+  }
+
+  const label = new Intl.DateTimeFormat("es-ES", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)))
+
+  return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
+}
+
+function eventTimeLabel(event: Event): string {
+  if (event.hour === undefined) return ""
+  const hour = String(event.hour).padStart(2, "0")
+  const minute = String(event.minute ?? 0).padStart(2, "0")
+  return `${hour}:${minute}`
+}
+
+function eventWeekdayLabel(event: Event): string {
+  if (
+    event.dayOfWeek === undefined ||
+    event.dayOfWeek < 0 ||
+    event.dayOfWeek > 6
+  ) {
+    return ""
+  }
+
+  const label = new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2026, 0, 4 + event.dayOfWeek)))
+
+  return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
+}
+
+function eventConceptName(event: Event): string {
+  const weekday = eventWeekdayLabel(event)
+  const month = eventMonthLabel(event)
+  const time = eventTimeLabel(event)
+
+  let details = ""
+  if (weekday && month) {
+    details = `${month} ${weekday}`
+  } else if (weekday) {
+    details = weekday
+  } else if (month) {
+    details = month
+  }
+
+  if (time) {
+    details = details.length > 0 ? `${details} ${time}` : time
+  }
+
+  return details.length > 0 ? `${event.title} (${details})` : event.title
+}
+
 /**
- * Internal: shared concept-name + vat-rate + per-line amount derivation.
- * Used by both `generateAttendeePayment` (initial create) and
- * `recomputeAttendeePayment` (seat-change update).
- *
- * - `conceptName`: defaults to `event.title` (with `" (no date)"` suffix
- *   when the event has no date). Callers may override with an existing
- *   concept name to preserve user edits on update paths.
- * - `conceptAmount`: per-line amount = gross `pricePerSeat` (duration is
- *   informational only and does NOT scale the price).
- * - `vat`: the event's VAT rate (percentage), mirrored as-is.
+ * Internal: shared concept-name + per-line amount. The per-line `amount`
+ * scales by the event's active monthly occurrences (1 for non-recurring
+ * events) so seat × amount = total.
  */
 function buildPaymentLineParts(event: Event): {
   conceptName: string
   conceptAmount: number
   vat: number
+  occurrences: number
 } {
-  const conceptAmount = round2(event.pricePerSeat)
-  const conceptName = event.date ? event.title : `${event.title} (no date)`
-  return { conceptName, conceptAmount, vat: event.vatRate }
+  const occurrences = activeMonthlyOccurrencesCount(event)
+  const conceptAmount = round2(event.pricePerSeat * occurrences)
+  const conceptName = eventConceptName(event)
+  return { conceptName, conceptAmount, vat: event.vatRate, occurrences }
 }
 
 /**
@@ -49,9 +123,9 @@ function buildPaymentLineParts(event: Event): {
  * The Payment shape is fixed by the iteration plan (§1.5):
  * - type: "income", tag: "event"
  * - date: today's local date (yyyy-mm-dd), independent of event.date
- * - concepts: one line, name = event title (+ " (no date)" if event has no
- *   date), amount = pricePerSeat (gross per-seat; duration does NOT scale
- *   the price), quantity = seats
+ * - concepts: one line, name = event title (+ month and optional hour when
+ *   available), amount = pricePerSeat (gross per-seat; duration does NOT
+ *   scale the price), quantity = seats
  * - netAmount/vatAmount/total: from `computeEventPaymentAmount` directly
  * - vat: the event's VAT rate (percentage), mirrored as-is
  */
@@ -66,7 +140,8 @@ export async function generateAttendeePayment(
 
   const { netAmount, vatAmount, total } = computeEventPaymentAmount(
     event,
-    attendee.seats
+    attendee.seats,
+    activeMonthlyOccurrencesCount(event)
   )
 
   const { conceptName, conceptAmount, vat } = buildPaymentLineParts(event)
@@ -76,7 +151,7 @@ export async function generateAttendeePayment(
   const paymentId = await deps.payments.create({
     type: "income",
     date,
-    tag: "event",
+    tag: eventTag(event),
     clientId: attendee.clientId,
     concepts: [
       {
@@ -172,7 +247,8 @@ export async function recomputeAttendeePayment(
 
   const { netAmount, vatAmount, total } = computeEventPaymentAmount(
     event,
-    newSeats
+    newSeats,
+    activeMonthlyOccurrencesCount(event)
   )
   const { conceptName: defaultName, conceptAmount } =
     buildPaymentLineParts(event)
@@ -184,6 +260,7 @@ export async function recomputeAttendeePayment(
     netAmount,
     vatAmount,
     total,
+    tag: eventTag(event),
     concepts: [
       {
         name: conceptName,
@@ -195,4 +272,56 @@ export async function recomputeAttendeePayment(
   })
 
   return { status: "updated", paymentId, netAmount, vatAmount, total }
+}
+
+// ---------------------------------------------------------------------------
+// recomputeAllAttendeePayments
+// ---------------------------------------------------------------------------
+
+export interface RecomputeAllResult {
+  updated: string[]
+  skippedInvoiced: Array<{
+    paymentId: string
+    invoiceType: InvoiceType
+    invoiceId: string
+  }>
+  missing: string[]
+}
+
+/**
+ * Refreshes every attendee's linked payment after the event itself
+ * changes (e.g. price, VAT rate, dayOfWeek, excludedDates). Attendees
+ * with no `paymentId` are ignored. Already-invoiced payments are
+ * recorded in `skippedInvoiced` and left untouched.
+ */
+export async function recomputeAllAttendeePayments(
+  event: Event,
+  deps: { payments: PaymentRepository }
+): Promise<RecomputeAllResult> {
+  const updated: string[] = []
+  const skippedInvoiced: RecomputeAllResult["skippedInvoiced"] = []
+  const missing: string[] = []
+
+  for (const attendee of event.attendees) {
+    if (!attendee.paymentId) continue
+    const result = await recomputeAttendeePayment(
+      event,
+      attendee,
+      attendee.seats,
+      deps
+    )
+    if (result.status === "updated") {
+      updated.push(result.paymentId)
+    } else if (result.status === "invoiced") {
+      skippedInvoiced.push({
+        paymentId: result.paymentId,
+        invoiceType: result.invoiceType,
+        invoiceId: result.invoiceId,
+      })
+    } else if (result.status === "missing") {
+      missing.push(attendee.paymentId)
+    }
+  }
+
+  return { updated, skippedInvoiced, missing }
 }

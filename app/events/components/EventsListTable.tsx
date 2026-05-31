@@ -3,9 +3,12 @@
 import { useMemo } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import { IconButton } from "@/app/components/IconButton"
+import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
 import { GeneratePaymentsIcon } from "@/app/components/icons/GeneratePaymentsIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import { XIcon } from "@/app/components/icons/XIcon"
 import type { Event } from "@/lib/domain/entities/event"
+import { activeMonthlyOccurrencesCount } from "@/lib/domain/services/event-pricing"
 import { formatCurrency } from "@/lib/formatters"
 import {
   compareEventsChronologicalAsc,
@@ -18,6 +21,15 @@ interface EventsListTableProps {
   events: Event[]
   onEdit: (event: Event) => void
   onDelete: (event: Event) => void
+  onCopy?: (event: Event) => void
+  /**
+   * When provided alongside `dateKey`, recurring events whose canonical
+   * `date` differs from `dateKey` (i.e. weekly expansions) get a "skip
+   * occurrence" button. Clicking it adds `dateKey` to the event's
+   * `excludedDates`.
+   */
+  onSkipOccurrence?: (event: Event, dateKey: string) => void
+  dateKey?: string
   onGenerateAllPayments: (event: Event) => void
   pendingGenerateAllId?: string | null
 }
@@ -26,6 +38,9 @@ export default function EventsListTable({
   events,
   onEdit,
   onDelete,
+  onCopy,
+  onSkipOccurrence,
+  dateKey,
   onGenerateAllPayments,
   pendingGenerateAllId,
 }: EventsListTableProps) {
@@ -59,6 +74,8 @@ export default function EventsListTable({
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
           {sorted.map((event) => {
             const seats = totalSeats(event.attendees)
+            const monthlyOccurrences = activeMonthlyOccurrencesCount(event)
+            const monthlyPrice = event.pricePerSeat * monthlyOccurrences
             const eventId = event._id ?? event.title
             const generatingAll = pendingGenerateAllId === event._id
             const handleRowKeyDown = (
@@ -96,7 +113,7 @@ export default function EventsListTable({
                   {seats} / {event.maxAttendees ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                  {formatCurrency(event.pricePerSeat)}
+                  {formatCurrency(monthlyPrice)}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-2">
@@ -110,6 +127,30 @@ export default function EventsListTable({
                     >
                       <GeneratePaymentsIcon />
                     </IconButton>
+                    {onCopy && (
+                      <IconButton
+                        stopPropagation
+                        onClick={() => onCopy(event)}
+                        ariaLabel={`Copy event ${event.title}`}
+                      >
+                        <DuplicateIcon />
+                      </IconButton>
+                    )}
+                    {onSkipOccurrence &&
+                      dateKey &&
+                      event.dayOfWeek !== undefined &&
+                      event.date !== dateKey && (
+                        <button
+                          type="button"
+                          onClick={() => onSkipOccurrence(event, dateKey)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          aria-label={`Exclude ${event.title} occurrence on ${dateKey}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        >
+                          <XIcon />
+                          Exclude date
+                        </button>
+                      )}
                     <IconButton
                       variant="danger"
                       stopPropagation

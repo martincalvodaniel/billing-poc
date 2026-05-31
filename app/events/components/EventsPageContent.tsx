@@ -15,9 +15,10 @@ import {
   useUpdateEvent,
 } from "@/lib/hooks/useEventMutations"
 import { useEvents } from "@/lib/hooks/useEvents"
+import { eventOccursOnRecurringDate } from "./calendar/calendarUtils"
 import EventsListTable from "./EventsListTable"
 import EventsMonthCalendar from "./EventsMonthCalendar"
-import type { EventFormValues } from "./eventFormModal-utils"
+import { type EventFormValues, valuesFromEvent } from "./eventFormModal-utils"
 import {
   type EventsFormState,
   extractEventErrorMessage,
@@ -52,6 +53,8 @@ export default function EventsPageContent() {
     string | null
   >(null)
   const [prefillDay, setPrefillDay] = useState<number | null>(null)
+  const [copySeed, setCopySeed] = useState<EventFormValues | null>(null)
+  const [copyKey, setCopyKey] = useState(0)
 
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1
@@ -81,7 +84,15 @@ export default function EventsPageContent() {
 
   const dayEvents = useMemo(() => {
     if (!dayModalKey) return []
-    return events.filter((e) => e.date === dayModalKey)
+    const [yStr, mStr, dStr] = dayModalKey.split("-")
+    const y = Number(yStr)
+    const m = Number(mStr)
+    const d = Number(dStr)
+    const date = new Date(y, m - 1, d)
+    return events.filter((e) => {
+      if (e.date === dayModalKey) return true
+      return eventOccursOnRecurringDate(e, date, dayModalKey)
+    })
   }, [events, dayModalKey])
 
   const editEventSnapshot =
@@ -96,6 +107,15 @@ export default function EventsPageContent() {
   const openCreate = (prefill?: number) => {
     setFormError(null)
     setPrefillDay(prefill ?? null)
+    setCopySeed(null)
+    setFormState({ open: true, mode: "create" })
+  }
+  const openCopy = (event: Event) => {
+    setFormError(null)
+    setPrefillDay(null)
+    const seed = valuesFromEvent(event)
+    setCopySeed(seed)
+    setCopyKey((n) => n + 1)
     setFormState({ open: true, mode: "create" })
   }
   const openEdit = (event: Event) => {
@@ -106,6 +126,7 @@ export default function EventsPageContent() {
     setFormState((prev) => ({ ...prev, open: false }))
     setFormError(null)
     setPrefillDay(null)
+    setCopySeed(null)
   }
 
   const formDefaults = useMemo<Partial<EventFormValues>>(
@@ -127,9 +148,11 @@ export default function EventsPageContent() {
         await updateMutation.trigger({
           id: formState.event._id,
           title: values.title.trim(),
+          tag: values.tag.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
+          dayOfWeek: toOptionalNumber(values.dayOfWeek),
           hour: toOptionalNumber(values.hour),
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
@@ -141,9 +164,11 @@ export default function EventsPageContent() {
       } else {
         await createMutation.trigger({
           title: values.title.trim(),
+          tag: values.tag.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
+          dayOfWeek: toOptionalNumber(values.dayOfWeek),
           hour: toOptionalNumber(values.hour),
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
@@ -185,6 +210,17 @@ export default function EventsPageContent() {
       setToast(extractEventErrorMessage(error, "Failed to generate payments"))
     } finally {
       setPendingGenerateAllId(null)
+    }
+  }
+
+  const handleSkipOccurrence = async (event: Event, key: string) => {
+    if (!event._id) return
+    const next = Array.from(new Set([...(event.excludedDates ?? []), key]))
+    try {
+      await updateMutation.trigger({ id: event._id, excludedDates: next })
+      setToast(`Occurrence on ${key} skipped`)
+    } catch (error) {
+      setToast(extractEventErrorMessage(error, "Failed to skip occurrence"))
     }
   }
 
@@ -235,6 +271,7 @@ export default function EventsPageContent() {
           events={events}
           onEdit={openEdit}
           onDelete={handleDelete}
+          onCopy={openCopy}
           onGenerateAllPayments={handleGenerateAllPayments}
           pendingGenerateAllId={pendingGenerateAllId}
         />
@@ -259,6 +296,8 @@ export default function EventsPageContent() {
           isSubmitting={isSubmitting}
           errorMessage={formError}
           defaults={formDefaults}
+          seedValues={copySeed}
+          resetKey={copySeed ? `copy-${copyKey}` : "create"}
         />
       )}
 
@@ -273,6 +312,9 @@ export default function EventsPageContent() {
           }}
           onDelete={(e) => {
             void handleDelete(e)
+          }}
+          onSkipOccurrence={(e, key) => {
+            void handleSkipOccurrence(e, key)
           }}
           onAddEventForDay={(day) => {
             setDayModalKey(null)

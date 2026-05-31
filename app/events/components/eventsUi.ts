@@ -10,14 +10,63 @@ import { formatDate } from "@/lib/formatters"
  *  - nothing             → "No date"
  */
 export function formatEventDateTime(
-  event: Pick<Event, "date" | "year" | "month" | "day" | "hour" | "minute">
+  event: Pick<
+    Event,
+    "date" | "year" | "month" | "day" | "dayOfWeek" | "hour" | "minute"
+  >
 ): string {
+  if (
+    event.dayOfWeek !== undefined &&
+    event.year !== undefined &&
+    event.month !== undefined
+  ) {
+    const monthYear = formatEventDate({
+      date: undefined,
+      year: event.year,
+      month: event.month,
+      day: undefined,
+    })
+    const weekday = formatEventWeekday(event)
+    const recurringLabel = weekday ? `${weekday}s` : ""
+    const timePart = formatEventTime(event) ?? ""
+
+    if (monthYear === "" && recurringLabel === "" && timePart === "") {
+      return "No date"
+    }
+
+    const base = [monthYear, recurringLabel].filter(Boolean).join(" ")
+    return timePart ? `${base} ${timePart}`.trim() : base
+  }
+
   const datePart = formatEventDate(event)
+  const weekdayPart = formatEventWeekday(event)
   const timePart = formatEventTime(event) ?? ""
-  if (datePart === "" && timePart === "") return "No date"
-  if (datePart === "") return timePart
-  if (timePart === "") return datePart
-  return `${datePart} ${timePart}`
+  if (datePart === "" && weekdayPart === "" && timePart === "") return "No date"
+
+  const baseDate =
+    weekdayPart && datePart
+      ? `${weekdayPart} · ${datePart}`
+      : weekdayPart || datePart
+
+  if (baseDate === "") return timePart
+  if (timePart === "") return baseDate
+  return `${baseDate} ${timePart}`
+}
+
+function formatEventWeekday(event: Pick<Event, "dayOfWeek">): string {
+  if (
+    event.dayOfWeek === undefined ||
+    event.dayOfWeek === null ||
+    event.dayOfWeek < 0 ||
+    event.dayOfWeek > 6
+  ) {
+    return ""
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2026, 0, 4 + event.dayOfWeek)))
 }
 
 function formatEventDate(

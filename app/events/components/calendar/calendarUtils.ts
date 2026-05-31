@@ -20,20 +20,62 @@ export function mondayIndex(date: Date): number {
 }
 
 /**
- * Group events by their ISO date (`event.date`). Events without a `date`
- * are intentionally ignored — they cannot be plotted on a calendar.
+ * Returns true when the recurring event "occurs" on `dateKey`. Recurring
+ * events have a `dayOfWeek` (0=Sun..6=Sat) and a `year`/`month` scope; the
+ * date must match that month/year and the weekday, and not be in
+ * `excludedDates`.
  */
-export function groupEventsByDate(events: Event[]): Map<string, Event[]> {
+export function eventOccursOnRecurringDate(
+  event: Event,
+  date: Date,
+  dateKey: string
+): boolean {
+  if (event.dayOfWeek === undefined) return false
+  if (event.year === undefined || event.month === undefined) return false
+  if (date.getFullYear() !== event.year) return false
+  if (date.getMonth() + 1 !== event.month) return false
+  if (date.getDay() !== event.dayOfWeek) return false
+  if (event.excludedDates?.includes(dateKey)) return false
+  return true
+}
+
+/**
+ * Group events by their ISO date (`event.date`) PLUS the recurring
+ * occurrences within `[year, month]`. Events with neither a fixed date nor
+ * a `dayOfWeek` are ignored.
+ */
+export function groupEventsByDate(
+  events: Event[],
+  year?: number,
+  month?: number
+): Map<string, Event[]> {
   const map = new Map<string, Event[]>()
+  const push = (key: string, event: Event) => {
+    const bucket = map.get(key)
+    if (bucket) bucket.push(event)
+    else map.set(key, [event])
+  }
+
   for (const event of events) {
-    if (!event.date) continue
-    const bucket = map.get(event.date)
-    if (bucket) {
-      bucket.push(event)
-    } else {
-      map.set(event.date, [event])
+    if (event.date) push(event.date, event)
+  }
+
+  if (year === undefined || month === undefined) return map
+
+  const lastDay = new Date(year, month, 0).getDate()
+  for (const event of events) {
+    if (event.dayOfWeek === undefined) continue
+    if (event.year !== year || event.month !== month) continue
+    for (let day = 1; day <= lastDay; day += 1) {
+      const date = new Date(year, month - 1, day)
+      const key = toDateKey(date)
+      // Skip the explicit-date bucket (already added above) when it
+      // happens to fall on the same recurring weekday.
+      if (event.date === key) continue
+      if (eventOccursOnRecurringDate(event, date, key)) push(key, event)
     }
   }
+
   return map
 }
 
