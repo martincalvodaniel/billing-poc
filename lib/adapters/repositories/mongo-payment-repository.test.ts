@@ -4,11 +4,42 @@ process.env.MONGODB_URI ??= "mongodb://localhost:27017/test"
 
 type BuildPaymentUpdateOps =
   typeof import("./mongo-payment-repository")["buildPaymentUpdateOps"]
+type BuildPaymentDateQuery =
+  typeof import("./mongo-payment-repository")["buildPaymentDateQuery"]
 
 let buildPaymentUpdateOps: BuildPaymentUpdateOps
+let buildPaymentDateQuery: BuildPaymentDateQuery
 
 beforeAll(async () => {
-  ;({ buildPaymentUpdateOps } = await import("./mongo-payment-repository"))
+  ;({ buildPaymentUpdateOps, buildPaymentDateQuery } = await import(
+    "./mongo-payment-repository"
+  ))
+})
+
+describe("buildPaymentDateQuery", () => {
+  test("month filter uses exact local month boundaries", () => {
+    const query = buildPaymentDateQuery({ year: 2026, month: 6 })
+    expect(query).toEqual({
+      date: {
+        $gte: "2026-06-01",
+        $lte: "2026-06-30",
+      },
+    })
+  })
+
+  test("year filter uses full calendar-year boundaries", () => {
+    const query = buildPaymentDateQuery({ year: 2026 })
+    expect(query).toEqual({
+      date: {
+        $gte: "2026-01-01",
+        $lte: "2026-12-31",
+      },
+    })
+  })
+
+  test("no filters returns empty query", () => {
+    expect(buildPaymentDateQuery({})).toEqual({})
+  })
 })
 
 describe("buildPaymentUpdateOps — discount removal", () => {
