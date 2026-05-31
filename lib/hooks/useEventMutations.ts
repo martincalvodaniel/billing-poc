@@ -2,6 +2,7 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
+import type { PaymentMethod } from "../domain/entities/payment"
 import { FetchError } from "../swr-fetcher"
 import { isEventsKey } from "./useEvents"
 import { isPaymentsKey } from "./usePayments"
@@ -12,9 +13,11 @@ import { isPaymentsKey } from "./usePayments"
 
 export interface CreateEventInput {
   title: string
+  tag?: string
   year?: number
   month?: number
   day?: number
+  dayOfWeek?: number
   hour?: number
   minute?: number
   durationMinutes?: number
@@ -26,9 +29,12 @@ export interface CreateEventInput {
 export interface UpdateEventInput {
   id: string
   title?: string
+  tag?: string
   year?: number
   month?: number
   day?: number
+  dayOfWeek?: number
+  excludedDates?: string[]
   hour?: number
   minute?: number
   durationMinutes?: number
@@ -61,6 +67,7 @@ export interface RemoveEventAttendeeInput {
 export interface GenerateEventPaymentInput {
   eventId: string
   clientId: string
+  paymentMethod?: PaymentMethod
 }
 
 export interface GenerateEventPaymentsInput {
@@ -168,10 +175,11 @@ export function buildRemoveAttendeeRequest(
 export function buildGenerateEventPaymentRequest(
   input: GenerateEventPaymentInput
 ): BuiltRequest {
-  const { eventId, clientId } = input
+  const { eventId, clientId, paymentMethod } = input
   return {
     url: `/api/events/${encodeURIComponent(eventId)}/attendees/${encodeURIComponent(clientId)}/payment`,
     method: "POST",
+    body: paymentMethod ? jsonBody({ paymentMethod }) : undefined,
   }
 }
 
@@ -317,10 +325,14 @@ export function useUpdateEvent(): MutationResult<
   UpdateEventInput,
   UpdateEventResponse
 > {
-  const invalidate = useInvalidateEvents()
+  const invalidateEvents = useInvalidateEvents()
+  const invalidatePayments = useInvalidatePayments()
   return useEventMutation<UpdateEventInput, UpdateEventResponse>(
     buildUpdateEventRequest,
-    invalidate
+    async () => {
+      await invalidateEvents()
+      await invalidatePayments()
+    }
   )
 }
 

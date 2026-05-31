@@ -7,31 +7,23 @@ export function round2(value: number): number {
 /**
  * Computes the Payment monetary fields for an Event attendee.
  *
- * Pricing convention (binding):
- * - `event.pricePerSeat` is the **gross** price per seat (VAT included),
- *   in euros. A stored value of 10 means "the customer pays 10 € per seat"
- *   regardless of the event's duration.
- * - `event.vatRate` is the VAT rate as a percentage (0–100). The net and
- *   VAT amounts are **extracted** from the gross total.
- * - `event.durationMinutes` is purely informational (used by the calendar
- *   and listings); it does NOT scale the price.
+ * `pricePerSeat` is the **gross** price per seat (VAT included). For
+ * recurring weekly events, callers pass the number of monthly occurrences
+ * (active dates in the event's month) so the total scales linearly:
  *
- * Formula:
- *   total      = round2(pricePerSeat * seats)
+ *   total      = round2(pricePerSeat * seats * occurrences)
  *   net        = round2(total / (1 + vatRate/100))
  *   vatAmount  = round2(total - net)
  *
- * Example: pricePerSeat=10, vatRate=21, seats=1, durationMinutes=180
- *   → total=10.00, net=8.26, vatAmount=1.74.
- *
- * The returned `vatRate` mirrors `event.vatRate` and is stored on
- * `Payment.vat` (which represents the rate, not an absolute amount).
+ * `durationMinutes` is informational and does NOT scale the price.
  */
 export function computeEventPaymentAmount(
   event: Pick<Event, "pricePerSeat" | "vatRate" | "durationMinutes">,
-  seats: number
+  seats: number,
+  occurrences = 1
 ): { netAmount: number; vatAmount: number; total: number; vatRate: number } {
-  const total = round2(event.pricePerSeat * seats)
+  const safeOccurrences = Math.max(1, Math.trunc(occurrences))
+  const total = round2(event.pricePerSeat * seats * safeOccurrences)
   const rate = event.vatRate
   const netAmount = round2(total / (1 + rate / 100))
   const vatAmount = round2(total - netAmount)
@@ -60,4 +52,71 @@ export function deriveEventDate(
   const mm = String(month).padStart(2, "0")
   const dd = String(day).padStart(2, "0")
   return `${year}-${mm}-${dd}`
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0")
+}
+
+/**
+ * Enumerate all ISO YYYY-MM-DD dates within (year, month) whose JS weekday
+ * (`Date#getDay()`, 0=Sunday..6=Saturday) matches `dayOfWeek`. Pure: no
+ * exclusions applied.
+ */
+export function enumerateMonthlyOccurrences(
+  year: number,
+  month: number,
+  dayOfWeek: number
+): string[] {
+  if (month < 1 || month > 12) return []
+  if (dayOfWeek < 0 || dayOfWeek > 6) return []
+  const result: string[] = []
+  const lastDay = new Date(year, month, 0).getDate()
+  for (let d = 1; d <= lastDay; d += 1) {
+    const date = new Date(year, month - 1, d)
+    if (date.getDay() === dayOfWeek) {
+      result.push(`${year}-${pad2(month)}-${pad2(d)}`)
+    }
+  }
+  return result
+}
+
+/**
+ * Active monthly occurrences for an event = all weekday matches in
+ * `(event.year, event.month)` minus `event.excludedDates`.
+ *
+ * Returns:
+ * - `undefined` when the event lacks year/month/dayOfWeek (caller treats
+ *   this as a single non-recurring event with 1 occurrence).
+ * - An array of ISO YYYY-MM-DD strings otherwise.
+ */
+export function activeMonthlyOccurrences(
+  event: Pick<Event, "year" | "month" | "dayOfWeek" | "excludedDates">
+): string[] | undefined {
+  if (
+    event.year === undefined ||
+    event.month === undefined ||
+    event.dayOfWeek === undefined
+  ) {
+    return undefined
+  }
+  const all = enumerateMonthlyOccurrences(
+    event.year,
+    event.month,
+    event.dayOfWeek
+  )
+  const excluded = new Set(event.excludedDates ?? [])
+  return all.filter((d) => !excluded.has(d))
+}
+
+/**
+ * Number of active monthly occurrences. Returns 1 for non-recurring events
+ * (no dayOfWeek or missing year/month), so the existing single-occurrence
+ * pricing path stays correct.
+ */
+export function activeMonthlyOccurrencesCount(
+  event: Pick<Event, "year" | "month" | "dayOfWeek" | "excludedDates">
+): number {
+  const list = activeMonthlyOccurrences(event)
+  return list === undefined ? 1 : list.length
 }

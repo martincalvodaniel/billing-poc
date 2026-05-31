@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { MongoEventRepository } from "@/lib/adapters/repositories/mongo-event-repository"
+import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
+import { recomputeAllAttendeePayments } from "@/lib/domain/services/event-payment-service"
 import { deriveEventDate } from "@/lib/domain/services/event-pricing"
 import {
   createEventSchema,
@@ -11,6 +13,7 @@ import {
 import { zodError } from "@/lib/validation"
 
 const events = new MongoEventRepository()
+const payments = new MongoPaymentRepository()
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,9 +67,11 @@ export async function POST(request: NextRequest) {
 
     const id = await events.create({
       title: data.title,
+      tag: data.tag,
       year: data.year,
       month: data.month,
       day: data.day,
+      dayOfWeek: data.dayOfWeek,
       hour: data.hour,
       minute: data.minute,
       date,
@@ -130,7 +135,28 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    // Re-fetch the persisted event and refresh linked attendee payments
+    // (price, occurrences and tag may have changed). Already-invoiced
+    // payments are silently skipped.
+    const refreshed = await events.findById(id)
+    let paymentSync: {
+      updated: number
+      skippedInvoiced: number
+      missing: number
+    } | null = null
+    if (refreshed?.attendees.some((a) => a.paymentId)) {
+      const r = await recomputeAllAttendeePayments(refreshed, { payments })
+      paymentSync = {
+        updated: r.updated.length,
+        skippedInvoiced: r.skippedInvoiced.length,
+        missing: r.missing.length,
+      }
+    }
+
+    return NextResponse.json(
+      paymentSync ? { success: true, paymentSync } : { success: true },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(`Error updating event: ${error}`)
     return NextResponse.json(

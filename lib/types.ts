@@ -147,9 +147,12 @@ export interface EventAttendee {
 export interface Event {
   _id?: ObjectId
   title: string
+  tag?: string
   year?: number
   month?: number
   day?: number
+  dayOfWeek?: number
+  excludedDates?: string[]
   hour?: number
   minute?: number
   date?: string
@@ -164,9 +167,11 @@ export interface Event {
 
 export interface EventFormData {
   title: string
+  tag?: string
   year?: string
   month?: string
   day?: string
+  dayOfWeek?: string
   hour?: string
   minute?: string
   durationMinutes?: string

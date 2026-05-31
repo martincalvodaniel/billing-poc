@@ -41,9 +41,12 @@ export function toDomain(doc: MongoEvent): Event {
   return {
     _id: doc._id?.toString(),
     title: doc.title,
+    tag: doc.tag,
     year: doc.year,
     month: doc.month,
     day: doc.day,
+    dayOfWeek: doc.dayOfWeek,
+    excludedDates: doc.excludedDates,
     hour: doc.hour,
     minute: doc.minute,
     date: doc.date,

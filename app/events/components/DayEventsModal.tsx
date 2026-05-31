@@ -12,9 +12,8 @@ interface DayEventsModalProps {
   onClose: () => void
   onEdit: (event: Event) => void
   onDelete: (event: Event) => void
+  onSkipOccurrence?: (event: Event, dateKey: string) => void
   onAddEventForDay: (day: number) => void
-  onGenerateAllPayments: (event: Event) => void
-  pendingGenerateAllId?: string | null
 }
 
 export default function DayEventsModal({
@@ -23,9 +22,8 @@ export default function DayEventsModal({
   onClose,
   onEdit,
   onDelete,
+  onSkipOccurrence,
   onAddEventForDay,
-  onGenerateAllPayments,
-  pendingGenerateAllId,
 }: DayEventsModalProps) {
   const dateLabel = formatDate(dateKey)
   const handleAdd = () => {
@@ -45,12 +43,17 @@ export default function DayEventsModal({
         />
       }
     >
+      <p className="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
+        For recurring events, use{" "}
+        <span className="font-medium">Exclude date</span> to skip this
+        occurrence (for example, holidays).
+      </p>
       <EventsListTable
         events={events}
         onEdit={onEdit}
         onDelete={onDelete}
-        onGenerateAllPayments={onGenerateAllPayments}
-        pendingGenerateAllId={pendingGenerateAllId ?? null}
+        onSkipOccurrence={onSkipOccurrence}
+        dateKey={dateKey}
       />
     </Modal>
   )

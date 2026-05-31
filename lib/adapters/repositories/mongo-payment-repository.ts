@@ -17,6 +17,39 @@ function toDomain(doc: MongoPayment): Payment {
   return mapPaymentDocToDomain(doc)
 }
 
+function pad2(value: number): string {
+  return String(value).padStart(2, "0")
+}
+
+function isoLocalDate(year: number, month: number, day: number): string {
+  return `${year}-${pad2(month)}-${pad2(day)}`
+}
+
+export function buildPaymentDateQuery(
+  filter: PaymentFilter
+): Record<string, unknown> {
+  if (filter.year && filter.month) {
+    const lastDay = new Date(filter.year, filter.month, 0).getDate()
+    return {
+      date: {
+        $gte: isoLocalDate(filter.year, filter.month, 1),
+        $lte: isoLocalDate(filter.year, filter.month, lastDay),
+      },
+    }
+  }
+
+  if (filter.year) {
+    return {
+      date: {
+        $gte: isoLocalDate(filter.year, 1, 1),
+        $lte: isoLocalDate(filter.year, 12, 31),
+      },
+    }
+  }
+
+  return {}
+}
+
 /**
  * Pure builder for the Mongo update document used by
  * `MongoPaymentRepository.update`. Extracted so it can be unit-tested
@@ -89,23 +122,7 @@ export class MongoPaymentRepository implements PaymentRepository {
 
   async findAll(filter: PaymentFilter): Promise<Payment[]> {
     const col = await this.collection()
-    const query: Record<string, unknown> = {}
-
-    if (filter.year && filter.month) {
-      const startDate = new Date(filter.year, filter.month - 1, 1)
-      const endDate = new Date(filter.year, filter.month, 0, 23, 59, 59, 999)
-      query.date = {
-        $gte: startDate.toISOString().split("T")[0],
-        $lte: endDate.toISOString().split("T")[0],
-      }
-    } else if (filter.year) {
-      const startDate = new Date(filter.year, 0, 1)
-      const endDate = new Date(filter.year, 11, 31, 23, 59, 59, 999)
-      query.date = {
-        $gte: startDate.toISOString().split("T")[0],
-        $lte: endDate.toISOString().split("T")[0],
-      }
-    }
+    const query = buildPaymentDateQuery(filter)
 
     const docs = await col
       .find(query)

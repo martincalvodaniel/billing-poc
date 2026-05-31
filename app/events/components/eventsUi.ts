@@ -10,14 +10,63 @@ import { formatDate } from "@/lib/formatters"
  *  - nothing             → "No date"
  */
 export function formatEventDateTime(
-  event: Pick<Event, "date" | "year" | "month" | "day" | "hour" | "minute">
+  event: Pick<
+    Event,
+    "date" | "year" | "month" | "day" | "dayOfWeek" | "hour" | "minute"
+  >
 ): string {
+  if (
+    event.dayOfWeek !== undefined &&
+    event.year !== undefined &&
+    event.month !== undefined
+  ) {
+    const monthYear = formatEventDate({
+      date: undefined,
+      year: event.year,
+      month: event.month,
+      day: undefined,
+    })
+    const weekday = formatEventWeekday(event)
+    const recurringLabel = weekday ? `${weekday}s` : ""
+    const timePart = formatEventTime(event) ?? ""
+
+    if (monthYear === "" && recurringLabel === "" && timePart === "") {
+      return "No date"
+    }
+
+    const base = [monthYear, recurringLabel].filter(Boolean).join(" ")
+    return timePart ? `${base} ${timePart}`.trim() : base
+  }
+
   const datePart = formatEventDate(event)
+  const weekdayPart = formatEventWeekday(event)
   const timePart = formatEventTime(event) ?? ""
-  if (datePart === "" && timePart === "") return "No date"
-  if (datePart === "") return timePart
-  if (timePart === "") return datePart
-  return `${datePart} ${timePart}`
+  if (datePart === "" && weekdayPart === "" && timePart === "") return "No date"
+
+  const baseDate =
+    weekdayPart && datePart
+      ? `${weekdayPart} · ${datePart}`
+      : weekdayPart || datePart
+
+  if (baseDate === "") return timePart
+  if (timePart === "") return baseDate
+  return `${baseDate} ${timePart}`
+}
+
+function formatEventWeekday(event: Pick<Event, "dayOfWeek">): string {
+  if (
+    event.dayOfWeek === undefined ||
+    event.dayOfWeek === null ||
+    event.dayOfWeek < 0 ||
+    event.dayOfWeek > 6
+  ) {
+    return ""
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2026, 0, 4 + event.dayOfWeek)))
 }
 
 function formatEventDate(
@@ -133,15 +182,24 @@ export function parseTimeOfDay(value: string): {
  * `createdAt` ascending; undefined `createdAt` is treated as equal (stable).
  */
 export function compareEventsChronologicalAsc(
-  a: Pick<Event, "year" | "month" | "day" | "hour" | "minute" | "createdAt">,
-  b: Pick<Event, "year" | "month" | "day" | "hour" | "minute" | "createdAt">
+  a: Pick<
+    Event,
+    "year" | "month" | "day" | "dayOfWeek" | "hour" | "minute" | "createdAt"
+  >,
+  b: Pick<
+    Event,
+    "year" | "month" | "day" | "dayOfWeek" | "hour" | "minute" | "createdAt"
+  >
 ): number {
   const byYear = cmpOptUndefinedFirst(a.year, b.year)
   if (byYear !== 0) return byYear
   const byMonth = cmpOptUndefinedFirst(a.month, b.month)
   if (byMonth !== 0) return byMonth
-  const byDay = cmpOptUndefinedFirst(a.day, b.day)
-  if (byDay !== 0) return byDay
+  const byDayOrWeek = cmpOptUndefinedFirst(
+    dayOrWeekSortValue(a.day, a.dayOfWeek),
+    dayOrWeekSortValue(b.day, b.dayOfWeek)
+  )
+  if (byDayOrWeek !== 0) return byDayOrWeek
   const byHour = cmpOptUndefinedFirst(a.hour, b.hour)
   if (byHour !== 0) return byHour
   const byMinute = cmpOptUndefinedFirst(a.minute, b.minute)
@@ -160,4 +218,14 @@ function cmpOptUndefinedFirst(
   if (a === undefined) return -1
   if (b === undefined) return 1
   return a - b
+}
+
+function dayOrWeekSortValue(
+  day: number | undefined,
+  dayOfWeek: number | undefined
+): number | undefined {
+  if (day !== undefined) return day
+  if (dayOfWeek === undefined) return undefined
+  if (dayOfWeek < 0 || dayOfWeek > 6) return undefined
+  return dayOfWeek === 0 ? 7 : dayOfWeek
 }

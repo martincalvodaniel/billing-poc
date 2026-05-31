@@ -107,6 +107,17 @@ describe("buildGenerateEventPaymentRequest", () => {
     expect(req.method).toBe("POST")
     expect(req.body).toBeUndefined()
   })
+
+  test("includes payment method when provided", () => {
+    const req = buildGenerateEventPaymentRequest({
+      eventId: "ev1",
+      clientId: "cli1",
+      paymentMethod: "card",
+    })
+    expect(req.url).toBe("/api/events/ev1/attendees/cli1/payment")
+    expect(req.method).toBe("POST")
+    expect(req.body).toBe(JSON.stringify({ paymentMethod: "card" }))
+  })
 })
 
 describe("buildGenerateEventPaymentsRequest", () => {

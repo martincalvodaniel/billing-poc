@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { MongoEventRepository } from "@/lib/adapters/repositories/mongo-event-repository"
 import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
+import { unlinkPaymentFromEvents } from "@/lib/domain/services/event-payment-service"
 import { computePaymentFinancials } from "@/lib/domain/services/payment-calculator"
 import {
   createPaymentSchema,
@@ -12,6 +14,7 @@ import { getClientById, getPaymentById } from "@/lib/server-cache"
 import { zodError } from "@/lib/validation"
 
 const payments = new MongoPaymentRepository()
+const events = new MongoEventRepository()
 
 export async function GET(request: NextRequest) {
   try {
@@ -244,6 +247,14 @@ export async function DELETE(request: NextRequest) {
     if (!deleted) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 })
     }
+
+    const unlinkResult = await unlinkPaymentFromEvents(parsed.data.id, {
+      events,
+    })
+
+    console.log(
+      `Deleted payment ${parsed.data.id}; cleared ${unlinkResult.updatedAttendees} attendee link(s) across ${unlinkResult.updatedEvents} event(s)`
+    )
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {

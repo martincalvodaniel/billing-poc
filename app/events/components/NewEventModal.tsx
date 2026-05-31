@@ -19,6 +19,16 @@ interface NewEventModalProps {
    * `emptyValues()`.
    */
   defaults?: Partial<EventFormValues>
+  /**
+   * Fully-populated initial values (e.g. when copying an existing event).
+   * When provided, replaces the empty/defaults seed entirely.
+   */
+  seedValues?: EventFormValues | null
+  /**
+   * Identity that triggers a form reset when it changes (e.g. a new copy
+   * source). Defaults to "create".
+   */
+  resetKey?: string
 }
 
 export default function NewEventModal({
@@ -28,10 +38,13 @@ export default function NewEventModal({
   isSubmitting,
   errorMessage,
   defaults,
+  seedValues,
+  resetKey,
 }: NewEventModalProps) {
   const computeInitialValues = useCallback(
-    () => applyDefaults(emptyValues(), defaults),
-    [defaults]
+    () =>
+      seedValues ? { ...seedValues } : applyDefaults(emptyValues(), defaults),
+    [defaults, seedValues]
   )
 
   return (
@@ -41,7 +54,7 @@ export default function NewEventModal({
       title="New event"
       submitLabel="Create event"
       maxWidth="lg"
-      resetKey="create"
+      resetKey={resetKey ?? "create"}
       computeInitialValues={computeInitialValues}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}

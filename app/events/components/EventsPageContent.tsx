@@ -1,29 +1,33 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import AddButton from "@/app/components/AddButton"
+import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import PageLayout from "@/app/components/PageLayout"
 import Toast from "@/app/components/Toast"
 import MonthPicker from "@/app/month/components/MonthPicker"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatMonthYear } from "@/lib/formatters"
 import {
+  useAddEventAttendee,
   useCreateEvent,
   useDeleteEvent,
-  useGenerateEventPayments,
   useUpdateEvent,
 } from "@/lib/hooks/useEventMutations"
 import { useEvents } from "@/lib/hooks/useEvents"
+import { eventOccursOnRecurringDate } from "./calendar/calendarUtils"
 import EventsListTable from "./EventsListTable"
 import EventsMonthCalendar from "./EventsMonthCalendar"
-import type { EventFormValues } from "./eventFormModal-utils"
+import { type EventFormValues, valuesFromEvent } from "./eventFormModal-utils"
 import {
   type EventsFormState,
   extractEventErrorMessage,
   toOptionalNumber,
   toRequiredNumber,
 } from "./eventsPageContent-utils"
+import { formatEventDateTime } from "./eventsUi"
 
 const DayEventsModal = dynamic(() => import("./DayEventsModal"), {
   ssr: false,
@@ -36,6 +40,8 @@ const NewEventModal = dynamic(() => import("./NewEventModal"), {
 })
 
 export default function EventsPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const today = new Date()
     return new Date(today.getFullYear(), today.getMonth(), 1)
@@ -48,10 +54,14 @@ export default function EventsPageContent() {
   const [formError, setFormError] = useState<string | null>(null)
   const [dayModalKey, setDayModalKey] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  const [pendingGenerateAllId, setPendingGenerateAllId] = useState<
-    string | null
-  >(null)
   const [prefillDay, setPrefillDay] = useState<number | null>(null)
+  const [copySeed, setCopySeed] = useState<EventFormValues | null>(null)
+  const [copyKey, setCopyKey] = useState(0)
+  const [copySourceEvent, setCopySourceEvent] = useState<Event | null>(null)
+  const [deleteDialogEvent, setDeleteDialogEvent] = useState<Event | null>(null)
+  const [deleteDialogError, setDeleteDialogError] = useState<string | null>(
+    null
+  )
 
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1
@@ -61,7 +71,7 @@ export default function EventsPageContent() {
   const createMutation = useCreateEvent()
   const updateMutation = useUpdateEvent()
   const deleteMutation = useDeleteEvent()
-  const generateAll = useGenerateEventPayments()
+  const addAttendeeMutation = useAddEventAttendee()
 
   const currentMonthStart = useMemo(() => {
     const today = new Date()
@@ -81,7 +91,15 @@ export default function EventsPageContent() {
 
   const dayEvents = useMemo(() => {
     if (!dayModalKey) return []
-    return events.filter((e) => e.date === dayModalKey)
+    const [yStr, mStr, dStr] = dayModalKey.split("-")
+    const y = Number(yStr)
+    const m = Number(mStr)
+    const d = Number(dStr)
+    const date = new Date(y, m - 1, d)
+    return events.filter((e) => {
+      if (e.date === dayModalKey) return true
+      return eventOccursOnRecurringDate(e, date, dayModalKey)
+    })
   }, [events, dayModalKey])
 
   const editEventSnapshot =
@@ -96,16 +114,67 @@ export default function EventsPageContent() {
   const openCreate = (prefill?: number) => {
     setFormError(null)
     setPrefillDay(prefill ?? null)
+    setCopySeed(null)
+    setCopySourceEvent(null)
     setFormState({ open: true, mode: "create" })
   }
-  const openEdit = (event: Event) => {
+  const openCopy = (event: Event) => {
+    setFormError(null)
+    setPrefillDay(null)
+    const seed = valuesFromEvent(event)
+    setCopySeed(seed)
+    setCopySourceEvent(event)
+    setCopyKey((n) => n + 1)
+    setFormState({ open: true, mode: "create" })
+  }
+  const openEdit = useCallback((event: Event) => {
     setFormError(null)
     setFormState({ open: true, mode: "edit", event })
-  }
+  }, [])
+
+  const requestedEventId = searchParams.get("eventId")
+  const requestedYear = Number(searchParams.get("year"))
+  const requestedMonth = Number(searchParams.get("month"))
+
+  useEffect(() => {
+    if (!requestedEventId) return
+    if (
+      Number.isInteger(requestedYear) &&
+      Number.isInteger(requestedMonth) &&
+      requestedMonth >= 1 &&
+      requestedMonth <= 12
+    ) {
+      setSelectedDate((prev) => {
+        if (
+          prev.getFullYear() === requestedYear &&
+          prev.getMonth() + 1 === requestedMonth
+        ) {
+          return prev
+        }
+        return new Date(requestedYear, requestedMonth - 1, 1)
+      })
+    }
+  }, [requestedEventId, requestedYear, requestedMonth])
+
+  useEffect(() => {
+    if (!requestedEventId) return
+    const target = events.find((event) => event._id === requestedEventId)
+    if (!target) return
+
+    openEdit(target)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("eventId")
+    const next = params.toString()
+    router.replace(next ? `/events?${next}` : "/events")
+  }, [requestedEventId, events, router, searchParams, openEdit])
+
   const closeForm = () => {
     setFormState((prev) => ({ ...prev, open: false }))
     setFormError(null)
     setPrefillDay(null)
+    setCopySeed(null)
+    setCopySourceEvent(null)
   }
 
   const formDefaults = useMemo<Partial<EventFormValues>>(
@@ -127,9 +196,12 @@ export default function EventsPageContent() {
         await updateMutation.trigger({
           id: formState.event._id,
           title: values.title.trim(),
+          tag: values.tag.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
+          dayOfWeek: toOptionalNumber(values.dayOfWeek),
+          excludedDates: formState.event.excludedDates,
           hour: toOptionalNumber(values.hour),
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
@@ -139,11 +211,13 @@ export default function EventsPageContent() {
         })
         setToast("Event updated")
       } else {
-        await createMutation.trigger({
+        const created = await createMutation.trigger({
           title: values.title.trim(),
+          tag: values.tag.trim() || undefined,
           year: toOptionalNumber(values.year),
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
+          dayOfWeek: toOptionalNumber(values.dayOfWeek),
           hour: toOptionalNumber(values.hour),
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
@@ -151,7 +225,32 @@ export default function EventsPageContent() {
           pricePerSeat: toRequiredNumber(values.pricePerSeat),
           vatRate: toRequiredNumber(values.vatRate),
         })
-        setToast("Event created")
+
+        if (
+          copySourceEvent?.dayOfWeek !== undefined &&
+          copySourceEvent.attendees.length > 0
+        ) {
+          const results = await Promise.allSettled(
+            copySourceEvent.attendees.map((attendee) =>
+              addAttendeeMutation.trigger({
+                eventId: created.id,
+                clientId: attendee.clientId,
+                seats: attendee.seats,
+              })
+            )
+          )
+          const copied = results.filter((r) => r.status === "fulfilled").length
+          const failed = results.length - copied
+          if (failed > 0) {
+            setToast(
+              `Event created. ${copied} attendees copied, ${failed} failed`
+            )
+          } else {
+            setToast(`Event created with ${copied} attendees copied`)
+          }
+        } else {
+          setToast("Event created")
+        }
       }
       closeForm()
     } catch (error) {
@@ -160,31 +259,35 @@ export default function EventsPageContent() {
   }
 
   const handleDelete = async (event: Event) => {
-    if (!event._id) return
-    const confirmed = window.confirm(
-      `Delete event "${event.title}"? This cannot be undone.`
-    )
-    if (!confirmed) return
+    setDeleteDialogError(null)
+    setDeleteDialogEvent(event)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialogEvent?._id) {
+      setDeleteDialogError("Event ID is missing")
+      return
+    }
     try {
-      await deleteMutation.trigger({ id: event._id })
+      await deleteMutation.trigger({ id: deleteDialogEvent._id })
       setToast("Event deleted")
+      setDeleteDialogEvent(null)
+      setDeleteDialogError(null)
     } catch (error) {
-      setToast(extractEventErrorMessage(error, "Failed to delete event"))
+      setDeleteDialogError(
+        extractEventErrorMessage(error, "Failed to delete event")
+      )
     }
   }
 
-  const handleGenerateAllPayments = async (event: Event) => {
+  const handleSkipOccurrence = async (event: Event, key: string) => {
     if (!event._id) return
-    setPendingGenerateAllId(event._id)
+    const next = Array.from(new Set([...(event.excludedDates ?? []), key]))
     try {
-      const result = await generateAll.trigger({ eventId: event._id })
-      setToast(
-        `${result.created.length} created, ${result.skipped.length} skipped`
-      )
+      await updateMutation.trigger({ id: event._id, excludedDates: next })
+      setToast(`Occurrence on ${key} skipped`)
     } catch (error) {
-      setToast(extractEventErrorMessage(error, "Failed to generate payments"))
-    } finally {
-      setPendingGenerateAllId(null)
+      setToast(extractEventErrorMessage(error, "Failed to skip occurrence"))
     }
   }
 
@@ -235,8 +338,7 @@ export default function EventsPageContent() {
           events={events}
           onEdit={openEdit}
           onDelete={handleDelete}
-          onGenerateAllPayments={handleGenerateAllPayments}
-          pendingGenerateAllId={pendingGenerateAllId}
+          onCopy={openCopy}
         />
       </div>
 
@@ -250,6 +352,18 @@ export default function EventsPageContent() {
           errorMessage={formError}
           onAttendeeSuccess={(msg) => setToast(msg)}
           onAttendeeError={(msg) => setToast(msg)}
+          onExcludedDatesChange={(excludedDates) => {
+            setFormState((prev) => {
+              if (prev.mode !== "edit" || !prev.event) return prev
+              return {
+                ...prev,
+                event: {
+                  ...prev.event,
+                  excludedDates,
+                },
+              }
+            })
+          }}
         />
       ) : (
         <NewEventModal
@@ -259,6 +373,8 @@ export default function EventsPageContent() {
           isSubmitting={isSubmitting}
           errorMessage={formError}
           defaults={formDefaults}
+          seedValues={copySeed}
+          resetKey={copySeed ? `copy-${copyKey}` : "create"}
         />
       )}
 
@@ -274,14 +390,45 @@ export default function EventsPageContent() {
           onDelete={(e) => {
             void handleDelete(e)
           }}
+          onSkipOccurrence={(e, key) => {
+            void handleSkipOccurrence(e, key)
+          }}
           onAddEventForDay={(day) => {
             setDayModalKey(null)
             openCreate(day)
           }}
-          onGenerateAllPayments={handleGenerateAllPayments}
-          pendingGenerateAllId={pendingGenerateAllId}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!deleteDialogEvent}
+        title="Delete event"
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        variant="danger"
+        isPending={deleteMutation.isMutating}
+        error={deleteDialogError}
+        onCancel={() => {
+          setDeleteDialogEvent(null)
+          setDeleteDialogError(null)
+        }}
+        onConfirm={() => {
+          void handleConfirmDelete()
+        }}
+      >
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          Delete event{" "}
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+            {deleteDialogEvent?.title ?? ""}
+          </span>
+          ? This cannot be undone.
+        </p>
+        {deleteDialogEvent && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Date & Time: {formatEventDateTime(deleteDialogEvent)}
+          </p>
+        )}
+      </ConfirmDialog>
     </PageLayout>
   )
 }

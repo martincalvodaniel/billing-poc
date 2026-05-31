@@ -3,9 +3,11 @@ import type { Event } from "@/lib/domain/entities/event"
 
 export interface EventFormValues {
   title: string
+  tag: string
   year: string
   month: string
   day: string
+  dayOfWeek: string
   hour: string
   minute: string
   durationMinutes: string
@@ -20,9 +22,11 @@ export const inputClass =
 export function emptyValues(): EventFormValues {
   return {
     title: "",
+    tag: "",
     year: "",
     month: "",
     day: "",
+    dayOfWeek: "",
     hour: "",
     minute: "",
     durationMinutes: "",
@@ -50,9 +54,11 @@ export function applyDefaults(
 export function valuesFromEvent(event: Event): EventFormValues {
   const v = emptyValues()
   v.title = event.title
+  v.tag = event.tag ?? ""
   v.year = event.year !== undefined ? String(event.year) : ""
   v.month = event.month !== undefined ? String(event.month) : ""
   v.day = event.day !== undefined ? String(event.day) : ""
+  v.dayOfWeek = event.dayOfWeek !== undefined ? String(event.dayOfWeek) : ""
   v.hour = event.hour !== undefined ? String(event.hour) : ""
   v.minute = event.minute !== undefined ? String(event.minute) : ""
   v.durationMinutes =

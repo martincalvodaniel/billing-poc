@@ -9,7 +9,11 @@ interface EventPricingFieldsProps {
   isSubmitting: boolean
   onChangeField: (
     field: keyof EventFormValues
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  ) => (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => void
 }
 
 export default function EventPricingFields({

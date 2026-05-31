@@ -53,6 +53,19 @@ describe("formatEventDateTime", () => {
     )
   })
 
+  test("formats recurring events as 'Month YYYY Weekday(s) HH:MM'", () => {
+    expect(
+      formatEventDateTime({
+        date: undefined,
+        year: 2026,
+        month: 4,
+        dayOfWeek: 2,
+        hour: 9,
+        minute: 5,
+      })
+    ).toBe("April 2026 Tuesdays 09:05")
+  })
+
   test("formats year only", () => {
     expect(formatEventDateTime({ date: undefined, year: 2026 })).toBe("2026")
   })
@@ -184,6 +197,24 @@ describe("compareEventsChronologicalAsc", () => {
     const noDay = make({ year: 2024, month: 1 })
     const day1 = make({ year: 2024, month: 1, day: 1 })
     expect(sign(compareEventsChronologicalAsc(noDay, day1))).toBe(-1)
+  })
+
+  test("same year/month, recurring events sort by dayOfWeek", () => {
+    const monday = make({ year: 2024, month: 1, dayOfWeek: 1 })
+    const thursday = make({ year: 2024, month: 1, dayOfWeek: 4 })
+    const sunday = make({ year: 2024, month: 1, dayOfWeek: 0 })
+    const sorted = [sunday, thursday, monday].sort(
+      compareEventsChronologicalAsc
+    )
+    expect(sorted.map((e) => e.dayOfWeek)).toEqual([1, 4, 0])
+  })
+
+  test("specific day takes precedence over dayOfWeek fallback", () => {
+    const recurringTuesday = make({ year: 2024, month: 1, dayOfWeek: 2 })
+    const dayOne = make({ year: 2024, month: 1, day: 1 })
+    expect(sign(compareEventsChronologicalAsc(dayOne, recurringTuesday))).toBe(
+      -1
+    )
   })
 
   test("same year, undefined month < month 1", () => {

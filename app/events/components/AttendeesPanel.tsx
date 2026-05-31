@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useSWRConfig } from "swr"
 import ClientFormModal from "@/app/clients/components/ClientFormModal"
@@ -9,23 +8,26 @@ import ClientSelector from "@/app/components/ClientSelector"
 import { EmptyState } from "@/app/components/EmptyState"
 import { CheckIcon } from "@/app/components/icons/CheckIcon"
 import { CopyIcon } from "@/app/components/icons/CopyIcon"
+import PaymentDetailModal from "@/app/month/components/PaymentDetailModal"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
+import type { PaymentMethod } from "@/lib/domain/entities/payment"
 import { useCreateClient } from "@/lib/hooks/useClientMutations"
 import { useClients } from "@/lib/hooks/useClients"
 import {
   isInvoiceGuardError,
   useAddEventAttendee,
   useGenerateEventPayment,
-  useGenerateEventPayments,
   useRemoveEventAttendee,
   useUpdateEventAttendee,
 } from "@/lib/hooks/useEventMutations"
+import { isEventsKey } from "@/lib/hooks/useEvents"
 import {
   buildPaymentKey,
   buildPaymentUrl,
   type PaymentResponse,
 } from "@/lib/hooks/usePayments"
 import { fetcher } from "@/lib/swr-fetcher"
+import type { Payment } from "@/lib/types"
 import AttendeeRow from "./AttendeeRow"
 import {
   buildAttendeeEmailsString,
@@ -53,12 +55,11 @@ export default function AttendeesPanel({
 }: AttendeesPanelProps) {
   const id = useId()
   const eventId = event._id
-  const router = useRouter()
   const { mutate } = useSWRConfig()
   const [pendingPayment, setPendingPayment] = useState<string | null>(null)
-  const [pendingBulk, setPendingBulk] = useState(false)
   const [savingClientId, setSavingClientId] = useState<string | null>(null)
   const [openingPaymentId, setOpeningPaymentId] = useState<string | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [invoiceGuard, setInvoiceGuard] = useState<InvoiceGuardState | null>(
     null
   )
@@ -109,7 +110,6 @@ export default function AttendeesPanel({
   const updateMutation = useUpdateEventAttendee()
   const removeMutation = useRemoveEventAttendee()
   const generateOne = useGenerateEventPayment()
-  const generateAll = useGenerateEventPayments()
   const createClient = useCreateClient()
 
   const seats = totalSeats(event.attendees)
@@ -196,11 +196,18 @@ export default function AttendeesPanel({
     }
   }
 
-  const handleGenerateOne = async (clientId: string) => {
+  const handleGenerateOne = async (
+    clientId: string,
+    paymentMethod: PaymentMethod
+  ) => {
     if (!eventId) return
     setPendingPayment(clientId)
     try {
-      const result = await generateOne.trigger({ eventId, clientId })
+      const result = await generateOne.trigger({
+        eventId,
+        clientId,
+        paymentMethod,
+      })
       if (result.alreadyExists) {
         onActionSuccess("Payment already exists for this attendee")
       } else {
@@ -210,21 +217,6 @@ export default function AttendeesPanel({
       onActionError(extractErrorMessage(error, "Failed to generate payment"))
     } finally {
       setPendingPayment(null)
-    }
-  }
-
-  const handleGenerateAll = async () => {
-    if (!eventId) return
-    setPendingBulk(true)
-    try {
-      const result = await generateAll.trigger({ eventId })
-      onActionSuccess(
-        `${result.created.length} created, ${result.skipped.length} skipped`
-      )
-    } catch (error) {
-      onActionError(extractErrorMessage(error, "Failed to generate payments"))
-    } finally {
-      setPendingBulk(false)
     }
   }
 
@@ -251,14 +243,10 @@ export default function AttendeesPanel({
         { revalidate: false, populateCache: true }
       )
       if (!data) throw new Error("Payment not found")
-      const { date } = data.payment
-      const year = date.slice(0, 4)
-      const month = parseInt(date.slice(5, 7), 10)
-      router.push(
-        `/month?year=${year}&month=${month}&payment=${encodeURIComponent(paymentId)}`
-      )
+      setSelectedPayment(data.payment)
     } catch (error) {
       onActionError(extractErrorMessage(error, "Failed to open payment"))
+    } finally {
       setOpeningPaymentId(null)
     }
   }
@@ -290,16 +278,6 @@ export default function AttendeesPanel({
             )}
           </button>
         </div>
-        {event.attendees.length > 0 && (
-          <button
-            type="button"
-            onClick={handleGenerateAll}
-            disabled={pendingBulk}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {pendingBulk ? "Generating…" : "Generate all payments"}
-          </button>
-        )}
       </div>
 
       {event.attendees.length === 0 ? (
@@ -368,6 +346,20 @@ export default function AttendeesPanel({
         isOpen={!!editingClient}
         onClose={() => setEditingClientId(null)}
       />
+
+      {selectedPayment && (
+        <PaymentDetailModal
+          payment={selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+          onUpdate={(payment) => setSelectedPayment(payment)}
+          onDelete={() => {
+            setSelectedPayment(null)
+            void mutate((key) => isEventsKey(key), undefined, {
+              revalidate: true,
+            })
+          }}
+        />
+      )}
     </section>
   )
 }
