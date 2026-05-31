@@ -2,12 +2,16 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
+import { IconButton } from "@/app/components/IconButton"
+import { TrashIcon } from "@/app/components/icons/TrashIcon"
 import { Modal } from "@/app/components/Modal"
 import { formatEventDateTime } from "@/app/events/components/eventsUi"
 import { useEventByPayment } from "@/lib/hooks/useEventByPayment"
 import {
   useCreatePayment,
+  useDeletePayment,
   useUpdatePayment,
 } from "@/lib/hooks/usePaymentMutations"
 import type { Payment, PaymentFormData } from "@/lib/types"
@@ -29,6 +33,7 @@ interface PaymentDetailModalProps {
   onClose: () => void
   onUpdate?: (payment: Payment) => void
   onCreate?: (payment: { id: string }) => void
+  onDelete?: (paymentId: string) => void
 }
 
 export default function PaymentDetailModal({
@@ -37,6 +42,7 @@ export default function PaymentDetailModal({
   onClose,
   onUpdate,
   onCreate,
+  onDelete,
 }: PaymentDetailModalProps) {
   const router = useRouter()
   const isDuplicate = mode === "duplicate"
@@ -76,10 +82,13 @@ export default function PaymentDetailModal({
 
   const { trigger: updatePayment, isMutating: isUpdating } = useUpdatePayment()
   const { trigger: createPayment, isMutating: isCreating } = useCreatePayment()
+  const { trigger: deletePayment, isMutating: isDeleting } = useDeletePayment()
   const isSaving = isDuplicate ? isCreating : isUpdating
 
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const handleOpenLinkedEvent = () => {
     if (!linkedEvent) return
@@ -93,6 +102,24 @@ export default function PaymentDetailModal({
     }
     onClose()
     router.push(`/events?${params.toString()}`)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!payment._id) {
+      setDeleteError("Payment ID is missing")
+      return
+    }
+
+    try {
+      const id = payment._id.toString()
+      await deletePayment({ id })
+      setShowDeleteConfirm(false)
+      setDeleteError(null)
+      onDelete?.(id)
+      onClose()
+    } catch (err) {
+      setDeleteError(extractPaymentError(err, "Failed to delete payment"))
+    }
   }
 
   const handleSave = async () => {
@@ -163,9 +190,6 @@ export default function PaymentDetailModal({
         clientId: formData.clientId || undefined,
         concepts: formData.concepts,
         vat: vatNumber,
-        // Send raw surcharge (including 0) so the API recompute uses the
-        // user's current value rather than falling back to the previously
-        // stored surcharge. The repository unsets the field when 0.
         surcharge: surchargeNumber,
         discount: discountNumber,
         deliveryNoteRef: formData.deliveryNoteRef || undefined,
@@ -207,91 +231,131 @@ export default function PaymentDetailModal({
   }
 
   return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
-      maxWidth="lg"
-      footer={
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSaving}
-            className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            aria-busy={isSaving}
-            className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800 dark:focus:ring-offset-zinc-900"
-          >
-            {isDuplicate
-              ? isCreating
-                ? "Creating..."
-                : "Create Payment"
-              : isUpdating
-                ? "Saving..."
-                : "Save Changes"}
-          </button>
-        </div>
-      }
-    >
-      <div className="space-y-4">
-        {error && <ErrorBanner>{error}</ErrorBanner>}
-
-        {linkedEvent && (
-          <div className="rounded-md border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/60 dark:bg-blue-900/20">
+    <>
+      <Modal
+        isOpen={true}
+        onClose={onClose}
+        title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
+        maxWidth="lg"
+        headerActions={
+          !isDuplicate ? (
+            <IconButton
+              variant="danger"
+              ariaLabel="Delete payment"
+              title="Delete payment"
+              onClick={() => {
+                setDeleteError(null)
+                setShowDeleteConfirm(true)
+              }}
+            >
+              <TrashIcon />
+            </IconButton>
+          ) : undefined
+        }
+        footer={
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={handleOpenLinkedEvent}
-              className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+              onClick={onClose}
+              disabled={isSaving}
+              className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
             >
-              Open linked event: {linkedEvent.title} ·{" "}
-              {formatEventDateTime(linkedEvent)}
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              aria-busy={isSaving}
+              className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800 dark:focus:ring-offset-zinc-900"
+            >
+              {isDuplicate
+                ? isCreating
+                  ? "Creating..."
+                  : "Create Payment"
+                : isUpdating
+                  ? "Saving..."
+                  : "Save Changes"}
             </button>
           </div>
-        )}
+        }
+      >
+        <div className="space-y-4">
+          {error && <ErrorBanner>{error}</ErrorBanner>}
 
-        <PaymentFormFields
-          formData={formData}
-          suggestedTags={suggestedTags}
-          showTagSuggestions={showTagSuggestions}
-          showAdditionalFields={showAdditionalFields}
-          onSetShowAdditionalFields={setShowAdditionalFields}
-          onChangeField={handleChange}
-          onTagSelect={handleTagSelect}
-          onTagBlur={handleTagBlur}
-          onClientChange={handleClientChange}
-          onAddConcept={addConcept}
-          onRemoveConcept={removeConcept}
-          calculateTotal={calculateTotal}
-          calculateVatAmount={calculateVatAmount}
-          calculateSurchargeAmount={calculateSurchargeAmount}
-          calculateNetAmount={calculateNetAmount}
-          calculateDiscount={calculateDiscount}
-        />
-
-        <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            Invoices
-          </h3>
-
-          {!isDuplicate && (
-            <PaymentInvoicesSection payment={payment} onUpdate={onUpdate} />
+          {linkedEvent && (
+            <div className="rounded-md border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/60 dark:bg-blue-900/20">
+              <button
+                type="button"
+                onClick={handleOpenLinkedEvent}
+                className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+              >
+                Open linked event: {linkedEvent.title} ·{" "}
+                {formatEventDateTime(linkedEvent)}
+              </button>
+            </div>
           )}
 
-          {isDuplicate && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Invoice and receipt links can be added after the duplicated
-              payment is created.
-            </p>
-          )}
+          <PaymentFormFields
+            formData={formData}
+            suggestedTags={suggestedTags}
+            showTagSuggestions={showTagSuggestions}
+            showAdditionalFields={showAdditionalFields}
+            onSetShowAdditionalFields={setShowAdditionalFields}
+            onChangeField={handleChange}
+            onTagSelect={handleTagSelect}
+            onTagBlur={handleTagBlur}
+            onClientChange={handleClientChange}
+            onAddConcept={addConcept}
+            onRemoveConcept={removeConcept}
+            calculateTotal={calculateTotal}
+            calculateVatAmount={calculateVatAmount}
+            calculateSurchargeAmount={calculateSurchargeAmount}
+            calculateNetAmount={calculateNetAmount}
+            calculateDiscount={calculateDiscount}
+          />
+
+          <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              Invoices
+            </h3>
+
+            {!isDuplicate && (
+              <PaymentInvoicesSection payment={payment} onUpdate={onUpdate} />
+            )}
+
+            {isDuplicate && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Invoice and receipt links can be added after the duplicated
+                payment is created.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      {!isDuplicate && (
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          title="Delete payment"
+          confirmLabel="Delete"
+          pendingLabel="Deleting…"
+          variant="danger"
+          isPending={isDeleting}
+          error={deleteError}
+          onCancel={() => {
+            setShowDeleteConfirm(false)
+            setDeleteError(null)
+          }}
+          onConfirm={() => {
+            void handleConfirmDelete()
+          }}
+        >
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Delete this payment? This action cannot be undone.
+          </p>
+        </ConfirmDialog>
+      )}
+    </>
   )
 }

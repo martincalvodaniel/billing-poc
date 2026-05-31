@@ -6,6 +6,7 @@ import type { PaymentRepository } from "@/lib/domain/ports/payment-repository"
 import {
   generateAttendeePayment,
   recomputeAttendeePayment,
+  unlinkPaymentFromEvents,
 } from "./event-payment-service"
 
 function makeEvent(overrides: Partial<Event> = {}): Event {
@@ -361,5 +362,144 @@ describe("generateAttendeePayment", () => {
 
     expect(creates).toHaveLength(1)
     expect(creates[0].data.paymentMethod).toBe("bank_transfer")
+  })
+})
+
+describe("unlinkPaymentFromEvents", () => {
+  test("clears paymentId for all attendees linked to the deleted payment", async () => {
+    const now = new Date("2026-05-14T00:00:00Z")
+    const eventRepoCalls: Array<{
+      eventId: string
+      clientId: string
+      patch: { seats?: number; paymentId?: string | null }
+    }> = []
+
+    const eventsRepo: EventRepository = {
+      findAll: async () => [
+        {
+          _id: "ev1",
+          title: "Event 1",
+          year: 2026,
+          month: 5,
+          day: 14,
+          date: "2026-05-14",
+          durationMinutes: 60,
+          maxAttendees: 10,
+          pricePerSeat: 50,
+          vatRate: 0,
+          attendees: [
+            {
+              clientId: "c1",
+              seats: 1,
+              paymentId: "pay-1",
+              addedAt: now,
+            },
+            {
+              clientId: "c2",
+              seats: 1,
+              paymentId: "pay-2",
+              addedAt: now,
+            },
+          ],
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          _id: "ev2",
+          title: "Event 2",
+          year: 2026,
+          month: 5,
+          day: 15,
+          date: "2026-05-15",
+          durationMinutes: 60,
+          maxAttendees: 10,
+          pricePerSeat: 50,
+          vatRate: 0,
+          attendees: [
+            {
+              clientId: "c3",
+              seats: 2,
+              paymentId: "pay-1",
+              addedAt: now,
+            },
+          ],
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+      findById: async () => null,
+      create: async () => "ev-new",
+      update: async () => true,
+      delete: async () => true,
+      addAttendee: async () => true,
+      updateAttendee: async (eventId, clientId, patch) => {
+        eventRepoCalls.push({ eventId, clientId, patch })
+        return true
+      },
+      removeAttendee: async () => true,
+    }
+
+    const result = await unlinkPaymentFromEvents("pay-1", {
+      events: eventsRepo,
+    })
+
+    expect(result).toEqual({ updatedAttendees: 2, updatedEvents: 2 })
+    expect(eventRepoCalls).toEqual([
+      { eventId: "ev1", clientId: "c1", patch: { paymentId: null } },
+      { eventId: "ev2", clientId: "c3", patch: { paymentId: null } },
+    ])
+  })
+
+  test("returns zero updates when no attendee references the payment", async () => {
+    const now = new Date("2026-05-14T00:00:00Z")
+    const eventRepoCalls: Array<{
+      eventId: string
+      clientId: string
+      patch: { seats?: number; paymentId?: string | null }
+    }> = []
+
+    const eventsRepo: EventRepository = {
+      findAll: async () => [
+        {
+          _id: "ev1",
+          title: "Event 1",
+          year: 2026,
+          month: 5,
+          day: 14,
+          date: "2026-05-14",
+          durationMinutes: 60,
+          maxAttendees: 10,
+          pricePerSeat: 50,
+          vatRate: 0,
+          attendees: [
+            {
+              clientId: "c1",
+              seats: 1,
+              paymentId: "pay-2",
+              addedAt: now,
+            },
+          ],
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+      findById: async () => null,
+      create: async () => "ev-new",
+      update: async () => true,
+      delete: async () => true,
+      addAttendee: async () => true,
+      updateAttendee: async (eventId, clientId, patch) => {
+        eventRepoCalls.push({ eventId, clientId, patch })
+        return true
+      },
+      removeAttendee: async () => true,
+    }
+
+    const result = await unlinkPaymentFromEvents("pay-1", {
+      events: eventsRepo,
+    })
+
+    expect(result).toEqual({ updatedAttendees: 0, updatedEvents: 0 })
+    expect(eventRepoCalls).toEqual([])
   })
 })

@@ -355,6 +355,12 @@ export default function MonthlyPaymentsView({
               payment={selectedPayment}
               onClose={closeEditModal}
               onUpdate={handlePaymentUpdated}
+              onDelete={() => {
+                setEditPaymentId(null)
+                setSuccessMessage("Payment deleted successfully")
+                setShowSuccess(true)
+                setTimeout(() => setShowSuccess(false), 4000)
+              }}
             />
           )
         })()}

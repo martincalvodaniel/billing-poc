@@ -20,6 +20,7 @@ import {
   useRemoveEventAttendee,
   useUpdateEventAttendee,
 } from "@/lib/hooks/useEventMutations"
+import { isEventsKey } from "@/lib/hooks/useEvents"
 import {
   buildPaymentKey,
   buildPaymentUrl,
@@ -351,6 +352,12 @@ export default function AttendeesPanel({
           payment={selectedPayment}
           onClose={() => setSelectedPayment(null)}
           onUpdate={(payment) => setSelectedPayment(payment)}
+          onDelete={() => {
+            setSelectedPayment(null)
+            void mutate((key) => isEventsKey(key), undefined, {
+              revalidate: true,
+            })
+          }}
         />
       )}
     </section>

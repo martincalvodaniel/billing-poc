@@ -294,6 +294,11 @@ export interface RecomputeAllResult {
   missing: string[]
 }
 
+export interface UnlinkPaymentFromEventsResult {
+  updatedAttendees: number
+  updatedEvents: number
+}
+
 /**
  * Refreshes every attendee's linked payment after the event itself
  * changes (e.g. price, VAT rate, dayOfWeek, excludedDates). Attendees
@@ -330,4 +335,40 @@ export async function recomputeAllAttendeePayments(
   }
 
   return { updated, skippedInvoiced, missing }
+}
+
+/**
+ * Removes a deleted payment reference from all event attendees that point to it.
+ */
+export async function unlinkPaymentFromEvents(
+  paymentId: string,
+  deps: { events: EventRepository }
+): Promise<UnlinkPaymentFromEventsResult> {
+  const allEvents = await deps.events.findAll({})
+  let updatedAttendees = 0
+  const updatedEventIds = new Set<string>()
+
+  for (const event of allEvents) {
+    if (!event._id) continue
+
+    for (const attendee of event.attendees) {
+      if (attendee.paymentId !== paymentId) continue
+
+      const updated = await deps.events.updateAttendee(
+        event._id,
+        attendee.clientId,
+        { paymentId: null }
+      )
+
+      if (updated) {
+        updatedAttendees += 1
+        updatedEventIds.add(event._id)
+      }
+    }
+  }
+
+  return {
+    updatedAttendees,
+    updatedEvents: updatedEventIds.size,
+  }
 }
