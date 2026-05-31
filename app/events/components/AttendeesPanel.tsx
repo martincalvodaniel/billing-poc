@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useEffect, useId, useMemo, useRef, useState } from "react"
 import { useSWRConfig } from "swr"
 import ClientFormModal from "@/app/clients/components/ClientFormModal"
@@ -9,6 +8,7 @@ import ClientSelector from "@/app/components/ClientSelector"
 import { EmptyState } from "@/app/components/EmptyState"
 import { CheckIcon } from "@/app/components/icons/CheckIcon"
 import { CopyIcon } from "@/app/components/icons/CopyIcon"
+import PaymentDetailModal from "@/app/month/components/PaymentDetailModal"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import type { PaymentMethod } from "@/lib/domain/entities/payment"
 import { useCreateClient } from "@/lib/hooks/useClientMutations"
@@ -26,6 +26,7 @@ import {
   type PaymentResponse,
 } from "@/lib/hooks/usePayments"
 import { fetcher } from "@/lib/swr-fetcher"
+import type { Payment } from "@/lib/types"
 import AttendeeRow from "./AttendeeRow"
 import {
   buildAttendeeEmailsString,
@@ -53,11 +54,11 @@ export default function AttendeesPanel({
 }: AttendeesPanelProps) {
   const id = useId()
   const eventId = event._id
-  const router = useRouter()
   const { mutate } = useSWRConfig()
   const [pendingPayment, setPendingPayment] = useState<string | null>(null)
   const [savingClientId, setSavingClientId] = useState<string | null>(null)
   const [openingPaymentId, setOpeningPaymentId] = useState<string | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [invoiceGuard, setInvoiceGuard] = useState<InvoiceGuardState | null>(
     null
   )
@@ -241,14 +242,10 @@ export default function AttendeesPanel({
         { revalidate: false, populateCache: true }
       )
       if (!data) throw new Error("Payment not found")
-      const { date } = data.payment
-      const year = date.slice(0, 4)
-      const month = parseInt(date.slice(5, 7), 10)
-      router.push(
-        `/month?year=${year}&month=${month}&payment=${encodeURIComponent(paymentId)}`
-      )
+      setSelectedPayment(data.payment)
     } catch (error) {
       onActionError(extractErrorMessage(error, "Failed to open payment"))
+    } finally {
       setOpeningPaymentId(null)
     }
   }
@@ -348,6 +345,14 @@ export default function AttendeesPanel({
         isOpen={!!editingClient}
         onClose={() => setEditingClientId(null)}
       />
+
+      {selectedPayment && (
+        <PaymentDetailModal
+          payment={selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+          onUpdate={(payment) => setSelectedPayment(payment)}
+        />
+      )}
     </section>
   )
 }
