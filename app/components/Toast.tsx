@@ -7,7 +7,7 @@ interface ToastProps {
 
 export default function Toast({ message, onClose }: ToastProps) {
   return (
-    <div className="fixed left-1/2 top-8 z-50 -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
+    <div className="fixed left-1/2 top-8 z-[60] -translate-x-1/2 animate-[slideDown_0.3s_ease-out]">
       <div
         className="flex items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 shadow-lg dark:border-green-800 dark:from-green-950/90 dark:to-emerald-950/90"
         role="status"

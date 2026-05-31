@@ -291,6 +291,28 @@ export default function EventsPageContent() {
     }
   }
 
+  const handlePersistExcludedDates = async (excludedDates: string[]) => {
+    const eventId = formState.mode === "edit" ? formState.event?._id : undefined
+    if (!eventId) return
+
+    // Keep edit-form state in sync so a later "Save changes" of unrelated
+    // fields does not revert the excludedDates we are persisting now.
+    setFormState((prev) => {
+      if (prev.mode !== "edit" || !prev.event) return prev
+      return {
+        ...prev,
+        event: { ...prev.event, excludedDates },
+      }
+    })
+
+    try {
+      await updateMutation.trigger({ id: eventId, excludedDates })
+      setToast("Occurrences updated")
+    } catch (error) {
+      setToast(extractEventErrorMessage(error, "Failed to update occurrences"))
+    }
+  }
+
   const isSubmitting =
     formState.mode === "edit"
       ? updateMutation.isMutating
@@ -353,16 +375,7 @@ export default function EventsPageContent() {
           onAttendeeSuccess={(msg) => setToast(msg)}
           onAttendeeError={(msg) => setToast(msg)}
           onExcludedDatesChange={(excludedDates) => {
-            setFormState((prev) => {
-              if (prev.mode !== "edit" || !prev.event) return prev
-              return {
-                ...prev,
-                event: {
-                  ...prev.event,
-                  excludedDates,
-                },
-              }
-            })
+            void handlePersistExcludedDates(excludedDates)
           }}
         />
       ) : (
