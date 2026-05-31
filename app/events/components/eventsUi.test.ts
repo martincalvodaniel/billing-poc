@@ -199,6 +199,24 @@ describe("compareEventsChronologicalAsc", () => {
     expect(sign(compareEventsChronologicalAsc(noDay, day1))).toBe(-1)
   })
 
+  test("same year/month, recurring events sort by dayOfWeek", () => {
+    const monday = make({ year: 2024, month: 1, dayOfWeek: 1 })
+    const thursday = make({ year: 2024, month: 1, dayOfWeek: 4 })
+    const sunday = make({ year: 2024, month: 1, dayOfWeek: 0 })
+    const sorted = [sunday, thursday, monday].sort(
+      compareEventsChronologicalAsc
+    )
+    expect(sorted.map((e) => e.dayOfWeek)).toEqual([1, 4, 0])
+  })
+
+  test("specific day takes precedence over dayOfWeek fallback", () => {
+    const recurringTuesday = make({ year: 2024, month: 1, dayOfWeek: 2 })
+    const dayOne = make({ year: 2024, month: 1, day: 1 })
+    expect(sign(compareEventsChronologicalAsc(dayOne, recurringTuesday))).toBe(
+      -1
+    )
+  })
+
   test("same year, undefined month < month 1", () => {
     const noMonth = make({ year: 2024 })
     const m1 = make({ year: 2024, month: 1 })

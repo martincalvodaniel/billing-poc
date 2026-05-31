@@ -182,15 +182,24 @@ export function parseTimeOfDay(value: string): {
  * `createdAt` ascending; undefined `createdAt` is treated as equal (stable).
  */
 export function compareEventsChronologicalAsc(
-  a: Pick<Event, "year" | "month" | "day" | "hour" | "minute" | "createdAt">,
-  b: Pick<Event, "year" | "month" | "day" | "hour" | "minute" | "createdAt">
+  a: Pick<
+    Event,
+    "year" | "month" | "day" | "dayOfWeek" | "hour" | "minute" | "createdAt"
+  >,
+  b: Pick<
+    Event,
+    "year" | "month" | "day" | "dayOfWeek" | "hour" | "minute" | "createdAt"
+  >
 ): number {
   const byYear = cmpOptUndefinedFirst(a.year, b.year)
   if (byYear !== 0) return byYear
   const byMonth = cmpOptUndefinedFirst(a.month, b.month)
   if (byMonth !== 0) return byMonth
-  const byDay = cmpOptUndefinedFirst(a.day, b.day)
-  if (byDay !== 0) return byDay
+  const byDayOrWeek = cmpOptUndefinedFirst(
+    dayOrWeekSortValue(a.day, a.dayOfWeek),
+    dayOrWeekSortValue(b.day, b.dayOfWeek)
+  )
+  if (byDayOrWeek !== 0) return byDayOrWeek
   const byHour = cmpOptUndefinedFirst(a.hour, b.hour)
   if (byHour !== 0) return byHour
   const byMinute = cmpOptUndefinedFirst(a.minute, b.minute)
@@ -209,4 +218,14 @@ function cmpOptUndefinedFirst(
   if (a === undefined) return -1
   if (b === undefined) return 1
   return a - b
+}
+
+function dayOrWeekSortValue(
+  day: number | undefined,
+  dayOfWeek: number | undefined
+): number | undefined {
+  if (day !== undefined) return day
+  if (dayOfWeek === undefined) return undefined
+  if (dayOfWeek < 0 || dayOfWeek > 6) return undefined
+  return dayOfWeek === 0 ? 7 : dayOfWeek
 }
