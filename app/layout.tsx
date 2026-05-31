@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 
 // biome-ignore lint/style/useComponentExportOnlyModules: Next.js requires metadata export alongside layout component
 export const metadata: Metadata = {
-  title: "Billing POC",
-  description: "Billing proof of concept application",
+  title: "Billing",
+  description: "Billing application",
 }
 
 export default function RootLayout({
