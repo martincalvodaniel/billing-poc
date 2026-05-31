@@ -66,11 +66,12 @@ export default function MonthlyPaymentsView({
 
   const [sort, setSort] = useState<PaymentSortState>({
     sortBy: "day",
-    sortDir: "desc",
+    sortDir: "asc",
   })
   const [filters, setFilters] = useState<PaymentFilters>({
     type: "all",
     hasInvoice: "all",
+    hasReceipt: "all",
     tags: [],
   })
 
@@ -102,6 +103,13 @@ export default function MonthlyPaymentsView({
     setFilters((prev) => ({
       ...prev,
       hasInvoice: toggleInvoiceFilter(prev.hasInvoice, hasInvoice),
+    }))
+  }, [])
+
+  const handleReceiptFilterToggle = useCallback((hasReceipt: boolean) => {
+    setFilters((prev) => ({
+      ...prev,
+      hasReceipt: toggleInvoiceFilter(prev.hasReceipt, hasReceipt),
     }))
   }, [])
 
@@ -317,9 +325,11 @@ export default function MonthlyPaymentsView({
         onSortChange={handleSortChange}
         typeFilter={filters.type}
         hasInvoiceFilter={filters.hasInvoice}
+        hasReceiptFilter={filters.hasReceipt}
         selectedTags={filters.tags}
         onTypeFilterToggle={handleTypeFilterToggle}
         onInvoiceFilterToggle={handleInvoiceFilterToggle}
+        onReceiptFilterToggle={handleReceiptFilterToggle}
         onTagFilterToggle={handleTagToggle}
       />
 

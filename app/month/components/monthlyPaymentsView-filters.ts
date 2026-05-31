@@ -15,10 +15,12 @@ export type PaymentSortDir = "asc" | "desc"
 export type PaymentTypeFilter = "all" | "income" | "outcome"
 
 export type PaymentInvoiceFilter = "all" | "yes" | "no"
+export type PaymentInvoiceKind = "invoice" | "receipt"
 
 export interface PaymentFilters {
   type: PaymentTypeFilter
   hasInvoice: PaymentInvoiceFilter
+  hasReceipt: PaymentInvoiceFilter
   tags: string[]
 }
 
@@ -52,6 +54,33 @@ export function paymentHasInvoice(payment: Payment): boolean {
   return (payment.invoices?.length ?? 0) > 0 || payment.invoice !== undefined
 }
 
+function isInvoiceKind(type: string): boolean {
+  return (
+    type === "Invoice" ||
+    type === "RectificativeInvoice" ||
+    type === "SimpleInvoice" ||
+    type === "RectificativeSimpleInvoice"
+  )
+}
+
+function isReceiptKind(type: string): boolean {
+  return type === "Receipt"
+}
+
+export function paymentHasInvoiceKind(
+  payment: Payment,
+  kind: PaymentInvoiceKind
+): boolean {
+  const entries = [
+    ...(payment.invoice ? [payment.invoice] : []),
+    ...(payment.invoices ?? []),
+  ]
+  if (kind === "invoice") {
+    return entries.some((entry) => isInvoiceKind(entry.type))
+  }
+  return entries.some((entry) => isReceiptKind(entry.type))
+}
+
 export function derivePaymentTagOptions(payments: Payment[]): string[] {
   const tags = new Set<string>()
   for (const p of payments) {
@@ -67,9 +96,14 @@ export function filterPayments(
   return payments.filter((p) => {
     if (filters.type !== "all" && p.type !== filters.type) return false
     if (filters.hasInvoice !== "all") {
-      const has = paymentHasInvoice(p)
+      const has = paymentHasInvoiceKind(p, "invoice")
       if (filters.hasInvoice === "yes" && !has) return false
       if (filters.hasInvoice === "no" && has) return false
+    }
+    if (filters.hasReceipt !== "all") {
+      const has = paymentHasInvoiceKind(p, "receipt")
+      if (filters.hasReceipt === "yes" && !has) return false
+      if (filters.hasReceipt === "no" && has) return false
     }
     if (filters.tags.length > 0 && !filters.tags.includes(p.tag ?? ""))
       return false

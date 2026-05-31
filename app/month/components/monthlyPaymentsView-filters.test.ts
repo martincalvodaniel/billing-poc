@@ -6,6 +6,7 @@ import {
   filterPayments,
   nextSortState,
   paymentHasInvoice,
+  paymentHasInvoiceKind,
   sortPayments,
   toggleInvoiceFilter,
   toggleTagFilter,
@@ -77,6 +78,26 @@ describe("paymentHasInvoice", () => {
   })
 })
 
+describe("paymentHasInvoiceKind", () => {
+  test("detects invoice-family entries", () => {
+    const payment = makePayment({
+      id: "1",
+      invoices: [{ ...sampleInvoice, type: "SimpleInvoice" }],
+    })
+    expect(paymentHasInvoiceKind(payment, "invoice")).toBe(true)
+    expect(paymentHasInvoiceKind(payment, "receipt")).toBe(false)
+  })
+
+  test("detects receipt entries", () => {
+    const payment = makePayment({
+      id: "1",
+      invoices: [{ ...sampleInvoice, type: "Receipt" }],
+    })
+    expect(paymentHasInvoiceKind(payment, "invoice")).toBe(false)
+    expect(paymentHasInvoiceKind(payment, "receipt")).toBe(true)
+  })
+})
+
 describe("derivePaymentTagOptions", () => {
   test("returns unique, sorted, non-empty tags", () => {
     const payments = [
@@ -116,6 +137,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "all",
       hasInvoice: "all",
+      hasReceipt: "all",
       tags: [],
     })
     expect(out).toHaveLength(4)
@@ -125,6 +147,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "income",
       hasInvoice: "all",
+      hasReceipt: "all",
       tags: [],
     })
     expect(out.map((p) => p._id)).toEqual(["1", "3"] as unknown as ObjectId[])
@@ -134,6 +157,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "outcome",
       hasInvoice: "all",
+      hasReceipt: "all",
       tags: [],
     })
     expect(out.map((p) => p._id)).toEqual(["2", "4"] as unknown as ObjectId[])
@@ -143,6 +167,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "all",
       hasInvoice: "yes",
+      hasReceipt: "all",
       tags: [],
     })
     expect(out.map((p) => p._id)).toEqual(["1", "3"] as unknown as ObjectId[])
@@ -152,6 +177,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "all",
       hasInvoice: "no",
+      hasReceipt: "all",
       tags: [],
     })
     expect(out.map((p) => p._id)).toEqual(["2", "4"] as unknown as ObjectId[])
@@ -161,6 +187,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "all",
       hasInvoice: "all",
+      hasReceipt: "all",
       tags: ["Food"],
     })
     expect(out.map((p) => p._id)).toEqual(["2", "3"] as unknown as ObjectId[])
@@ -170,6 +197,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "all",
       hasInvoice: "all",
+      hasReceipt: "all",
       tags: ["Rent"],
     })
     expect(out.map((p) => p._id)).toEqual(["1"] as unknown as ObjectId[])
@@ -179,6 +207,7 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "income",
       hasInvoice: "yes",
+      hasReceipt: "all",
       tags: ["Food"],
     })
     expect(out.map((p) => p._id)).toEqual(["3"] as unknown as ObjectId[])
@@ -188,9 +217,25 @@ describe("filterPayments", () => {
     const out = filterPayments(base, {
       type: "all",
       hasInvoice: "all",
+      hasReceipt: "all",
       tags: ["Rent", "Food"],
     })
     expect(out).toHaveLength(3)
+  })
+
+  test("hasReceipt=yes filters receipt payments", () => {
+    const receipt = { ...sampleInvoice, type: "Receipt" as const }
+    const withReceipt = [
+      ...base,
+      makePayment({ id: "5", type: "income", invoices: [receipt] }),
+    ]
+    const out = filterPayments(withReceipt, {
+      type: "all",
+      hasInvoice: "all",
+      hasReceipt: "yes",
+      tags: [],
+    })
+    expect(out.map((p) => p._id)).toEqual(["5"] as unknown as ObjectId[])
   })
 })
 
