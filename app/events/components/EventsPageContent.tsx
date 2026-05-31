@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic"
 import { useMemo, useState } from "react"
 import AddButton from "@/app/components/AddButton"
+import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import PageLayout from "@/app/components/PageLayout"
 import Toast from "@/app/components/Toast"
 import MonthPicker from "@/app/month/components/MonthPicker"
@@ -25,6 +26,7 @@ import {
   toOptionalNumber,
   toRequiredNumber,
 } from "./eventsPageContent-utils"
+import { formatEventDateTime } from "./eventsUi"
 
 const DayEventsModal = dynamic(() => import("./DayEventsModal"), {
   ssr: false,
@@ -53,6 +55,10 @@ export default function EventsPageContent() {
   const [copySeed, setCopySeed] = useState<EventFormValues | null>(null)
   const [copyKey, setCopyKey] = useState(0)
   const [copySourceEvent, setCopySourceEvent] = useState<Event | null>(null)
+  const [deleteDialogEvent, setDeleteDialogEvent] = useState<Event | null>(null)
+  const [deleteDialogError, setDeleteDialogError] = useState<string | null>(
+    null
+  )
 
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1
@@ -211,16 +217,24 @@ export default function EventsPageContent() {
   }
 
   const handleDelete = async (event: Event) => {
-    if (!event._id) return
-    const confirmed = window.confirm(
-      `Delete event "${event.title}"? This cannot be undone.`
-    )
-    if (!confirmed) return
+    setDeleteDialogError(null)
+    setDeleteDialogEvent(event)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialogEvent?._id) {
+      setDeleteDialogError("Event ID is missing")
+      return
+    }
     try {
-      await deleteMutation.trigger({ id: event._id })
+      await deleteMutation.trigger({ id: deleteDialogEvent._id })
       setToast("Event deleted")
+      setDeleteDialogEvent(null)
+      setDeleteDialogError(null)
     } catch (error) {
-      setToast(extractEventErrorMessage(error, "Failed to delete event"))
+      setDeleteDialogError(
+        extractEventErrorMessage(error, "Failed to delete event")
+      )
     }
   }
 
@@ -331,6 +345,36 @@ export default function EventsPageContent() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!deleteDialogEvent}
+        title="Delete event"
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        variant="danger"
+        isPending={deleteMutation.isMutating}
+        error={deleteDialogError}
+        onCancel={() => {
+          setDeleteDialogEvent(null)
+          setDeleteDialogError(null)
+        }}
+        onConfirm={() => {
+          void handleConfirmDelete()
+        }}
+      >
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          Delete event{" "}
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+            {deleteDialogEvent?.title ?? ""}
+          </span>
+          ? This cannot be undone.
+        </p>
+        {deleteDialogEvent && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Date & Time: {formatEventDateTime(deleteDialogEvent)}
+          </p>
+        )}
+      </ConfirmDialog>
     </PageLayout>
   )
 }
