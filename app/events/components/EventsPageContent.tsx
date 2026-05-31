@@ -9,6 +9,7 @@ import MonthPicker from "@/app/month/components/MonthPicker"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatMonthYear } from "@/lib/formatters"
 import {
+  useAddEventAttendee,
   useCreateEvent,
   useDeleteEvent,
   useUpdateEvent,
@@ -51,6 +52,7 @@ export default function EventsPageContent() {
   const [prefillDay, setPrefillDay] = useState<number | null>(null)
   const [copySeed, setCopySeed] = useState<EventFormValues | null>(null)
   const [copyKey, setCopyKey] = useState(0)
+  const [copySourceEvent, setCopySourceEvent] = useState<Event | null>(null)
 
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1
@@ -60,6 +62,7 @@ export default function EventsPageContent() {
   const createMutation = useCreateEvent()
   const updateMutation = useUpdateEvent()
   const deleteMutation = useDeleteEvent()
+  const addAttendeeMutation = useAddEventAttendee()
 
   const currentMonthStart = useMemo(() => {
     const today = new Date()
@@ -103,6 +106,7 @@ export default function EventsPageContent() {
     setFormError(null)
     setPrefillDay(prefill ?? null)
     setCopySeed(null)
+    setCopySourceEvent(null)
     setFormState({ open: true, mode: "create" })
   }
   const openCopy = (event: Event) => {
@@ -110,6 +114,7 @@ export default function EventsPageContent() {
     setPrefillDay(null)
     const seed = valuesFromEvent(event)
     setCopySeed(seed)
+    setCopySourceEvent(event)
     setCopyKey((n) => n + 1)
     setFormState({ open: true, mode: "create" })
   }
@@ -122,6 +127,7 @@ export default function EventsPageContent() {
     setFormError(null)
     setPrefillDay(null)
     setCopySeed(null)
+    setCopySourceEvent(null)
   }
 
   const formDefaults = useMemo<Partial<EventFormValues>>(
@@ -157,7 +163,7 @@ export default function EventsPageContent() {
         })
         setToast("Event updated")
       } else {
-        await createMutation.trigger({
+        const created = await createMutation.trigger({
           title: values.title.trim(),
           tag: values.tag.trim() || undefined,
           year: toOptionalNumber(values.year),
@@ -171,7 +177,32 @@ export default function EventsPageContent() {
           pricePerSeat: toRequiredNumber(values.pricePerSeat),
           vatRate: toRequiredNumber(values.vatRate),
         })
-        setToast("Event created")
+
+        if (
+          copySourceEvent?.dayOfWeek !== undefined &&
+          copySourceEvent.attendees.length > 0
+        ) {
+          const results = await Promise.allSettled(
+            copySourceEvent.attendees.map((attendee) =>
+              addAttendeeMutation.trigger({
+                eventId: created.id,
+                clientId: attendee.clientId,
+                seats: attendee.seats,
+              })
+            )
+          )
+          const copied = results.filter((r) => r.status === "fulfilled").length
+          const failed = results.length - copied
+          if (failed > 0) {
+            setToast(
+              `Event created. ${copied} attendees copied, ${failed} failed`
+            )
+          } else {
+            setToast(`Event created with ${copied} attendees copied`)
+          }
+        } else {
+          setToast("Event created")
+        }
       }
       closeForm()
     } catch (error) {
