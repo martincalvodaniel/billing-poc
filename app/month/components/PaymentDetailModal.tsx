@@ -1,8 +1,11 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
+import { formatEventDateTime } from "@/app/events/components/eventsUi"
+import { useEventByPayment } from "@/lib/hooks/useEventByPayment"
 import {
   useCreatePayment,
   useUpdatePayment,
@@ -35,7 +38,10 @@ export default function PaymentDetailModal({
   onUpdate,
   onCreate,
 }: PaymentDetailModalProps) {
+  const router = useRouter()
   const isDuplicate = mode === "duplicate"
+  const paymentId = payment._id?.toString() ?? null
+  const { event: linkedEvent } = useEventByPayment(paymentId)
   const initialFormData: PaymentFormData = isDuplicate
     ? buildDuplicateSeed(payment)
     : {
@@ -74,6 +80,20 @@ export default function PaymentDetailModal({
 
   const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
+
+  const handleOpenLinkedEvent = () => {
+    if (!linkedEvent) return
+    const params = new URLSearchParams()
+    params.set("eventId", linkedEvent.id)
+    if (typeof linkedEvent.year === "number") {
+      params.set("year", String(linkedEvent.year))
+    }
+    if (typeof linkedEvent.month === "number") {
+      params.set("month", String(linkedEvent.month))
+    }
+    onClose()
+    router.push(`/events?${params.toString()}`)
+  }
 
   const handleSave = async () => {
     setError(null)
@@ -222,6 +242,19 @@ export default function PaymentDetailModal({
     >
       <div className="space-y-4">
         {error && <ErrorBanner>{error}</ErrorBanner>}
+
+        {linkedEvent && (
+          <div className="rounded-md border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/60 dark:bg-blue-900/20">
+            <button
+              type="button"
+              onClick={handleOpenLinkedEvent}
+              className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+            >
+              Open linked event: {linkedEvent.title} ·{" "}
+              {formatEventDateTime(linkedEvent)}
+            </button>
+          </div>
+        )}
 
         <PaymentFormFields
           formData={formData}

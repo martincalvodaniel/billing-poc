@@ -1,7 +1,8 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import AddButton from "@/app/components/AddButton"
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import PageLayout from "@/app/components/PageLayout"
@@ -39,6 +40,8 @@ const NewEventModal = dynamic(() => import("./NewEventModal"), {
 })
 
 export default function EventsPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const today = new Date()
     return new Date(today.getFullYear(), today.getMonth(), 1)
@@ -124,10 +127,48 @@ export default function EventsPageContent() {
     setCopyKey((n) => n + 1)
     setFormState({ open: true, mode: "create" })
   }
-  const openEdit = (event: Event) => {
+  const openEdit = useCallback((event: Event) => {
     setFormError(null)
     setFormState({ open: true, mode: "edit", event })
-  }
+  }, [])
+
+  const requestedEventId = searchParams.get("eventId")
+  const requestedYear = Number(searchParams.get("year"))
+  const requestedMonth = Number(searchParams.get("month"))
+
+  useEffect(() => {
+    if (!requestedEventId) return
+    if (
+      Number.isInteger(requestedYear) &&
+      Number.isInteger(requestedMonth) &&
+      requestedMonth >= 1 &&
+      requestedMonth <= 12
+    ) {
+      setSelectedDate((prev) => {
+        if (
+          prev.getFullYear() === requestedYear &&
+          prev.getMonth() + 1 === requestedMonth
+        ) {
+          return prev
+        }
+        return new Date(requestedYear, requestedMonth - 1, 1)
+      })
+    }
+  }, [requestedEventId, requestedYear, requestedMonth])
+
+  useEffect(() => {
+    if (!requestedEventId) return
+    const target = events.find((event) => event._id === requestedEventId)
+    if (!target) return
+
+    openEdit(target)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("eventId")
+    const next = params.toString()
+    router.replace(next ? `/events?${next}` : "/events")
+  }, [requestedEventId, events, router, searchParams, openEdit])
+
   const closeForm = () => {
     setFormState((prev) => ({ ...prev, open: false }))
     setFormError(null)
