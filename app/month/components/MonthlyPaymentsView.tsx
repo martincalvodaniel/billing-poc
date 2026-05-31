@@ -219,6 +219,12 @@ export default function MonthlyPaymentsView({
   const {
     totalIncome,
     totalOutcome,
+    totalVat,
+    totalVatIncome,
+    totalVatOutcome,
+    totalNet,
+    totalNetIncome,
+    totalNetOutcome,
     incomeCount,
     outcomeCount,
     incomeByTag,
@@ -226,6 +232,10 @@ export default function MonthlyPaymentsView({
   } = useMemo(() => {
     let income = 0
     let outcome = 0
+    let vatIncome = 0
+    let vatOutcome = 0
+    let netIncome = 0
+    let netOutcome = 0
     let incCount = 0
     let outCount = 0
     const incByTag: Record<string, number> = {}
@@ -234,10 +244,14 @@ export default function MonthlyPaymentsView({
       const tag = p.tag || "Untagged"
       if (p.type === "income") {
         income += p.total
+        vatIncome += p.vatAmount
+        netIncome += p.netAmount
         incByTag[tag] = (incByTag[tag] || 0) + p.total
         incCount++
       } else {
         outcome += p.total
+        vatOutcome += p.vatAmount
+        netOutcome += p.netAmount
         outByTag[tag] = (outByTag[tag] || 0) + p.total
         outCount++
       }
@@ -245,14 +259,18 @@ export default function MonthlyPaymentsView({
     return {
       totalIncome: income,
       totalOutcome: outcome,
+      totalVat: vatIncome - vatOutcome,
+      totalVatIncome: vatIncome,
+      totalVatOutcome: vatOutcome,
+      totalNet: netIncome - netOutcome,
+      totalNetIncome: netIncome,
+      totalNetOutcome: netOutcome,
       incomeCount: incCount,
       outcomeCount: outCount,
       incomeByTag: incByTag,
       outcomeByTag: outByTag,
     }
   }, [payments])
-
-  const netBalance = totalIncome - totalOutcome
 
   if (isLoading) {
     return (
@@ -284,7 +302,12 @@ export default function MonthlyPaymentsView({
         <PaymentsSummary
           totalIncome={totalIncome}
           totalOutcome={totalOutcome}
-          netBalance={netBalance}
+          totalVat={totalVat}
+          totalVatIncome={totalVatIncome}
+          totalVatOutcome={totalVatOutcome}
+          totalNet={totalNet}
+          totalNetIncome={totalNetIncome}
+          totalNetOutcome={totalNetOutcome}
           incomeCount={incomeCount}
           outcomeCount={outcomeCount}
           typeFilter={filters.type}
