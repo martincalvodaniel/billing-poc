@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useCallback } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatDate } from "@/lib/formatters"
 import EventFormShell from "./EventFormShell"
@@ -20,6 +20,34 @@ interface EditEventModalProps {
   errorMessage?: string | null
   onAttendeeSuccess?: (msg: string) => void
   onAttendeeError?: (msg: string) => void
+  onExcludedDatesChange?: (excludedDates: string[]) => void
+}
+
+function toIsoDate(year: number, month: number, day: number): string {
+  const y = String(year)
+  const m = String(month).padStart(2, "0")
+  const d = String(day).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
+function recurringMonthOccurrences(event: Event): string[] {
+  if (
+    event.year === undefined ||
+    event.month === undefined ||
+    event.dayOfWeek === undefined
+  ) {
+    return []
+  }
+
+  const daysInMonth = new Date(event.year, event.month, 0).getDate()
+  const out: string[] = []
+  for (let day = 1; day <= daysInMonth; day++) {
+    const weekday = new Date(event.year, event.month - 1, day).getDay()
+    if (weekday === event.dayOfWeek) {
+      out.push(toIsoDate(event.year, event.month, day))
+    }
+  }
+  return out
 }
 
 export default function EditEventModal({
@@ -31,35 +59,64 @@ export default function EditEventModal({
   errorMessage,
   onAttendeeSuccess,
   onAttendeeError,
+  onExcludedDatesChange,
 }: EditEventModalProps) {
   const computeInitialValues = useCallback(
     () => valuesFromEvent(event),
     [event]
   )
 
+  const [excludedDatesDraft, setExcludedDatesDraft] = useState<string[]>(
+    event.excludedDates ?? []
+  )
+
+  useEffect(() => {
+    setExcludedDatesDraft(event.excludedDates ?? [])
+  }, [event.excludedDates])
+
+  const occurrences = useMemo(() => recurringMonthOccurrences(event), [event])
+
+  const toggleOccurrence = (date: string) => {
+    setExcludedDatesDraft((prev) => {
+      const next = prev.includes(date)
+        ? prev.filter((value) => value !== date)
+        : [...prev, date].sort((a, b) => a.localeCompare(b))
+      onExcludedDatesChange?.(next)
+      return next
+    })
+  }
+
   const attendeesPanel = event._id ? (
     <div className="space-y-4 pb-4">
-      {event.dayOfWeek !== undefined &&
-        (event.excludedDates?.length ?? 0) > 0 && (
-          <div className="rounded-md border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-900/20">
-            <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-              Excluded dates
-            </h3>
-            <p className="mt-1 text-xs text-amber-800/90 dark:text-amber-300">
-              This recurring event will skip these dates.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {(event.excludedDates ?? []).map((date) => (
-                <span
+      {event.dayOfWeek !== undefined && occurrences.length > 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-900/20">
+          <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+            This month occurrences
+          </h3>
+          <p className="mt-1 text-xs text-amber-800/90 dark:text-amber-300">
+            Toggle each occurrence: green is active, red is excluded.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {occurrences.map((date) => {
+              const isExcluded = excludedDatesDraft.includes(date)
+              return (
+                <button
+                  type="button"
+                  onClick={() => toggleOccurrence(date)}
                   key={date}
-                  className="rounded-full border border-amber-300 bg-white px-2 py-0.5 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                  className={`rounded-full border px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isExcluded
+                      ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"
+                      : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                  }`}
                 >
                   {formatDate(date)}
-                </span>
-              ))}
-            </div>
+                </button>
+              )
+            })}
           </div>
-        )}
+        </div>
+      )}
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">

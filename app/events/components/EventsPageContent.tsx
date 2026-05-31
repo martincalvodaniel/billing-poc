@@ -201,6 +201,7 @@ export default function EventsPageContent() {
           month: toOptionalNumber(values.month),
           day: toOptionalNumber(values.day),
           dayOfWeek: toOptionalNumber(values.dayOfWeek),
+          excludedDates: formState.event.excludedDates,
           hour: toOptionalNumber(values.hour),
           minute: toOptionalNumber(values.minute),
           durationMinutes: toOptionalNumber(values.durationMinutes),
@@ -351,6 +352,18 @@ export default function EventsPageContent() {
           errorMessage={formError}
           onAttendeeSuccess={(msg) => setToast(msg)}
           onAttendeeError={(msg) => setToast(msg)}
+          onExcludedDatesChange={(excludedDates) => {
+            setFormState((prev) => {
+              if (prev.mode !== "edit" || !prev.event) return prev
+              return {
+                ...prev,
+                event: {
+                  ...prev.event,
+                  excludedDates,
+                },
+              }
+            })
+          }}
         />
       ) : (
         <NewEventModal
