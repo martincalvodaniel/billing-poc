@@ -1,17 +1,18 @@
-import { ObjectId } from "mongodb"
 import type { InvoiceMetadata, Payment } from "../../domain/entities/payment"
 import type {
   PaymentFilter,
   PaymentRepository,
 } from "../../domain/ports/payment-repository"
 import { getDatabase } from "../../mongodb"
-import type { Payment as MongoPayment } from "../../types"
+import type { MongoPayment } from "../../types"
 import { mapPaymentDocToDomain } from "./mongo-payment-repository-utils"
-import { MongoUpdateBuilder, omitNullish, type UpdateOps } from "./mongo-utils"
-
-function toObjectId(id: string): ObjectId {
-  return new ObjectId(id)
-}
+import {
+  isValidObjectId,
+  MongoUpdateBuilder,
+  omitNullish,
+  toObjectId,
+  type UpdateOps,
+} from "./mongo-utils"
 
 function toDomain(doc: MongoPayment): Payment {
   return mapPaymentDocToDomain(doc)
@@ -78,7 +79,7 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
     // surcharge === 0 means "no surcharge" → remove the field entirely.
     builder.setOrUnset(
       "surcharge",
-      data.surcharge && data.surcharge > 0 ? data.surcharge : undefined
+      data.surcharge !== 0 ? data.surcharge : undefined
     )
   }
   if (data.discount !== undefined) {
@@ -98,7 +99,7 @@ export function buildPaymentUpdateOps(data: Partial<Payment>): UpdateOps {
   if (data.surchargeAmount !== undefined) {
     builder.setOrUnset(
       "surchargeAmount",
-      data.surchargeAmount && data.surchargeAmount > 0
+      data.surchargeAmount !== 0
         ? data.surchargeAmount
         : undefined
     )
@@ -133,6 +134,7 @@ export class MongoPaymentRepository implements PaymentRepository {
   }
 
   async findById(id: string): Promise<Payment | null> {
+    if (!isValidObjectId(id)) return null
     const col = await this.collection()
     const doc = await col.findOne({ _id: toObjectId(id) })
     return doc ? toDomain(doc) : null
@@ -149,11 +151,11 @@ export class MongoPaymentRepository implements PaymentRepository {
         ? payment.discount
         : undefined
     const surcharge =
-      typeof payment.surcharge === "number" && payment.surcharge > 0
+      typeof payment.surcharge === "number" && payment.surcharge !== 0
         ? payment.surcharge
         : undefined
     const surchargeAmount =
-      typeof payment.surchargeAmount === "number" && payment.surchargeAmount > 0
+      typeof payment.surchargeAmount === "number" && payment.surchargeAmount !== 0
         ? payment.surchargeAmount
         : undefined
     const doc = omitNullish({
@@ -179,6 +181,7 @@ export class MongoPaymentRepository implements PaymentRepository {
   }
 
   async update(id: string, data: Partial<Payment>): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const result = await col.updateOne(
       { _id: toObjectId(id) },
@@ -188,6 +191,7 @@ export class MongoPaymentRepository implements PaymentRepository {
   }
 
   async delete(id: string): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0
@@ -202,6 +206,7 @@ export class MongoPaymentRepository implements PaymentRepository {
     paymentId: string,
     invoice: InvoiceMetadata
   ): Promise<boolean> {
+    if (!isValidObjectId(paymentId)) return false
     const col = await this.collection()
     const _id = toObjectId(paymentId)
     const existing = await col.findOne({ _id }, { projection: { invoice: 1 } })
@@ -244,6 +249,7 @@ export class MongoPaymentRepository implements PaymentRepository {
    * distinguish "found but nothing pulled" → 404 from a successful delete.
    */
   async removeLinkInvoice(paymentId: string, link: string): Promise<boolean> {
+    if (!isValidObjectId(paymentId)) return false
     const col = await this.collection()
     const _id = toObjectId(paymentId)
     const result = await col.updateOne(

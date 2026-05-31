@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
-import type { Client, ClientFormData } from "@/lib/types"
+import type { Client, ClientFormData } from "@/lib/domain/entities/client"
 
 interface ClientFormProps {
   client?: Client
@@ -43,6 +43,7 @@ export default function ClientForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    e.stopPropagation()
     setError(null)
 
     // Validate form data

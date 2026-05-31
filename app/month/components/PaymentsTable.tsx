@@ -4,8 +4,8 @@ import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { IconButton } from "@/app/components/IconButton"
 import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { formatCurrency, formatMonthYear } from "@/lib/formatters"
-import type { Payment } from "@/lib/types"
 import {
   type PaymentInvoiceFilter,
   type PaymentSortKey,
@@ -224,7 +224,7 @@ export default function PaymentsTable({
   onTagFilterToggle: (tag: string) => void
 }) {
   const hasSurcharge = filteredPayments.some(
-    (p) => p.surcharge && p.surcharge > 0
+    (p) => typeof p.surcharge === "number" && p.surcharge !== 0
   )
 
   return (
@@ -274,6 +274,13 @@ export default function PaymentsTable({
                   align="right"
                 />
                 <SortableHeader
+                  label="Net"
+                  sortKey="net"
+                  sort={sort}
+                  onSortChange={onSortChange}
+                  align="right"
+                />
+                <SortableHeader
                   label="VAT"
                   sortKey="vat"
                   sort={sort}
@@ -289,13 +296,6 @@ export default function PaymentsTable({
                     align="right"
                   />
                 )}
-                <SortableHeader
-                  label="Net"
-                  sortKey="net"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="right"
-                />
                 <th />
               </tr>
             </thead>
@@ -305,8 +305,8 @@ export default function PaymentsTable({
                 const hasReceipt = paymentHasInvoiceKind(payment, "receipt")
                 return (
                   <tr
-                    key={payment._id?.toString()}
-                    onClick={() => onRowClick(payment._id?.toString() || "")}
+                    key={payment._id}
+                    onClick={() => onRowClick(payment._id || "")}
                     className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
                   >
                     <td className="px-3 py-4 text-zinc-900 dark:text-zinc-100">
@@ -420,12 +420,16 @@ export default function PaymentsTable({
                     <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
                       {formatCurrency(payment.total)}
                     </td>
+                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
+                      {formatCurrency(payment.netAmount)}
+                    </td>
                     <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                       ({payment.vat}%) {formatCurrency(payment.vatAmount)}
                     </td>
                     {hasSurcharge && (
                       <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                        {payment.surcharge && payment.surcharge > 0 ? (
+                        {typeof payment.surcharge === "number" &&
+                        payment.surcharge !== 0 ? (
                           <span>
                             ({payment.surcharge}%){" "}
                             {formatCurrency(payment.surchargeAmount || 0)}
@@ -437,16 +441,13 @@ export default function PaymentsTable({
                         )}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.netAmount)}
-                    </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center justify-end gap-1">
                         <IconButton
                           variant="info"
                           stopPropagation
                           onClick={(e) =>
-                            onDuplicateClick(e, payment._id?.toString() || "")
+                            onDuplicateClick(e, payment._id || "")
                           }
                           ariaLabel="Duplicate payment"
                         >
@@ -455,9 +456,7 @@ export default function PaymentsTable({
                         <IconButton
                           variant="danger"
                           stopPropagation
-                          onClick={(e) =>
-                            onDeleteClick(e, payment._id?.toString() || "")
-                          }
+                          onClick={(e) => onDeleteClick(e, payment._id || "")}
                           ariaLabel="Delete payment"
                         >
                           <TrashIcon />

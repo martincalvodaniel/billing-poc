@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test"
-import { MongoUpdateBuilder, omitNullish, setOrUnset } from "./mongo-utils"
+import { ObjectId } from "mongodb"
+import {
+  isValidObjectId,
+  MongoUpdateBuilder,
+  omitNullish,
+  setOrUnset,
+  toObjectId,
+} from "./mongo-utils"
 
 describe("omitNullish", () => {
   it("returns an empty object for an empty input", () => {
@@ -114,5 +121,41 @@ describe("MongoUpdateBuilder", () => {
       .set("b", undefined)
       .build()
     expect(ops).toEqual({ $set: { a: null, b: undefined } })
+  })
+})
+
+describe("isValidObjectId", () => {
+  it("returns true for a 24-char hex string", () => {
+    expect(isValidObjectId("507f1f77bcf86cd799439011")).toBe(true)
+  })
+
+  it("returns true for a freshly generated ObjectId string", () => {
+    expect(isValidObjectId(new ObjectId().toString())).toBe(true)
+  })
+
+  it("returns false for a malformed id", () => {
+    expect(isValidObjectId("not-an-object-id")).toBe(false)
+  })
+
+  it("returns false for an empty string", () => {
+    expect(isValidObjectId("")).toBe(false)
+  })
+})
+
+describe("toObjectId", () => {
+  it("builds an ObjectId equal to the source hex string", () => {
+    const hex = "507f1f77bcf86cd799439011"
+    const oid = toObjectId(hex)
+    expect(oid).toBeInstanceOf(ObjectId)
+    expect(oid.toString()).toBe(hex)
+  })
+
+  it("round-trips a generated ObjectId", () => {
+    const source = new ObjectId()
+    expect(toObjectId(source.toString()).equals(source)).toBe(true)
+  })
+
+  it("throws on a malformed id (guard with isValidObjectId first)", () => {
+    expect(() => toObjectId("not-an-object-id")).toThrow()
   })
 })

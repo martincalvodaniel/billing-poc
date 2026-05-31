@@ -1,8 +1,12 @@
 import { mutate } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
+import type {
+  InvoiceMetadata,
+  InvoiceType,
+  Payment,
+} from "@/lib/domain/entities/payment"
 import { isPaymentsKey } from "@/lib/hooks/usePayments"
 import { FetchError } from "@/lib/swr-fetcher"
-import type { InvoiceMetadata, InvoiceType, Payment } from "@/lib/types"
 
 async function invalidatePayments(): Promise<void> {
   await mutate(isPaymentsKey, undefined, { revalidate: true })

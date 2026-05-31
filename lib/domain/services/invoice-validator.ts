@@ -6,8 +6,6 @@ import {
 } from "../entities/payment"
 
 export type { InvoiceType }
-/** @deprecated transitional alias — use `InvoiceType`. */
-export type InvoiceSeries = InvoiceType
 
 const objectIdPattern = /^[0-9a-fA-F]{24}$/
 

@@ -65,11 +65,11 @@ describe("calculateVatAmount", () => {
     expect(calculateVatAmount(121, 21)).toBe(21)
   })
 
-  it("calculates VAT with surcharge", () => {
-    // total=131.52, vat=21%, surcharge=5.2%
-    // 131.52 * (21/100) / (1 + 21/100 + 5.2/100) = 131.52 * 0.21 / 1.262
-    const result = calculateVatAmount(131.52, 21, 5.2)
-    expect(result).toBeCloseTo(21.89, 1)
+  it("keeps VAT extraction based on VAT-inclusive base even with surcharge", () => {
+    // base=121, vat=21%, surcharge=5.2%
+    // VAT = 121 - (121 / 1.21) = 21
+    const result = calculateVatAmount(121, 21, 5.2)
+    expect(result).toBe(21)
   })
 
   it("returns 0 for zero total", () => {
@@ -87,10 +87,10 @@ describe("calculateSurchargeAmount", () => {
   })
 
   it("calculates surcharge correctly", () => {
-    // total=131.52, vat=21%, surcharge=5.2%
-    // 131.52 * (5.2/100) / (1 + 21/100 + 5.2/100) = 131.52 * 0.052 / 1.262
-    const result = calculateSurchargeAmount(131.52, 21, 5.2)
-    expect(result).toBeCloseTo(5.42, 1)
+    // base=121, vat=21%, surcharge=5.2%
+    // net = 121 / 1.21 = 100, surcharge = 100 * 5.2% = 5.2
+    const result = calculateSurchargeAmount(121, 21, 5.2)
+    expect(result).toBe(5.2)
   })
 })
 
@@ -105,9 +105,9 @@ describe("calculateNetAmount", () => {
   })
 
   it("calculates net with VAT and surcharge", () => {
-    // 131.52 / (1 + 0.21 + 0.052) = 131.52 / 1.262 ≈ 104.22
-    const result = calculateNetAmount(131.52, 21, 5.2)
-    expect(result).toBeCloseTo(104.22, 0)
+    // surcharge does not affect net extraction from VAT-inclusive base
+    const result = calculateNetAmount(121, 21, 5.2)
+    expect(result).toBe(100)
   })
 
   it("returns number with 2 decimal precision", () => {
@@ -204,8 +204,12 @@ describe("validateSurcharge", () => {
     expect(validateSurcharge("5.2").isValid).toBe(true)
   })
 
-  it("rejects negative", () => {
-    expect(validateSurcharge("-1").isValid).toBe(false)
+  it("accepts negative values for withholding", () => {
+    expect(validateSurcharge("-15").isValid).toBe(true)
+  })
+
+  it("rejects values below -100", () => {
+    expect(validateSurcharge("-101").isValid).toBe(false)
   })
 
   it("rejects over 100", () => {

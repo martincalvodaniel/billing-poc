@@ -1,6 +1,6 @@
 import useSWR, { type KeyedMutator } from "swr"
+import type { Client, PaginatedResponse } from "@/lib/domain/entities/client"
 import { fetcher } from "@/lib/swr-fetcher"
-import type { Client, PaginatedResponse } from "@/lib/types"
 
 export interface UseClientsArgs {
   search?: string

@@ -4,7 +4,12 @@ import SummaryCard from "../../components/SummaryCard"
 export default function PaymentsSummary({
   totalIncome,
   totalOutcome,
-  netBalance,
+  totalVat,
+  totalVatIncome,
+  totalVatOutcome,
+  totalNet,
+  totalNetIncome,
+  totalNetOutcome,
   incomeCount,
   outcomeCount,
   typeFilter,
@@ -12,39 +17,137 @@ export default function PaymentsSummary({
 }: {
   totalIncome: number
   totalOutcome: number
-  netBalance: number
+  totalVat: number
+  totalVatIncome: number
+  totalVatOutcome: number
+  totalNet: number
+  totalNetIncome: number
+  totalNetOutcome: number
   incomeCount: number
   outcomeCount: number
   typeFilter: "all" | "income" | "outcome"
   onTypeFilterToggle: (type: "income" | "outcome") => void
 }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <SummaryCard
-        label={`Total Income (${incomeCount})`}
-        value={formatCurrency(totalIncome)}
-        valueClassName="text-green-600 dark:text-green-400"
-        active={typeFilter === "income"}
-        onClick={() => onTypeFilterToggle("income")}
-        ariaLabel="Filter table by income payments"
-      />
-      <SummaryCard
-        label={`Total Outcome (${outcomeCount})`}
-        value={formatCurrency(totalOutcome)}
-        valueClassName="text-red-600 dark:text-red-400"
-        active={typeFilter === "outcome"}
-        onClick={() => onTypeFilterToggle("outcome")}
-        ariaLabel="Filter table by outcome payments"
-      />
-      <SummaryCard
-        label="Net Balance"
-        value={formatCurrency(netBalance)}
+        label="Total"
+        value={formatCurrency(totalIncome - totalOutcome)}
         valueClassName={
-          netBalance >= 0
+          totalIncome - totalOutcome >= 0
             ? "text-blue-600 dark:text-blue-400"
             : "text-red-600 dark:text-red-400"
         }
-      />
+      >
+        <div className="space-y-1 text-xs">
+          <button
+            type="button"
+            onClick={() => onTypeFilterToggle("income")}
+            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              typeFilter === "income"
+                ? "ring-1 ring-blue-500"
+                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            }`}
+          >
+            <span className="text-green-600 dark:text-green-400">
+              Income ({incomeCount}): {formatCurrency(totalIncome)}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onTypeFilterToggle("outcome")}
+            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              typeFilter === "outcome"
+                ? "ring-1 ring-blue-500"
+                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            }`}
+          >
+            <span className="text-red-600 dark:text-red-400">
+              Outcome ({outcomeCount}): {formatCurrency(totalOutcome)}
+            </span>
+          </button>
+        </div>
+      </SummaryCard>
+      <SummaryCard
+        label="Net"
+        value={formatCurrency(totalNet)}
+        valueClassName={
+          totalNet >= 0
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-red-600 dark:text-red-400"
+        }
+      >
+        <div className="space-y-1 text-xs">
+          <button
+            type="button"
+            onClick={() => onTypeFilterToggle("income")}
+            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              typeFilter === "income"
+                ? "ring-1 ring-blue-500"
+                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            }`}
+            aria-label="Filter table by income payments"
+          >
+            <span className="text-green-600 dark:text-green-400">
+              Income ({incomeCount}): {formatCurrency(totalNetIncome)}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onTypeFilterToggle("outcome")}
+            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              typeFilter === "outcome"
+                ? "ring-1 ring-blue-500"
+                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            }`}
+            aria-label="Filter table by outcome payments"
+          >
+            <span className="text-red-600 dark:text-red-400">
+              Outcome ({outcomeCount}): {formatCurrency(totalNetOutcome)}
+            </span>
+          </button>
+        </div>
+      </SummaryCard>
+      <SummaryCard
+        label="VAT"
+        value={formatCurrency(totalVat)}
+        valueClassName={
+          totalVat >= 0
+            ? "text-blue-600 dark:text-blue-400"
+            : "text-red-600 dark:text-red-400"
+        }
+      >
+        <div className="space-y-1 text-xs">
+          <button
+            type="button"
+            onClick={() => onTypeFilterToggle("income")}
+            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              typeFilter === "income"
+                ? "ring-1 ring-blue-500"
+                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            }`}
+            aria-label="Filter table by income payments"
+          >
+            <span className="text-green-600 dark:text-green-400">
+              Income ({incomeCount}): {formatCurrency(totalVatIncome)}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onTypeFilterToggle("outcome")}
+            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              typeFilter === "outcome"
+                ? "ring-1 ring-blue-500"
+                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            }`}
+            aria-label="Filter table by outcome payments"
+          >
+            <span className="text-red-600 dark:text-red-400">
+              Outcome ({outcomeCount}): {formatCurrency(totalVatOutcome)}
+            </span>
+          </button>
+        </div>
+      </SummaryCard>
     </div>
   )
 }

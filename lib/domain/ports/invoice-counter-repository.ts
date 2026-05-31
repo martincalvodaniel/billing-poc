@@ -1,6 +1,6 @@
-import type { InvoiceSeries } from "../entities/payment"
+import type { InvoiceType } from "../entities/payment"
 
 export interface InvoiceCounterRepository {
-  getNextNumber(series: InvoiceSeries, year: number): Promise<number>
-  getCurrentNumber(series: InvoiceSeries, year: number): Promise<number>
+  getNextNumber(series: InvoiceType, year: number): Promise<number>
+  getCurrentNumber(series: InvoiceType, year: number): Promise<number>
 }

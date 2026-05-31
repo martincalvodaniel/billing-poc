@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { MongoClientRepository } from "@/lib/adapters/repositories/mongo-client-repository"
+import { MongoInvoiceCounterRepository } from "@/lib/adapters/repositories/mongo-invoice-counter-repository"
 import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
 import type { Client } from "@/lib/domain/entities/client"
@@ -13,13 +14,13 @@ import {
   generateInvoiceSchema,
   REGULAR_INVOICE_TYPES,
 } from "@/lib/domain/services/invoice-validator"
-import { getNextInvoiceNumber } from "@/lib/invoiceCounters"
 import { formatInvoiceNumber, generateInvoicePdf } from "@/lib/invoicePdf"
 import { getCompanyInfo } from "@/lib/server-cache"
 import { zodError } from "@/lib/validation"
 
 const paymentRepo = new MongoPaymentRepository()
 const clientRepo = new MongoClientRepository()
+const invoiceCounterRepo = new MongoInvoiceCounterRepository()
 
 function paymentYearFromDate(date: string): number {
   const head = date.slice(0, 4)
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     const year = paymentYearFromDate(payment.date)
-    const invoiceNumber = await getNextInvoiceNumber(type, year)
+    const invoiceNumber = await invoiceCounterRepo.getNextNumber(type, year)
     const id = formatInvoiceNumber(type, year, invoiceNumber)
 
     const pdfBuffer = await generateInvoicePdf({

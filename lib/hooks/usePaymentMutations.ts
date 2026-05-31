@@ -2,8 +2,12 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
+import type {
+  PaymentConcept,
+  PaymentMethod,
+  PaymentType,
+} from "../domain/entities/payment"
 import { FetchError } from "../swr-fetcher"
-import type { PaymentConcept, PaymentMethod, PaymentType } from "../types"
 import { isPaymentsKey } from "./usePayments"
 
 export interface CreatePaymentInput {

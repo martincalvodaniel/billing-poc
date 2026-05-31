@@ -1,17 +1,18 @@
-import { ObjectId } from "mongodb"
 import type { Client, PaginatedResponse } from "../../domain/entities/client"
 import type {
   ClientFilter,
   ClientRepository,
+  ClientUpdateData,
 } from "../../domain/ports/client-repository"
 import { getDatabase } from "../../mongodb"
 import { buildAccentInsensitivePattern } from "../../text-search"
-import type { Client as MongoClient } from "../../types"
-import { MongoUpdateBuilder, omitNullish } from "./mongo-utils"
-
-function toObjectId(id: string): ObjectId {
-  return new ObjectId(id)
-}
+import type { MongoClient } from "../../types"
+import {
+  isValidObjectId,
+  MongoUpdateBuilder,
+  omitNullish,
+  toObjectId,
+} from "./mongo-utils"
 
 function toDomain(doc: MongoClient): Client {
   return {
@@ -68,6 +69,7 @@ export class MongoClientRepository implements ClientRepository {
   }
 
   async findById(id: string): Promise<Client | null> {
+    if (!isValidObjectId(id)) return null
     const col = await this.collection()
     const doc = await col.findOne({ _id: toObjectId(id) })
     return doc ? toDomain(doc) : null
@@ -89,7 +91,8 @@ export class MongoClientRepository implements ClientRepository {
     return result.insertedId.toString()
   }
 
-  async update(id: string, data: Partial<Client>): Promise<boolean> {
+  async update(id: string, data: ClientUpdateData): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
@@ -106,6 +109,7 @@ export class MongoClientRepository implements ClientRepository {
   }
 
   async delete(id: string): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const result = await col.deleteOne({ _id: toObjectId(id) })
     return result.deletedCount > 0

@@ -1,6 +1,6 @@
 "use client"
 
-import type { PaymentFormData } from "@/lib/types"
+import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import PaymentAdditionalFields from "./PaymentAdditionalFields"
 import PaymentConceptsList from "./PaymentConceptsList"
 import PaymentTagVatRow from "./PaymentTagVatRow"

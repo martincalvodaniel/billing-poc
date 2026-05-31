@@ -10,7 +10,7 @@ import { CheckIcon } from "@/app/components/icons/CheckIcon"
 import { CopyIcon } from "@/app/components/icons/CopyIcon"
 import PaymentDetailModal from "@/app/month/components/PaymentDetailModal"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
-import type { PaymentMethod } from "@/lib/domain/entities/payment"
+import type { Payment, PaymentMethod } from "@/lib/domain/entities/payment"
 import { useCreateClient } from "@/lib/hooks/useClientMutations"
 import { useClients } from "@/lib/hooks/useClients"
 import {
@@ -27,7 +27,6 @@ import {
   type PaymentResponse,
 } from "@/lib/hooks/usePayments"
 import { fetcher } from "@/lib/swr-fetcher"
-import type { Payment } from "@/lib/types"
 import AttendeeRow from "./AttendeeRow"
 import {
   buildAttendeeEmailsString,
@@ -83,7 +82,7 @@ export default function AttendeesPanel({
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>()
     for (const c of clients) {
-      if (c._id) map.set(String(c._id), c.name)
+      if (c._id) map.set(c._id, c.name)
     }
     return map
   }, [clients])
@@ -91,7 +90,7 @@ export default function AttendeesPanel({
   const editingClient = useMemo(
     () =>
       editingClientId
-        ? clients.find((c) => String(c._id) === editingClientId)
+        ? clients.find((c) => c._id === editingClientId)
         : undefined,
     [clients, editingClientId]
   )

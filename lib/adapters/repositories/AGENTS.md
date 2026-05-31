@@ -9,9 +9,16 @@ never import from `mongodb` directly.
 - Each repo implements a port interface (e.g.
   `MongoPaymentRepository implements PaymentRepository`).
 - Domain entities (`lib/domain/entities/`) are plain TypeScript and never
-  reference `ObjectId`, `Db`, `Filter`, or any Mongo type.
-- Persistence shapes live in `lib/types.ts` (the `Payment`, `Client`,
-  `Event`, etc. interfaces with `ObjectId` fields).
+  reference `ObjectId`, `Db`, `Filter`, or any Mongo type. IDs are `string`.
+- Persistence shapes live in `lib/types.ts` as `Mongo`-prefixed types
+  (`MongoPayment`, `MongoClient`, `MongoEvent`, `MongoEventAttendee`,
+  `MongoAbsence`, `MongoInvoiceCounter`). Each is derived from its domain
+  entity via `Omit<...>` and only re-types the identity / foreign-key fields
+  as `ObjectId` (plus persistence-only fields such as
+  `MongoAbsence.studentNameLower`), so value types stay single-sourced in the
+  entities and the two shapes cannot drift. These `Mongo*` types must be
+  imported **only** inside this folder — a stray import elsewhere is a
+  boundary violation.
 - Convert at the boundary: `toDomain(doc)` on read, `toObjectId(id)` /
   shape-mapping on write. Never leak Mongo documents past the repository.
 

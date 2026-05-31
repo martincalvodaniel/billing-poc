@@ -1,4 +1,4 @@
-import type { Payment } from "@/lib/types"
+import type { Payment } from "@/lib/domain/entities/payment"
 
 export type PaymentSortKey =
   | "day"
@@ -89,6 +89,10 @@ export function derivePaymentTagOptions(payments: Payment[]): string[] {
   return Array.from(tags).sort((a, b) => a.localeCompare(b))
 }
 
+function normalizedTag(tag: string | undefined): string {
+  return tag && tag.length > 0 ? tag : "Untagged"
+}
+
 export function filterPayments(
   payments: Payment[],
   filters: PaymentFilters
@@ -105,7 +109,7 @@ export function filterPayments(
       if (filters.hasReceipt === "yes" && !has) return false
       if (filters.hasReceipt === "no" && has) return false
     }
-    if (filters.tags.length > 0 && !filters.tags.includes(p.tag ?? ""))
+    if (filters.tags.length > 0 && !filters.tags.includes(normalizedTag(p.tag)))
       return false
     return true
   })

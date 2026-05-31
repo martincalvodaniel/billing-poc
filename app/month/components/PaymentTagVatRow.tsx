@@ -1,7 +1,7 @@
 "use client"
 
 import { useId } from "react"
-import type { PaymentFormData } from "@/lib/types"
+import type { PaymentFormData } from "@/lib/domain/entities/payment"
 
 interface PaymentTagVatRowProps {
   formData: PaymentFormData

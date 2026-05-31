@@ -1,181 +1,56 @@
+/**
+ * MongoDB persistence shapes.
+ *
+ * These types describe documents exactly as they are stored in Mongo — the
+ * only difference from the domain entities in `lib/domain/entities/` is that
+ * identity and foreign-key fields are raw `ObjectId`s instead of `string`s.
+ * Every other field is reused from the domain entity (via `Omit`) so there is
+ * a single source of truth for value types and the two shapes cannot drift.
+ *
+ * They are imported **only** by the repository adapters in
+ * `lib/adapters/repositories/`, which convert at the boundary (`toDomain` on
+ * read → string ids; `toObjectId` on write). A stray import of a `Mongo*` type
+ * outside that folder is a hexagonal-boundary violation.
+ */
 import type { ObjectId } from "mongodb"
-import type { PartOfDay } from "./domain/entities/absence"
-import type { PaymentMethod } from "./domain/entities/payment"
+import type { Absence } from "./domain/entities/absence"
+import type { Client } from "./domain/entities/client"
+import type { Event, EventAttendee } from "./domain/entities/event"
+import type { InvoiceCounter } from "./domain/entities/invoice"
+import type { Payment } from "./domain/entities/payment"
 
-export type { PartOfDay, PaymentMethod }
+export type MongoPayment = Omit<Payment, "_id" | "clientId"> & {
+  _id?: ObjectId
+  clientId?: ObjectId
+}
 
-export type PaymentType = "income" | "outcome"
+export type MongoClient = Omit<Client, "_id"> & {
+  _id?: ObjectId
+}
 
-export type ClientType = "individual" | "company"
-
-export type InvoiceType =
-  | "Invoice"
-  | "RectificativeInvoice"
-  | "SimpleInvoice"
-  | "RectificativeSimpleInvoice"
-  | "Receipt"
-
-/** @deprecated transitional alias — use `InvoiceType`. Retained for the
- *  invoice-counter document, which is keyed by series. */
-export type InvoiceSeries = InvoiceType
+export type MongoInvoiceCounter = Omit<InvoiceCounter, "_id"> & {
+  _id?: ObjectId
+}
 
 /**
- * Unified invoice metadata entry. An entry has a `type` plus exactly one
- * of `id` (generated PDF) or `link` (external URL); generated PDFs may
- * additionally carry `blobUrl`/`blobPathname` when persisted.
+ * `studentNameLower` is a persistence-only denormalisation used for
+ * accent-insensitive querying and the unique index; it has no place in the
+ * domain entity.
  */
-export interface InvoiceMetadata {
-  type: InvoiceType
-  id?: string
-  link?: string
-  generatedAt: Date
-  blobUrl?: string
-  blobPathname?: string
-}
-
-export interface PaymentConcept {
-  name: string
-  amount: number
-  quantity: number
-}
-
-export interface Payment {
+export type MongoAbsence = Omit<Absence, "_id"> & {
   _id?: ObjectId
-  type: PaymentType
-  date: string
-  tag?: string
-  clientId?: ObjectId
-  concepts: PaymentConcept[]
-  vat: number
-  surcharge?: number
-  discount?: number
-  deliveryNoteRef?: string
-  netAmount: number
-  vatAmount: number
-  surchargeAmount?: number
-  total: number
-  invoice?: InvoiceMetadata // Legacy single-invoice field (read-back compat)
-  invoices?: InvoiceMetadata[] // All invoices (generated PDFs + external links)
-  paymentMethod?: PaymentMethod
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface PaymentFormData {
-  type: PaymentType
-  date: string
-  concepts: PaymentConcept[]
-  vat: string
-  surcharge?: string
-  discount?: string
-  tag?: string
-  clientId?: string
-  deliveryNoteRef?: string
-  paymentMethod?: PaymentMethod | ""
-}
-
-export interface Client {
-  _id?: ObjectId
-  clientType: ClientType
-  name: string
-  taxId?: string
-  address?: string
-  phone?: string
-  email?: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface ClientFormData {
-  clientType: ClientType
-  name: string
-  taxId?: string
-  address?: string
-  phone?: string
-  email?: string
-}
-
-export interface PaginationMeta {
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPrevPage: boolean
-}
-
-export interface PaginatedResponse<T> {
-  items: T[]
-  pagination: PaginationMeta
-}
-
-export interface InvoiceCounter {
-  _id?: ObjectId
-  series: InvoiceType
-  year: number
-  lastNumber: number
-  updatedAt: Date
-}
-
-export type AbsenceType = "absence" | "recovery"
-
-export interface Absence {
-  _id?: ObjectId
-  type: AbsenceType
-  studentName: string
   studentNameLower: string
-  date: string
-  partOfDay: PartOfDay
-  createdAt: Date
-  updatedAt: Date
 }
 
-export interface AbsenceFormData {
-  type: AbsenceType
-  studentName: string
-  date: string
-  partOfDay: PartOfDay
-}
-
-export interface EventAttendee {
+export type MongoEventAttendee = Omit<
+  EventAttendee,
+  "clientId" | "paymentId"
+> & {
   clientId: ObjectId
-  seats: number
   paymentId?: ObjectId
-  addedAt: Date
 }
 
-export interface Event {
+export type MongoEvent = Omit<Event, "_id" | "attendees"> & {
   _id?: ObjectId
-  title: string
-  tag?: string
-  year?: number
-  month?: number
-  day?: number
-  dayOfWeek?: number
-  excludedDates?: string[]
-  hour?: number
-  minute?: number
-  date?: string
-  durationMinutes?: number
-  maxAttendees?: number
-  pricePerSeat: number
-  vatRate: number
-  attendees: EventAttendee[]
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface EventFormData {
-  title: string
-  tag?: string
-  year?: string
-  month?: string
-  day?: string
-  dayOfWeek?: string
-  hour?: string
-  minute?: string
-  durationMinutes?: string
-  maxAttendees?: string
-  pricePerSeat: string
-  vatRate: string
+  attendees: MongoEventAttendee[]
 }

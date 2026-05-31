@@ -1,18 +1,12 @@
-import { type Filter, ObjectId } from "mongodb"
+import type { Filter } from "mongodb"
 import type { Event, EventAttendee } from "../../domain/entities/event"
 import type { EventFilter } from "../../domain/ports/event-repository"
-import type {
-  Event as MongoEvent,
-  EventAttendee as MongoEventAttendee,
-} from "../../types"
+import type { MongoEvent, MongoEventAttendee } from "../../types"
+import { isValidObjectId, toObjectId } from "./mongo-utils"
 
-export function toObjectId(id: string): ObjectId {
-  return new ObjectId(id)
-}
-
-export function isValidObjectId(id: string): boolean {
-  return ObjectId.isValid(id)
-}
+// Re-exported from the shared repository utils so existing event-repository
+// imports keep working; the single source of truth lives in `./mongo-utils`.
+export { isValidObjectId, toObjectId }
 
 export function attendeeToDomain(a: MongoEventAttendee): EventAttendee {
   return {

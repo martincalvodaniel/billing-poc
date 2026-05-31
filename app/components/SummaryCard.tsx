@@ -3,6 +3,7 @@ type SummaryCardProps = {
   value: string
   valueClassName?: string
   className?: string
+  children?: React.ReactNode
   onClick?: () => void
   active?: boolean
   ariaLabel?: string
@@ -13,6 +14,7 @@ export default function SummaryCard({
   value,
   valueClassName,
   className,
+  children,
   onClick,
   active = false,
   ariaLabel,
@@ -36,6 +38,7 @@ export default function SummaryCard({
         >
           {value}
         </p>
+        {children ? <div className="mt-2">{children}</div> : null}
       </button>
     )
   }
@@ -50,6 +53,7 @@ export default function SummaryCard({
       >
         {value}
       </p>
+      {children ? <div className="mt-2">{children}</div> : null}
     </div>
   )
 }

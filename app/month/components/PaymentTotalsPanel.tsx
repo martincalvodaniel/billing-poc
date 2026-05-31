@@ -19,18 +19,20 @@ export default function PaymentTotalsPanel({
   calculateNetAmount,
   calculateDiscount,
 }: PaymentTotalsPanelProps) {
-  const showSurcharge = parseFloat(surcharge || "0") > 0
+  const showSurcharge = parseFloat(surcharge || "0") !== 0
   const showDiscount = parseFloat(discount || "0") > 0
   const conceptsTotal = calculateTotal()
   const grandTotal = Math.max(conceptsTotal - parseFloat(discount || "0"), 0)
+  const surchargeAmount = parseFloat(calculateSurchargeAmount()) || 0
+  const finalTotal = grandTotal + surchargeAmount
   return (
     <div className="space-y-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Total from components
+          Subtotal
         </span>
-        <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-          €{conceptsTotal.toFixed(2)}
+        <span className="text-lg font-semibold text-green-600 dark:text-blue-400">
+          €{calculateNetAmount()}
         </span>
       </div>
       {showDiscount && (
@@ -75,10 +77,10 @@ export default function PaymentTotalsPanel({
       <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Net Amount (after deductions)
+            Total
           </span>
-          <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-            €{calculateNetAmount()}
+          <span className="text-lg font-semibold text-blue-600 dark:text-green-400">
+            €{finalTotal.toFixed(2)}
           </span>
         </div>
       </div>

@@ -1,12 +1,12 @@
 "use client"
 
 import { useId } from "react"
-import ClientSelector from "@/app/components/ClientSelector"
+import ClientSelectorField from "@/app/components/ClientSelectorField"
+import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
 } from "@/lib/domain/entities/payment"
-import type { PaymentFormData } from "@/lib/types"
 
 interface PaymentAdditionalFieldsProps {
   formData: PaymentFormData
@@ -52,7 +52,7 @@ export default function PaymentAdditionalFields({
 
       {showAdditionalFields && (
         <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
-          <ClientSelector
+          <ClientSelectorField
             value={formData.clientId}
             onChange={onClientChange}
             label="Client (Optional)"
@@ -114,7 +114,7 @@ export default function PaymentAdditionalFields({
               value={formData.surcharge}
               onChange={onChangeField}
               step="0.1"
-              min="0"
+              min="-100"
               max="100"
               placeholder="0"
               className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"

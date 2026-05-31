@@ -3,9 +3,9 @@
 import dynamic from "next/dynamic"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
 import { usePayments } from "@/lib/hooks/usePayments"
-import type { Payment } from "@/lib/types"
 import Toast from "../../components/Toast"
 import {
   filterPayments,
@@ -134,7 +134,7 @@ export default function MonthlyPaymentsView({
     if (!target) return
     if (consumedPaymentRef.current === target) return
     if (isLoading) return
-    if (payments.some((p) => p._id?.toString() === target)) {
+    if (payments.some((p) => p._id === target)) {
       setEditPaymentId(target)
     }
     consumedPaymentRef.current = target
@@ -158,7 +158,7 @@ export default function MonthlyPaymentsView({
 
   const handleDuplicateClick = (e: React.MouseEvent, paymentId: string) => {
     e.stopPropagation()
-    const source = payments.find((p) => p._id?.toString() === paymentId)
+    const source = payments.find((p) => p._id === paymentId)
     if (source) setDuplicateSeed(source)
   }
 
@@ -219,6 +219,12 @@ export default function MonthlyPaymentsView({
   const {
     totalIncome,
     totalOutcome,
+    totalVat,
+    totalVatIncome,
+    totalVatOutcome,
+    totalNet,
+    totalNetIncome,
+    totalNetOutcome,
     incomeCount,
     outcomeCount,
     incomeByTag,
@@ -226,6 +232,10 @@ export default function MonthlyPaymentsView({
   } = useMemo(() => {
     let income = 0
     let outcome = 0
+    let vatIncome = 0
+    let vatOutcome = 0
+    let netIncome = 0
+    let netOutcome = 0
     let incCount = 0
     let outCount = 0
     const incByTag: Record<string, number> = {}
@@ -234,10 +244,14 @@ export default function MonthlyPaymentsView({
       const tag = p.tag || "Untagged"
       if (p.type === "income") {
         income += p.total
+        vatIncome += p.vatAmount
+        netIncome += p.netAmount
         incByTag[tag] = (incByTag[tag] || 0) + p.total
         incCount++
       } else {
         outcome += p.total
+        vatOutcome += p.vatAmount
+        netOutcome += p.netAmount
         outByTag[tag] = (outByTag[tag] || 0) + p.total
         outCount++
       }
@@ -245,14 +259,18 @@ export default function MonthlyPaymentsView({
     return {
       totalIncome: income,
       totalOutcome: outcome,
+      totalVat: vatIncome - vatOutcome,
+      totalVatIncome: vatIncome,
+      totalVatOutcome: vatOutcome,
+      totalNet: netIncome - netOutcome,
+      totalNetIncome: netIncome,
+      totalNetOutcome: netOutcome,
       incomeCount: incCount,
       outcomeCount: outCount,
       incomeByTag: incByTag,
       outcomeByTag: outByTag,
     }
   }, [payments])
-
-  const netBalance = totalIncome - totalOutcome
 
   if (isLoading) {
     return (
@@ -284,7 +302,12 @@ export default function MonthlyPaymentsView({
         <PaymentsSummary
           totalIncome={totalIncome}
           totalOutcome={totalOutcome}
-          netBalance={netBalance}
+          totalVat={totalVat}
+          totalVatIncome={totalVatIncome}
+          totalVatOutcome={totalVatOutcome}
+          totalNet={totalNet}
+          totalNetIncome={totalNetIncome}
+          totalNetOutcome={totalNetOutcome}
           incomeCount={incomeCount}
           outcomeCount={outcomeCount}
           typeFilter={filters.type}
@@ -335,9 +358,7 @@ export default function MonthlyPaymentsView({
 
       {deleteConfirmPaymentId && (
         <DeletePaymentModal
-          payment={payments.find(
-            (p) => p._id?.toString() === deleteConfirmPaymentId
-          )}
+          payment={payments.find((p) => p._id === deleteConfirmPaymentId)}
           isDeleting={isDeleting}
           onClose={() => setDeleteConfirmPaymentId(null)}
           onConfirm={handleConfirmDelete}
@@ -346,9 +367,7 @@ export default function MonthlyPaymentsView({
 
       {editPaymentId &&
         (() => {
-          const selectedPayment = payments.find(
-            (p) => p._id?.toString() === editPaymentId
-          )
+          const selectedPayment = payments.find((p) => p._id === editPaymentId)
           if (!selectedPayment) return null
           return (
             <PaymentDetailModal

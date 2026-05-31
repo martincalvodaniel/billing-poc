@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { MongoPaymentRepository } from "@/lib/adapters/repositories/mongo-payment-repository"
 import { requireAuth } from "@/lib/api-auth"
-import type { InvoiceMetadata } from "@/lib/types"
+import type { InvoiceMetadata } from "@/lib/domain/entities/payment"
 import { zodError } from "@/lib/validation"
 
 const paymentRepo = new MongoPaymentRepository()

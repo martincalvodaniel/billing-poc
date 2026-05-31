@@ -1,5 +1,5 @@
 import type { InvoiceMetadata, Payment } from "../../domain/entities/payment"
-import type { Payment as MongoPayment } from "../../types"
+import type { MongoPayment } from "../../types"
 
 /**
  * Pure mappers used by `MongoPaymentRepository`. Extracted to a sibling

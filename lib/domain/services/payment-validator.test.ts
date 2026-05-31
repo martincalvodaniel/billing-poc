@@ -104,6 +104,17 @@ describe("createPaymentSchema", () => {
     expect(result.success).toBe(true)
   })
 
+  it("accepts negative surcharge for withholding scenarios", () => {
+    const result = createPaymentSchema.safeParse({
+      ...validPayment,
+      surcharge: -15,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.surcharge).toBe(-15)
+    }
+  })
+
   it("defaults discount to 0", () => {
     const result = createPaymentSchema.safeParse(validPayment)
     expect(result.success).toBe(true)
@@ -230,6 +241,17 @@ describe("updatePaymentSchema", () => {
     expect(result.success).toBe(true)
     if (result.success) {
       expect(result.data.surcharge).toBe(0)
+    }
+  })
+
+  it("accepts negative surcharge on update", () => {
+    const result = updatePaymentSchema.safeParse({
+      id: "abc123",
+      surcharge: -15,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.surcharge).toBe(-15)
     }
   })
 })

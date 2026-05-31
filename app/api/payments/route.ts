@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       paymentMethod: paymentMethod || undefined,
       concepts,
       vat,
-      surcharge: surchargeVal > 0 ? surchargeVal : undefined,
+      surcharge: surchargeVal !== 0 ? surchargeVal : undefined,
       discount: discountVal > 0 ? discountVal : undefined,
       ...financials,
       createdAt: new Date(),
@@ -190,7 +190,7 @@ export async function PUT(request: NextRequest) {
       updateData.netAmount = financials.netAmount
       updateData.vatAmount = financials.vatAmount
       updateData.surchargeAmount =
-        surcharge > 0 ? financials.surchargeAmount : undefined
+        surcharge !== 0 ? financials.surchargeAmount : undefined
     }
 
     const updated = await payments.update(id, updateData)
@@ -204,13 +204,13 @@ export async function PUT(request: NextRequest) {
         total: updateData.total,
         vatAmount: updateData.vatAmount,
         surchargeAmount:
-          typeof updateData.surcharge === "number" && updateData.surcharge > 0
+          typeof updateData.surcharge === "number" && updateData.surcharge !== 0
             ? updateData.surchargeAmount
             : undefined,
         netAmount: updateData.netAmount,
         vat: updateData.vat,
         surcharge:
-          typeof updateData.surcharge === "number" && updateData.surcharge > 0
+          typeof updateData.surcharge === "number" && updateData.surcharge !== 0
             ? updateData.surcharge
             : undefined,
         discount:

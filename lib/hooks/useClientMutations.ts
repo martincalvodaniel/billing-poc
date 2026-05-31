@@ -1,7 +1,7 @@
 import { useSWRConfig } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
+import type { ClientFormData } from "@/lib/domain/entities/client"
 import { FetchError } from "@/lib/swr-fetcher"
-import type { ClientFormData } from "@/lib/types"
 import { isClientsKey } from "./useClients"
 
 export const CLIENTS_ENDPOINT = "/api/clients"

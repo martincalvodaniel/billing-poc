@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef } from "react"
+import { createPortal } from "react-dom"
 import { useFocusTrap } from "@/lib/hooks/useFocusTrap"
 import CloseButton from "./CloseButton"
 
@@ -50,7 +51,7 @@ export function Modal({
     }
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || typeof document === "undefined") return null
 
   const maxWidthClass = {
     sm: "max-w-sm",
@@ -59,7 +60,7 @@ export function Modal({
     xl: "max-w-2xl",
   }[maxWidth]
 
-  return (
+  return createPortal(
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-close is a standard modal pattern
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -101,7 +102,8 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

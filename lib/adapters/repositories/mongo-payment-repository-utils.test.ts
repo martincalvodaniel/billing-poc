@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { ObjectId } from "mongodb"
-import type { Payment as MongoPayment } from "../../types"
+import type { MongoPayment } from "../../types"
 import {
   mapPaymentDocToDomain,
   migrateInvoiceMetadata,

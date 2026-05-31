@@ -1,7 +1,7 @@
 import { Badge } from "@/app/components/Badge"
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
+import type { Payment } from "@/lib/domain/entities/payment"
 import { formatCurrency, formatDate } from "@/lib/formatters"
-import type { Payment } from "@/lib/types"
 
 export default function DeletePaymentModal({
   payment,

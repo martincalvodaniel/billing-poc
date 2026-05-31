@@ -63,12 +63,12 @@ export const validateSurcharge = (
   const surchargeNumber = parseFloat(surcharge)
   if (
     Number.isNaN(surchargeNumber) ||
-    surchargeNumber < 0 ||
+    surchargeNumber < -100 ||
     surchargeNumber > 100
   ) {
     return {
       isValid: false,
-      error: "Surcharge must be between 0 and 100",
+      error: "Surcharge must be between -100 and 100",
     }
   }
   return { isValid: true, error: null }

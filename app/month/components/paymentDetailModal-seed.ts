@@ -1,4 +1,4 @@
-import type { Payment, PaymentFormData } from "@/lib/types"
+import type { Payment, PaymentFormData } from "@/lib/domain/entities/payment"
 
 /**
  * Builds a `PaymentFormData` seed for duplicating an existing payment.
