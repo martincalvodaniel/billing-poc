@@ -26,8 +26,39 @@ export function Modal({
 }: ModalProps) {
   const id = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useFocusTrap(dialogRef, isOpen)
+
+  // Browser Back button (desktop and mobile) closes the modal.
+  // On open: push a sentinel history entry (same URL, state={modal:true}).
+  // On Back: popstate fires → close the modal; the pointer is already at the
+  //   previous entry, so no further action is needed.
+  // On close by X / backdrop / Cancel: replaceState replaces the sentinel
+  //   in-place — synchronous, fires NO popstate, causes NO navigation.
+  //   Safe in React Strict Mode: replaceState is sync so the re-mount's
+  //   pushState always sees state.modal===false and adds a fresh sentinel.
+  useEffect(() => {
+    if (!isOpen) return
+
+    history.pushState({ modal: true }, "")
+
+    const handlePopState = () => {
+      onCloseRef.current()
+    }
+
+    window.addEventListener("popstate", handlePopState)
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState)
+      if (history.state?.modal) {
+        history.replaceState(null, "")
+      }
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
