@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const invoiceNumber = await invoiceCounterRepo.getNextNumber(type, year)
     const id = formatInvoiceNumber(type, year, invoiceNumber)
 
-    const pdfBuffer = await generateInvoicePdf({
+    await generateInvoicePdf({
       payment,
       client,
       invoiceNumber,

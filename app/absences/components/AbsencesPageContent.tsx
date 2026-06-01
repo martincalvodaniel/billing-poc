@@ -73,6 +73,14 @@ export default function AbsencesPageContent() {
     setSelectedDate(currentMonthStart)
   }
 
+  const handleGoToPreviousMonth = () => {
+    handleMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() - 1)
+  }
+
+  const handleGoToNextMonth = () => {
+    handleMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() + 1)
+  }
+
   const dayModalRecords = useMemo(() => {
     if (!dayModalDate) return []
     return absences.filter((record) => record.date === dayModalDate)
@@ -111,6 +119,8 @@ export default function AbsencesPageContent() {
           records={absences}
           selectedDate={selectedDate}
           onDayClick={setDayModalDate}
+          onSwipeToPreviousMonth={handleGoToPreviousMonth}
+          onSwipeToNextMonth={handleGoToNextMonth}
         />
         <AbsencesSummaryTable
           rows={summaryRows}

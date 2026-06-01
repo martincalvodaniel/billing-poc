@@ -64,6 +64,12 @@ export function useEventsPageState() {
     if (isViewingCurrentMonth) return
     setSelectedDate(currentMonthStart)
   }
+  const handleGoToPreviousMonth = () => {
+    handleMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() - 1)
+  }
+  const handleGoToNextMonth = () => {
+    handleMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() + 1)
+  }
 
   const dayEvents = useMemo(
     () => filterDayEvents(events, dayModalKey),
@@ -215,6 +221,8 @@ export function useEventsPageState() {
     isViewingCurrentMonth,
     handleMonthChange,
     handleGoToCurrentMonth,
+    handleGoToPreviousMonth,
+    handleGoToNextMonth,
     formState,
     formError,
     formDefaults,

@@ -29,6 +29,8 @@ export default function PaymentRow({
   onInvoiceFilterToggle,
   onReceiptFilterToggle,
   onTagFilterToggle,
+  clientNameById,
+  onClientClick,
 }: {
   payment: Payment
   hasSurcharge: boolean
@@ -43,9 +45,15 @@ export default function PaymentRow({
   onInvoiceFilterToggle: (hasInvoice: boolean) => void
   onReceiptFilterToggle: (hasReceipt: boolean) => void
   onTagFilterToggle: (tag: string) => void
+  clientNameById: Map<string, string>
+  onClientClick: (clientId: string) => void
 }) {
   const hasInvoice = paymentHasInvoiceKind(payment, "invoice")
   const hasReceipt = paymentHasInvoiceKind(payment, "receipt")
+  const clientName = payment.clientId
+    ? clientNameById.get(payment.clientId)
+    : undefined
+
   return (
     <tr
       onClick={() => onRowClick(payment._id || "")}
@@ -147,6 +155,27 @@ export default function PaymentRow({
               {payment.tag}
             </Badge>
           </button>
+        ) : (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
+        )}
+      </td>
+      <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+        {clientName && payment.clientId ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onClientClick(payment.clientId ?? "")
+            }}
+            aria-label={`Edit client ${clientName}`}
+            className="truncate rounded text-left text-emerald-700 hover:underline focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:text-emerald-400"
+          >
+            {clientName}
+          </button>
+        ) : payment.clientId ? (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">
+            Unknown client
+          </span>
         ) : (
           <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
         )}
