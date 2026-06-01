@@ -326,15 +326,28 @@ At least one of `clientType`, `name`, `taxId`, `address`, `phone`, or `email` mu
 
 Each series maintains independent sequential numbering. Only income payments can have generated invoices. Each payment can only have one invoice generated. The `downloadUrl` is a server-side proxy route — the browser is opened to that URL which streams the PDF content directly (no direct blob access required).
 
-### `POST /api/invoices/upload` - Upload Provider Bill
+### `POST /api/payments/[id]/invoices/link` - Add External Invoice Link
 
-**Content-Type:** `multipart/form-data`
+```json
+{
+  "type": "Invoice" | "Receipt",
+  "link": "https://example.com/invoice.pdf"
+}
+```
 
-**Form Fields:**
-- `file`: PDF file (required, max 10MB)
-- `paymentId`: MongoDB ObjectId of the outcome payment (required)
+**URL Parameters:**
+- `id`: MongoDB ObjectId of the payment
 
-**Response:** Endpoint removed (`410 Gone`).
+**Parameters:**
+- `type`: Invoice entry type (required)
+- `link`: Absolute URL to the external invoice/receipt document (required)
+
+**Response:**
+```json
+{
+  "ok": true
+}
+```
 
 ### `GET /api/invoices/[id]` - Retrieve Invoice or Provider Bill
 
