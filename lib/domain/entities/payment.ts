@@ -23,16 +23,13 @@ export interface PaymentConcept {
 
 /**
  * Unified invoice metadata entry. An entry has a `type` plus exactly one
- * of `id` (generated PDF) or `link` (external URL); generated PDFs may
- * additionally carry `blobUrl`/`blobPathname` when persisted.
+ * of `id` (generated PDF) or `link` (external URL).
  */
 export interface InvoiceMetadata {
   type: InvoiceType
   id?: string
   link?: string
   generatedAt: Date
-  blobUrl?: string
-  blobPathname?: string
 }
 
 export interface Payment {

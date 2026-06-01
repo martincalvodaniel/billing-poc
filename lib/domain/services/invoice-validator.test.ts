@@ -13,8 +13,6 @@ function invoice(type: InvoiceType, n = 1): InvoiceMetadata {
     type,
     id,
     generatedAt: new Date("2026-01-01T00:00:00Z"),
-    blobUrl: "https://blob.example/x.pdf",
-    blobPathname: "x.pdf",
   }
 }
 

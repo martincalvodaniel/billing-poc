@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { MongoClientRepository } from "@/lib/adapters/repositories/mongo-client-repository"
 import { MongoInvoiceCounterRepository } from "@/lib/adapters/repositories/mongo-invoice-counter-repository"
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { paymentId, type, persist } = parsed.data
+    const { paymentId, type } = parsed.data
 
     const [payment, company] = await Promise.all([
       paymentRepo.findById(paymentId),
@@ -78,24 +77,10 @@ export async function POST(request: NextRequest) {
       company,
     })
 
-    let blobUrl: string | undefined
-    let blobPathname: string | undefined
-    if (persist === true) {
-      const filename = `${id}-${paymentId}.pdf`
-      const blob = await put(filename, pdfBuffer, {
-        access: "private",
-        contentType: "application/pdf",
-      })
-      blobUrl = blob.url
-      blobPathname = blob.pathname
-    }
-
     const invoiceMetadata: InvoiceMetadata = {
       type,
       id,
       generatedAt: new Date(),
-      ...(blobUrl ? { blobUrl } : {}),
-      ...(blobPathname ? { blobPathname } : {}),
     }
 
     const appended = await paymentRepo.appendInvoice(paymentId, invoiceMetadata)

@@ -115,8 +115,6 @@ describe("recomputeAttendeePayment", () => {
         type: "Invoice",
         id: "F26_042",
         generatedAt: new Date("2026-05-14T10:00:00Z"),
-        blobUrl: "https://blob.example/inv.pdf",
-        blobPathname: "invoices/inv.pdf",
       },
     })
     const { repo, updates } = makeFakeRepo(payment)

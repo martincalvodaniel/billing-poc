@@ -7,7 +7,7 @@ import type { MongoPayment } from "../../types"
  *
  * `migrateInvoiceMetadata` performs read-time migration of legacy invoice
  * entries onto the unified shape (`type` + optional `id`/`link` +
- * timestamps + optional blob fields):
+ * timestamps):
  *   - new `type`  ← `type`  ?? `series`
  *   - new `id`    ← `id`    ?? `formattedNumber`
  *   - legacy `series`/`number`/`formattedNumber` are read on input but
@@ -15,7 +15,7 @@ import type { MongoPayment } from "../../types"
  *
  * `mapPaymentDocToDomain` additionally lifts legacy outcome top-level
  * fields (`providerBillLink`, `providerBillUrl` + `providerBillPathname`)
- * into the unified `invoices[]` array as link / blob entries.
+ * into the unified `invoices[]` array as link entries.
  */
 
 type LegacyInvoiceMetadata = {
@@ -23,8 +23,6 @@ type LegacyInvoiceMetadata = {
   id?: unknown
   link?: unknown
   generatedAt?: unknown
-  blobUrl?: unknown
-  blobPathname?: unknown
   series?: unknown
   number?: unknown
   formattedNumber?: unknown
@@ -74,10 +72,6 @@ export function migrateInvoiceMetadata(raw: unknown): InvoiceMetadata {
   if (id) entry.id = id
   const link = asString(r.link)
   if (link) entry.link = link
-  const blobUrl = asString(r.blobUrl)
-  if (blobUrl) entry.blobUrl = blobUrl
-  const blobPathname = asString(r.blobPathname)
-  if (blobPathname) entry.blobPathname = blobPathname
   return entry
 }
 
@@ -87,15 +81,13 @@ function fallbackTimestamp(doc: LegacyPaymentDoc): Date {
 
 function legacyLiftedEntry(
   generatedAt: Date,
-  extras: { link?: string; blobUrl?: string; blobPathname?: string }
+  extras: { link?: string }
 ): InvoiceMetadata {
   const entry: InvoiceMetadata = {
     type: "Invoice",
     generatedAt,
   }
   if (extras.link) entry.link = extras.link
-  if (extras.blobUrl) entry.blobUrl = extras.blobUrl
-  if (extras.blobPathname) entry.blobPathname = extras.blobPathname
   return entry
 }
 
@@ -107,10 +99,9 @@ function liftLegacyProviderBills(
   const ts = fallbackTimestamp(doc)
   const link = asString(doc.providerBillLink)
   if (link) out.push(legacyLiftedEntry(ts, { link }))
-  const blobUrl = asString(doc.providerBillUrl)
-  if (blobUrl) {
-    const blobPathname = asString(doc.providerBillPathname)
-    out.push(legacyLiftedEntry(ts, { blobUrl, blobPathname }))
+  const providerBillUrl = asString(doc.providerBillUrl)
+  if (providerBillUrl) {
+    out.push(legacyLiftedEntry(ts, { link: providerBillUrl }))
   }
   return out
 }

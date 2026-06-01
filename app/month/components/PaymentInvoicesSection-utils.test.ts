@@ -10,8 +10,6 @@ function invoice(type: InvoiceType): InvoiceMetadata {
     type,
     id: `${type}-1`,
     generatedAt: new Date(),
-    blobUrl: "x",
-    blobPathname: "x",
   }
 }
 

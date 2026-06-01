@@ -13,15 +13,11 @@ describe("migrateInvoiceMetadata", () => {
       number: 3,
       formattedNumber: "F26_003",
       generatedAt: new Date("2026-02-01T10:00:00Z"),
-      blobUrl: "https://blob.example/F26_003.pdf",
-      blobPathname: "F26_003.pdf",
     }
     const migrated = migrateInvoiceMetadata(raw)
     expect(migrated.type).toBe("Invoice")
     expect(migrated.id).toBe("F26_003")
     expect(migrated.generatedAt).toEqual(new Date("2026-02-01T10:00:00Z"))
-    expect(migrated.blobUrl).toBe("https://blob.example/F26_003.pdf")
-    expect(migrated.blobPathname).toBe("F26_003.pdf")
   })
 
   test("does not write legacy aliases (series/number/formattedNumber) on output", () => {
@@ -155,7 +151,7 @@ describe("mapPaymentDocToDomain", () => {
     expect(entry?.generatedAt).toEqual(baseDoc.updatedAt as Date)
   })
 
-  test("lifts legacy providerBillUrl (+pathname) into invoices[] as a blob entry", () => {
+  test("lifts legacy providerBillUrl (+pathname) into invoices[] as a link entry", () => {
     const doc = {
       ...baseDoc,
       providerBillUrl: "https://blob.example/legacy.pdf",
@@ -164,8 +160,7 @@ describe("mapPaymentDocToDomain", () => {
     const result = mapPaymentDocToDomain(doc)
     expect(result.invoices).toHaveLength(1)
     const entry = result.invoices?.[0]
-    expect(entry?.blobUrl).toBe("https://blob.example/legacy.pdf")
-    expect(entry?.blobPathname).toBe("legacy.pdf")
+    expect(entry?.link).toBe("https://blob.example/legacy.pdf")
   })
 
   test("lifts both legacy provider-bill flavours alongside migrated invoices[]", () => {
@@ -187,9 +182,7 @@ describe("mapPaymentDocToDomain", () => {
     expect(result.invoices).toHaveLength(3)
     expect(result.invoices?.[0]?.id).toBe("F26_001")
     expect(result.invoices?.[1]?.link).toBe("https://provider.example/bill.pdf")
-    expect(result.invoices?.[2]?.blobUrl).toBe(
-      "https://blob.example/legacy.pdf"
-    )
+    expect(result.invoices?.[2]?.link).toBe("https://blob.example/legacy.pdf")
   })
 
   test("does not write provider-bill top-level fields on the output", () => {

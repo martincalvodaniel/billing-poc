@@ -20,7 +20,6 @@
     "knip": "knip"
   },
   "dependencies": {
-    "@vercel/blob": "2.4.0",
     "better-auth": "1.6.12",
     "mongodb": "7.2.0",
     "next": "16.2.6",

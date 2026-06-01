@@ -17,8 +17,8 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 - **Consistent Design System** - All pages follow unified layout, navigation, colors, and spacing patterns for a cohesive user experience
 - **Type Safety** - Full TypeScript with strict mode throughout the codebase
 - **RESTful API** - GET, POST, PUT, and DELETE endpoints for payment and client operations with support for payment components
-- **Invoice Generation** - Generate professional PDF invoices for income payments with 4 sequential series (Invoice, Rectificative Invoice, Simple Invoice, Rectificative Simple Invoice). Each series maintains independent sequential numbering. PDFs stored in private Vercel Blob storage and served securely through a server-side proxy.
-- **Provider Bill Management** - Upload and store provider bill PDFs for outcome payments. Supports PDF files up to 10MB stored in Vercel Blob.
+- **Invoice Generation** - Generate professional PDF invoices for income payments with 4 sequential series (Invoice, Rectificative Invoice, Simple Invoice, Rectificative Simple Invoice). Each series maintains independent sequential numbering. PDFs are generated server-side and served through a protected route.
+- **Provider Bill Management** - Associate external provider bill links for outcome payments.
 - **Pagination** - Client list pagination with configurable page size and full navigation controls for browsing large datasets
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 - **Form & Server Validation** - Client and server-side validation for data integrity
@@ -29,7 +29,6 @@ A proof-of-concept billing system for managing and tracking income and outcome p
 ### Prerequisites
 - Node.js 20+ and bun
 - MongoDB running locally or MongoDB Atlas account
-- Vercel Blob storage token (for invoice/bill PDF storage)
 
 ### Installation
 
@@ -40,7 +39,6 @@ bun install
 # 2. Set up environment variables
 # Copy .env.example to .env and configure:
 # - MONGODB_URI: Your MongoDB connection string
-# - BLOB_READ_WRITE_TOKEN: Your Vercel Blob storage token
 cp .env.example .env
 
 # 3. Start MongoDB (if using local)
@@ -320,9 +318,7 @@ At least one of `clientType`, `name`, `taxId`, `address`, `phone`, or `email` mu
   "invoice": {
     "series": "Invoice",
     "number": 1,
-    "generatedAt": "2024-01-01T00:00:00Z",
-    "blobUrl": "https://...",
-    "blobPathname": "..."
+    "generatedAt": "2024-01-01T00:00:00Z"
   },
   "downloadUrl": "/api/invoices/{paymentId}"
 }
@@ -338,23 +334,14 @@ Each series maintains independent sequential numbering. Only income payments can
 - `file`: PDF file (required, max 10MB)
 - `paymentId`: MongoDB ObjectId of the outcome payment (required)
 
-**Response:**
-```json
-{
-  "success": true,
-  "billUrl": "https://...",
-  "pathname": "..."
-}
-```
-
-Only outcome payments can have provider bills uploaded. File must be PDF format and under 10MB.
+**Response:** Endpoint removed (`410 Gone`).
 
 ### `GET /api/invoices/[id]` - Retrieve Invoice or Provider Bill
 
 **URL Parameters:**
 - `id`: MongoDB ObjectId of the payment
 
-**Response:** Streams the PDF file directly (`Content-Type: application/pdf`). The server fetches the file from private Vercel Blob storage using its token and proxies it to the browser. No blob token is exposed to the client.
+**Response:** Streams the PDF file directly (`Content-Type: application/pdf`) by regenerating it server-side from payment + invoice metadata.
 
 Returns 404 if no invoice or provider bill exists for the payment.
 
@@ -363,7 +350,6 @@ Returns 404 if no invoice or provider bill exists for the payment.
 - **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Database:** MongoDB (via MongoDB Node.js Driver)
-- **File Storage:** Vercel Blob (for invoice and bill PDFs)
 - **PDF Generation:** pdf-lib (serverless-compatible PDF generation)
 - **Styling:** Tailwind CSS 4
 - **Fonts:** Geist Sans & Geist Mono
@@ -373,13 +359,11 @@ Returns 404 if no invoice or provider bill exists for the payment.
 
 1. Push your code to GitHub
 2. Import your repository on [Vercel](https://vercel.com)
-3. Create a Vercel Blob store in your project dashboard
-4. Add environment variables in Vercel project settings:
+3. Add environment variables in Vercel project settings:
    - `MONGODB_URI`: Your MongoDB connection string
-   - `BLOB_READ_WRITE_TOKEN`: Your Vercel Blob storage token (auto-configured if using Vercel Blob)
-5. Deploy!
+4. Deploy!
 
-Vercel will automatically detect Next.js and configure the build settings. Vercel Blob provides secure, scalable storage for invoice and bill PDFs.
+Vercel will automatically detect Next.js and configure the build settings.
 
 ## Roadmap
 
