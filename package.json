@@ -15,7 +15,8 @@
     "load-data:absences": "bun run scripts/absences/loadSampleAbsences.ts",
     "load-data:month": "bun run scripts/payments/loadRandomDataForMonth.ts",
     "load-data:year": "bun run scripts/payments/loadRandomDataForYear.ts",
-    "migrate:absences:partOfDay": "bun run scripts/absences/migrateBackfillPartOfDay.ts"
+    "migrate:absences:partOfDay": "bun run scripts/absences/migrateBackfillPartOfDay.ts",
+    "knip": "knip"
   },
   "dependencies": {
     "@vercel/blob": "2.4.0",
@@ -35,6 +36,7 @@
     "@types/node": "25.9.1",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
+    "knip": "6.15.0",
     "tailwindcss": "4.3.0",
     "typescript": "6.0.3"
   }
