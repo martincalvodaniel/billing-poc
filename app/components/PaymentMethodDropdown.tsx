@@ -1,12 +1,12 @@
 "use client"
 
 import { useId, useMemo, useRef, useState } from "react"
-import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import {
-  type PaymentMethod,
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
+  type PaymentMethod,
 } from "@/lib/domain/entities/payment"
+import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { BankTransferIcon } from "./icons/BankTransferIcon"
 import { CardIcon } from "./icons/CardIcon"
 import { CashIcon } from "./icons/CashIcon"
