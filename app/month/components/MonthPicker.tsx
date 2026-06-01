@@ -2,8 +2,7 @@
 
 import { useCallback, useRef } from "react"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
-import GoToCurrentButton from "../../components/GoToCurrentButton"
-import NavButton from "../../components/NavButton"
+import MonthNavigationControls from "../../components/MonthNavigationControls"
 import PickerOverlay from "../../components/PickerOverlay"
 
 const MONTH_INDEXES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const
@@ -36,13 +35,6 @@ export default function MonthPicker({
   }, [onShowCalendarChange])
   useClickOutside(calendarRef, handleOutsideClick, showCalendar)
 
-  const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-    })
-  }
-
   const handlePrevYear = () => {
     onMonthChange(selectedDate.getFullYear() - 1, selectedDate.getMonth())
   }
@@ -61,26 +53,16 @@ export default function MonthPicker({
 
   return (
     <div className="flex flex-wrap items-center gap-2" ref={calendarRef}>
-      <GoToCurrentButton
-        disabled={isViewingCurrentMonth}
-        onClick={onGoToCurrentMonth}
-        label="Go to current month"
-      />
-      <div className="flex items-center gap-0.75">
-        <NavButton onClick={handleDayPrev} aria-label="View previous month">
-          ←
-        </NavButton>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => onShowCalendarChange(!showCalendar)}
-            aria-label={`Select month, currently viewing ${formatMonthYear(selectedDate)}`}
-            aria-expanded={showCalendar}
-            className="min-h-11 w-[7.5rem] rounded-lg border border-zinc-200 px-4 py-2 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
-          >
-            {formatMonthYear(selectedDate)}
-          </button>
-          {showCalendar && (
+      <MonthNavigationControls
+        selectedDate={selectedDate}
+        showCalendar={showCalendar}
+        isViewingCurrentMonth={isViewingCurrentMonth}
+        onGoToCurrentMonth={onGoToCurrentMonth}
+        onShowCalendarChange={onShowCalendarChange}
+        onPrevMonth={handleDayPrev}
+        onNextMonth={handleDayNext}
+        overlay={
+          showCalendar ? (
             <PickerOverlay
               onClose={() => onShowCalendarChange(false)}
               closeLabel="Close calendar"
@@ -169,12 +151,9 @@ export default function MonthPicker({
                 </div>
               </div>
             </PickerOverlay>
-          )}
-        </div>
-        <NavButton onClick={handleDayNext} aria-label="View next month">
-          →
-        </NavButton>
-      </div>
+          ) : null
+        }
+      />
     </div>
   )
 }
