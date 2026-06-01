@@ -105,8 +105,3 @@ export const paymentQuerySchema = z.object({
     .max(12, "Invalid month")
     .optional(),
 })
-
-export type CreatePaymentInput = z.infer<typeof createPaymentSchema>
-export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>
-export type DeletePaymentInput = z.infer<typeof deletePaymentSchema>
-export type PaymentQueryInput = z.infer<typeof paymentQuerySchema>

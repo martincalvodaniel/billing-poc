@@ -97,8 +97,3 @@ export const clientQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
 })
-
-export type CreateClientInput = z.infer<typeof createClientSchema>
-export type UpdateClientInput = z.infer<typeof updateClientSchema>
-export type DeleteClientInput = z.infer<typeof deleteClientSchema>
-export type ClientQueryInput = z.infer<typeof clientQuerySchema>

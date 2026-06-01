@@ -10,7 +10,7 @@ import type {
 
 export type ColumnAlign = "left" | "right"
 
-export function SortIndicator({
+function SortIndicator({
   active,
   dir,
 }: {

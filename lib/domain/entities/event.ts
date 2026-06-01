@@ -25,18 +25,3 @@ export interface Event {
   createdAt: Date
   updatedAt: Date
 }
-
-export interface EventFormData {
-  title: string
-  tag?: string
-  year?: string
-  month?: string
-  day?: string
-  dayOfWeek?: string
-  hour?: string
-  minute?: string
-  durationMinutes?: string
-  maxAttendees?: string
-  pricePerSeat: string
-  vatRate: string
-}

@@ -177,10 +177,3 @@ export const updateAttendeeSchema = z
   .refine((data) => Object.values(data).some((v) => v !== undefined), {
     message: "No fields to update",
   })
-
-export type CreateEventInput = z.infer<typeof createEventSchema>
-export type UpdateEventInput = z.infer<typeof updateEventSchema>
-export type DeleteEventInput = z.infer<typeof deleteEventSchema>
-export type EventQueryInput = z.infer<typeof eventQuerySchema>
-export type AddAttendeeInput = z.infer<typeof addAttendeeSchema>
-export type UpdateAttendeeInput = z.infer<typeof updateAttendeeSchema>

@@ -7,7 +7,6 @@ import {
   buildCreateEventRequest,
   buildDeleteEventRequest,
   buildGenerateEventPaymentRequest,
-  buildGenerateEventPaymentsRequest,
   buildRemoveAttendeeRequest,
   buildUpdateAttendeeRequest,
   buildUpdateEventRequest,
@@ -23,8 +22,6 @@ import type {
   DeleteEventResponse,
   GenerateEventPaymentInput,
   GenerateEventPaymentResponse,
-  GenerateEventPaymentsInput,
-  GenerateEventPaymentsResponse,
   RemoveEventAttendeeInput,
   RemoveEventAttendeeResponse,
   UpdateEventAttendeeInput,
@@ -179,20 +176,6 @@ export function useGenerateEventPayment(): MutationResult<
     GenerateEventPaymentInput,
     GenerateEventPaymentResponse
   >(buildGenerateEventPaymentRequest, async () => {
-    await Promise.all([invalidateEvents(), invalidatePayments()])
-  })
-}
-
-export function useGenerateEventPayments(): MutationResult<
-  GenerateEventPaymentsInput,
-  GenerateEventPaymentsResponse
-> {
-  const invalidateEvents = useInvalidateEvents()
-  const invalidatePayments = useInvalidatePayments()
-  return useEventMutation<
-    GenerateEventPaymentsInput,
-    GenerateEventPaymentsResponse
-  >(buildGenerateEventPaymentsRequest, async () => {
     await Promise.all([invalidateEvents(), invalidatePayments()])
   })
 }

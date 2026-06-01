@@ -14,11 +14,6 @@ import {
 
 // Re-export the recompute/unlink helpers so existing consumers and tests can
 // keep importing them from this module.
-export type {
-  RecomputeAllResult,
-  RecomputeAttendeePaymentResult,
-  UnlinkPaymentFromEventsResult,
-} from "@/lib/domain/services/event-payment-recompute"
 export {
   recomputeAllAttendeePayments,
   recomputeAttendeePayment,

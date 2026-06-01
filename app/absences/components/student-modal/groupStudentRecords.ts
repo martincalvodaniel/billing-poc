@@ -7,17 +7,17 @@ import type {
 const PART_OF_DAY_ORDER: PartOfDay[] = ["morning", "evening"]
 const TYPE_ORDER: AbsenceType[] = ["absence", "recovery"]
 
-export interface GroupedTypeBucket {
+interface GroupedTypeBucket {
   type: AbsenceType
   items: Absence[]
 }
 
-export interface GroupedPartBucket {
+interface GroupedPartBucket {
   partOfDay: PartOfDay
   types: GroupedTypeBucket[]
 }
 
-export interface GroupedDateBucket {
+interface GroupedDateBucket {
   date: string
   parts: GroupedPartBucket[]
 }

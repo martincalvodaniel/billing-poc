@@ -81,14 +81,14 @@ const STREETS = [
 /**
  * Generate a random number between min and max (inclusive)
  */
-export function randomBetween(min: number, max: number): number {
+function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 /**
  * Generate a random individual client
  */
-export function generateIndividualClient(): ClientFormData {
+function generateIndividualClient(): ClientFormData {
   const firstName =
     INDIVIDUAL_FIRST_NAMES[
       Math.floor(Math.random() * INDIVIDUAL_FIRST_NAMES.length)
@@ -122,7 +122,7 @@ export function generateIndividualClient(): ClientFormData {
 /**
  * Generate a random company client
  */
-export function generateCompanyClient(): ClientFormData {
+function generateCompanyClient(): ClientFormData {
   const company =
     COMPANY_NAMES[Math.floor(Math.random() * COMPANY_NAMES.length)]
 
@@ -150,7 +150,7 @@ export function generateCompanyClient(): ClientFormData {
 /**
  * Generate sample clients (mix of individuals and companies)
  */
-export function generateClients(count: number): ClientFormData[] {
+function generateClients(count: number): ClientFormData[] {
   const clients: ClientFormData[] = []
 
   for (let i = 0; i < count; i++) {
@@ -167,7 +167,7 @@ export function generateClients(count: number): ClientFormData[] {
 /**
  * Insert a client via the API
  */
-export async function insertClient(
+async function insertClient(
   baseUrl: string,
   client: ClientFormData
 ): Promise<void> {

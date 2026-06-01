@@ -28,7 +28,6 @@ export {
   parseInvoiceId,
   paymentMethodLabelES,
 } from "./invoicePdf-format"
-export type { GeneratedInvoiceType } from "./invoicePdf-layout"
 
 export interface InvoiceRenderContext {
   payment: Payment

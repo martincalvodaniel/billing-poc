@@ -10,14 +10,14 @@ export interface EventsFormState {
   event?: Event
 }
 
-export function toOptionalNumber(value: string): number | undefined {
+function toOptionalNumber(value: string): number | undefined {
   const trimmed = value.trim()
   if (trimmed.length === 0) return undefined
   const n = Number(trimmed)
   return Number.isFinite(n) ? n : undefined
 }
 
-export function toRequiredNumber(value: string): number {
+function toRequiredNumber(value: string): number {
   const n = Number(value.trim())
   return Number.isFinite(n) ? n : 0
 }

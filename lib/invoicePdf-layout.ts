@@ -11,7 +11,6 @@ export const MARGIN = 50
 export const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
 const COL_GAP = 16
 export const COL_WIDTH = (CONTENT_WIDTH - COL_GAP) / 2
-export const LEFT_X = MARGIN
 export const RIGHT_X = MARGIN + COL_WIDTH + COL_GAP
 export const BAND_HEIGHT = 18
 export const ROW_HEIGHT = 14

@@ -9,7 +9,7 @@ import {
   COL_WIDTH,
   type GeneratedInvoiceType,
   HEADER_BG,
-  LEFT_X,
+  MARGIN,
   RIGHT_X,
   ROW_HEIGHT,
   SAGE_TEXT,
@@ -70,7 +70,7 @@ export function drawSageBand(
   }
 }
 
-export function drawRow(
+function drawRow(
   page: PDFPage,
   fonts: Fonts,
   x: number,
@@ -118,7 +118,7 @@ export function drawCompanyAndClient(
   let rightY = leftY
 
   // LEFT: DATOS DE EMPRESA
-  drawSageBand(page, fonts, LEFT_X, leftY, COL_WIDTH, "DATOS DE EMPRESA:")
+  drawSageBand(page, fonts, MARGIN, leftY, COL_WIDTH, "DATOS DE EMPRESA:")
   leftY -= BAND_HEIGHT
   const companyRows = [
     company.name,
@@ -129,7 +129,7 @@ export function drawCompanyAndClient(
     company.email,
   ]
   for (const text of companyRows) {
-    drawRow(page, fonts, LEFT_X, leftY, COL_WIDTH, text)
+    drawRow(page, fonts, MARGIN, leftY, COL_WIDTH, text)
     leftY -= ROW_HEIGHT
   }
 

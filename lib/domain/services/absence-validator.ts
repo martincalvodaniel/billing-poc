@@ -69,11 +69,3 @@ export const absenceQuerySchema = z.object({
 export const absenceStudentsQuerySchema = z.object({
   q: z.string().trim().optional(),
 })
-
-export type CreateAbsenceInput = z.infer<typeof createAbsenceSchema>
-export type UpdateAbsenceInput = z.infer<typeof updateAbsenceSchema>
-export type DeleteAbsenceInput = { id: string } | { studentName: string }
-export type AbsenceQueryInput = z.infer<typeof absenceQuerySchema>
-export type AbsenceStudentsQueryInput = z.infer<
-  typeof absenceStudentsQuerySchema
->

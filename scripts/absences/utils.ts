@@ -4,7 +4,7 @@ import type {
   PartOfDay,
 } from "../../lib/domain/entities/absence"
 
-export const STUDENT_NAMES = [
+const STUDENT_NAMES = [
   "María García",
   "Juan Pérez",
   "Lucía Martínez",
@@ -36,7 +36,7 @@ function daysInMonth(year: number, month: number): number {
 /**
  * Generate a random YYYY-MM-DD date within the given month.
  */
-export function generateDateInMonth(year: number, month: number): string {
+function generateDateInMonth(year: number, month: number): string {
   const day = randomBetween(1, daysInMonth(year, month))
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 }
@@ -44,11 +44,11 @@ export function generateDateInMonth(year: number, month: number): string {
 /**
  * Pick a random element from an array.
  */
-export function randomPick<T>(items: readonly T[]): T {
+function randomPick<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)]
 }
 
-export interface GenerateAbsenceRecordsArgs {
+interface GenerateAbsenceRecordsArgs {
   year: number
   month: number
   count: number
@@ -60,7 +60,7 @@ export interface GenerateAbsenceRecordsArgs {
  * Distribution:
  * - ~60% absence / ~40% recovery
  */
-export function generateAbsenceRecords({
+function generateAbsenceRecords({
   year,
   month,
   count,
@@ -104,7 +104,7 @@ export function generateAbsenceRecords({
 /**
  * POST a single absence record to the API.
  */
-export async function insertAbsence(
+async function insertAbsence(
   baseUrl: string,
   record: AbsenceFormData
 ): Promise<void> {
@@ -130,7 +130,7 @@ export async function insertAbsence(
   }
 }
 
-export interface LoadAbsencesResult {
+interface LoadAbsencesResult {
   total: number
   inserted: number
   errors: { index: number; error: string }[]

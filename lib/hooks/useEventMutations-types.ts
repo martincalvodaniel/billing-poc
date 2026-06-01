@@ -102,11 +102,6 @@ export interface GenerateEventPaymentResponse {
   alreadyExists?: boolean
 }
 
-export interface GenerateEventPaymentsResponse {
-  created: string[]
-  skipped: string[]
-}
-
 // ---------------------------------------------------------------------------
 // Request shape
 // ---------------------------------------------------------------------------

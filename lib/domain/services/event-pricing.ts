@@ -1,6 +1,6 @@
 import type { Event } from "../entities/event"
 
-export function round2(value: number): number {
+function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
@@ -63,7 +63,7 @@ function pad2(n: number): string {
  * (`Date#getDay()`, 0=Sunday..6=Saturday) matches `dayOfWeek`. Pure: no
  * exclusions applied.
  */
-export function enumerateMonthlyOccurrences(
+function enumerateMonthlyOccurrences(
   year: number,
   month: number,
   dayOfWeek: number
@@ -90,7 +90,7 @@ export function enumerateMonthlyOccurrences(
  *   this as a single non-recurring event with 1 occurrence).
  * - An array of ISO YYYY-MM-DD strings otherwise.
  */
-export function activeMonthlyOccurrences(
+function activeMonthlyOccurrences(
   event: Pick<Event, "year" | "month" | "dayOfWeek" | "excludedDates">
 ): string[] | undefined {
   if (

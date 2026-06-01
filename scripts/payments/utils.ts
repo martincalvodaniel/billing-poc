@@ -3,7 +3,7 @@ import type {
   PaymentFormData,
 } from "../../lib/domain/entities/payment"
 
-export const INCOME_NAMES = [
+const INCOME_NAMES = [
   "Client Invoice",
   "Consulting Fee",
   "Software License",
@@ -14,7 +14,7 @@ export const INCOME_NAMES = [
   "Maintenance Fee",
 ]
 
-export const OUTCOME_NAMES = [
+const OUTCOME_NAMES = [
   "Office Supplies",
   "Software License",
   "Cloud Services",
@@ -27,7 +27,7 @@ export const OUTCOME_NAMES = [
   "Travel Expenses",
 ]
 
-export const CONCEPT_NAMES = [
+const CONCEPT_NAMES = [
   "Labor",
   "Materials",
   "Services",
@@ -59,28 +59,28 @@ function randomPaymentMethod() {
 /**
  * Generate a random number between min and max (inclusive)
  */
-export function randomBetween(min: number, max: number): number {
+function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 /**
  * Generate random amount between 100 and 5000
  */
-export function randomAmount(): number {
+function randomAmount(): number {
   return Math.round((Math.random() * 4900 + 100) * 100) / 100
 }
 
 /**
  * Generate random quantity (1-3)
  */
-export function randomQuantity(): number {
+function randomQuantity(): number {
   return randomBetween(1, 3)
 }
 
 /**
  * Generate a random concept
  */
-export function generateConcept(): PaymentConcept {
+function generateConcept(): PaymentConcept {
   return {
     name: CONCEPT_NAMES[Math.floor(Math.random() * CONCEPT_NAMES.length)],
     amount: randomAmount(),
@@ -91,7 +91,7 @@ export function generateConcept(): PaymentConcept {
 /**
  * Generate concepts (1-5)
  */
-export function generateConcepts(): PaymentConcept[] {
+function generateConcepts(): PaymentConcept[] {
   const numConcepts = randomBetween(1, 5)
   return Array.from({ length: numConcepts }, () => generateConcept())
 }
@@ -99,10 +99,7 @@ export function generateConcepts(): PaymentConcept[] {
 /**
  * Calculate VAT and totals from concepts (amount × quantity)
  */
-export function calculateTotals(
-  concepts: PaymentConcept[],
-  defaultVAT: number
-) {
+function calculateTotals(concepts: PaymentConcept[], defaultVAT: number) {
   const totalAmount = concepts.reduce(
     (sum, c) => sum + c.amount * c.quantity,
     0
@@ -120,7 +117,7 @@ export function calculateTotals(
 /**
  * Generate a random date within the specified month
  */
-export function generateDateInMonth(year: number, month: number): string {
+function generateDateInMonth(year: number, month: number): string {
   const day = randomBetween(1, 28)
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 }
@@ -128,7 +125,7 @@ export function generateDateInMonth(year: number, month: number): string {
 /**
  * Generate income payments
  */
-export function generateIncomes(year: number, month: number) {
+function generateIncomes(year: number, month: number) {
   const count = randomBetween(5, 10)
   return Array.from({ length: count }, () => {
     const concepts = generateConcepts()
@@ -161,7 +158,7 @@ export function generateIncomes(year: number, month: number) {
 /**
  * Generate outcome payments
  */
-export function generateOutcomes(year: number, month: number) {
+function generateOutcomes(year: number, month: number) {
   const count = randomBetween(5, 10)
   return Array.from({ length: count }, () => {
     const concepts = generateConcepts()
@@ -194,7 +191,7 @@ export function generateOutcomes(year: number, month: number) {
 /**
  * Insert a payment via the API
  */
-export async function insertPayment(
+async function insertPayment(
   baseUrl: string,
   payment: PaymentFormData
 ): Promise<void> {

@@ -1,7 +1,7 @@
 import type { Event } from "@/lib/domain/entities/event"
 import { activeMonthlyOccurrencesCount } from "@/lib/domain/services/event-pricing"
 
-export function round2(value: number): number {
+function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
@@ -20,7 +20,7 @@ export function eventTag(event: Event): string {
   return trimmed && trimmed.length > 0 ? trimmed : DEFAULT_EVENT_TAG
 }
 
-export function eventMonthLabel(event: Event): string {
+function eventMonthLabel(event: Event): string {
   let year = event.year
   let month = event.month
 
@@ -44,14 +44,14 @@ export function eventMonthLabel(event: Event): string {
   return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
 }
 
-export function eventTimeLabel(event: Event): string {
+function eventTimeLabel(event: Event): string {
   if (event.hour === undefined) return ""
   const hour = String(event.hour).padStart(2, "0")
   const minute = String(event.minute ?? 0).padStart(2, "0")
   return `${hour}:${minute}`
 }
 
-export function eventWeekdayLabel(event: Event): string {
+function eventWeekdayLabel(event: Event): string {
   if (
     event.dayOfWeek === undefined ||
     event.dayOfWeek < 0 ||
@@ -68,7 +68,7 @@ export function eventWeekdayLabel(event: Event): string {
   return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
 }
 
-export function eventConceptName(event: Event): string {
+function eventConceptName(event: Event): string {
   const weekday = eventWeekdayLabel(event)
   const month = eventMonthLabel(event)
   const time = eventTimeLabel(event)
