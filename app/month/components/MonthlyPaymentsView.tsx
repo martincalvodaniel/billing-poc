@@ -1,7 +1,10 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
+import ClientFormModal from "@/app/clients/components/ClientFormModal"
+import type { Client } from "@/lib/domain/entities/client"
+import { useClients } from "@/lib/hooks/useClients"
 import { usePayments } from "@/lib/hooks/usePayments"
 import Toast from "../../components/Toast"
 import MonthlyPaymentsModals from "./MonthlyPaymentsModals"
@@ -28,6 +31,22 @@ export default function MonthlyPaymentsView({
     isLoading,
     error: fetchError,
   } = usePayments({ year, month })
+  // 100 is the API max page size; enough for name lookups in this view.
+  const { clients } = useClients({ page: 1, pageSize: 100 })
+  const [editingClientId, setEditingClientId] = useState<string | null>(null)
+
+  const clientNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const client of clients) {
+      if (client._id) map.set(client._id, client.name)
+    }
+    return map
+  }, [clients])
+
+  const editingClient: Client | undefined = useMemo(
+    () => clients.find((client) => client._id === editingClientId),
+    [clients, editingClientId]
+  )
 
   const {
     sort,
@@ -160,6 +179,14 @@ export default function MonthlyPaymentsView({
         onInvoiceFilterToggle={handleInvoiceFilterToggle}
         onReceiptFilterToggle={handleReceiptFilterToggle}
         onTagFilterToggle={handleTagToggle}
+        clientNameById={clientNameById}
+        onClientClick={setEditingClientId}
+      />
+
+      <ClientFormModal
+        client={editingClient}
+        isOpen={!!editingClient}
+        onClose={() => setEditingClientId(null)}
       />
 
       <MonthlyPaymentsModals

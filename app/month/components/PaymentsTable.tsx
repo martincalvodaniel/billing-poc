@@ -29,6 +29,8 @@ export default function PaymentsTable({
   onInvoiceFilterToggle,
   onReceiptFilterToggle,
   onTagFilterToggle,
+  clientNameById,
+  onClientClick,
 }: {
   payments: Payment[]
   filteredPayments: Payment[]
@@ -47,6 +49,8 @@ export default function PaymentsTable({
   onInvoiceFilterToggle: (hasInvoice: boolean) => void
   onReceiptFilterToggle: (hasReceipt: boolean) => void
   onTagFilterToggle: (tag: string) => void
+  clientNameById: Map<string, string>
+  onClientClick: (clientId: string) => void
 }) {
   const hasSurcharge = filteredPayments.some(
     (p) => typeof p.surcharge === "number" && p.surcharge !== 0
@@ -91,6 +95,9 @@ export default function PaymentsTable({
                   onSortChange={onSortChange}
                   align="left"
                 />
+                <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
+                  Client
+                </th>
                 <SortableHeader
                   label="Total"
                   sortKey="total"
@@ -141,6 +148,8 @@ export default function PaymentsTable({
                   onInvoiceFilterToggle={onInvoiceFilterToggle}
                   onReceiptFilterToggle={onReceiptFilterToggle}
                   onTagFilterToggle={onTagFilterToggle}
+                  clientNameById={clientNameById}
+                  onClientClick={onClientClick}
                 />
               ))}
             </tbody>
