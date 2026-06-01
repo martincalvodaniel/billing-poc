@@ -28,6 +28,8 @@ export default function EventsPageContent() {
     isViewingCurrentMonth,
     handleMonthChange,
     handleGoToCurrentMonth,
+    handleGoToPreviousMonth,
+    handleGoToNextMonth,
     formState,
     formError,
     formDefaults,
@@ -78,6 +80,8 @@ export default function EventsPageContent() {
           selectedDate={selectedDate}
           onDayClick={setDayModalKey}
           onEventClick={openEdit}
+          onSwipeToPreviousMonth={handleGoToPreviousMonth}
+          onSwipeToNextMonth={handleGoToNextMonth}
         />
         <EventsListTable
           events={events}

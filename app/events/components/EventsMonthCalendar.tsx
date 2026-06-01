@@ -16,6 +16,8 @@ interface EventsMonthCalendarProps {
   selectedDate: Date
   onDayClick: (dateKey: string) => void
   onEventClick: (event: Event) => void
+  onSwipeToPreviousMonth: () => void
+  onSwipeToNextMonth: () => void
 }
 
 export default function EventsMonthCalendar({
@@ -23,6 +25,8 @@ export default function EventsMonthCalendar({
   selectedDate,
   onDayClick,
   onEventClick,
+  onSwipeToPreviousMonth,
+  onSwipeToNextMonth,
 }: EventsMonthCalendarProps) {
   const grouped = useMemo(
     () =>
@@ -42,6 +46,8 @@ export default function EventsMonthCalendar({
   return (
     <MonthCalendarGrid
       cells={cells}
+      onSwipeToPreviousMonth={onSwipeToPreviousMonth}
+      onSwipeToNextMonth={onSwipeToNextMonth}
       renderCell={(cell) => {
         const dayEvents = grouped.get(cell.key) ?? []
         return (

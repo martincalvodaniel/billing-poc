@@ -16,12 +16,16 @@ interface AbsencesMonthCalendarProps {
   records: Absence[]
   selectedDate: Date
   onDayClick: (date: string) => void
+  onSwipeToPreviousMonth: () => void
+  onSwipeToNextMonth: () => void
 }
 
 export default function AbsencesMonthCalendar({
   records,
   selectedDate,
   onDayClick,
+  onSwipeToPreviousMonth,
+  onSwipeToNextMonth,
 }: AbsencesMonthCalendarProps) {
   const counts = useMemo(() => aggregateByPart(records), [records])
   const todayKey = useMemo(() => toDateKey(new Date()), [])
@@ -33,6 +37,8 @@ export default function AbsencesMonthCalendar({
   return (
     <MonthCalendarGrid
       cells={cells}
+      onSwipeToPreviousMonth={onSwipeToPreviousMonth}
+      onSwipeToNextMonth={onSwipeToNextMonth}
       renderCell={(cell) => {
         const dayCounts = counts.get(cell.key) ?? emptyDayCounts()
         const dimmed = !cell.inMonth
