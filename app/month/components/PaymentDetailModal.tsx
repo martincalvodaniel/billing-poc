@@ -165,7 +165,7 @@ export default function PaymentDetailModal({
                 onClick={handleOpenLinkedEvent}
                 className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
               >
-                Open linked event: {linkedEvent.title} ·{" "}
+                Linked event: {linkedEvent.title} ·{" "}
                 {formatEventDateTime(linkedEvent)}
               </button>
             </div>
