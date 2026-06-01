@@ -1,10 +1,10 @@
 "use client"
 
-import { useId } from "react"
-import type { PaymentFormData } from "@/lib/domain/entities/payment"
-import {
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_METHODS,
+import { useCallback } from "react"
+import PaymentMethodDropdown from "@/app/components/PaymentMethodDropdown"
+import type {
+  PaymentFormData,
+  PaymentMethod,
 } from "@/lib/domain/entities/payment"
 import PaymentAdditionalFields from "./PaymentAdditionalFields"
 import PaymentConceptsList from "./PaymentConceptsList"
@@ -56,7 +56,14 @@ export default function PaymentFormFields({
   calculateNetAmount,
   calculateDiscount,
 }: PaymentFormFieldsProps) {
-  const id = useId()
+  const handlePaymentMethodChange = useCallback(
+    (value: PaymentMethod | "") => {
+      onChangeField({
+        target: { name: "paymentMethod", value },
+      } as React.ChangeEvent<HTMLSelectElement>)
+    },
+    [onChangeField]
+  )
 
   return (
     <div className="space-y-4">
@@ -69,28 +76,10 @@ export default function PaymentFormFields({
         onTagSelect={onTagSelect}
         onTagBlur={onTagBlur}
       />
-      <div className="space-y-2">
-        <label
-          htmlFor={`${id}-paymentMethod`}
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Payment Method (Optional)
-        </label>
-        <select
-          id={`${id}-paymentMethod`}
-          name="paymentMethod"
-          value={formData.paymentMethod ?? ""}
-          onChange={onChangeField}
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-        >
-          <option value="">— Not specified —</option>
-          {PAYMENT_METHODS.map((m) => (
-            <option key={m} value={m}>
-              {PAYMENT_METHOD_LABELS[m]}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PaymentMethodDropdown
+        value={formData.paymentMethod ?? ""}
+        onChange={handlePaymentMethodChange}
+      />
       <PaymentAdditionalFields
         formData={formData}
         showAdditionalFields={showAdditionalFields}
