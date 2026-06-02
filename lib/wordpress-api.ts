@@ -1,5 +1,6 @@
 import { z } from "zod"
 import type {
+  WordPressBilling,
   WordPressOrder,
   WordPressOrdersResponse,
 } from "@/lib/domain/entities/wordpress-order"
@@ -139,6 +140,33 @@ export function buildWordPressOrdersUrl(
   return `${normalizedEndpoint}/wc/v3/orders?${params.toString()}`
 }
 
+export function toCapitalCase(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase("es-ES")
+    .replace(/(^|[\s'-])(\p{L})/gu, (_match, separator, letter) => {
+      return `${separator}${letter.toLocaleUpperCase("es-ES")}`
+    })
+}
+
+export function sanitizeWordPressPhone(value: string): string {
+  return value
+    .trim()
+    .replace(/^\+34\s*/, "")
+    .replace(/(\d)\s+(?=\d)/g, "$1")
+}
+
+export function sanitizeWordPressBilling(
+  billing: WordPressBilling
+): WordPressBilling {
+  return {
+    ...billing,
+    first_name: toCapitalCase(billing.first_name),
+    last_name: toCapitalCase(billing.last_name),
+    phone: sanitizeWordPressPhone(billing.phone),
+  }
+}
+
 function projectOrder(order: z.infer<typeof rawOrderSchema>): WordPressOrder {
   return {
     id: order.id,
@@ -149,7 +177,7 @@ function projectOrder(order: z.infer<typeof rawOrderSchema>): WordPressOrder {
     cart_tax: order.cart_tax,
     total: order.total,
     total_tax: order.total_tax,
-    billing: order.billing,
+    billing: sanitizeWordPressBilling(order.billing),
     payment_method: order.payment_method,
     payment_method_title: order.payment_method_title,
     date_completed: order.date_completed,
