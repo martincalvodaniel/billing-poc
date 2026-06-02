@@ -348,20 +348,20 @@ export function WordpressBillingClientModal({
           )}
 
           {!selectedClient && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <p className="text-sm text-green-600 dark:text-green-300 ">
               Confirm will create a new client as Individual using billing name,
               phone and email.
             </p>
           )}
 
           {selectedClient && !hasDiffChanges && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <p className="text-sm text-yellow-600 dark:text-yellow-300">
               Selected client already matches billing name, phone and email.
             </p>
           )}
 
           {selectedClient && hasDiffChanges && selectedDiffCount === 0 && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <p className="text-sm text-red-600 dark:text-red-300">
               Select at least one mismatched field to update.
             </p>
           )}

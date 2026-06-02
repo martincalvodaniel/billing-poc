@@ -77,7 +77,7 @@ export default function PaymentFormFields({
         onTagSelect={onTagSelect}
         onTagBlur={onTagBlur}
       />
-      
+
       <div className="grid gap-4 md:grid-cols-2">
         <ClientSelectorField
           value={formData.clientId}

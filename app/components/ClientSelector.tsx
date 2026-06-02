@@ -1,12 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import useSWR from "swr"
 import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
 import { PencilIcon } from "@/app/components/icons/PencilIcon"
 import type { Client } from "@/lib/domain/entities/client"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { useClients } from "@/lib/hooks/useClients"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
+import { fetcher } from "@/lib/swr-fetcher"
 
 interface ClientSelectorProps {
   value?: string // Client ID
@@ -59,16 +61,28 @@ export default function ClientSelector({
     pageSize: PAGE_SIZE,
   })
 
+  const shouldFetchSelectedById = useMemo(() => {
+    if (!value) return false
+    return !clients.some((client) => client._id === value)
+  }, [value, clients])
+
+  const { data: selectedClientById } = useSWR<Client>(
+    shouldFetchSelectedById && value
+      ? (["/api/clients/by-id", value] as const)
+      : null,
+    ([, clientId]) => fetcher<Client>(`/api/clients/${clientId}`)
+  )
+
   // Derive the currently selected client from the cached list. When the
   // user has just made a manual selection we honour it; otherwise we
   // resolve from `value` against the cached results.
   const selectedClient = useMemo<Client | null>(() => {
     if (!value) return null
     if (manuallySelectedId === value) {
-      return clients.find((c) => c._id === value) ?? null
+      return clients.find((c) => c._id === value) ?? selectedClientById ?? null
     }
-    return clients.find((c) => c._id === value) ?? null
-  }, [value, clients, manuallySelectedId])
+    return clients.find((c) => c._id === value) ?? selectedClientById ?? null
+  }, [value, clients, manuallySelectedId, selectedClientById])
 
   // Sync the search input with the resolved selected client's name.
   // We only seed the input on (a) clearing the value externally, or
