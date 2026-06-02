@@ -10,10 +10,13 @@ import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
 
 interface ClientSelectorProps {
   value?: string // Client ID
+  initialQuery?: string
+  selectedClientName?: string
   onChange: (
     clientId: string | undefined,
     clientName: string | undefined
   ) => void
+  onSelectClient?: (client: Client | null) => void
   label?: string
   required?: boolean
   onCreateClient?: (name: string) => void | Promise<void>
@@ -26,7 +29,10 @@ const PAGE_SIZE = 20
 
 export default function ClientSelector({
   value,
+  initialQuery,
+  selectedClientName,
   onChange,
+  onSelectClient,
   label = "Client (Optional)",
   required = false,
   onCreateClient,
@@ -68,17 +74,37 @@ export default function ClientSelector({
   // We only seed the input on (a) clearing the value externally, or
   // (b) the first time the selected client resolves for the current value.
   const resolvedNameRef = useRef<string | null>(null)
+  const appliedInitialQueryRef = useRef<string | null>(null)
   useEffect(() => {
     if (!value) {
       resolvedNameRef.current = null
       setSearchQuery((q) => (q === "" ? q : ""))
       return
     }
-    if (selectedClient && resolvedNameRef.current !== value) {
+
+    const resolvedName =
+      selectedClient?.name ?? selectedClientName?.trim() ?? ""
+
+    if (resolvedName.length > 0 && resolvedNameRef.current !== value) {
       resolvedNameRef.current = value
-      setSearchQuery(selectedClient.name)
+      setSearchQuery(resolvedName)
     }
-  }, [value, selectedClient])
+  }, [value, selectedClient, selectedClientName])
+
+  useEffect(() => {
+    if (value) return
+
+    const nextQuery = initialQuery?.trim() ?? ""
+    if (nextQuery.length === 0) {
+      appliedInitialQueryRef.current = null
+      return
+    }
+
+    if (appliedInitialQueryRef.current === nextQuery) return
+
+    appliedInitialQueryRef.current = nextQuery
+    setSearchQuery(nextQuery)
+  }, [initialQuery, value])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value
@@ -86,10 +112,11 @@ export default function ClientSelector({
     setShowSuggestions(true)
 
     // Clear selection if user is typing
-    if (selectedClient) {
+    if (value) {
       setManuallySelectedId(null)
       resolvedNameRef.current = null
       onChange(undefined, undefined)
+      onSelectClient?.(null)
     }
   }
 
@@ -100,6 +127,7 @@ export default function ClientSelector({
     setSearchQuery(client.name)
     setShowSuggestions(false)
     onChange(clientId, client.name)
+    onSelectClient?.(client)
   }
 
   const handleClearSelection = () => {
@@ -107,6 +135,7 @@ export default function ClientSelector({
     resolvedNameRef.current = null
     setSearchQuery("")
     onChange(undefined, undefined)
+    onSelectClient?.(null)
   }
 
   const handleInputFocus = () => {
