@@ -2,7 +2,10 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
-import type { WordPressOrder } from "@/lib/domain/entities/wordpress-order"
+import type {
+  WordPressOrder,
+  WordPressOrderStatus,
+} from "@/lib/domain/entities/wordpress-order"
 import { FetchError } from "@/lib/swr-fetcher"
 import { isWordpressOrdersKey } from "./useWordpressOrders"
 
@@ -10,7 +13,7 @@ const WORDPRESS_ORDERS_ENDPOINT = "/api/wordpress/orders"
 
 export interface UpdateWordpressOrderStatusInput {
   orderId: number
-  status: "completed"
+  status: WordPressOrderStatus
 }
 
 export interface UpdateWordpressOrderStatusResponse {
