@@ -8,7 +8,7 @@ Next.js 16 (App Router), React 19, TypeScript 6 (strict), MongoDB 7, Tailwind CS
 lib/domain/entities/     → Pure TS types (Payment, Client, InvoiceCounter)
 lib/domain/services/     → Business logic (calculators, Zod validators, auth)
 lib/domain/ports/        → Interfaces (PaymentRepository, ClientRepository, etc.)
-lib/adapters/            → Infrastructure (MongoPaymentRepository, VercelBlobStorage, etc.)
+lib/adapters/            → Infrastructure (MongoPaymentRepository, MongoClientRepository, etc.)
 lib/auth.ts              → NextAuth config (Google provider, JWT, email allowlist)
 lib/api-auth.ts          → requireAuth() guard for API routes
 lib/formatters.ts        → Shared formatCurrency, formatDate, formatMonthYear

@@ -1,8 +1,8 @@
 ## with clarifications
 ```
-You are the orchestrator agent, read again and act as described at .agents/agents/orchestrator.agent.md
+You are the orchestrator agent, act as described at .agents/agents/orchestrator.agent.md
 
-Then execute that agent for agent-iterations/260531-1650_hexagonal-fixes/main.prompt.md
+Then execute that agent for agent-iterations/260601-1958_wordpress/main.prompt.md
 
 Do not ask the user for a new request outside of this #tool:vscode/askQuestions.
 
@@ -11,13 +11,9 @@ The last think you must prompt in this chat (at the end of the iteration) is a q
 
 ## direct
 ```
-You are the orchestrator agent, read again and act as described at .agents/agents/orchestrator.agent.md
+You are the orchestrator agent, act as described at .agents/agents/orchestrator.agent.md
 
-Then execute that agent for agent-iterations/260531-1650_hexagonal-fixes/main.prompt.md
-
-Do not create nor ask for clarifications in this iteration. Let the subagents decide if they need to ask for clarifications or not. Do not ask the user for a new request outside of this #tool:vscode/askQuestions
-
-The last think you must prompt in this chat (at the end of the iteration) is a question with #tool:vscode/askQuestions asking the user to evaluate and answer if the task was succesfully accomplished. Do not auto-answer this question, only human user can answer.
+Then execute that agent for agent-iterations/260601-1958_wordpress/main.prompt.md
 ```
 
 # common
@@ -30,4 +26,3 @@ The last think you should prompt in this chat (at the end of the iteration) is a
 
 Do not ask the user for a new request outside of this #tool:vscode/askQuestions
 ```
-33%

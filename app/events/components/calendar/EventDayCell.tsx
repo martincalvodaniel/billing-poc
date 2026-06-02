@@ -67,34 +67,41 @@ export default function EventDayCell({
       >
         <span>{date.getDate()}</span>
         {count > 0 && (
-          <span className="inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+          <span className="hidden min-w-[1.5rem] items-center justify-center rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 sm:inline-flex">
             {count}
           </span>
         )}
       </span>
       <div className="mt-1 flex flex-1 flex-col gap-0.5">
-        {preview.map((event) => {
-          const eventTitle = formatEventTimeAndTitle(event)
-          return (
-            <button
-              key={event._id ?? eventTitle}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onEventClick(event)
-              }}
-              className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-left text-[11px] font-medium text-purple-800 hover:bg-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60"
-              title={eventTitle}
-            >
-              {eventTitle}
-            </button>
-          )
-        })}
-        {extra > 0 && (
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            +{extra} more
+        {count > 0 && (
+          <span className="inline-flex min-w-[1.5rem] items-center justify-center self-start rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 sm:hidden">
+            {count}
           </span>
         )}
+        <div className="hidden flex-1 flex-col gap-0.5 sm:flex">
+          {preview.map((event) => {
+            const eventTitle = formatEventTimeAndTitle(event)
+            return (
+              <button
+                key={event._id ?? eventTitle}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEventClick(event)
+                }}
+                className="truncate rounded bg-purple-50 px-1.5 py-0.5 text-left text-[11px] font-medium text-purple-800 hover:bg-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60"
+                title={eventTitle}
+              >
+                {eventTitle}
+              </button>
+            )
+          })}
+          {extra > 0 && (
+            <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+              +{extra} more
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

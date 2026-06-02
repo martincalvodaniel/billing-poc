@@ -1,6 +1,11 @@
 "use client"
 
-import type { PaymentFormData } from "@/lib/domain/entities/payment"
+import { useCallback } from "react"
+import PaymentMethodDropdown from "@/app/components/PaymentMethodDropdown"
+import type {
+  PaymentFormData,
+  PaymentMethod,
+} from "@/lib/domain/entities/payment"
 import PaymentAdditionalFields from "./PaymentAdditionalFields"
 import PaymentConceptsList from "./PaymentConceptsList"
 import PaymentTagVatRow from "./PaymentTagVatRow"
@@ -51,6 +56,15 @@ export default function PaymentFormFields({
   calculateNetAmount,
   calculateDiscount,
 }: PaymentFormFieldsProps) {
+  const handlePaymentMethodChange = useCallback(
+    (value: PaymentMethod | "") => {
+      onChangeField({
+        target: { name: "paymentMethod", value },
+      } as React.ChangeEvent<HTMLSelectElement>)
+    },
+    [onChangeField]
+  )
+
   return (
     <div className="space-y-4">
       <PaymentTypeDateRow formData={formData} onChangeField={onChangeField} />
@@ -61,6 +75,10 @@ export default function PaymentFormFields({
         onChangeField={onChangeField}
         onTagSelect={onTagSelect}
         onTagBlur={onTagBlur}
+      />
+      <PaymentMethodDropdown
+        value={formData.paymentMethod ?? ""}
+        onChange={handlePaymentMethodChange}
       />
       <PaymentAdditionalFields
         formData={formData}

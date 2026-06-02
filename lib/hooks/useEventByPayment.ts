@@ -1,7 +1,7 @@
 import useSWR from "swr"
 import { fetcher } from "@/lib/swr-fetcher"
 
-export interface EventByPaymentRef {
+interface EventByPaymentRef {
   id: string
   title: string
   date?: string

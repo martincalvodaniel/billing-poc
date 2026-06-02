@@ -10,7 +10,7 @@ export interface UseClientsArgs {
 
 export type ClientsKey = readonly ["/api/clients", string, number, number]
 
-export type ClientsResponse = PaginatedResponse<Client>
+type ClientsResponse = PaginatedResponse<Client>
 
 export interface UseClientsResult {
   data: ClientsResponse | undefined

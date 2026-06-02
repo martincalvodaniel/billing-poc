@@ -6,7 +6,9 @@ export interface ClientFilter {
   pageSize: number
 }
 
-export type ClientUpdateData = Partial<Omit<Client, "taxId" | "address" | "phone" | "email">> & {
+export type ClientUpdateData = Partial<
+  Omit<Client, "taxId" | "address" | "phone" | "email">
+> & {
   taxId?: string | null
   address?: string | null
   phone?: string | null

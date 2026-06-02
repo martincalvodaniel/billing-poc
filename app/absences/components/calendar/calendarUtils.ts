@@ -1,6 +1,6 @@
 import type { Absence } from "@/lib/domain/entities/absence"
 
-export interface PartCounts {
+interface PartCounts {
   absences: number
   recoveries: number
 }

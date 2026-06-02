@@ -8,7 +8,7 @@ import { isValidObjectId, toObjectId } from "./mongo-utils"
 // imports keep working; the single source of truth lives in `./mongo-utils`.
 export { isValidObjectId, toObjectId }
 
-export function attendeeToDomain(a: MongoEventAttendee): EventAttendee {
+function attendeeToDomain(a: MongoEventAttendee): EventAttendee {
   return {
     clientId: a.clientId.toString(),
     seats: a.seats,

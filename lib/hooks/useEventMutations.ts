@@ -2,264 +2,50 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
-import type { PaymentMethod } from "../domain/entities/payment"
-import { FetchError } from "../swr-fetcher"
+import {
+  buildAddAttendeeRequest,
+  buildCreateEventRequest,
+  buildDeleteEventRequest,
+  buildGenerateEventPaymentRequest,
+  buildRemoveAttendeeRequest,
+  buildUpdateAttendeeRequest,
+  buildUpdateEventRequest,
+} from "./useEventMutations-requests"
+import { runRequest } from "./useEventMutations-runtime"
+import type {
+  AddEventAttendeeInput,
+  AddEventAttendeeResponse,
+  BuiltRequest,
+  CreateEventInput,
+  CreateEventResponse,
+  DeleteEventInput,
+  DeleteEventResponse,
+  GenerateEventPaymentInput,
+  GenerateEventPaymentResponse,
+  RemoveEventAttendeeInput,
+  RemoveEventAttendeeResponse,
+  UpdateEventAttendeeInput,
+  UpdateEventAttendeeResponse,
+  UpdateEventInput,
+  UpdateEventResponse,
+} from "./useEventMutations-types"
 import { isEventsKey } from "./useEvents"
 import { isPaymentsKey } from "./usePayments"
 
-// ---------------------------------------------------------------------------
-// Input types
-// ---------------------------------------------------------------------------
-
-export interface CreateEventInput {
-  title: string
-  tag?: string
-  year?: number
-  month?: number
-  day?: number
-  dayOfWeek?: number
-  hour?: number
-  minute?: number
-  durationMinutes?: number
-  maxAttendees?: number
-  pricePerSeat: number
-  vatRate: number
-}
-
-export interface UpdateEventInput {
-  id: string
-  title?: string
-  tag?: string
-  year?: number
-  month?: number
-  day?: number
-  dayOfWeek?: number
-  excludedDates?: string[]
-  hour?: number
-  minute?: number
-  durationMinutes?: number
-  maxAttendees?: number
-  pricePerSeat?: number
-  vatRate?: number
-}
-
-export interface DeleteEventInput {
-  id: string
-}
-
-export interface AddEventAttendeeInput {
-  eventId: string
-  clientId: string
-  seats: number
-}
-
-export interface UpdateEventAttendeeInput {
-  eventId: string
-  clientId: string
-  seats?: number
-}
-
-export interface RemoveEventAttendeeInput {
-  eventId: string
-  clientId: string
-}
-
-export interface GenerateEventPaymentInput {
-  eventId: string
-  clientId: string
-  paymentMethod?: PaymentMethod
-}
-
-export interface GenerateEventPaymentsInput {
-  eventId: string
-}
-
-// ---------------------------------------------------------------------------
-// Response types
-// ---------------------------------------------------------------------------
-
-export interface CreateEventResponse {
-  success: boolean
-  id: string
-}
-
-export interface UpdateEventResponse {
-  success: boolean
-}
-
-export interface DeleteEventResponse {
-  success: boolean
-}
-
-export interface AddEventAttendeeResponse {
-  success: boolean
-}
-
-export interface UpdateEventAttendeeResponse {
-  success: boolean
-}
-
-export interface RemoveEventAttendeeResponse {
-  success: boolean
-}
-
-export interface GenerateEventPaymentResponse {
-  success?: boolean
-  paymentId: string
-  alreadyExists?: boolean
-}
-
-export interface GenerateEventPaymentsResponse {
-  created: string[]
-  skipped: string[]
-}
-
-// ---------------------------------------------------------------------------
-// Request builders (pure, exported for tests)
-// ---------------------------------------------------------------------------
-
-export interface BuiltRequest {
-  url: string
-  method: "POST" | "PUT" | "DELETE"
-  body?: string
-}
-
-function jsonBody<T>(body: T): string {
-  return JSON.stringify(body)
-}
-
-export function buildCreateEventRequest(input: CreateEventInput): BuiltRequest {
-  return { url: "/api/events", method: "POST", body: jsonBody(input) }
-}
-
-export function buildUpdateEventRequest(input: UpdateEventInput): BuiltRequest {
-  return { url: "/api/events", method: "PUT", body: jsonBody(input) }
-}
-
-export function buildDeleteEventRequest(input: DeleteEventInput): BuiltRequest {
-  return { url: "/api/events", method: "DELETE", body: jsonBody(input) }
-}
-
-export function buildAddAttendeeRequest(
-  input: AddEventAttendeeInput
-): BuiltRequest {
-  const { eventId, clientId, seats } = input
-  return {
-    url: `/api/events/${encodeURIComponent(eventId)}/attendees`,
-    method: "POST",
-    body: jsonBody({ clientId, seats }),
-  }
-}
-
-export function buildUpdateAttendeeRequest(
-  input: UpdateEventAttendeeInput
-): BuiltRequest {
-  const { eventId, clientId, seats } = input
-  return {
-    url: `/api/events/${encodeURIComponent(eventId)}/attendees/${encodeURIComponent(clientId)}`,
-    method: "PUT",
-    body: jsonBody({ seats }),
-  }
-}
-
-export function buildRemoveAttendeeRequest(
-  input: RemoveEventAttendeeInput
-): BuiltRequest {
-  const { eventId, clientId } = input
-  return {
-    url: `/api/events/${encodeURIComponent(eventId)}/attendees/${encodeURIComponent(clientId)}`,
-    method: "DELETE",
-  }
-}
-
-export function buildGenerateEventPaymentRequest(
-  input: GenerateEventPaymentInput
-): BuiltRequest {
-  const { eventId, clientId, paymentMethod } = input
-  return {
-    url: `/api/events/${encodeURIComponent(eventId)}/attendees/${encodeURIComponent(clientId)}/payment`,
-    method: "POST",
-    body: paymentMethod ? jsonBody({ paymentMethod }) : undefined,
-  }
-}
-
-export function buildGenerateEventPaymentsRequest(
-  input: GenerateEventPaymentsInput
-): BuiltRequest {
-  return {
-    url: `/api/events/${encodeURIComponent(input.eventId)}/payments`,
-    method: "POST",
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Invoice-guard error detection
-// ---------------------------------------------------------------------------
-
-/**
- * Detects the 409 "cannot-modify-invoiced-payment" response from the
- * `PUT /api/events/[id]/attendees/[clientId]` endpoint and returns its
- * structured payload. Returns `null` for any other error shape.
- *
- * The server emits exactly:
- *   { error: "cannot-modify-invoiced-payment",
- *     paymentId: string,
- *     invoiceType: string,
- *     invoiceId: string }
- * with HTTP 409, wrapped here as `FetchError(status=409, info=<body>)`.
- */
-export function isInvoiceGuardError(
-  err: unknown
-): { invoiceType: string; invoiceId: string; paymentId: string } | null {
-  if (!(err instanceof FetchError)) return null
-  if (err.status !== 409) return null
-  const info = err.info
-  if (!info || typeof info !== "object") return null
-  const record = info as Record<string, unknown>
-  if (record.error !== "cannot-modify-invoiced-payment") return null
-  const { invoiceType, invoiceId, paymentId } = record
-  if (typeof invoiceType !== "string") return null
-  if (typeof invoiceId !== "string") return null
-  if (typeof paymentId !== "string") return null
-  return { invoiceType, invoiceId, paymentId }
-}
-
-// ---------------------------------------------------------------------------
-// Fetcher
-// ---------------------------------------------------------------------------
-
-async function runRequest<TResponse>(req: BuiltRequest): Promise<TResponse> {
-  const init: RequestInit = {
-    method: req.method,
-    credentials: "same-origin",
-    headers: req.body ? { "Content-Type": "application/json" } : undefined,
-    body: req.body,
-  }
-  const response = await fetch(req.url, init)
-  if (!response.ok) {
-    const contentType = response.headers.get("content-type") ?? ""
-    let info: unknown
-    if (contentType.includes("application/json")) {
-      try {
-        info = await response.json()
-      } catch {
-        info = null
-      }
-    } else {
-      try {
-        info = await response.text()
-      } catch {
-        info = null
-      }
-    }
-    throw new FetchError(
-      `${req.method} ${req.url} failed with status ${response.status}`,
-      response.status,
-      info
-    )
-  }
-  return (await response.json()) as TResponse
-}
+export {
+  buildAddAttendeeRequest,
+  buildCreateEventRequest,
+  buildDeleteEventRequest,
+  buildGenerateEventPaymentRequest,
+  buildGenerateEventPaymentsRequest,
+  buildRemoveAttendeeRequest,
+  buildUpdateAttendeeRequest,
+  buildUpdateEventRequest,
+} from "./useEventMutations-requests"
+export { isInvoiceGuardError } from "./useEventMutations-runtime"
+// Re-export types, request builders, and the invoice-guard helper so existing
+// consumers/tests can keep importing them from this module.
+export type * from "./useEventMutations-types"
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -390,20 +176,6 @@ export function useGenerateEventPayment(): MutationResult<
     GenerateEventPaymentInput,
     GenerateEventPaymentResponse
   >(buildGenerateEventPaymentRequest, async () => {
-    await Promise.all([invalidateEvents(), invalidatePayments()])
-  })
-}
-
-export function useGenerateEventPayments(): MutationResult<
-  GenerateEventPaymentsInput,
-  GenerateEventPaymentsResponse
-> {
-  const invalidateEvents = useInvalidateEvents()
-  const invalidatePayments = useInvalidatePayments()
-  return useEventMutation<
-    GenerateEventPaymentsInput,
-    GenerateEventPaymentsResponse
-  >(buildGenerateEventPaymentsRequest, async () => {
     await Promise.all([invalidateEvents(), invalidatePayments()])
   })
 }

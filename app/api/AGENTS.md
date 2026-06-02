@@ -34,7 +34,6 @@ Each resource has `app/api/[resource]/route.ts` exporting GET, POST, PUT, DELETE
 - `MongoPaymentRepository` (`lib/adapters/repositories/mongo-payment-repository.ts`)
 - `MongoClientRepository` (`lib/adapters/repositories/mongo-client-repository.ts`)
 - `MongoInvoiceCounterRepository` (`lib/adapters/repositories/mongo-invoice-counter-repository.ts`)
-- `VercelBlobStorage` (`lib/adapters/storage/vercel-blob-storage.ts`)
 - Instantiate at module scope: `const payments = new MongoPaymentRepository()`
 - Never use raw `getDatabase()` or `db.collection()` directly in API routes
 
@@ -56,5 +55,5 @@ Log errors with template literals: `console.error(\`Error context: ${error}\`)`
 
 ## Invoice Generation
 - Income payments only; 4 independent series with atomic MongoDB counters (`findOneAndUpdate` + upsert)
-- PDFs via `pdf-lib`, stored in Vercel Blob, served through server-side proxy
+- PDFs via `pdf-lib`, regenerated server-side from invoice metadata when requested
 - Outcome payments: upload provider bill PDFs (max 10MB)

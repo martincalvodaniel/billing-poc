@@ -10,21 +10,13 @@ import { Modal } from "@/app/components/Modal"
 import { formatEventDateTime } from "@/app/events/components/eventsUi"
 import type { Payment, PaymentFormData } from "@/lib/domain/entities/payment"
 import { useEventByPayment } from "@/lib/hooks/useEventByPayment"
-import {
-  useCreatePayment,
-  useDeletePayment,
-  useUpdatePayment,
-} from "@/lib/hooks/usePaymentMutations"
 import PaymentFormFields from "./PaymentFormFields"
 import PaymentInvoicesSection from "./PaymentInvoicesSection"
-import { buildDuplicateSeed } from "./paymentDetailModal-seed"
-import { extractPaymentError } from "./paymentDetailModal-utils"
 import {
-  validateConcepts,
-  validateDiscount,
-  validateSurcharge,
-  validateVat,
-} from "./paymentUtils"
+  buildDuplicateSeed,
+  buildEditFormData,
+} from "./paymentDetailModal-seed"
+import { usePaymentDetailSave } from "./usePaymentDetailSave"
 import { usePaymentForm } from "./usePaymentForm"
 
 interface PaymentDetailModalProps {
@@ -50,18 +42,7 @@ export default function PaymentDetailModal({
   const { event: linkedEvent } = useEventByPayment(paymentId)
   const initialFormData: PaymentFormData = isDuplicate
     ? buildDuplicateSeed(payment)
-    : {
-        type: payment.type,
-        date: payment.date,
-        concepts: payment.concepts || [{ name: "", amount: 0, quantity: 1 }],
-        vat: payment.vat.toString(),
-        surcharge: payment.surcharge?.toString() || "",
-        discount: payment.discount?.toString() || "",
-        tag: payment.tag || "",
-        clientId: payment.clientId || undefined,
-        deliveryNoteRef: payment.deliveryNoteRef || "",
-        paymentMethod: payment.paymentMethod ?? "",
-      }
+    : buildEditFormData(payment)
 
   const {
     formData,
@@ -80,15 +61,35 @@ export default function PaymentDetailModal({
     calculateDiscount,
   } = usePaymentForm(initialFormData)
 
-  const { trigger: updatePayment, isMutating: isUpdating } = useUpdatePayment()
-  const { trigger: createPayment, isMutating: isCreating } = useCreatePayment()
-  const { trigger: deletePayment, isMutating: isDeleting } = useDeletePayment()
-  const isSaving = isDuplicate ? isCreating : isUpdating
-
-  const [error, setError] = useState<string | null>(null)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const {
+    error,
+    isSaving,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    deleteError,
+    setDeleteError,
+    handleSave,
+    handleConfirmDelete,
+  } = usePaymentDetailSave({
+    payment,
+    isDuplicate,
+    formData,
+    calculators: {
+      calculateTotal,
+      calculateVatAmount,
+      calculateSurchargeAmount,
+      calculateNetAmount,
+    },
+    onUpdate,
+    onCreate,
+    onDelete,
+    onClose,
+  })
 
   const handleOpenLinkedEvent = () => {
     if (!linkedEvent) return
@@ -102,132 +103,6 @@ export default function PaymentDetailModal({
     }
     onClose()
     router.push(`/events?${params.toString()}`)
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!payment._id) {
-      setDeleteError("Payment ID is missing")
-      return
-    }
-
-    try {
-      const id = payment._id
-      await deletePayment({ id })
-      setShowDeleteConfirm(false)
-      setDeleteError(null)
-      onDelete?.(id)
-      onClose()
-    } catch (err) {
-      setDeleteError(extractPaymentError(err, "Failed to delete payment"))
-    }
-  }
-
-  const handleSave = async () => {
-    setError(null)
-    if (!formData.date) {
-      setError("Date is required")
-      return
-    }
-    const conceptValidation = validateConcepts(formData.concepts)
-    if (!conceptValidation.isValid) {
-      setError(conceptValidation.error)
-      return
-    }
-    const vatValidation = validateVat(formData.vat)
-    if (!vatValidation.isValid) {
-      setError(vatValidation.error)
-      return
-    }
-    const surchargeValidation = validateSurcharge(formData.surcharge)
-    if (!surchargeValidation.isValid) {
-      setError(surchargeValidation.error)
-      return
-    }
-    const conceptsTotal = calculateTotal()
-    const discountValidation = validateDiscount(
-      formData.discount,
-      conceptsTotal
-    )
-    if (!discountValidation.isValid) {
-      setError(discountValidation.error)
-      return
-    }
-    const vatNumber = parseFloat(formData.vat)
-    const surchargeNumber = surchargeValidation.isValid
-      ? parseFloat(formData.surcharge || "0")
-      : 0
-    const discountNumber = parseFloat(formData.discount || "0") || 0
-
-    if (isDuplicate) {
-      try {
-        const created = await createPayment({
-          type: formData.type,
-          date: formData.date,
-          tag: formData.tag || undefined,
-          clientId: formData.clientId || undefined,
-          concepts: formData.concepts,
-          vat: vatNumber,
-          surcharge: surchargeNumber,
-          discount: discountNumber,
-          deliveryNoteRef: formData.deliveryNoteRef || undefined,
-          paymentMethod: formData.paymentMethod || undefined,
-        })
-        onCreate?.({ id: created.id })
-        onClose()
-      } catch (err) {
-        console.error(`Error duplicating payment: ${err}`)
-        setError(extractPaymentError(err, "An error occurred"))
-      }
-      return
-    }
-
-    try {
-      const responseData = await updatePayment({
-        id: payment._id ?? "",
-        date: formData.date,
-        type: formData.type,
-        tag: formData.tag || undefined,
-        clientId: formData.clientId || undefined,
-        concepts: formData.concepts,
-        vat: vatNumber,
-        surcharge: surchargeNumber,
-        discount: discountNumber,
-        deliveryNoteRef: formData.deliveryNoteRef || undefined,
-        paymentMethod: formData.paymentMethod || undefined,
-      })
-
-      const updatedPayment: Payment = {
-        ...payment,
-        date: formData.date,
-        type: formData.type,
-        tag: formData.tag || undefined,
-        concepts: formData.concepts,
-        vat: responseData.vat ?? vatNumber,
-        surcharge:
-          responseData.surcharge ??
-          (surchargeNumber !== 0 ? surchargeNumber : undefined),
-        discount:
-          responseData.discount ??
-          (discountNumber > 0 ? discountNumber : undefined),
-        deliveryNoteRef: formData.deliveryNoteRef || undefined,
-        total: responseData.total ?? calculateTotal(),
-        vatAmount: responseData.vatAmount ?? parseFloat(calculateVatAmount()),
-        surchargeAmount:
-          responseData.surchargeAmount ??
-          (surchargeNumber !== 0
-            ? parseFloat(calculateSurchargeAmount())
-            : undefined),
-        netAmount: responseData.netAmount ?? parseFloat(calculateNetAmount()),
-        paymentMethod: formData.paymentMethod || undefined,
-        updatedAt: new Date(),
-      }
-
-      onUpdate?.(updatedPayment)
-      onClose()
-    } catch (err) {
-      console.error(`Error updating payment: ${err}`)
-      setError(extractPaymentError(err, "An error occurred"))
-    }
   }
 
   return (
@@ -290,7 +165,7 @@ export default function PaymentDetailModal({
                 onClick={handleOpenLinkedEvent}
                 className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
               >
-                Open linked event: {linkedEvent.title} ·{" "}
+                Linked event: {linkedEvent.title} ·{" "}
                 {formatEventDateTime(linkedEvent)}
               </button>
             </div>

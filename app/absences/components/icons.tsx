@@ -1,5 +1,4 @@
 export { CheckIcon } from "@/app/components/icons/CheckIcon"
 export { PencilIcon } from "@/app/components/icons/PencilIcon"
 export { PlusIcon } from "@/app/components/icons/PlusIcon"
-export { TrashIcon } from "@/app/components/icons/TrashIcon"
 export { XIcon } from "@/app/components/icons/XIcon"

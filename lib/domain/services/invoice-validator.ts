@@ -10,31 +10,21 @@ export type { InvoiceType }
 const objectIdPattern = /^[0-9a-fA-F]{24}$/
 
 /** The four generated-PDF invoice types. */
-export const INVOICE_TYPE_VALUES: InvoiceType[] = [
+const INVOICE_TYPE_VALUES = [
   "Invoice",
   "RectificativeInvoice",
   "SimpleInvoice",
   "RectificativeSimpleInvoice",
-]
-
-/** @deprecated transitional alias — use `INVOICE_TYPE_VALUES`. */
-export const INVOICE_SERIES_VALUES = INVOICE_TYPE_VALUES
+] as const satisfies readonly InvoiceType[]
 
 export const generateInvoiceSchema = z.object({
   paymentId: z
     .string()
     .min(1, "paymentId is required")
     .regex(objectIdPattern, "paymentId must be a 24-character hex ObjectId"),
-  type: z.enum([
-    "Invoice",
-    "RectificativeInvoice",
-    "SimpleInvoice",
-    "RectificativeSimpleInvoice",
-  ]),
+  type: z.enum(INVOICE_TYPE_VALUES),
   persist: z.boolean().optional(),
 })
-
-export type GenerateInvoiceInput = z.infer<typeof generateInvoiceSchema>
 
 const SIMPLE_TYPES: InvoiceType[] = [
   "SimpleInvoice",
@@ -45,9 +35,6 @@ const REGULAR_TYPES: InvoiceType[] = ["Invoice", "RectificativeInvoice"]
 export const REGULAR_INVOICE_TYPES: ReadonlySet<InvoiceType> = new Set(
   REGULAR_TYPES
 )
-
-/** @deprecated transitional alias — use `REGULAR_INVOICE_TYPES`. */
-export const REGULAR_INVOICE_SERIES = REGULAR_INVOICE_TYPES
 
 const RECTIFICATIVE_TO_BASE: Partial<Record<InvoiceType, InvoiceType>> = {
   RectificativeInvoice: "Invoice",

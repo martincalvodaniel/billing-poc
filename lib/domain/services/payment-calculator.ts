@@ -50,7 +50,11 @@ export function computePaymentFinancials(
   )
   const surchargeAmount =
     surchargePercentage !== 0
-      ? calculateSurchargeAmount(taxableBase, vatPercentage, surchargePercentage)
+      ? calculateSurchargeAmount(
+          taxableBase,
+          vatPercentage,
+          surchargePercentage
+        )
       : undefined
   const total = Number.parseFloat(
     (taxableBase + (surchargeAmount ?? 0)).toFixed(2)

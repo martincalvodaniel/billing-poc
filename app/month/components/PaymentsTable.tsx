@@ -1,224 +1,15 @@
-import { Badge } from "@/app/components/Badge"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
-import { IconButton } from "@/app/components/IconButton"
-import { BankTransferIcon } from "@/app/components/icons/BankTransferIcon"
-import { CardIcon } from "@/app/components/icons/CardIcon"
-import { CashIcon } from "@/app/components/icons/CashIcon"
-import { DuplicateIcon } from "@/app/components/icons/DuplicateIcon"
-import { TrashIcon } from "@/app/components/icons/TrashIcon"
-import { XIcon } from "@/app/components/icons/XIcon"
 import type { Payment } from "@/lib/domain/entities/payment"
-import { formatCurrency, formatMonthYear } from "@/lib/formatters"
-import {
-  type PaymentInvoiceFilter,
-  type PaymentSortKey,
-  type PaymentSortState,
-  type PaymentTypeFilter,
-  paymentHasInvoiceKind,
+import { formatMonthYear } from "@/lib/formatters"
+import type {
+  PaymentInvoiceFilter,
+  PaymentSortKey,
+  PaymentSortState,
+  PaymentTypeFilter,
 } from "./monthlyPaymentsView-filters"
-
-type ColumnAlign = "left" | "right"
-
-function SortIndicator({
-  active,
-  dir,
-}: {
-  active: boolean
-  dir: "asc" | "desc"
-}) {
-  if (!active) {
-    return (
-      <svg
-        aria-hidden="true"
-        className="h-3 w-3 text-zinc-400 dark:text-zinc-600"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8 9l4-4 4 4M8 15l4 4 4-4"
-        />
-      </svg>
-    )
-  }
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-3 w-3 text-zinc-700 dark:text-zinc-200"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d={dir === "asc" ? "M8 15l4-4 4 4" : "M8 9l4 4 4-4"}
-      />
-    </svg>
-  )
-}
-
-function SortableHeader({
-  label,
-  sortKey,
-  sort,
-  onSortChange,
-  align,
-}: {
-  label: string
-  sortKey: PaymentSortKey
-  sort?: PaymentSortState
-  onSortChange?: (key: PaymentSortKey) => void
-  align: ColumnAlign
-}) {
-  const active = sort?.sortBy === sortKey
-  const dir = sort?.sortDir ?? "desc"
-  const ariaSort: "ascending" | "descending" | "none" = active
-    ? dir === "asc"
-      ? "ascending"
-      : "descending"
-    : "none"
-  const justify = align === "right" ? "justify-end" : "justify-start"
-  const alignClass = align === "right" ? "text-right" : "text-left"
-  const baseTh = `px-6 py-3 ${alignClass} font-medium text-zinc-700 dark:text-zinc-300`
-
-  if (!onSortChange) {
-    return <th className={baseTh}>{label}</th>
-  }
-
-  return (
-    <th aria-sort={ariaSort} className={baseTh}>
-      <button
-        type="button"
-        onClick={() => onSortChange(sortKey)}
-        aria-label={`Sort by ${label}`}
-        className={`inline-flex w-full items-center gap-1 ${justify} cursor-pointer rounded text-inherit hover:text-zinc-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:hover:text-zinc-100`}
-      >
-        <span>{label}</span>
-        <SortIndicator active={active} dir={dir} />
-      </button>
-    </th>
-  )
-}
-
-function InvoiceMarker({ has }: { has: boolean }) {
-  return (
-    <span
-      role="img"
-      aria-label={has ? "Has invoice" : "Without invoice"}
-      className={`inline-flex items-center ${
-        has
-          ? "text-blue-600 dark:text-blue-400"
-          : "text-rose-600 dark:text-rose-400"
-      }`}
-    >
-      <svg
-        aria-hidden="true"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M7 2h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M14 2v5h5"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 12h6M9 16h6"
-        />
-      </svg>
-      <span className="sr-only">{has ? "Has invoice" : "Without invoice"}</span>
-    </span>
-  )
-}
-
-function ReceiptMarker({ has }: { has: boolean }) {
-  return (
-    <span
-      role="img"
-      aria-label={has ? "Has receipt" : "Without receipt"}
-      className={`inline-flex items-center ${
-        has
-          ? "text-blue-600 dark:text-blue-400"
-          : "text-rose-600 dark:text-rose-400"
-      }`}
-    >
-      <svg
-        aria-hidden="true"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M7 3h10v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5V5a2 2 0 0 1 2-2z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 9h6M9 12h6M9 15h4"
-        />
-      </svg>
-      <span className="sr-only">{has ? "Has receipt" : "Without receipt"}</span>
-    </span>
-  )
-}
-
-function PaymentMethodMarker({ method }: { method?: Payment["paymentMethod"] }) {
-  if (!method) {
-    return (
-      <span className="inline-flex items-center text-rose-600 dark:text-rose-400">
-        <XIcon className="h-4 w-4" />
-        <span className="sr-only">No payment method</span>
-      </span>
-    )
-  }
-
-  if (method === "cash") {
-    return (
-      <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400">
-        <CashIcon className="h-4 w-4" />
-        <span className="sr-only">Cash</span>
-      </span>
-    )
-  }
-
-  if (method === "card") {
-    return (
-      <span className="inline-flex items-center text-blue-600 dark:text-blue-400">
-        <CardIcon className="h-4 w-4" />
-        <span className="sr-only">Card</span>
-      </span>
-    )
-  }
-
-  return (
-    <span className="inline-flex items-center text-zinc-700 dark:text-zinc-300">
-      <BankTransferIcon className="h-4 w-4" />
-      <span className="sr-only">Bank transfer</span>
-    </span>
-  )
-}
+import PaymentRow from "./PaymentRow"
+import { SortableHeader } from "./PaymentsTableCells"
 
 export default function PaymentsTable({
   payments,
@@ -238,6 +29,8 @@ export default function PaymentsTable({
   onInvoiceFilterToggle,
   onReceiptFilterToggle,
   onTagFilterToggle,
+  clientNameById,
+  onClientClick,
 }: {
   payments: Payment[]
   filteredPayments: Payment[]
@@ -256,6 +49,8 @@ export default function PaymentsTable({
   onInvoiceFilterToggle: (hasInvoice: boolean) => void
   onReceiptFilterToggle: (hasReceipt: boolean) => void
   onTagFilterToggle: (tag: string) => void
+  clientNameById: Map<string, string>
+  onClientClick: (clientId: string) => void
 }) {
   const hasSurcharge = filteredPayments.some(
     (p) => typeof p.surcharge === "number" && p.surcharge !== 0
@@ -300,6 +95,9 @@ export default function PaymentsTable({
                   onSortChange={onSortChange}
                   align="left"
                 />
+                <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
+                  Client
+                </th>
                 <SortableHeader
                   label="Total"
                   sortKey="total"
@@ -334,175 +132,26 @@ export default function PaymentsTable({
               </tr>
             </thead>
             <tbody>
-              {filteredPayments.map((payment) => {
-                const hasInvoice = paymentHasInvoiceKind(payment, "invoice")
-                const hasReceipt = paymentHasInvoiceKind(payment, "receipt")
-                return (
-                  <tr
-                    key={payment._id}
-                    onClick={() => onRowClick(payment._id || "")}
-                    className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
-                  >
-                    <td className="px-3 py-4 text-zinc-900 dark:text-zinc-100">
-                      <div className="inline-flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onInvoiceFilterToggle(hasInvoice)
-                          }}
-                          aria-label={
-                            hasInvoice
-                              ? "Filter by payments with invoice"
-                              : "Filter by payments without invoice"
-                          }
-                          className={`rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                            (hasInvoice && hasInvoiceFilter === "yes") ||
-                            (!hasInvoice && hasInvoiceFilter === "no")
-                              ? "ring-1 ring-blue-500"
-                              : ""
-                          }`}
-                          title={
-                            hasInvoice ? "Invoice present" : "Invoice missing"
-                          }
-                        >
-                          <InvoiceMarker has={hasInvoice} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onReceiptFilterToggle(hasReceipt)
-                          }}
-                          aria-label={
-                            hasReceipt
-                              ? "Filter by payments with receipt"
-                              : "Filter by payments without receipt"
-                          }
-                          className={`rounded p-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                            (hasReceipt && hasReceiptFilter === "yes") ||
-                            (!hasReceipt && hasReceiptFilter === "no")
-                              ? "ring-1 ring-blue-500"
-                              : ""
-                          }`}
-                          title={
-                            hasReceipt ? "Receipt present" : "Receipt missing"
-                          }
-                        >
-                          <ReceiptMarker has={hasReceipt} />
-                        </button>
-                        <span title={payment.paymentMethod ?? "No payment method"}>
-                          <PaymentMethodMarker method={payment.paymentMethod} />
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      <span className="inline-block w-5 text-right tabular-nums">
-                        {new Date(payment.date).getDate()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onTypeFilterToggle(payment.type)
-                        }}
-                        aria-label={`Filter by ${payment.type}`}
-                        className="rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <Badge
-                          tone={
-                            payment.type === "income" ? "success" : "danger"
-                          }
-                          className={
-                            typeFilter === payment.type
-                              ? "ring-1 ring-blue-500"
-                              : undefined
-                          }
-                        >
-                          {payment.type.charAt(0).toUpperCase() +
-                            payment.type.slice(1)}
-                        </Badge>
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
-                      {payment.tag ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onTagFilterToggle(payment.tag ?? "")
-                          }}
-                          aria-label={`Filter by tag ${payment.tag}`}
-                          className="rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        >
-                          <Badge
-                            tone="info"
-                            className={
-                              selectedTags.includes(payment.tag)
-                                ? "ring-1 ring-blue-500"
-                                : undefined
-                            }
-                          >
-                            {payment.tag}
-                          </Badge>
-                        </button>
-                      ) : (
-                        <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                          —
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.total)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-                      {formatCurrency(payment.netAmount)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                      ({payment.vat}%) {formatCurrency(payment.vatAmount)}
-                    </td>
-                    {hasSurcharge && (
-                      <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                        {typeof payment.surcharge === "number" &&
-                        payment.surcharge !== 0 ? (
-                          <span>
-                            ({payment.surcharge}%){" "}
-                            {formatCurrency(payment.surchargeAmount || 0)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                            —
-                          </span>
-                        )}
-                      </td>
-                    )}
-                    <td className="px-6 py-4 text-right">
-                      <div className="inline-flex items-center justify-end gap-1">
-                        <IconButton
-                          variant="info"
-                          stopPropagation
-                          onClick={(e) =>
-                            onDuplicateClick(e, payment._id || "")
-                          }
-                          ariaLabel="Duplicate payment"
-                        >
-                          <DuplicateIcon />
-                        </IconButton>
-                        <IconButton
-                          variant="danger"
-                          stopPropagation
-                          onClick={(e) => onDeleteClick(e, payment._id || "")}
-                          ariaLabel="Delete payment"
-                        >
-                          <TrashIcon />
-                        </IconButton>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+              {filteredPayments.map((payment) => (
+                <PaymentRow
+                  key={payment._id}
+                  payment={payment}
+                  hasSurcharge={hasSurcharge}
+                  onRowClick={onRowClick}
+                  onDeleteClick={onDeleteClick}
+                  onDuplicateClick={onDuplicateClick}
+                  typeFilter={typeFilter}
+                  hasInvoiceFilter={hasInvoiceFilter}
+                  hasReceiptFilter={hasReceiptFilter}
+                  selectedTags={selectedTags}
+                  onTypeFilterToggle={onTypeFilterToggle}
+                  onInvoiceFilterToggle={onInvoiceFilterToggle}
+                  onReceiptFilterToggle={onReceiptFilterToggle}
+                  onTagFilterToggle={onTagFilterToggle}
+                  clientNameById={clientNameById}
+                  onClientClick={onClientClick}
+                />
+              ))}
             </tbody>
           </table>
         </div>

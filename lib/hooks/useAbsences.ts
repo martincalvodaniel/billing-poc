@@ -50,7 +50,7 @@ export function isAbsencesKey(key: unknown): key is AbsencesKey {
   )
 }
 
-export interface AbsencesResponse {
+interface AbsencesResponse {
   absences: Absence[]
 }
 

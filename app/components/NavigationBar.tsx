@@ -22,6 +22,11 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/events", label: "Events", matches: (p) => p === "/events" },
   { href: "/month", label: "Monthly Overview", matches: (p) => p === "/month" },
   { href: "/year", label: "Yearly Overview", matches: (p) => p === "/year" },
+  {
+    href: "/wordpress",
+    label: "WordPress",
+    matches: (p) => p === "/wordpress",
+  },
 ]
 
 export default function NavigationBar({ subtitle }: NavigationBarProps) {

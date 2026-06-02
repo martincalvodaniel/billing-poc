@@ -16,7 +16,7 @@ const FOCUSABLE_SELECTOR = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",")
 
-export function getFocusableElements(container: HTMLElement): HTMLElement[] {
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
   const nodes = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
   return Array.from(nodes).filter(
     (el) =>

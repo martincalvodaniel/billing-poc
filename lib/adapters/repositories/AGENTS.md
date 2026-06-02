@@ -78,9 +78,8 @@ migration of legacy persistence shapes onto the unified domain model:
 - Legacy outcome `providerBillLink` (manual URL) and
   `providerBillUrl` (+ `providerBillPathname`) top-level fields are
   lifted into the unified `invoices[]` array as
-  `{ type: "Invoice", link, generatedAt }` and
-  `{ type: "Invoice", blobUrl, blobPathname?, generatedAt }` entries
-  respectively. `generatedAt` falls back to `updatedAt` / `createdAt`.
+  `{ type: "Invoice", link, generatedAt }` entries.
+  `generatedAt` falls back to `updatedAt` / `createdAt`.
 
 The repository never writes those legacy top-level fields any more; the
 mapper exists so existing documents continue to load without an offline

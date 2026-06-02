@@ -1,34 +1,20 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import type { Payment } from "@/lib/domain/entities/payment"
-import { useDeletePayment } from "@/lib/hooks/usePaymentMutations"
+import { useMemo, useState } from "react"
+import ClientFormModal from "@/app/clients/components/ClientFormModal"
+import type { Client } from "@/lib/domain/entities/client"
+import { useClients } from "@/lib/hooks/useClients"
 import { usePayments } from "@/lib/hooks/usePayments"
 import Toast from "../../components/Toast"
-import {
-  filterPayments,
-  nextSortState,
-  type PaymentFilters,
-  type PaymentSortKey,
-  type PaymentSortState,
-  type PaymentTypeFilter,
-  sortPayments,
-  toggleInvoiceFilter,
-  toggleTagFilter,
-  toggleTypeFilter,
-} from "./monthlyPaymentsView-filters"
+import MonthlyPaymentsModals from "./MonthlyPaymentsModals"
+import { computePaymentTotals } from "./monthlyPaymentsView-totals"
 import PaymentsSummary from "./PaymentsSummary"
 import PaymentsTable from "./PaymentsTable"
+import { useMonthlyPaymentsActions } from "./useMonthlyPaymentsActions"
+import { useMonthlyPaymentsFilters } from "./useMonthlyPaymentsFilters"
 
 const PaymentCharts = dynamic(() => import("./PaymentCharts"), { ssr: false })
-const DeletePaymentModal = dynamic(() => import("./DeletePaymentModal"), {
-  ssr: false,
-})
-const PaymentDetailModal = dynamic(() => import("./PaymentDetailModal"), {
-  ssr: false,
-})
 
 export default function MonthlyPaymentsView({
   selectedDate,
@@ -45,175 +31,55 @@ export default function MonthlyPaymentsView({
     isLoading,
     error: fetchError,
   } = usePayments({ year, month })
+  // 100 is the API max page size; enough for name lookups in this view.
+  const { clients } = useClients({ page: 1, pageSize: 100 })
+  const [editingClientId, setEditingClientId] = useState<string | null>(null)
 
-  const { trigger: deletePayment, isMutating: isDeleting } = useDeletePayment()
+  const clientNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const client of clients) {
+      if (client._id) map.set(client._id, client.name)
+    }
+    return map
+  }, [clients])
 
-  const [actionError, setActionError] = useState<string | null>(null)
-
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string>("")
-
-  // Delete confirmation state
-  const [deleteConfirmPaymentId, setDeleteConfirmPaymentId] = useState<
-    string | null
-  >(null)
-
-  // Edit modal state (full payment edit)
-  const [editPaymentId, setEditPaymentId] = useState<string | null>(null)
-
-  // Duplicate modal state — holds the source payment to seed the create form.
-  const [duplicateSeed, setDuplicateSeed] = useState<Payment | null>(null)
-
-  const [sort, setSort] = useState<PaymentSortState>({
-    sortBy: "day",
-    sortDir: "asc",
-  })
-  const [filters, setFilters] = useState<PaymentFilters>({
-    type: "all",
-    hasInvoice: "all",
-    hasReceipt: "all",
-    tags: [],
-  })
-
-  const filteredPayments = useMemo(
-    () =>
-      sortPayments(
-        filterPayments(payments, filters),
-        sort.sortBy,
-        sort.sortDir
-      ),
-    [payments, filters, sort.sortBy, sort.sortDir]
+  const editingClient: Client | undefined = useMemo(
+    () => clients.find((client) => client._id === editingClientId),
+    [clients, editingClientId]
   )
 
-  const handleSortChange = useCallback((key: PaymentSortKey) => {
-    setSort((prev) => nextSortState(prev, key))
-  }, [])
+  const {
+    sort,
+    filters,
+    filteredPayments,
+    handleSortChange,
+    handleTypeFilterToggle,
+    handleInvoiceFilterToggle,
+    handleReceiptFilterToggle,
+    handleTagToggle,
+    clearTagFilter,
+  } = useMonthlyPaymentsFilters(payments)
 
-  const handleTypeFilterToggle = useCallback(
-    (type: Exclude<PaymentTypeFilter, "all">) => {
-      setFilters((prev) => ({
-        ...prev,
-        type: toggleTypeFilter(prev.type, type),
-      }))
-    },
-    []
-  )
-
-  const handleInvoiceFilterToggle = useCallback((hasInvoice: boolean) => {
-    setFilters((prev) => ({
-      ...prev,
-      hasInvoice: toggleInvoiceFilter(prev.hasInvoice, hasInvoice),
-    }))
-  }, [])
-
-  const handleReceiptFilterToggle = useCallback((hasReceipt: boolean) => {
-    setFilters((prev) => ({
-      ...prev,
-      hasReceipt: toggleInvoiceFilter(prev.hasReceipt, hasReceipt),
-    }))
-  }, [])
-
-  const handleTagToggle = useCallback((tag: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      tags: toggleTagFilter(prev.tags, tag),
-    }))
-  }, [])
-
-  const clearTagFilter = useCallback(() => {
-    setFilters((prev) => ({ ...prev, tags: [] }))
-  }, [])
-
-  // Auto-open the payment-detail modal when arriving with ?payment=<id>.
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const pathname = usePathname()
-  const consumedPaymentRef = useRef<string | null>(null)
-  useEffect(() => {
-    const target = searchParams.get("payment")
-    if (!target) return
-    if (consumedPaymentRef.current === target) return
-    if (isLoading) return
-    if (payments.some((p) => p._id === target)) {
-      setEditPaymentId(target)
-    }
-    consumedPaymentRef.current = target
-    router.replace(`${pathname}?year=${year}&month=${month}`, {
-      scroll: false,
-    })
-  }, [payments, isLoading, searchParams, year, month, pathname, router])
-
-  const handleRowClick = (paymentId: string) => {
-    setEditPaymentId(paymentId)
-  }
-
-  const closeEditModal = () => {
-    setEditPaymentId(null)
-  }
-
-  const handleDeleteClick = (e: React.MouseEvent, paymentId: string) => {
-    e.stopPropagation() // Prevent row click
-    setDeleteConfirmPaymentId(paymentId)
-  }
-
-  const handleDuplicateClick = (e: React.MouseEvent, paymentId: string) => {
-    e.stopPropagation()
-    const source = payments.find((p) => p._id === paymentId)
-    if (source) setDuplicateSeed(source)
-  }
-
-  const handlePaymentDuplicated = () => {
-    setDuplicateSeed(null)
-    setSuccessMessage("Payment duplicated successfully")
-    setShowSuccess(true)
-    setTimeout(() => setShowSuccess(false), 4000)
-  }
-
-  const handlePaymentUpdated = (_updatedPayment: Payment) => {
-    // useUpdatePayment invalidates the payments cache automatically.
-    setSuccessMessage("Payment updated successfully")
-    setShowSuccess(true)
-    setTimeout(() => setShowSuccess(false), 4000)
-  }
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteConfirmPaymentId) return
-
-    try {
-      await deletePayment({ id: deleteConfirmPaymentId })
-
-      setDeleteConfirmPaymentId(null)
-      setSuccessMessage("Payment deleted successfully")
-      setShowSuccess(true)
-      setTimeout(() => setShowSuccess(false), 4000)
-    } catch (err) {
-      console.error(`Error deleting payment: ${err}`)
-      setActionError(err instanceof Error ? err.message : "An error occurred")
-      setDeleteConfirmPaymentId(null)
-    }
-  }, [deleteConfirmPaymentId, deletePayment])
-
-  // Enter-to-confirm for the delete modal. ESC is handled by Modal itself.
-  useEffect(() => {
-    if (!deleteConfirmPaymentId) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault()
-        e.stopPropagation()
-        handleConfirmDelete()
-      }
-    }
-
-    const timeoutId = setTimeout(() => {
-      document.addEventListener("keydown", handleKeyDown)
-    }, 0)
-
-    return () => {
-      clearTimeout(timeoutId)
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [deleteConfirmPaymentId, handleConfirmDelete])
+  const {
+    actionError,
+    showSuccess,
+    successMessage,
+    dismissSuccess,
+    isDeleting,
+    deleteConfirmPaymentId,
+    editPaymentId,
+    duplicateSeed,
+    handleRowClick,
+    closeEditModal,
+    closeDeleteModal,
+    closeDuplicateModal,
+    handleDeleteClick,
+    handleDuplicateClick,
+    handlePaymentDuplicated,
+    handlePaymentUpdated,
+    handleEditDeleted,
+    handleConfirmDelete,
+  } = useMonthlyPaymentsActions({ payments, isLoading, year, month })
 
   // Combine iterations: compute totals, counts, and tag breakdowns in a single pass (js-combine-iterations)
   const {
@@ -229,48 +95,7 @@ export default function MonthlyPaymentsView({
     outcomeCount,
     incomeByTag,
     outcomeByTag,
-  } = useMemo(() => {
-    let income = 0
-    let outcome = 0
-    let vatIncome = 0
-    let vatOutcome = 0
-    let netIncome = 0
-    let netOutcome = 0
-    let incCount = 0
-    let outCount = 0
-    const incByTag: Record<string, number> = {}
-    const outByTag: Record<string, number> = {}
-    for (const p of payments) {
-      const tag = p.tag || "Untagged"
-      if (p.type === "income") {
-        income += p.total
-        vatIncome += p.vatAmount
-        netIncome += p.netAmount
-        incByTag[tag] = (incByTag[tag] || 0) + p.total
-        incCount++
-      } else {
-        outcome += p.total
-        vatOutcome += p.vatAmount
-        netOutcome += p.netAmount
-        outByTag[tag] = (outByTag[tag] || 0) + p.total
-        outCount++
-      }
-    }
-    return {
-      totalIncome: income,
-      totalOutcome: outcome,
-      totalVat: vatIncome - vatOutcome,
-      totalVatIncome: vatIncome,
-      totalVatOutcome: vatOutcome,
-      totalNet: netIncome - netOutcome,
-      totalNetIncome: netIncome,
-      totalNetOutcome: netOutcome,
-      incomeCount: incCount,
-      outcomeCount: outCount,
-      incomeByTag: incByTag,
-      outcomeByTag: outByTag,
-    }
-  }, [payments])
+  } = useMemo(() => computePaymentTotals(payments), [payments])
 
   if (isLoading) {
     return (
@@ -295,7 +120,7 @@ export default function MonthlyPaymentsView({
   return (
     <div className="w-full space-y-2">
       {showSuccess && (
-        <Toast message={successMessage} onClose={() => setShowSuccess(false)} />
+        <Toast message={successMessage} onClose={dismissSuccess} />
       )}
 
       {showCharts && (
@@ -354,44 +179,30 @@ export default function MonthlyPaymentsView({
         onInvoiceFilterToggle={handleInvoiceFilterToggle}
         onReceiptFilterToggle={handleReceiptFilterToggle}
         onTagFilterToggle={handleTagToggle}
+        clientNameById={clientNameById}
+        onClientClick={setEditingClientId}
       />
 
-      {deleteConfirmPaymentId && (
-        <DeletePaymentModal
-          payment={payments.find((p) => p._id === deleteConfirmPaymentId)}
-          isDeleting={isDeleting}
-          onClose={() => setDeleteConfirmPaymentId(null)}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+      <ClientFormModal
+        client={editingClient}
+        isOpen={!!editingClient}
+        onClose={() => setEditingClientId(null)}
+      />
 
-      {editPaymentId &&
-        (() => {
-          const selectedPayment = payments.find((p) => p._id === editPaymentId)
-          if (!selectedPayment) return null
-          return (
-            <PaymentDetailModal
-              payment={selectedPayment}
-              onClose={closeEditModal}
-              onUpdate={handlePaymentUpdated}
-              onDelete={() => {
-                setEditPaymentId(null)
-                setSuccessMessage("Payment deleted successfully")
-                setShowSuccess(true)
-                setTimeout(() => setShowSuccess(false), 4000)
-              }}
-            />
-          )
-        })()}
-
-      {duplicateSeed && (
-        <PaymentDetailModal
-          payment={duplicateSeed}
-          mode="duplicate"
-          onClose={() => setDuplicateSeed(null)}
-          onCreate={handlePaymentDuplicated}
-        />
-      )}
+      <MonthlyPaymentsModals
+        payments={payments}
+        deleteConfirmPaymentId={deleteConfirmPaymentId}
+        isDeleting={isDeleting}
+        onCloseDelete={closeDeleteModal}
+        onConfirmDelete={handleConfirmDelete}
+        editPaymentId={editPaymentId}
+        onCloseEdit={closeEditModal}
+        onUpdate={handlePaymentUpdated}
+        onDeleteEdit={handleEditDeleted}
+        duplicateSeed={duplicateSeed}
+        onCloseDuplicate={closeDuplicateModal}
+        onCreateDuplicate={handlePaymentDuplicated}
+      />
     </div>
   )
 }

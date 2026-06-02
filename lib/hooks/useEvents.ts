@@ -29,7 +29,7 @@ export function isEventsKey(key: unknown): boolean {
   return Array.isArray(key) && key[0] === "/api/events"
 }
 
-export interface EventsResponse {
+interface EventsResponse {
   events: Event[]
 }
 

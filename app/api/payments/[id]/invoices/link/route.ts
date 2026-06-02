@@ -42,8 +42,6 @@ export async function POST(
     }
     const { type, link } = parsed.data
 
-    // `Receipt` is now part of the `InvoiceType` union (Wave E). Generated
-    // PDF rendering excludes it via a narrowed `GeneratedInvoiceType`.
     const entry: InvoiceMetadata = {
       type,
       link,

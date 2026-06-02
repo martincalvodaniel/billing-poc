@@ -24,3 +24,22 @@ export function buildDuplicateSeed(payment: Payment): PaymentFormData {
     paymentMethod: "",
   }
 }
+
+/**
+ * Builds a `PaymentFormData` seed for editing an existing payment, mirroring
+ * every stored field (with sensible defaults for optional ones).
+ */
+export function buildEditFormData(payment: Payment): PaymentFormData {
+  return {
+    type: payment.type,
+    date: payment.date,
+    concepts: payment.concepts || [{ name: "", amount: 0, quantity: 1 }],
+    vat: payment.vat.toString(),
+    surcharge: payment.surcharge?.toString() || "",
+    discount: payment.discount?.toString() || "",
+    tag: payment.tag || "",
+    clientId: payment.clientId || undefined,
+    deliveryNoteRef: payment.deliveryNoteRef || "",
+    paymentMethod: payment.paymentMethod ?? "",
+  }
+}

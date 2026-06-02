@@ -1,212 +1,33 @@
-import {
-  PDFDocument,
-  type PDFFont,
-  type PDFPage,
-  rgb,
-  StandardFonts,
-} from "pdf-lib"
+import { PDFDocument, StandardFonts } from "pdf-lib"
 import type { Client } from "./domain/entities/client"
 import type { CompanyInfo } from "./domain/entities/companyInfo"
-import type {
-  InvoiceType,
-  Payment,
-  PaymentMethod,
-} from "./domain/entities/payment"
+import type { Payment } from "./domain/entities/payment"
+import { drawCompanyAndClient, type Fonts } from "./invoicePdf-draw"
+import { drawItemsTable, drawTotals } from "./invoicePdf-draw-table"
+import {
+  formatInvoiceDateES,
+  formatInvoiceNumber,
+  invoiceTitle,
+} from "./invoicePdf-format"
+import {
+  type GeneratedInvoiceType,
+  LOGO_BOX,
+  LOGO_CLEARANCE,
+  MARGIN,
+  PAGE_HEIGHT,
+  PAGE_WIDTH,
+  SAGE_TEXT,
+} from "./invoicePdf-layout"
 
-/** PDF rendering applies only to the four generated invoice types;
- *  `Receipt` is link-only and never renders here. */
-type GeneratedInvoiceType = Exclude<InvoiceType, "Receipt">
-
-const PAGE_WIDTH = 595
-const PAGE_HEIGHT = 842
-const MARGIN = 50
-const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
-const COL_GAP = 16
-const COL_WIDTH = (CONTENT_WIDTH - COL_GAP) / 2
-const LEFT_X = MARGIN
-const RIGHT_X = MARGIN + COL_WIDTH + COL_GAP
-const BAND_HEIGHT = 18
-const ROW_HEIGHT = 14
-const LOGO_BOX = 70
-const LOGO_CLEARANCE = 20
-
-const HEADER_BG = rgb(0xe4 / 255, 0xeb / 255, 0xd4 / 255)
-const TOTAL_BG = rgb(0x74 / 255, 0x8f / 255, 0x4a / 255)
-const SAGE_TEXT = rgb(0x6b / 255, 0x7a / 255, 0x4e / 255)
-const BLACK = rgb(0, 0, 0)
-const WHITE = rgb(1, 1, 1)
-
-// ---------- Pure helpers (exported for tests) ----------
-
-const SERIES_PREFIX: Record<GeneratedInvoiceType, string> = {
-  Invoice: "F",
-  SimpleInvoice: "FS",
-  RectificativeInvoice: "FR",
-  RectificativeSimpleInvoice: "FSR",
-}
-
-const PREFIX_TO_TYPE: Record<string, GeneratedInvoiceType> = {
-  FSR: "RectificativeSimpleInvoice",
-  FS: "SimpleInvoice",
-  FR: "RectificativeInvoice",
-  F: "Invoice",
-}
-
-export function formatInvoiceNumber(
-  series: GeneratedInvoiceType,
-  year: number,
-  n: number
-): string {
-  const yy = String(year % 100).padStart(2, "0")
-  const nnn = String(n).padStart(3, "0")
-  return `${SERIES_PREFIX[series]}${yy}_${nnn}`
-}
-
-export function parseInvoiceId(
-  id: string
-): { type: GeneratedInvoiceType; year: number; n: number } | null {
-  const match = /^(FSR|FS|FR|F)(\d{2})_(\d{3,})$/.exec(id)
-  if (!match) return null
-  const prefix = match[1]
-  const type = PREFIX_TO_TYPE[prefix]
-  if (!type) return null
-  const yy = Number.parseInt(match[2], 10)
-  const n = Number.parseInt(match[3], 10)
-  if (!Number.isFinite(yy) || !Number.isFinite(n) || n <= 0) return null
-  return { type, year: 2000 + yy, n }
-}
-
-export function formatInvoiceDateES(date: string | Date): string {
-  let d: Date
-  if (typeof date === "string") {
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date)
-    if (match) {
-      d = new Date(
-        Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-      )
-    } else {
-      d = new Date(date)
-    }
-  } else {
-    d = date
-  }
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "numeric",
-    month: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(d)
-}
-
-const PAYMENT_METHOD_LABEL_ES: Record<PaymentMethod, string> = {
-  cash: "Pago en efectivo",
-  card: "Pago con tarjeta bancaria",
-  bank_transfer: "Pago por transferencia",
-}
-
-export function paymentMethodLabelES(
-  method: PaymentMethod | undefined
-): string {
-  if (!method) return ""
-  return PAYMENT_METHOD_LABEL_ES[method] ?? ""
-}
-
-export function formatInvoiceAmount(n: number): string {
-  return `${n.toFixed(2).replace(".", ",")}€`
-}
-
-export function invoiceTitle(series: GeneratedInvoiceType): string[] {
-  switch (series) {
-    case "Invoice":
-      return ["FACTURA"]
-    case "SimpleInvoice":
-      return ["FACTURA SIMPLIFICADA"]
-    case "RectificativeInvoice":
-      return ["FACTURA", "RECTIFICATIVA"]
-    case "RectificativeSimpleInvoice":
-      return ["FACTURA SIMPLIFICADA", "RECTIFICATIVA"]
-  }
-}
-
-function isSimpleSeries(series: GeneratedInvoiceType): boolean {
-  return series === "SimpleInvoice" || series === "RectificativeSimpleInvoice"
-}
-
-// ---------- Drawing helpers ----------
-
-interface Fonts {
-  font: PDFFont
-  bold: PDFFont
-}
-
-function drawSageBand(
-  page: PDFPage,
-  fonts: Fonts,
-  x: number,
-  y: number,
-  width: number,
-  label: string,
-  options: {
-    rightLabel?: string
-    rightWidth?: number
-    backgroundColor?: ReturnType<typeof rgb>
-    textColor?: ReturnType<typeof rgb>
-  } = {}
-): void {
-  const backgroundColor = options.backgroundColor ?? HEADER_BG
-  const textColor = options.textColor ?? SAGE_TEXT
-
-  page.drawRectangle({
-    x,
-    y: y - BAND_HEIGHT,
-    width,
-    height: BAND_HEIGHT,
-    color: backgroundColor,
-  })
-  page.drawText(label, {
-    x: x + 6,
-    y: y - BAND_HEIGHT + 5,
-    size: 9,
-    font: fonts.bold,
-    color: textColor,
-  })
-  if (options.rightLabel && options.rightWidth) {
-    const split = x + width - options.rightWidth
-    page.drawLine({
-      start: { x: split, y: y - BAND_HEIGHT },
-      end: { x: split, y },
-      thickness: 1,
-      color: WHITE,
-    })
-    page.drawText(options.rightLabel, {
-      x: split + 6,
-      y: y - BAND_HEIGHT + 5,
-      size: 9,
-      font: fonts.bold,
-      color: textColor,
-    })
-  }
-}
-
-function drawRow(
-  page: PDFPage,
-  fonts: Fonts,
-  x: number,
-  y: number,
-  width: number,
-  text: string
-): void {
-  page.drawText(text, {
-    x: x + 6,
-    y: y - ROW_HEIGHT + 4,
-    size: 9,
-    font: fonts.font,
-    color: BLACK,
-    maxWidth: width - 12,
-  })
-}
-
-// ---------- Main renderer ----------
+// Re-export pure helpers so existing consumers/tests can import from here.
+export {
+  formatInvoiceAmount,
+  formatInvoiceDateES,
+  formatInvoiceNumber,
+  invoiceTitle,
+  parseInvoiceId,
+  paymentMethodLabelES,
+} from "./invoicePdf-format"
 
 export interface InvoiceRenderContext {
   payment: Payment
@@ -284,207 +105,18 @@ export async function generateInvoicePdf(
     const logoBottomY = PAGE_HEIGHT - MARGIN - LOGO_BOX
     const contentTopY = Math.min(titleY - 30, logoBottomY - LOGO_CLEARANCE)
 
-    let leftY = contentTopY
-    let rightY = leftY
-
-    // LEFT: DATOS DE EMPRESA
-    drawSageBand(page, fonts, LEFT_X, leftY, COL_WIDTH, "DATOS DE EMPRESA:")
-    leftY -= BAND_HEIGHT
-    const companyRows = [
-      company.name,
-      company.taxId,
-      company.addressLine,
-      `${company.postalCode} ${company.city} (${company.country})`,
-      company.phone,
-      company.email,
-    ]
-    for (const text of companyRows) {
-      drawRow(page, fonts, LEFT_X, leftY, COL_WIDTH, text)
-      leftY -= ROW_HEIGHT
-    }
-
-    // RIGHT: Nº FACTURA + FECHA split band
-    const rightHalf = COL_WIDTH / 2
-    drawSageBand(page, fonts, RIGHT_X, rightY, COL_WIDTH, "Nº FACTURA:", {
-      rightLabel: "FECHA:",
-      rightWidth: rightHalf,
-    })
-    rightY -= BAND_HEIGHT
-    drawRow(page, fonts, RIGHT_X, rightY, rightHalf, formattedNumber)
-    drawRow(page, fonts, RIGHT_X + rightHalf, rightY, rightHalf, formattedDate)
-    rightY -= ROW_HEIGHT + 4
-
-    // RIGHT: MÉTODO DE PAGO (all invoice types, plain value)
-    if (payment.paymentMethod) {
-      drawSageBand(page, fonts, RIGHT_X, rightY, COL_WIDTH, "MÉTODO DE PAGO:")
-      rightY -= BAND_HEIGHT
-      drawRow(
-        page,
-        fonts,
-        RIGHT_X,
-        rightY,
-        COL_WIDTH,
-        paymentMethodLabelES(payment.paymentMethod)
-      )
-      rightY -= ROW_HEIGHT + 4
-    }
-
-    // RIGHT: DATOS CLIENTE
-    drawSageBand(page, fonts, RIGHT_X, rightY, COL_WIDTH, "DATOS CLIENTE:")
-    rightY -= BAND_HEIGHT
-    if (isSimpleSeries(series)) {
-      drawRow(page, fonts, RIGHT_X, rightY, COL_WIDTH, "Particular")
-      rightY -= ROW_HEIGHT
-    } else if (client) {
-      const clientRows = [
-        client.name,
-        client.taxId ?? "",
-        client.address ?? "",
-        client.email ?? "",
-        client.phone ?? "",
-      ].filter((s) => s.length > 0)
-      for (const text of clientRows) {
-        drawRow(page, fonts, RIGHT_X, rightY, COL_WIDTH, text)
-        rightY -= ROW_HEIGHT
-      }
-    }
-
-    // Items table
-    let tableY = Math.min(leftY, rightY) - 24
-    const colConcept = MARGIN
-    const colQty = MARGIN + CONTENT_WIDTH * 0.55
-    const colPrice = MARGIN + CONTENT_WIDTH * 0.7
-    const colTotal = MARGIN + CONTENT_WIDTH * 0.85
-
-    page.drawRectangle({
-      x: MARGIN,
-      y: tableY - BAND_HEIGHT,
-      width: CONTENT_WIDTH,
-      height: BAND_HEIGHT,
-      color: HEADER_BG,
-    })
-    const headerY = tableY - BAND_HEIGHT + 5
-    page.drawText("Concepto", {
-      x: colConcept + 6,
-      y: headerY,
-      size: 9,
-      font: bold,
-      color: SAGE_TEXT,
-    })
-    page.drawText("Cantidad", {
-      x: colQty + 6,
-      y: headerY,
-      size: 9,
-      font: bold,
-      color: SAGE_TEXT,
-    })
-    page.drawText("Precio/und", {
-      x: colPrice + 6,
-      y: headerY,
-      size: 9,
-      font: bold,
-      color: SAGE_TEXT,
-    })
-    page.drawText("Total", {
-      x: colTotal + 6,
-      y: headerY,
-      size: 9,
-      font: bold,
-      color: SAGE_TEXT,
-    })
-    tableY -= BAND_HEIGHT
-
-    for (const concept of payment.concepts) {
-      const qty = concept.quantity ?? 1
-      const lineTotal = concept.amount * qty
-      const rowY = tableY - ROW_HEIGHT + 4
-      page.drawText(concept.name, {
-        x: colConcept + 6,
-        y: rowY,
-        size: 9,
-        font,
-        color: BLACK,
-        maxWidth: colQty - colConcept - 12,
-      })
-      page.drawText(String(qty), {
-        x: colQty + 6,
-        y: rowY,
-        size: 9,
-        font,
-        color: BLACK,
-      })
-      page.drawText(formatInvoiceAmount(concept.amount), {
-        x: colPrice + 6,
-        y: rowY,
-        size: 9,
-        font,
-        color: BLACK,
-      })
-      page.drawText(formatInvoiceAmount(lineTotal), {
-        x: colTotal + 6,
-        y: rowY,
-        size: 9,
-        font,
-        color: BLACK,
-      })
-      tableY -= ROW_HEIGHT
-    }
-
-    // Totals (right column)
-    let totalsY = tableY - 30
-    const totalsWidth = CONTENT_WIDTH * 0.45
-    const totalsX = MARGIN + CONTENT_WIDTH - totalsWidth
-    const totalsLabelWidth = totalsWidth * 0.55
-
-    const totalRows: { label: string; value: string; bold?: boolean }[] = [
-      { label: "SUBTOTAL:", value: formatInvoiceAmount(payment.netAmount) },
-      {
-        label: `IVA (${payment.vat}%):`,
-        value: formatInvoiceAmount(payment.vatAmount),
-      },
-    ]
-    if (payment.surcharge && payment.surchargeAmount) {
-      totalRows.push({
-        label: "RECARGO:",
-        value: formatInvoiceAmount(payment.surchargeAmount),
-      })
-    }
-    if (payment.discount && payment.discount > 0) {
-      totalRows.push({
-        label: "DESCUENTO:",
-        value: `-${formatInvoiceAmount(payment.discount)}`,
-      })
-    }
-    totalRows.push({
-      label: "TOTAL:",
-      value: formatInvoiceAmount(payment.total),
-      bold: true,
+    const tableTopY = drawCompanyAndClient(page, fonts, {
+      company,
+      payment,
+      client,
+      series,
+      formattedNumber,
+      formattedDate,
+      contentTopY,
     })
 
-    for (const row of totalRows) {
-      const isTotalRow = row.bold === true
-      drawSageBand(page, fonts, totalsX, totalsY, totalsLabelWidth, row.label, {
-        backgroundColor: isTotalRow ? TOTAL_BG : HEADER_BG,
-        textColor: isTotalRow ? WHITE : SAGE_TEXT,
-      })
-      page.drawRectangle({
-        x: totalsX + totalsLabelWidth,
-        y: totalsY - BAND_HEIGHT,
-        width: totalsWidth - totalsLabelWidth,
-        height: BAND_HEIGHT,
-        ...(isTotalRow
-          ? { color: TOTAL_BG }
-          : { borderColor: HEADER_BG, borderWidth: 0.5 }),
-      })
-      page.drawText(row.value, {
-        x: totalsX + totalsLabelWidth + 8,
-        y: totalsY - BAND_HEIGHT + 5,
-        size: row.bold ? 10 : 9,
-        font: row.bold ? bold : font,
-        color: isTotalRow ? WHITE : BLACK,
-      })
-      totalsY -= BAND_HEIGHT + 2
-    }
+    const tableBottomY = drawItemsTable(page, fonts, payment, tableTopY - 24)
+    drawTotals(page, fonts, payment, tableBottomY - 30)
 
     const pdfBytes = await pdf.save()
     return Buffer.from(pdfBytes)

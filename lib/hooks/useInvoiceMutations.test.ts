@@ -85,16 +85,12 @@ describe("GenerateInvoiceResult", () => {
         type: "Invoice",
         id: "F26_003",
         generatedAt: new Date("2026-05-30T12:00:00Z"),
-        blobUrl: "https://blob.example/F26_003.pdf",
-        blobPathname: "F26_003.pdf",
       },
       invoices: [
         {
           type: "Invoice",
           id: "F26_003",
           generatedAt: new Date("2026-05-30T12:00:00Z"),
-          blobUrl: "https://blob.example/F26_003.pdf",
-          blobPathname: "F26_003.pdf",
         },
       ],
       id: "F26_003",

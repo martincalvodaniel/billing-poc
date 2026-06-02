@@ -21,7 +21,7 @@ export interface ClientFormData {
   email?: string
 }
 
-export interface PaginationMeta {
+interface PaginationMeta {
   page: number
   pageSize: number
   total: number

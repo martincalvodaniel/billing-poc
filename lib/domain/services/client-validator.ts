@@ -56,28 +56,28 @@ export const updateClientSchema = z
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
     address: z
       .string()
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
     phone: z
       .string()
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
     email: z
       .string()
       .optional()
       .transform((v) => {
         const trimmed = v?.trim()
-        return trimmed ? trimmed : null
+        return trimmed ? trimmed : undefined
       }),
   })
   .refine(
@@ -97,8 +97,3 @@ export const clientQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
 })
-
-export type CreateClientInput = z.infer<typeof createClientSchema>
-export type UpdateClientInput = z.infer<typeof updateClientSchema>
-export type DeleteClientInput = z.infer<typeof deleteClientSchema>
-export type ClientQueryInput = z.infer<typeof clientQuerySchema>

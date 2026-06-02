@@ -65,25 +65,7 @@ export interface PaymentResponse {
   payment: Payment
 }
 
-export interface UsePaymentResult {
-  payment: Payment | null
-  isLoading: boolean
-  error: unknown
-}
-
-export function usePayment(id: string | null): UsePaymentResult {
-  const { data, error, isLoading } = useSWR<PaymentResponse>(
-    id ? buildPaymentKey(id) : null,
-    id ? () => fetcher<PaymentResponse>(buildPaymentUrl(id)) : null
-  )
-  return {
-    payment: data?.payment ?? null,
-    isLoading,
-    error,
-  }
-}
-
-export interface PaymentsResponse {
+interface PaymentsResponse {
   payments: Payment[]
 }
 
