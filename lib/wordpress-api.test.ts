@@ -25,9 +25,9 @@ describe("buildWordPressOrderUrl", () => {
 })
 
 describe("buildWordPressOrderStatusPayload", () => {
-  it("builds the completed status payload", () => {
-    expect(buildWordPressOrderStatusPayload("completed")).toEqual({
-      status: "completed",
+  it("builds the selected status payload", () => {
+    expect(buildWordPressOrderStatusPayload("cancelled")).toEqual({
+      status: "cancelled",
     })
   })
 })

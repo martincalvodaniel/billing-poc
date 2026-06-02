@@ -2,6 +2,7 @@ import { z } from "zod"
 import type {
   WordPressBilling,
   WordPressOrder,
+  WordPressOrderStatus,
   WordPressOrdersResponse,
 } from "@/lib/domain/entities/wordpress-order"
 
@@ -148,8 +149,10 @@ export function buildWordPressOrderUrl(
   return `${normalizedEndpoint}/wc/v3/orders/${orderId}`
 }
 
-export function buildWordPressOrderStatusPayload(status: "completed"): {
-  status: "completed"
+export function buildWordPressOrderStatusPayload(
+  status: WordPressOrderStatus
+): {
+  status: WordPressOrderStatus
 } {
   return { status }
 }
@@ -270,7 +273,7 @@ export async function fetchWordPressOrdersPage(
 
 export async function updateWordPressOrderStatus(
   orderId: number,
-  status: "completed"
+  status: WordPressOrderStatus
 ): Promise<WordPressOrder> {
   const endpoint = getRequiredWordPressEnv("WORDPRESS_ENDPOINT")
   const user = getRequiredWordPressEnv("WORDPRESS_USER")

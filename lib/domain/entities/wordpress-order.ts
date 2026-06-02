@@ -1,3 +1,15 @@
+export const WORDPRESS_ORDER_STATUSES = [
+  "pending",
+  "processing",
+  "on-hold",
+  "completed",
+  "cancelled",
+  "refunded",
+  "failed",
+] as const
+
+export type WordPressOrderStatus = (typeof WORDPRESS_ORDER_STATUSES)[number]
+
 export interface WordPressBilling {
   first_name: string
   last_name: string

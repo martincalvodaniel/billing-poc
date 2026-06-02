@@ -50,10 +50,10 @@ describe("isWordpressOrdersKey", () => {
 })
 
 describe("buildUpdateWordpressOrderStatusRequest", () => {
-  test("targets a single order with the completed status payload", () => {
+  test("targets a single order with the selected status payload", () => {
     const request = buildUpdateWordpressOrderStatusRequest({
       orderId: 123,
-      status: "completed",
+      status: "refunded",
     })
 
     expect(request.url).toBe("/api/wordpress/orders/123")
@@ -61,7 +61,7 @@ describe("buildUpdateWordpressOrderStatusRequest", () => {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ status: "completed" }),
+      body: JSON.stringify({ status: "refunded" }),
     })
   })
 })
