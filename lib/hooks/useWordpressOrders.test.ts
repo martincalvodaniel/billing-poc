@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { buildUpdateWordpressOrderStatusRequest } from "./useWordpressOrderMutations"
 import {
   buildWordpressOrdersKey,
   buildWordpressOrdersUrl,
@@ -45,5 +46,22 @@ describe("isWordpressOrdersKey", () => {
     expect(isWordpressOrdersKey(["/api/payments", 1])).toBe(false)
     expect(isWordpressOrdersKey("/api/wordpress/orders?page=1")).toBe(false)
     expect(isWordpressOrdersKey(null)).toBe(false)
+  })
+})
+
+describe("buildUpdateWordpressOrderStatusRequest", () => {
+  test("targets a single order with the completed status payload", () => {
+    const request = buildUpdateWordpressOrderStatusRequest({
+      orderId: 123,
+      status: "completed",
+    })
+
+    expect(request.url).toBe("/api/wordpress/orders/123")
+    expect(request.init).toEqual({
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ status: "completed" }),
+    })
   })
 })

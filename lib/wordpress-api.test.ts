@@ -1,9 +1,36 @@
 import { describe, expect, it } from "bun:test"
 import {
+  buildWordPressOrderStatusPayload,
+  buildWordPressOrdersUrl,
+  buildWordPressOrderUrl,
   sanitizeWordPressBilling,
   sanitizeWordPressPhone,
   toCapitalCase,
 } from "@/lib/wordpress-api"
+
+describe("buildWordPressOrdersUrl", () => {
+  it("builds the WooCommerce orders page URL", () => {
+    expect(buildWordPressOrdersUrl("https://example.com/wp-json/", 3)).toBe(
+      "https://example.com/wp-json/wc/v3/orders?page=3"
+    )
+  })
+})
+
+describe("buildWordPressOrderUrl", () => {
+  it("builds the WooCommerce single order URL", () => {
+    expect(buildWordPressOrderUrl("https://example.com/wp-json/", 123)).toBe(
+      "https://example.com/wp-json/wc/v3/orders/123"
+    )
+  })
+})
+
+describe("buildWordPressOrderStatusPayload", () => {
+  it("builds the completed status payload", () => {
+    expect(buildWordPressOrderStatusPayload("completed")).toEqual({
+      status: "completed",
+    })
+  })
+})
 
 describe("toCapitalCase", () => {
   it("normalizes names to capital case", () => {
