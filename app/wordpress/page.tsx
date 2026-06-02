@@ -9,6 +9,7 @@ import type { WordPressOrder } from "@/lib/domain/entities/wordpress-order"
 import { useWordpressOrders } from "@/lib/hooks/useWordpressOrders"
 import { WordpressBillingClientModal } from "./components/WordpressBillingClientModal"
 import { WordpressOrderDetailsModal } from "./components/WordpressOrderDetailsModal"
+import { WordpressOrderStatusModal } from "./components/WordpressOrderStatusModal"
 import { WordpressOrdersHeader } from "./components/WordpressOrdersHeader"
 import { WordpressOrdersTable } from "./components/WordpressOrdersTable"
 import { WordpressPagination } from "./components/WordpressPagination"
@@ -20,6 +21,7 @@ export default function WordpressPage() {
     null
   )
   const [billingOrder, setBillingOrder] = useState<WordPressOrder | null>(null)
+  const [statusOrder, setStatusOrder] = useState<WordPressOrder | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const { data, orders, isLoading, error, mutate } = useWordpressOrders({
@@ -59,6 +61,7 @@ export default function WordpressPage() {
             orders={orders}
             onSelectOrder={(order) => setSelectedOrder(order)}
             onSelectBilling={(order) => setBillingOrder(order)}
+            onSelectStatus={(order) => setStatusOrder(order)}
           />
         )}
 
@@ -78,6 +81,12 @@ export default function WordpressPage() {
       <WordpressBillingClientModal
         order={billingOrder}
         onClose={() => setBillingOrder(null)}
+        onConfirmed={(message) => setToastMessage(message)}
+      />
+
+      <WordpressOrderStatusModal
+        order={statusOrder}
+        onClose={() => setStatusOrder(null)}
         onConfirmed={(message) => setToastMessage(message)}
       />
 

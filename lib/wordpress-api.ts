@@ -1,5 +1,6 @@
 import { z } from "zod"
 import type {
+  WordPressBilling,
   WordPressOrder,
   WordPressOrdersResponse,
 } from "@/lib/domain/entities/wordpress-order"
@@ -139,6 +140,47 @@ export function buildWordPressOrdersUrl(
   return `${normalizedEndpoint}/wc/v3/orders?${params.toString()}`
 }
 
+export function buildWordPressOrderUrl(
+  endpoint: string,
+  orderId: number
+): string {
+  const normalizedEndpoint = endpoint.replace(/\/$/, "")
+  return `${normalizedEndpoint}/wc/v3/orders/${orderId}`
+}
+
+export function buildWordPressOrderStatusPayload(status: "completed"): {
+  status: "completed"
+} {
+  return { status }
+}
+
+export function toCapitalCase(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase("es-ES")
+    .replace(/(^|[\s'-])(\p{L})/gu, (_match, separator, letter) => {
+      return `${separator}${letter.toLocaleUpperCase("es-ES")}`
+    })
+}
+
+export function sanitizeWordPressPhone(value: string): string {
+  return value
+    .trim()
+    .replace(/^\+34\s*/, "")
+    .replace(/(\d)\s+(?=\d)/g, "$1")
+}
+
+export function sanitizeWordPressBilling(
+  billing: WordPressBilling
+): WordPressBilling {
+  return {
+    ...billing,
+    first_name: toCapitalCase(billing.first_name),
+    last_name: toCapitalCase(billing.last_name),
+    phone: sanitizeWordPressPhone(billing.phone),
+  }
+}
+
 function projectOrder(order: z.infer<typeof rawOrderSchema>): WordPressOrder {
   return {
     id: order.id,
@@ -149,7 +191,7 @@ function projectOrder(order: z.infer<typeof rawOrderSchema>): WordPressOrder {
     cart_tax: order.cart_tax,
     total: order.total,
     total_tax: order.total_tax,
-    billing: order.billing,
+    billing: sanitizeWordPressBilling(order.billing),
     payment_method: order.payment_method,
     payment_method_title: order.payment_method_title,
     date_completed: order.date_completed,
@@ -224,4 +266,45 @@ export async function fetchWordPressOrdersPage(
       hasNextPage: page < totalPages,
     },
   }
+}
+
+export async function updateWordPressOrderStatus(
+  orderId: number,
+  status: "completed"
+): Promise<WordPressOrder> {
+  const endpoint = getRequiredWordPressEnv("WORDPRESS_ENDPOINT")
+  const user = getRequiredWordPressEnv("WORDPRESS_USER")
+  const password = getRequiredWordPressEnv("WORDPRESS_PASSWORD")
+
+  const response = await fetch(buildWordPressOrderUrl(endpoint, orderId), {
+    method: "PUT",
+    headers: {
+      Authorization: buildWordPressBasicAuthHeader(user, password),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(buildWordPressOrderStatusPayload(status)),
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => "")
+    const suffix = bodyText.length > 0 ? `: ${bodyText}` : ""
+    throw new WordPressApiError(
+      `WordPress order update failed with status ${response.status}${suffix}`,
+      response.status
+    )
+  }
+
+  const rawData = await response.json()
+  const parsed = rawOrderSchema.safeParse(rawData)
+
+  if (!parsed.success) {
+    throw new WordPressApiError(
+      "WordPress order update payload validation failed",
+      502
+    )
+  }
+
+  return projectOrder(parsed.data)
 }

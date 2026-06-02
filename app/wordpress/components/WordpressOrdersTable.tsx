@@ -11,32 +11,43 @@ interface WordpressOrdersTableProps {
   orders: WordPressOrder[]
   onSelectOrder: (order: WordPressOrder) => void
   onSelectBilling: (order: WordPressOrder) => void
+  onSelectStatus: (order: WordPressOrder) => void
 }
 
 export function WordpressOrdersTable({
   orders,
   onSelectOrder,
   onSelectBilling,
+  onSelectStatus,
 }: WordpressOrdersTableProps) {
   return (
     <>
       <div className="space-y-3 md:hidden">
         {orders.map((order) => (
-          <button
+          <div
             key={order.id}
-            type="button"
-            onClick={() => onSelectOrder(order)}
-            className="w-full rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-sm transition-colors hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800/40"
-            aria-label={`Open order ${order.id} details`}
+            className="w-full rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                <button
+                  type="button"
+                  onClick={() => onSelectOrder(order)}
+                  className="text-left text-sm font-semibold text-zinc-900 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:text-zinc-50 dark:focus:ring-offset-zinc-900"
+                  aria-label={`Open order ${order.id} details`}
+                >
                   #{order.id}
-                </p>
-                <Badge tone={getOrderStatusTone(order.status)} size="sm">
-                  {order.status}
-                </Badge>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectStatus(order)}
+                  className="block rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+                  aria-label={`Change status for order ${order.id}`}
+                >
+                  <Badge tone={getOrderStatusTone(order.status)} size="sm">
+                    {order.status}
+                  </Badge>
+                </button>
               </div>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 {formatAmount(order.total)}
@@ -68,7 +79,7 @@ export function WordpressOrdersTable({
                 {formatOrderTime(order.date_paid || order.date_completed)}
               </p>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 
@@ -102,9 +113,19 @@ export function WordpressOrdersTable({
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                       #{order.id}
                     </p>
-                    <Badge tone={getOrderStatusTone(order.status)} size="sm">
-                      {order.status}
-                    </Badge>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onSelectStatus(order)
+                      }}
+                      className="block rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+                      aria-label={`Change status for order ${order.id}`}
+                    >
+                      <Badge tone={getOrderStatusTone(order.status)} size="sm">
+                        {order.status}
+                      </Badge>
+                    </button>
                   </div>
                 </td>
                 <td className="px-4 py-3 align-top">
