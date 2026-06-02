@@ -13,7 +13,7 @@ import PaymentTagVatRow from "./PaymentTagVatRow"
 import PaymentTotalsPanel from "./PaymentTotalsPanel"
 import PaymentTypeDateRow from "./PaymentTypeDateRow"
 
-interface PaymentFormFieldsProps {
+interface PaymentDetailFormFieldsProps {
   formData: PaymentFormData
   suggestedTags: string[]
   showTagSuggestions: boolean
@@ -36,10 +36,10 @@ interface PaymentFormFieldsProps {
 }
 
 /**
- * Reusable molecule component for payment form fields.
- * Shared between PaymentForm and PaymentDetailModal.
+ * Payment fields used by Edit/Duplicate modal.
+ * Keeps Client next to Payment Method as a modal-specific layout.
  */
-export default function PaymentFormFields({
+export default function PaymentDetailFormFields({
   formData,
   suggestedTags,
   showTagSuggestions,
@@ -56,7 +56,7 @@ export default function PaymentFormFields({
   calculateSurchargeAmount,
   calculateNetAmount,
   calculateDiscount,
-}: PaymentFormFieldsProps) {
+}: PaymentDetailFormFieldsProps) {
   const handlePaymentMethodChange = useCallback(
     (value: PaymentMethod | "") => {
       onChangeField({
@@ -77,7 +77,7 @@ export default function PaymentFormFields({
         onTagSelect={onTagSelect}
         onTagBlur={onTagBlur}
       />
-      
+
       <div className="grid gap-4 md:grid-cols-2">
         <ClientSelectorField
           value={formData.clientId}

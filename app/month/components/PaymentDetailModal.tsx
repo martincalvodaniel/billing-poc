@@ -10,7 +10,7 @@ import { Modal } from "@/app/components/Modal"
 import { formatEventDateTime } from "@/app/events/components/eventsUi"
 import type { Payment, PaymentFormData } from "@/lib/domain/entities/payment"
 import { useEventByPayment } from "@/lib/hooks/useEventByPayment"
-import PaymentFormFields from "./PaymentFormFields"
+import PaymentDetailFormFields from "./PaymentDetailFormFields"
 import PaymentInvoicesSection from "./PaymentInvoicesSection"
 import {
   buildDuplicateSeed,
@@ -171,7 +171,7 @@ export default function PaymentDetailModal({
             </div>
           )}
 
-          <PaymentFormFields
+          <PaymentDetailFormFields
             formData={formData}
             suggestedTags={suggestedTags}
             showTagSuggestions={showTagSuggestions}
