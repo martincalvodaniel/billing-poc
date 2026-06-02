@@ -1,19 +1,24 @@
 "use client"
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import useSWR from "swr"
 import { ClientTypeIcon } from "@/app/components/icons/ClientTypeIcon"
 import { PencilIcon } from "@/app/components/icons/PencilIcon"
 import type { Client } from "@/lib/domain/entities/client"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
 import { useClients } from "@/lib/hooks/useClients"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
+import { fetcher } from "@/lib/swr-fetcher"
 
 interface ClientSelectorProps {
   value?: string // Client ID
+  initialQuery?: string
+  selectedClientName?: string
   onChange: (
     clientId: string | undefined,
     clientName: string | undefined
   ) => void
+  onSelectClient?: (client: Client | null) => void
   label?: string
   required?: boolean
   onCreateClient?: (name: string) => void | Promise<void>
@@ -26,7 +31,10 @@ const PAGE_SIZE = 20
 
 export default function ClientSelector({
   value,
+  initialQuery,
+  selectedClientName,
   onChange,
+  onSelectClient,
   label = "Client (Optional)",
   required = false,
   onCreateClient,
@@ -53,32 +61,64 @@ export default function ClientSelector({
     pageSize: PAGE_SIZE,
   })
 
+  const shouldFetchSelectedById = useMemo(() => {
+    if (!value) return false
+    return !clients.some((client) => client._id === value)
+  }, [value, clients])
+
+  const { data: selectedClientById } = useSWR<Client>(
+    shouldFetchSelectedById && value
+      ? (["/api/clients/by-id", value] as const)
+      : null,
+    ([, clientId]) => fetcher<Client>(`/api/clients/${clientId}`)
+  )
+
   // Derive the currently selected client from the cached list. When the
   // user has just made a manual selection we honour it; otherwise we
   // resolve from `value` against the cached results.
   const selectedClient = useMemo<Client | null>(() => {
     if (!value) return null
     if (manuallySelectedId === value) {
-      return clients.find((c) => c._id === value) ?? null
+      return clients.find((c) => c._id === value) ?? selectedClientById ?? null
     }
-    return clients.find((c) => c._id === value) ?? null
-  }, [value, clients, manuallySelectedId])
+    return clients.find((c) => c._id === value) ?? selectedClientById ?? null
+  }, [value, clients, manuallySelectedId, selectedClientById])
 
   // Sync the search input with the resolved selected client's name.
   // We only seed the input on (a) clearing the value externally, or
   // (b) the first time the selected client resolves for the current value.
   const resolvedNameRef = useRef<string | null>(null)
+  const appliedInitialQueryRef = useRef<string | null>(null)
   useEffect(() => {
     if (!value) {
       resolvedNameRef.current = null
       setSearchQuery((q) => (q === "" ? q : ""))
       return
     }
-    if (selectedClient && resolvedNameRef.current !== value) {
+
+    const resolvedName =
+      selectedClient?.name ?? selectedClientName?.trim() ?? ""
+
+    if (resolvedName.length > 0 && resolvedNameRef.current !== value) {
       resolvedNameRef.current = value
-      setSearchQuery(selectedClient.name)
+      setSearchQuery(resolvedName)
     }
-  }, [value, selectedClient])
+  }, [value, selectedClient, selectedClientName])
+
+  useEffect(() => {
+    if (value) return
+
+    const nextQuery = initialQuery?.trim() ?? ""
+    if (nextQuery.length === 0) {
+      appliedInitialQueryRef.current = null
+      return
+    }
+
+    if (appliedInitialQueryRef.current === nextQuery) return
+
+    appliedInitialQueryRef.current = nextQuery
+    setSearchQuery(nextQuery)
+  }, [initialQuery, value])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value
@@ -86,10 +126,11 @@ export default function ClientSelector({
     setShowSuggestions(true)
 
     // Clear selection if user is typing
-    if (selectedClient) {
+    if (value) {
       setManuallySelectedId(null)
       resolvedNameRef.current = null
       onChange(undefined, undefined)
+      onSelectClient?.(null)
     }
   }
 
@@ -100,6 +141,7 @@ export default function ClientSelector({
     setSearchQuery(client.name)
     setShowSuggestions(false)
     onChange(clientId, client.name)
+    onSelectClient?.(client)
   }
 
   const handleClearSelection = () => {
@@ -107,6 +149,7 @@ export default function ClientSelector({
     resolvedNameRef.current = null
     setSearchQuery("")
     onChange(undefined, undefined)
+    onSelectClient?.(null)
   }
 
   const handleInputFocus = () => {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useId } from "react"
-import ClientSelectorField from "@/app/components/ClientSelectorField"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 
 interface PaymentAdditionalFieldsProps {
@@ -11,7 +10,6 @@ interface PaymentAdditionalFieldsProps {
   onChangeField: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void
-  onClientChange: (clientId: string | undefined) => void
 }
 
 export default function PaymentAdditionalFields({
@@ -19,7 +17,6 @@ export default function PaymentAdditionalFields({
   showAdditionalFields,
   onSetShowAdditionalFields,
   onChangeField,
-  onClientChange,
 }: PaymentAdditionalFieldsProps) {
   const id = useId()
   return (
@@ -48,13 +45,6 @@ export default function PaymentAdditionalFields({
 
       {showAdditionalFields && (
         <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
-          <ClientSelectorField
-            value={formData.clientId}
-            onChange={onClientChange}
-            label="Client (Optional)"
-            required={false}
-          />
-
           <div className="space-y-2">
             <label
               htmlFor={`${id}-deliveryNoteRef`}

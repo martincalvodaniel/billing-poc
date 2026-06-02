@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
+import ClientSelectorField from "@/app/components/ClientSelectorField"
 import PaymentMethodDropdown from "@/app/components/PaymentMethodDropdown"
 import type {
   PaymentFormData,
@@ -76,16 +77,25 @@ export default function PaymentFormFields({
         onTagSelect={onTagSelect}
         onTagBlur={onTagBlur}
       />
-      <PaymentMethodDropdown
-        value={formData.paymentMethod ?? ""}
-        onChange={handlePaymentMethodChange}
-      />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <ClientSelectorField
+          value={formData.clientId}
+          onChange={(clientId) => onClientChange(clientId)}
+          label="Client (Optional)"
+          required={false}
+        />
+        <PaymentMethodDropdown
+          value={formData.paymentMethod ?? ""}
+          onChange={handlePaymentMethodChange}
+        />
+      </div>
+
       <PaymentAdditionalFields
         formData={formData}
         showAdditionalFields={showAdditionalFields}
         onSetShowAdditionalFields={onSetShowAdditionalFields}
         onChangeField={onChangeField}
-        onClientChange={onClientChange}
       />
       <PaymentConceptsList
         formData={formData}
