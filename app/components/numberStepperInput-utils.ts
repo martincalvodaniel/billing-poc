@@ -2,7 +2,8 @@ export type StepDirection = "increment" | "decrement"
 
 /**
  * Pure helper to compute the next value of a numeric stepper input.
- * - When `current` is empty or NaN, falls back to `min` when defined, else 0.
+ * - When `current` is empty or NaN, falls back to `emptyBase`, then `min`,
+ *   then 0.
  * - Result is clamped within [min, max] when those bounds are provided.
  * - Returns a string for direct binding to a controlled input.
  */
@@ -11,10 +12,11 @@ export function stepValue(
   step: number,
   min: number | undefined,
   max: number | undefined,
-  direction: StepDirection
+  direction: StepDirection,
+  emptyBase?: number
 ): string {
   const parsed = current === "" ? Number.NaN : Number(current)
-  const base = Number.isFinite(parsed) ? parsed : (min ?? 0)
+  const base = Number.isFinite(parsed) ? parsed : (emptyBase ?? min ?? 0)
   const delta = direction === "increment" ? step : -step
   let next = base + delta
   if (typeof min === "number" && next < min) next = min

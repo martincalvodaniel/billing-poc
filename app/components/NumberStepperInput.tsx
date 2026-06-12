@@ -4,6 +4,7 @@ import { type StepDirection, stepValue } from "./numberStepperInput-utils"
 
 interface NumberStepperInputProps {
   id: string
+  name?: string
   value: string
   onValueChange: (value: string) => void
   ariaLabel: string
@@ -12,10 +13,14 @@ interface NumberStepperInputProps {
   step: number
   disabled?: boolean
   required?: boolean
+  placeholder?: string
+  inputMode?: "decimal" | "numeric"
+  emptyStepBase?: number
 }
 
 export default function NumberStepperInput({
   id,
+  name,
   value,
   onValueChange,
   ariaLabel,
@@ -24,6 +29,9 @@ export default function NumberStepperInput({
   step,
   disabled,
   required,
+  placeholder,
+  inputMode = "numeric",
+  emptyStepBase,
 }: NumberStepperInputProps) {
   const parsedValue = value === "" ? Number.NaN : Number(value)
   const decrementDisabled =
@@ -32,7 +40,7 @@ export default function NumberStepperInput({
     disabled || (typeof max === "number" && parsedValue >= max)
 
   const handleStep = (direction: StepDirection) => {
-    const nextValue = stepValue(value, step, min, max, direction)
+    const nextValue = stepValue(value, step, min, max, direction, emptyStepBase)
     onValueChange(nextValue)
   }
   const handleDecrement = () => handleStep("decrement")
@@ -57,8 +65,9 @@ export default function NumberStepperInput({
       </button>
       <input
         id={id}
+        name={name}
         type="number"
-        inputMode="numeric"
+        inputMode={inputMode}
         min={min}
         max={max}
         step={step}
@@ -66,6 +75,7 @@ export default function NumberStepperInput({
         onChange={handleChange}
         disabled={disabled}
         required={required}
+        placeholder={placeholder}
         aria-label={ariaLabel}
         className="h-11 min-w-0 flex-1 appearance-none bg-white px-1 text-center text-sm text-zinc-900 focus:outline-none disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-100"
       />

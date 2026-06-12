@@ -28,6 +28,10 @@ describe("stepValue", () => {
     expect(stepValue("", 1, 3, 10, "increment")).toBe("4")
   })
 
+  it("uses a configured empty base before min", () => {
+    expect(stepValue("", 0.1, -100, 100, "increment", 0)).toBe("0.1")
+  })
+
   it("uses 0 when current is empty and no min", () => {
     expect(stepValue("", 1, undefined, undefined, "increment")).toBe("1")
   })

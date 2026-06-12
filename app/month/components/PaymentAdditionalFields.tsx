@@ -1,5 +1,6 @@
 "use client"
 import { useId } from "react"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 
 interface PaymentAdditionalFieldsProps {
@@ -18,6 +19,11 @@ export default function PaymentAdditionalFields({
 }: PaymentAdditionalFieldsProps) {
   const handleSetShowAdditionalFields = () =>
     onSetShowAdditionalFields(!showAdditionalFields)
+  const handleSurchargeChange = (value: string) => {
+    onChangeField({
+      target: { name: "surcharge", value },
+    } as React.ChangeEvent<HTMLInputElement>)
+  }
   const id = useId()
   return (
     <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
@@ -70,17 +76,18 @@ export default function PaymentAdditionalFields({
             >
               Surcharge (%) - Optional
             </label>
-            <input
-              type="number"
+            <NumberStepperInput
               id={`${id}-surcharge`}
               name="surcharge"
-              value={formData.surcharge}
-              onChange={onChangeField}
-              step="0.1"
-              min="-100"
-              max="100"
+              value={formData.surcharge ? String(formData.surcharge) : ""}
+              onValueChange={handleSurchargeChange}
+              step={0.5}
+              min={-100}
+              max={100}
               placeholder="0"
-              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              inputMode="decimal"
+              emptyStepBase={0}
+              ariaLabel="Surcharge percentage"
             />
           </div>
 

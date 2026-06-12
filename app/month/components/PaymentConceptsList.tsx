@@ -1,5 +1,6 @@
 "use client"
 import { useId } from "react"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type {
   PaymentConcept,
   PaymentFormData,
@@ -71,10 +72,27 @@ function PaymentConceptRow({
   const handleChange = useStableCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => onChangeField(event, index)
   )
+  const handleConceptValueChange = (
+    name: "conceptAmount" | "conceptQuantity",
+    value: string
+  ) => {
+    onChangeField(
+      {
+        target: { name, value },
+      } as React.ChangeEvent<HTMLInputElement>,
+      index
+    )
+  }
+  const handleAmountChange = useStableCallback((value: string) =>
+    handleConceptValueChange("conceptAmount", value)
+  )
+  const handleQuantityChange = useStableCallback((value: string) =>
+    handleConceptValueChange("conceptQuantity", value)
+  )
   const handleRemove = useStableCallback(() => onRemove(index))
 
   return (
-    <div className="relative grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50 sm:grid-cols-12">
+    <div className="relative grid grid-cols-12 gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
       <ConceptInput
         id={`${idPrefix}-conceptName-${index}`}
         name="conceptName"
@@ -82,32 +100,33 @@ function PaymentConceptRow({
         value={concept.name || ""}
         onChange={handleChange}
         placeholder="e.g., Service, Product..."
-        className="space-y-2 col-span-12 sm:col-span-7"
+        className="space-y-2 col-span-12 sm:col-span-6"
         required
       />
-      <ConceptInput
+      <ConceptNumberStepper
         id={`${idPrefix}-conceptAmount-${index}`}
         name="conceptAmount"
         label="Amount (€)"
-        type="number"
-        value={concept.amount || ""}
-        onChange={handleChange}
+        value={String(concept.amount || "")}
+        onValueChange={handleAmountChange}
         placeholder="0.00"
-        step="0.01"
+        step={5}
+        inputMode="decimal"
         className="space-y-2 col-span-6 sm:col-span-3"
         required
+        ariaLabel="Concept Amount in Euros"
       />
-      <ConceptInput
+      <ConceptNumberStepper
         id={`${idPrefix}-conceptQuantity-${index}`}
         name="conceptQuantity"
         label="Quantity"
-        type="number"
-        value={concept.quantity ?? 1}
-        onChange={handleChange}
+        value={String(concept.quantity ?? 1)}
+        onValueChange={handleQuantityChange}
         placeholder="1"
-        step="1"
-        min="1"
-        className="space-y-2 col-span-6 sm:col-span-2"
+        step={1}
+        min={1}
+        className="space-y-2 col-span-6 sm:col-span-3"
+        ariaLabel="Concept Quantity"
       />
       {removable ? (
         <button
@@ -153,6 +172,27 @@ function ConceptInput({
         {...inputProps}
         className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
       />
+    </div>
+  )
+}
+
+function ConceptNumberStepper({
+  label,
+  className,
+  ...stepperProps
+}: React.ComponentProps<typeof NumberStepperInput> & {
+  label: string
+  className: string
+}) {
+  return (
+    <div className={className}>
+      <label
+        htmlFor={stepperProps.id}
+        className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+      >
+        {label}
+      </label>
+      <NumberStepperInput {...stepperProps} ariaLabel={label} />
     </div>
   )
 }

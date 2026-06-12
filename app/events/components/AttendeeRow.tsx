@@ -9,6 +9,7 @@ import { BankTransferIcon } from "@/app/components/icons/BankTransferIcon"
 import { CardIcon } from "@/app/components/icons/CardIcon"
 import { CashIcon } from "@/app/components/icons/CashIcon"
 import { TrashIcon } from "@/app/components/icons/TrashIcon"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type { EventAttendee } from "@/lib/domain/entities/event"
 import type { PaymentMethod } from "@/lib/domain/entities/payment"
 
@@ -50,9 +51,6 @@ export default function AttendeeRow({
   function handleEditClient(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation()
     onEditClient(attendee.clientId)
-  }
-  function handleSeatsValueChange(event: React.ChangeEvent<HTMLInputElement>) {
-    return setSeatsValue(event.currentTarget.value)
   }
   function handleGenerateCashPayment() {
     return onGenerate(attendee.clientId, "cash")
@@ -122,17 +120,15 @@ export default function AttendeeRow({
             Seats for {name}
           </label>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: focus/keyboard handlers on a wrapper to detect blur/Enter on the seats input */}
-          <div className="w-20" onBlur={handleBlur} onKeyDown={handleKeyDown}>
-            <input
-              type="number"
+          <div className="w-36" onBlur={handleBlur} onKeyDown={handleKeyDown}>
+            <NumberStepperInput
               id={`${rowIdPrefix}-seats-${attendee.clientId}`}
               value={seatsValue}
-              onChange={handleSeatsValueChange}
+              onValueChange={setSeatsValue}
               min={1}
               step={1}
               disabled={isSaving}
-              aria-label={`Seats for ${name}`}
-              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              ariaLabel={`Seats for ${name}`}
             />
           </div>
           {isSaving ? (
