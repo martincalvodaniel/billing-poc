@@ -80,7 +80,7 @@ export default function EventBasicFields({
           className={inputClass}
         />
       </FormField>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start">
         <div className="space-y-1">
           <span className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
             Date (optional)
@@ -101,7 +101,7 @@ export default function EventBasicFields({
               value={hasConcreteDay ? "" : values.dayOfWeek}
               onChange={onChangeField("dayOfWeek")}
               disabled={isSubmitting || hasConcreteDay}
-              className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 md:w-[180px] md:pr-8 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
+              className="min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:w-[180px] md:pr-8 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
             >
               <option value="">— Not recurring —</option>
               <option value="1">Monday</option>
