@@ -80,8 +80,8 @@ export default function EventBasicFields({
           className={inputClass}
         />
       </FormField>
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-3">
-        <div className="space-y-1 md:flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="space-y-1">
           <span className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
             Date (optional)
           </span>

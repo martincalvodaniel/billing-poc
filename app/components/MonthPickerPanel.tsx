@@ -29,7 +29,11 @@ export default function MonthPickerPanel({
   onClose,
 }: MonthPickerPanelProps) {
   return (
-    <PickerOverlay onClose={onClose} closeLabel="Close month picker">
+    <PickerOverlay
+      onClose={onClose}
+      closeLabel="Close month picker"
+      desktopAlign="left"
+    >
       <div className="px-4 pb-4">
         <div className="grid grid-cols-4 gap-2">
           {months.map((month) => (

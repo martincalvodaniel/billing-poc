@@ -20,7 +20,11 @@ export default function YearPickerPanel({
   const showNextYears = () => onPageChange(yearPageBase + 12)
   const years = Array.from({ length: 12 }, (_, i) => yearPageBase + i)
   return (
-    <PickerOverlay onClose={onClose} closeLabel="Close year picker">
+    <PickerOverlay
+      onClose={onClose}
+      closeLabel="Close year picker"
+      desktopAlign="left"
+    >
       <div className="px-4 pb-4">
         <div className="mb-3 flex items-center justify-between">
           <button

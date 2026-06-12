@@ -15,7 +15,11 @@ export default function DayPickerPanel({
   onClose,
 }: DayPickerPanelProps) {
   return (
-    <PickerOverlay onClose={onClose} closeLabel="Close day picker">
+    <PickerOverlay
+      onClose={onClose}
+      closeLabel="Close day picker"
+      desktopAlign="left"
+    >
       <div className="px-4 pb-4">
         <div className="grid grid-cols-7 gap-1">
           {days.map((day) => (
