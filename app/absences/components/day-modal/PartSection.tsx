@@ -23,6 +23,12 @@ export default function PartSection({
   onDelete,
   onAddNew,
 }: PartSectionProps) {
+  function handleAddNewAbsence() {
+    return onAddNew("absence")
+  }
+  function handleAddNewRecovery() {
+    return onAddNew("recovery")
+  }
   const label = PART_OF_DAY_LABEL[part]
   const absences = records.filter((r) => r.type === "absence")
   const recoveries = records.filter((r) => r.type === "recovery")
@@ -50,7 +56,7 @@ export default function PartSection({
         editingId={editingId}
         onEdit={onEdit}
         onDelete={onDelete}
-        onAddNew={() => onAddNew("absence")}
+        onAddNew={handleAddNewAbsence}
         addAriaLabel={`Add absence in ${label}`}
       />
       <RecordSection
@@ -60,7 +66,7 @@ export default function PartSection({
         editingId={editingId}
         onEdit={onEdit}
         onDelete={onDelete}
-        onAddNew={() => onAddNew("recovery")}
+        onAddNew={handleAddNewRecovery}
         addAriaLabel={`Add recovery in ${label}`}
       />
     </section>

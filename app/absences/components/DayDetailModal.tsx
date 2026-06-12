@@ -40,6 +40,19 @@ export default function DayDetailModal({
   records,
   onClose,
 }: DayDetailModalProps) {
+  const handlePendingDeleteChange = () => setPendingDelete(null)
+
+  const handleAddInPartMorning = (
+    type: Parameters<
+      NonNullable<React.ComponentProps<typeof PartSection>["onAddNew"]>
+    >[0]
+  ) => handleAddInPart("morning", type)
+
+  const handleAddInPartEvening = (
+    type: Parameters<
+      NonNullable<React.ComponentProps<typeof PartSection>["onAddNew"]>
+    >[0]
+  ) => handleAddInPart("evening", type)
   const [formState, setFormState] = useState<FormState>({ mode: "create" })
   const [pendingDelete, setPendingDelete] = useState<Absence | null>(null)
   const {
@@ -116,7 +129,9 @@ export default function DayDetailModal({
 
   return (
     <>
-      {toastMessage && <Toast message={toastMessage} onClose={clearToast} />}
+      {toastMessage ? (
+        <Toast message={toastMessage} onClose={clearToast} />
+      ) : null}
 
       <Modal isOpen onClose={onClose} title={formatDate(date)} maxWidth="lg">
         <div className="space-y-6">
@@ -126,7 +141,7 @@ export default function DayDetailModal({
             editingId={editingId}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onAddNew={(type) => handleAddInPart("morning", type)}
+            onAddNew={handleAddInPartMorning}
           />
 
           <PartSection
@@ -135,10 +150,10 @@ export default function DayDetailModal({
             editingId={editingId}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onAddNew={(type) => handleAddInPart("evening", type)}
+            onAddNew={handleAddInPartEvening}
           />
 
-          {inlineForm.visible && (
+          {inlineForm.visible ? (
             <div
               ref={inlineForm.containerRef}
               className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800"
@@ -173,25 +188,25 @@ export default function DayDetailModal({
                   <StudentNameField />
                   <DateField />
                 </FieldsRow>
-                {formState.mode === "edit" && (
+                {formState.mode === "edit" ? (
                   <>
                     <TypeField />
                     <PartOfDayField />
                   </>
-                )}
+                ) : null}
               </AbsenceForm>
             </div>
-          )}
+          ) : null}
         </div>
       </Modal>
 
-      {pendingDelete && (
+      {pendingDelete ? (
         <ConfirmDeleteModal
           isOpen
           title="Delete Record"
           isPending={isDeleting}
           errorMessage={deleteError}
-          onCancel={() => setPendingDelete(null)}
+          onCancel={handlePendingDeleteChange}
           onConfirm={handleConfirmDelete}
         >
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -205,7 +220,7 @@ export default function DayDetailModal({
             This action cannot be undone.
           </p>
         </ConfirmDeleteModal>
-      )}
+      ) : null}
     </>
   )
 }

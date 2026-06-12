@@ -6,7 +6,6 @@ interface WordpressOrderDetailsModalProps {
   order: WordPressOrder | null
   onClose: () => void
 }
-
 export function WordpressOrderDetailsModal({
   order,
   onClose,
@@ -18,7 +17,7 @@ export function WordpressOrderDetailsModal({
       title={order ? `Order #${order.id} details` : "Order details"}
       maxWidth="xl"
     >
-      {order && (
+      {order ? (
         <div className="space-y-6">
           <section className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700">
@@ -30,9 +29,9 @@ export function WordpressOrderDetailsModal({
                   {order.billing.first_name} {order.billing.last_name}
                 </p>
                 <p>{order.billing.address_1}</p>
-                {order.billing.address_2.length > 0 && (
+                {order.billing.address_2.length > 0 ? (
                   <p>{order.billing.address_2}</p>
-                )}
+                ) : null}
                 <p>
                   {order.billing.postcode} {order.billing.city}
                 </p>
@@ -100,25 +99,27 @@ export function WordpressOrderDetailsModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900">
-                    {order.line_items.map((item) => (
-                      <tr key={`${item.sku}-${item.name}-${item.quantity}`}>
-                        <td className="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">
-                          {item.name}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">
-                          {item.quantity}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300">
-                          {item.sku}
-                        </td>
-                        <td className="px-3 py-2 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                          {formatAmount(item.total)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                          {formatAmount(item.total_tax)}
-                        </td>
-                      </tr>
-                    ))}
+                    {order.line_items.map((item) => {
+                      return (
+                        <tr key={`${item.sku}-${item.name}-${item.quantity}`}>
+                          <td className="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">
+                            {item.name}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">
+                            {item.quantity}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300">
+                            {item.sku}
+                          </td>
+                          <td className="px-3 py-2 text-right text-sm text-zinc-900 dark:text-zinc-100">
+                            {formatAmount(item.total)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-sm text-zinc-900 dark:text-zinc-100">
+                            {formatAmount(item.total_tax)}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -150,26 +151,28 @@ export function WordpressOrderDetailsModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900">
-                    {order.tax_lines.map((taxLine) => (
-                      <tr key={taxLine.id}>
-                        <td className="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">
-                          {taxLine.label}
-                        </td>
-                        <td className="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300">
-                          {taxLine.rate_code} ({taxLine.rate_percent}%)
-                        </td>
-                        <td className="px-3 py-2 text-right text-sm text-zinc-900 dark:text-zinc-100">
-                          {formatAmount(taxLine.tax_total)}
-                        </td>
-                      </tr>
-                    ))}
+                    {order.tax_lines.map((taxLine) => {
+                      return (
+                        <tr key={taxLine.id}>
+                          <td className="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100">
+                            {taxLine.label}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300">
+                            {taxLine.rate_code} ({taxLine.rate_percent}%)
+                          </td>
+                          <td className="px-3 py-2 text-right text-sm text-zinc-900 dark:text-zinc-100">
+                            {formatAmount(taxLine.tax_total)}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </section>
         </div>
-      )}
+      ) : null}
     </Modal>
   )
 }

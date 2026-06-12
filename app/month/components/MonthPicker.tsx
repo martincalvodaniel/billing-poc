@@ -1,12 +1,11 @@
 "use client"
-
 import { useCallback, useRef } from "react"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import MonthNavigationControls from "../../components/MonthNavigationControls"
 import PickerOverlay from "../../components/PickerOverlay"
 
 const MONTH_INDEXES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const
-
 const MONTH_SHORT_LABELS: readonly string[] = MONTH_INDEXES.map((m) =>
   new Date(2000, m).toLocaleDateString("en-US", { month: "short" })
 )
@@ -19,7 +18,6 @@ interface MonthPickerProps {
   isViewingCurrentMonth: boolean
   onGoToCurrentMonth: () => void
 }
-
 export default function MonthPicker({
   selectedDate,
   onMonthChange,
@@ -28,29 +26,24 @@ export default function MonthPicker({
   isViewingCurrentMonth,
   onGoToCurrentMonth,
 }: MonthPickerProps) {
+  const handleShowCalendarChange = () => onShowCalendarChange(false)
   const calendarRef = useRef<HTMLDivElement>(null)
-
   const handleOutsideClick = useCallback(() => {
     onShowCalendarChange(false)
   }, [onShowCalendarChange])
   useClickOutside(calendarRef, handleOutsideClick, showCalendar)
-
   const handlePrevYear = () => {
     onMonthChange(selectedDate.getFullYear() - 1, selectedDate.getMonth())
   }
-
   const handleNextYear = () => {
     onMonthChange(selectedDate.getFullYear() + 1, selectedDate.getMonth())
   }
-
   const handleDayPrev = () => {
     onMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() - 1)
   }
-
   const handleDayNext = () => {
     onMonthChange(selectedDate.getFullYear(), selectedDate.getMonth() + 1)
   }
-
   return (
     <div className="flex flex-wrap items-center gap-2" ref={calendarRef}>
       <MonthNavigationControls
@@ -64,7 +57,7 @@ export default function MonthPicker({
         overlay={
           showCalendar ? (
             <PickerOverlay
-              onClose={() => onShowCalendarChange(false)}
+              onClose={handleShowCalendarChange}
               closeLabel="Close calendar"
             >
               {/* Calendar Header */}
@@ -99,32 +92,16 @@ export default function MonthPicker({
 
                 {/* Month Grid */}
                 <div className="grid grid-cols-4 gap-2">
-                  {MONTH_INDEXES.map((monthIndex) => {
-                    const year = selectedDate.getFullYear()
-                    const month = monthIndex
-                    const label = MONTH_SHORT_LABELS[monthIndex]
-                    const isSelected =
-                      year === selectedDate.getFullYear() &&
-                      month === selectedDate.getMonth()
-
-                    return (
-                      <button
-                        type="button"
-                        key={label}
-                        onClick={() => {
-                          onMonthChange(year, month)
-                          onShowCalendarChange(false)
-                        }}
-                        className={`rounded px-2 py-2 text-xs font-medium ${
-                          isSelected
-                            ? "bg-blue-600 text-white dark:bg-blue-700"
-                            : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    )
-                  })}
+                  {MONTH_INDEXES.map((month) => (
+                    <MonthGridOption
+                      key={month}
+                      year={selectedDate.getFullYear()}
+                      month={month}
+                      selected={month === selectedDate.getMonth()}
+                      onMonthChange={onMonthChange}
+                      onClose={handleShowCalendarChange}
+                    />
+                  ))}
                 </div>
 
                 {/* Year Navigation */}
@@ -155,5 +132,36 @@ export default function MonthPicker({
         }
       />
     </div>
+  )
+}
+function MonthGridOption({
+  year,
+  month,
+  selected,
+  onMonthChange,
+  onClose,
+}: {
+  year: number
+  month: number
+  selected: boolean
+  onMonthChange: (year: number, month: number) => void
+  onClose: () => void
+}) {
+  const handleClick = useStableCallback(() => {
+    onMonthChange(year, month)
+    onClose()
+  })
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`rounded px-2 py-2 text-xs font-medium ${
+        selected
+          ? "bg-blue-600 text-white dark:bg-blue-700"
+          : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      }`}
+    >
+      {MONTH_SHORT_LABELS[month]}
+    </button>
   )
 }

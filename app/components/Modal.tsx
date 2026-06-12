@@ -1,8 +1,8 @@
 "use client"
-
 import { useEffect, useId, useRef } from "react"
 import { createPortal } from "react-dom"
 import { useFocusTrap } from "@/lib/hooks/useFocusTrap"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import CloseButton from "./CloseButton"
 
 interface ModalProps {
@@ -14,7 +14,6 @@ interface ModalProps {
   headerActions?: React.ReactNode
   maxWidth?: "sm" | "md" | "lg" | "xl"
 }
-
 export function Modal({
   isOpen,
   onClose,
@@ -24,15 +23,20 @@ export function Modal({
   headerActions,
   maxWidth = "md",
 }: ModalProps) {
+  const handleBackdropClick = useStableCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        onClose()
+      }
+    }
+  )
   const id = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
   useEffect(() => {
     onCloseRef.current = onClose
   })
-
   useFocusTrap(dialogRef, isOpen)
-
   // Browser Back button (desktop and mobile) closes the modal.
   // On open: push a sentinel history entry (same URL, state={modal:true}).
   // On Back: popstate fires → close the modal; the pointer is already at the
@@ -43,15 +47,11 @@ export function Modal({
   //   pushState always sees state.modal===false and adds a fresh sentinel.
   useEffect(() => {
     if (!isOpen) return
-
     history.pushState({ modal: true }, "")
-
     const handlePopState = () => {
       onCloseRef.current()
     }
-
     window.addEventListener("popstate", handlePopState)
-
     return () => {
       window.removeEventListener("popstate", handlePopState)
       if (history.state?.modal) {
@@ -59,10 +59,8 @@ export function Modal({
       }
     }
   }, [isOpen])
-
   useEffect(() => {
     if (!isOpen) return
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
       const modalElement = document.querySelector('[role="dialog"]')
@@ -71,36 +69,27 @@ export function Modal({
       e.stopPropagation()
       onClose()
     }
-
     const timeoutId = setTimeout(() => {
       document.addEventListener("keydown", handleKeyDown)
     }, 0)
-
     return () => {
       clearTimeout(timeoutId)
       document.removeEventListener("keydown", handleKeyDown)
     }
   }, [isOpen, onClose])
-
   if (!isOpen || typeof document === "undefined") return null
-
   const maxWidthClass = {
     sm: "max-w-sm",
     md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-2xl",
   }[maxWidth]
-
   return createPortal(
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-close is a standard modal pattern
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
-      }}
+      onClick={handleBackdropClick}
     >
       <div
         ref={dialogRef}
@@ -127,17 +116,16 @@ export function Modal({
         <div className="px-6 py-4">{children}</div>
 
         {/* Footer (optional) */}
-        {footer && (
+        {footer ? (
           <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
             {footer}
           </div>
-        )}
+        ) : null}
       </div>
     </div>,
     document.body
   )
 }
-
 interface ConfirmFooterProps {
   onConfirm: () => void
   onCancel: () => void
@@ -147,7 +135,6 @@ interface ConfirmFooterProps {
   cancelLabel?: string
   variant?: "danger" | "primary"
 }
-
 export function ConfirmFooter({
   onConfirm,
   onCancel,
@@ -178,7 +165,7 @@ export function ConfirmFooter({
         aria-busy={isPending}
         className={confirmClass}
       >
-        {isPending ? pendingLabel : confirmLabel}
+        {String(isPending ? pendingLabel : confirmLabel)}
       </button>
     </div>
   )

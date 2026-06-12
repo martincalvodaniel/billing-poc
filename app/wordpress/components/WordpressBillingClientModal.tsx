@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useMemo, useState } from "react"
 import ClientSelector from "@/app/components/ClientSelector"
 import { Modal } from "@/app/components/Modal"
@@ -10,6 +9,7 @@ import {
   useUpdateClient,
 } from "@/lib/hooks/useClientMutations"
 import { useClients } from "@/lib/hooks/useClients"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import { WordpressBillingClientModalFooter } from "./WordpressBillingClientModalFooter"
 import { WordpressBillingClientStatusMessages } from "./WordpressBillingClientStatusMessages"
 import { WordpressBillingDataCard } from "./WordpressBillingDataCard"
@@ -29,17 +29,34 @@ interface WordpressBillingClientModalProps {
   onClose: () => void
   onConfirmed?: (message: string) => void
 }
-
 export function WordpressBillingClientModal({
   order,
   onClose,
   onConfirmed,
 }: WordpressBillingClientModalProps) {
+  const handleClientChange = useStableCallback((clientId?: string) => {
+    setHasManualSelection(true)
+    setSelectedClientId(clientId)
+  })
+  const handleSelectClient = useStableCallback((client: Client | null) => {
+    setHasManualSelection(true)
+    setSelectedClient(client)
+  })
+  const handleConfirmClick = useStableCallback(() => {
+    void handleConfirm()
+  })
+  const handleFieldToggle = useStableCallback(
+    (field: ClientDiffRow["field"], checked: boolean) => {
+      setSelectedDiffFields((current) => ({
+        ...current,
+        [field]: checked,
+      }))
+    }
+  )
   const { trigger: createClient, isMutating: isCreatingClient } =
     useCreateClient()
   const { trigger: updateClient, isMutating: isUpdatingClient } =
     useUpdateClient()
-
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(
     undefined
   )
@@ -49,7 +66,6 @@ export function WordpressBillingClientModal({
     createEmptySelectedDiffFields
   )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
   useEffect(() => {
     if (!order) return
     setSelectedClientId(undefined)
@@ -68,19 +84,15 @@ export function WordpressBillingClientModal({
     page: 1,
     pageSize: 20,
   })
-
   useEffect(() => {
     if (!order || hasManualSelection || selectedClientId || selectedClient)
       return
-
     const billingNameNormalized = normalizeName(getBillingName(order))
     const exactMatch = autoMatchedClients.find((client) => {
       if (!client._id) return false
       return normalizeName(client.name) === billingNameNormalized
     })
-
     if (!exactMatch?._id) return
-
     setSelectedClientId(exactMatch._id)
     setSelectedClient(exactMatch)
   }, [
@@ -98,7 +110,6 @@ export function WordpressBillingClientModal({
 
   const clientDiff = useMemo<ClientDiffRow[]>(() => {
     if (!selectedClient || !billingPayload) return []
-
     const rows = [
       {
         field: "name" as const,
@@ -122,39 +133,29 @@ export function WordpressBillingClientModal({
 
     return rows.filter((row) => row.currentValue !== row.nextValue)
   }, [selectedClient, billingPayload])
-
   useEffect(() => {
     if (!selectedClient) {
       setSelectedDiffFields(createEmptySelectedDiffFields())
       return
     }
-
     const next = createEmptySelectedDiffFields()
-
     for (const row of clientDiff) {
       next[row.field] = true
     }
-
     setSelectedDiffFields(next)
   }, [selectedClient, clientDiff])
-
   const hasDiffChanges = clientDiff.length > 0
   const selectedDiffCount = clientDiff.filter(
     (row) => selectedDiffFields[row.field]
   ).length
   const isSubmitting = isCreatingClient || isUpdatingClient
-
   const confirmLabel = selectedClient
     ? "Confirm update client"
     : "Confirm create client"
-
   const pendingLabel = selectedClient ? "Updating client…" : "Creating client…"
-
   const handleConfirm = async () => {
     if (!order || !billingPayload) return
-
     setErrorMessage(null)
-
     try {
       if (!selectedClient?._id) {
         await createClient({
@@ -165,14 +166,12 @@ export function WordpressBillingClientModal({
         onClose()
         return
       }
-
       const updates: {
         id: string
         name?: string
         phone?: string
         email?: string
       } = { id: selectedClient._id }
-
       if (selectedDiffFields.name) {
         updates.name = billingPayload.name
       }
@@ -182,12 +181,10 @@ export function WordpressBillingClientModal({
       if (selectedDiffFields.email) {
         updates.email = billingPayload.email
       }
-
       if (Object.keys(updates).length === 1) {
         setErrorMessage("Select at least one field to update.")
         return
       }
-
       await updateClient(updates)
       onConfirmed?.(`Client updated from order #${order.id}`)
       onClose()
@@ -195,11 +192,9 @@ export function WordpressBillingClientModal({
       setErrorMessage(extractApiError(error, "Failed to save client"))
     }
   }
-
   const isConfirmDisabled =
     isSubmitting ||
     (selectedClient ? !hasDiffChanges || selectedDiffCount === 0 : false)
-
   return (
     <Modal
       isOpen={order !== null}
@@ -216,14 +211,12 @@ export function WordpressBillingClientModal({
           isConfirmDisabled={isConfirmDisabled}
           isSubmitting={isSubmitting}
           onCancel={onClose}
-          onConfirm={() => {
-            void handleConfirm()
-          }}
+          onConfirm={handleConfirmClick}
           pendingLabel={pendingLabel}
         />
       }
     >
-      {order && (
+      {order ? (
         <div className="space-y-4">
           <WordpressBillingDataCard order={order} />
 
@@ -231,29 +224,18 @@ export function WordpressBillingClientModal({
             value={selectedClientId}
             initialQuery={getBillingName(order)}
             selectedClientName={selectedClient?.name}
-            onChange={(clientId) => {
-              setHasManualSelection(true)
-              setSelectedClientId(clientId)
-            }}
-            onSelectClient={(client) => {
-              setHasManualSelection(true)
-              setSelectedClient(client)
-            }}
+            onChange={handleClientChange}
+            onSelectClient={handleSelectClient}
             label="Select an existing client to update (optional)"
           />
 
-          {selectedClient && hasDiffChanges && (
+          {selectedClient && hasDiffChanges ? (
             <WordpressClientDiffPanel
               clientDiff={clientDiff}
               selectedDiffFields={selectedDiffFields}
-              onFieldToggle={(field, checked) => {
-                setSelectedDiffFields((current) => ({
-                  ...current,
-                  [field]: checked,
-                }))
-              }}
+              onFieldToggle={handleFieldToggle}
             />
-          )}
+          ) : null}
 
           <WordpressBillingClientStatusMessages
             errorMessage={errorMessage}
@@ -262,7 +244,7 @@ export function WordpressBillingClientModal({
             selectedDiffCount={selectedDiffCount}
           />
         </div>
-      )}
+      ) : null}
     </Modal>
   )
 }

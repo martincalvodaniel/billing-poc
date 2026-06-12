@@ -1,5 +1,4 @@
 "use client"
-
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -11,7 +10,6 @@ import MobileMenuOverlay, { type NavItem } from "./MobileMenuOverlay"
 interface NavigationBarProps {
   subtitle: string
 }
-
 const NAV_ITEMS: readonly NavItem[] = [
   {
     href: "/",
@@ -28,13 +26,12 @@ const NAV_ITEMS: readonly NavItem[] = [
     matches: (p) => p === "/wordpress",
   },
 ]
-
 export default function NavigationBar({ subtitle }: NavigationBarProps) {
+  const handleMenuOpenChange = () => setMenuOpen(true)
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
-
   const handleSignOut = useCallback(() => {
     signOut({
       fetchOptions: {
@@ -42,7 +39,6 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
       },
     })
   }, [router])
-
   const buildLinkClass = (isActive: boolean) => {
     const base =
       "block rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
@@ -52,12 +48,9 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
       "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
     return `${base} ${isActive ? active : inactive}`
   }
-
   const closeMenu = useCallback(() => setMenuOpen(false), [])
-
   // Close on Escape (when the mobile menu is open)
   useEscapeKey(closeMenu, menuOpen)
-
   return (
     <>
       <nav className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -85,10 +78,10 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
               </Link>
             )
           })}
-          {session?.user && (
+          {session?.user ? (
             <>
               <div className="mx-1 h-6 w-px bg-zinc-200 dark:bg-zinc-700" />
-              {session.user.image && (
+              {session.user.image ? (
                 <Image
                   src={session.user.image}
                   alt={session.user.name ?? "User avatar"}
@@ -97,7 +90,7 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
                   className="h-7 w-7 rounded-full"
                   referrerPolicy="no-referrer"
                 />
-              )}
+              ) : null}
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -106,13 +99,13 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
                 Sign out
               </button>
             </>
-          )}
+          ) : null}
         </div>
 
         {/* Mobile hamburger button */}
         <button
           type="button"
-          onClick={() => setMenuOpen(true)}
+          onClick={handleMenuOpenChange}
           aria-label="Open navigation menu"
           className="min-h-11 min-w-11 rounded-md p-2 text-zinc-700 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:hidden dark:text-zinc-200 dark:hover:bg-zinc-800"
         >
@@ -133,7 +126,7 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
         </button>
       </nav>
 
-      {menuOpen && (
+      {menuOpen ? (
         <MobileMenuOverlay
           items={NAV_ITEMS}
           pathname={pathname}
@@ -142,7 +135,7 @@ export default function NavigationBar({ subtitle }: NavigationBarProps) {
           onClose={closeMenu}
           onSignOut={handleSignOut}
         />
-      )}
+      ) : null}
     </>
   )
 }

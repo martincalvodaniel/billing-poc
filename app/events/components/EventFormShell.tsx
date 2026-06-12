@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useId, useRef, useState } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { Modal } from "@/app/components/Modal"
@@ -9,7 +8,6 @@ import EventPricingFields from "./EventPricingFields"
 import EventScheduleFields from "./EventScheduleFields"
 import type { EventFormValues } from "./eventFormModal-utils"
 import { parseTimeOfDay } from "./eventsUi"
-
 export interface EventFormShellProps {
   isOpen: boolean
   onClose: () => void
@@ -33,7 +31,6 @@ export interface EventFormShellProps {
   /** Optional content rendered above the form (e.g. attendees panel). */
   headerSlot?: React.ReactNode
 }
-
 export default function EventFormShell({
   isOpen,
   onClose,
@@ -49,33 +46,33 @@ export default function EventFormShell({
 }: EventFormShellProps) {
   const id = useId()
   const titleRef = useRef<HTMLInputElement>(null)
-  const [values, setValues] = useState<EventFormValues>(() =>
-    computeInitialValues()
-  )
-
+  const [values, setValues] = useState<EventFormValues>(() => {
+    return computeInitialValues()
+  })
   // Reset form whenever the modal opens or the reset identity changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: deliberate reset on open/identity change only
   useEffect(() => {
     if (!isOpen) return
     setValues(computeInitialValues())
-    const t = setTimeout(() => titleRef.current?.focus(), 0)
-    return () => clearTimeout(t)
+    const t = setTimeout(() => {
+      return titleRef.current?.focus()
+    }, 0)
+    return () => {
+      return clearTimeout(t)
+    }
   }, [isOpen, resetKey])
-
   const canSubmit =
     values.title.trim().length > 0 &&
     values.pricePerSeat.trim().length > 0 &&
     values.vatRate.trim().length > 0 &&
     !isSubmitting
-
-  const handleChange =
-    (field: keyof EventFormValues) =>
-    (
+  const handleChange = (field: keyof EventFormValues) => {
+    return (
       e: React.ChangeEvent<
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >
-    ) =>
-      setValues((prev) => {
+    ) => {
+      return setValues((prev) => {
         const nextValue = e.target.value
         if (field === "dayOfWeek") {
           return {
@@ -86,32 +83,34 @@ export default function EventFormShell({
         }
         return { ...prev, [field]: nextValue }
       })
-
-  const handleDateChange = (next: PartialDateValue) => {
-    setValues((prev) => ({
-      ...prev,
-      year: typeof next.year === "number" ? String(next.year) : "",
-      month: typeof next.month === "number" ? String(next.month) : "",
-      day: typeof next.day === "number" ? String(next.day) : "",
-      dayOfWeek: typeof next.day === "number" ? "" : prev.dayOfWeek,
-    }))
+    }
   }
-
+  const handleDateChange = (next: PartialDateValue) => {
+    setValues((prev) => {
+      return {
+        ...prev,
+        year: typeof next.year === "number" ? String(next.year) : "",
+        month: typeof next.month === "number" ? String(next.month) : "",
+        day: typeof next.day === "number" ? String(next.day) : "",
+        dayOfWeek: typeof next.day === "number" ? "" : prev.dayOfWeek,
+      }
+    })
+  }
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const parsed = parseTimeOfDay(e.target.value)
-    setValues((prev) => ({
-      ...prev,
-      hour: typeof parsed.hour === "number" ? String(parsed.hour) : "",
-      minute: typeof parsed.minute === "number" ? String(parsed.minute) : "",
-    }))
+    setValues((prev) => {
+      return {
+        ...prev,
+        hour: typeof parsed.hour === "number" ? String(parsed.hour) : "",
+        minute: typeof parsed.minute === "number" ? String(parsed.minute) : "",
+      }
+    })
   }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
     await onSubmit(values)
   }
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (
       e.key === "Enter" &&
@@ -122,24 +121,23 @@ export default function EventFormShell({
       void handleSubmit(e)
     }
   }
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth={maxWidth}>
       {headerSlot}
       {/*
-        `noValidate` disables the browser's native form validation popups
-        (e.g. "the two nearest valid values are X and Y" when typing values
-        that don't match the input's `step`). We still validate server-side
-        via Zod schemas; `step` here is only a UX convenience for keyboard
-        arrows / spinner increments.
-      */}
+          `noValidate` disables the browser's native form validation popups
+          (e.g. "the two nearest valid values are X and Y" when typing values
+          that don't match the input's `step`). We still validate server-side
+          via Zod schemas; `step` here is only a UX convenience for keyboard
+          arrows / spinner increments.
+        */}
       <form
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
         className="space-y-4"
         noValidate
       >
-        {errorMessage && <ErrorBanner>{errorMessage}</ErrorBanner>}
+        {errorMessage ? <ErrorBanner>{errorMessage}</ErrorBanner> : null}
 
         <EventBasicFields
           idPrefix={id}
@@ -181,7 +179,7 @@ export default function EventFormShell({
             aria-busy={isSubmitting}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-zinc-900"
           >
-            {isSubmitting ? "Saving…" : submitLabel}
+            {String(isSubmitting ? "Saving…" : submitLabel)}
           </button>
         </div>
       </form>

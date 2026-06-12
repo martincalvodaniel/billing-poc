@@ -38,6 +38,33 @@ export default function StudentDetailModal({
   records,
   onClose,
 }: StudentDetailModalProps) {
+  function openDeleteAllConfirm() {
+    mutations.clearDeleteAllError()
+    setDeleteAllConfirmOpen(true)
+  }
+  function cancelPendingDelete() {
+    return setPendingDelete(null)
+  }
+  function closeDeleteAllConfirm() {
+    return setDeleteAllConfirmOpen(false)
+  }
+  function editRecord(
+    record: Parameters<
+      NonNullable<React.ComponentProps<typeof StudentRecordsList>["onEdit"]>
+    >[0]
+  ) {
+    mutations.clearFormError()
+    setFormState({ mode: "edit", target: record })
+    inlineForm.show()
+  }
+  function requestRecordDelete(
+    record: Parameters<
+      NonNullable<React.ComponentProps<typeof StudentRecordsList>["onDelete"]>
+    >[0]
+  ) {
+    mutations.clearDeleteError()
+    setPendingDelete(record)
+  }
   const [formState, setFormState] = useState<FormState>({ mode: "create" })
   const [pendingDelete, setPendingDelete] = useState<Absence | null>(null)
   const [deleteAllConfirmOpen, setDeleteAllConfirmOpen] = useState(false)
@@ -120,7 +147,9 @@ export default function StudentDetailModal({
 
   return (
     <>
-      {toastMessage && <Toast message={toastMessage} onClose={clearToast} />}
+      {toastMessage ? (
+        <Toast message={toastMessage} onClose={clearToast} />
+      ) : null}
 
       <Modal isOpen onClose={onClose} title={studentName} maxWidth="lg">
         <div className="space-y-6">
@@ -138,20 +167,17 @@ export default function StudentDetailModal({
                   ariaLabel={`Add record for ${studentName}`}
                   title={`Add record for ${studentName}`}
                 />
-                {records.length > 0 && (
+                {records.length > 0 ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      mutations.clearDeleteAllError()
-                      setDeleteAllConfirmOpen(true)
-                    }}
+                    onClick={openDeleteAllConfirm}
                     aria-label={`Delete all records for ${studentName}`}
                     className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                   >
                     <TrashIcon />
                     All
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
             {groupedRecords.length === 0 ? (
@@ -162,20 +188,13 @@ export default function StudentDetailModal({
                 editingId={
                   formState.mode === "edit" ? formState.target?._id : undefined
                 }
-                onEdit={(record) => {
-                  mutations.clearFormError()
-                  setFormState({ mode: "edit", target: record })
-                  inlineForm.show()
-                }}
-                onDelete={(record) => {
-                  mutations.clearDeleteError()
-                  setPendingDelete(record)
-                }}
+                onEdit={editRecord}
+                onDelete={requestRecordDelete}
               />
             )}
           </section>
 
-          {inlineForm.visible && (
+          {inlineForm.visible ? (
             <div
               ref={inlineForm.containerRef}
               className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-800"
@@ -211,17 +230,17 @@ export default function StudentDetailModal({
                 <PartOfDayField />
               </AbsenceForm>
             </div>
-          )}
+          ) : null}
         </div>
       </Modal>
 
-      {pendingDelete && (
+      {pendingDelete ? (
         <ConfirmDeleteModal
           isOpen
           title="Delete Record"
           isPending={isDeleting}
           errorMessage={deleteError}
-          onCancel={() => setPendingDelete(null)}
+          onCancel={cancelPendingDelete}
           onConfirm={handleConfirmDelete}
         >
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -235,15 +254,15 @@ export default function StudentDetailModal({
             This action cannot be undone.
           </p>
         </ConfirmDeleteModal>
-      )}
+      ) : null}
 
-      {deleteAllConfirmOpen && (
+      {deleteAllConfirmOpen ? (
         <ConfirmDeleteModal
           isOpen
           title="Delete all records?"
           isPending={isDeleting}
           errorMessage={deleteAllError}
-          onCancel={() => setDeleteAllConfirmOpen(false)}
+          onCancel={closeDeleteAllConfirm}
           onConfirm={handleConfirmDeleteAll}
         >
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -255,7 +274,7 @@ export default function StudentDetailModal({
             ? This cannot be undone.
           </p>
         </ConfirmDeleteModal>
-      )}
+      ) : null}
     </>
   )
 }

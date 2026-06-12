@@ -19,9 +19,10 @@ export default function PaginationControls({
   hasNextPage,
   onPageChange,
 }: PaginationControlsProps) {
+  const showPreviousPage = () => onPageChange(currentPage - 1)
+  const showNextPage = () => onPageChange(currentPage + 1)
   const startItem = (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, total)
-
   return (
     <div className="flex flex-col items-center gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:justify-between">
       <div className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -43,7 +44,7 @@ export default function PaginationControls({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={showPreviousPage}
           disabled={!hasPrevPage}
           className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
           aria-label="Previous page"
@@ -63,7 +64,7 @@ export default function PaginationControls({
 
         <button
           type="button"
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={showNextPage}
           disabled={!hasNextPage}
           className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
           aria-label="Next page"

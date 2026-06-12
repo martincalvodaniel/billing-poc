@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -27,15 +26,21 @@ function parseSearchParamsDate(
   const today = new Date()
   return new Date(today.getFullYear(), today.getMonth(), 1)
 }
-
 function formatDateString(date: Date): string {
   const yearStr = date.getFullYear()
   const monthStr = String(date.getMonth() + 1).padStart(2, "0")
   const day = String(date.getDate()).padStart(2, "0")
   return `${yearStr}-${monthStr}-${day}`
 }
-
 export default function MonthPageContent() {
+  function handleIsSubmittingChange() {
+    setIsSubmitting(true)
+    formRef.current?.submit()
+    // Reset after a brief delay to allow form submission to process
+    setTimeout(() => {
+      return setIsSubmitting(false)
+    }, 100)
+  }
   const searchParams = useSearchParams()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState(() =>
@@ -48,14 +53,12 @@ export default function MonthPageContent() {
     setFormDate: (dateString: string) => void
     submit: () => void
   }>(null)
-
   // On mobile, hide charts by default after mount
   useEffect(() => {
     if (!window.matchMedia("(min-width: 640px)").matches) {
       setShowCharts(false)
     }
   }, [])
-
   const currentMonthDate = new Date()
   const currentMonthStart = new Date(
     currentMonthDate.getFullYear(),
@@ -65,45 +68,37 @@ export default function MonthPageContent() {
   const isViewingCurrentMonth =
     selectedDate.getFullYear() === currentMonthStart.getFullYear() &&
     selectedDate.getMonth() === currentMonthStart.getMonth()
-
   const initialDate = isViewingCurrentMonth
     ? formatDateString(currentMonthDate)
     : formatDateString(selectedDate)
-
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
     })
   }
-
   const handlePaymentSaved = (date: string) => {
     formRef.current?.setFormDate(date)
     // Payments cache invalidation is handled by the mutation hooks themselves.
     setShowPaymentModal(false)
   }
-
   const handleAddPaymentClick = () => {
     setShowPaymentModal(true)
   }
-
   const handleCloseModal = useCallback(() => {
     setShowPaymentModal(false)
     setIsSubmitting(false)
   }, [])
-
   const handleCalendarMonthSelect = (year: number, month: number) => {
     const nextDate = new Date(year, month, 1)
     setSelectedDate(nextDate)
     formRef.current?.setFormDate(formatDateString(nextDate))
   }
-
   const handleGoToCurrentMonth = () => {
     if (isViewingCurrentMonth) return
     setSelectedDate(currentMonthStart)
     formRef.current?.setFormDate(formatDateString(currentMonthStart))
   }
-
   return (
     <PageLayout
       navigationSubtitle="Monthly Overview"
@@ -144,7 +139,7 @@ export default function MonthPageContent() {
         />
       </div>
 
-      {showPaymentModal && (
+      {showPaymentModal ? (
         <Modal
           isOpen={showPaymentModal}
           onClose={handleCloseModal}
@@ -162,12 +157,7 @@ export default function MonthPageContent() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setIsSubmitting(true)
-                  formRef.current?.submit()
-                  // Reset after a brief delay to allow form submission to process
-                  setTimeout(() => setIsSubmitting(false), 100)
-                }}
+                onClick={handleIsSubmittingChange}
                 disabled={isSubmitting}
                 className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-800"
               >
@@ -182,7 +172,7 @@ export default function MonthPageContent() {
             initialDate={initialDate}
           />
         </Modal>
-      )}
+      ) : null}
     </PageLayout>
   )
 }

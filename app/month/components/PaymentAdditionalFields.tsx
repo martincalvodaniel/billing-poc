@@ -1,5 +1,4 @@
 "use client"
-
 import { useId } from "react"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 
@@ -11,19 +10,20 @@ interface PaymentAdditionalFieldsProps {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void
 }
-
 export default function PaymentAdditionalFields({
   formData,
   showAdditionalFields,
   onSetShowAdditionalFields,
   onChangeField,
 }: PaymentAdditionalFieldsProps) {
+  const handleSetShowAdditionalFields = () =>
+    onSetShowAdditionalFields(!showAdditionalFields)
   const id = useId()
   return (
     <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
       <button
         type="button"
-        onClick={() => onSetShowAdditionalFields(!showAdditionalFields)}
+        onClick={handleSetShowAdditionalFields}
         className="flex w-full items-center justify-between rounded-md bg-zinc-100 px-4 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
       >
         <span>Additional Fields</span>
@@ -43,7 +43,7 @@ export default function PaymentAdditionalFields({
         </svg>
       </button>
 
-      {showAdditionalFields && (
+      {showAdditionalFields ? (
         <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
           <div className="space-y-2">
             <label
@@ -104,7 +104,7 @@ export default function PaymentAdditionalFields({
             />
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

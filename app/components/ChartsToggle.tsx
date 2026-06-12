@@ -5,6 +5,8 @@ export default function ChartsToggle({
   showCharts: boolean
   onToggle: (show: boolean) => void
 }) {
+  const enableCharts = () => onToggle(true)
+  const hideCharts = () => onToggle(false)
   return (
     <fieldset
       className="inline-flex min-h-11 items-center overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-700"
@@ -16,7 +18,7 @@ export default function ChartsToggle({
       </span>
       <button
         type="button"
-        onClick={() => onToggle(true)}
+        onClick={enableCharts}
         aria-pressed={showCharts}
         className={`min-h-11 px-3 py-2 text-sm font-medium transition ${
           showCharts
@@ -28,7 +30,7 @@ export default function ChartsToggle({
       </button>
       <button
         type="button"
-        onClick={() => onToggle(false)}
+        onClick={hideCharts}
         aria-pressed={!showCharts}
         className={`min-h-11 px-3 py-2 text-sm font-medium transition ${
           !showCharts

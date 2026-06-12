@@ -1,4 +1,5 @@
 import type { Absence } from "@/lib/domain/entities/absence"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import RecordRowActions from "../RecordRowActions"
 import AddRecordButton from "../shared/AddRecordButton"
 
@@ -47,29 +48,53 @@ export default function RecordSection({
       ) : (
         <ul className="space-y-2">
           {records.map((record) => (
-            <li
+            <RecordListItem
               key={record._id ?? `${record.studentName}-${record.date}`}
-              className={`flex items-start gap-2 rounded-md border p-3 ${
-                editingId && editingId === record._id
-                  ? "border-blue-400 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20"
-                  : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50"
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {record.studentName}
-                </p>
-              </div>
-              <RecordRowActions
-                onEdit={() => onEdit(record)}
-                onDelete={() => onDelete(record)}
-                editLabel={`Edit ${record.type} for ${record.studentName}`}
-                deleteLabel={`Delete ${record.type} for ${record.studentName}`}
-              />
-            </li>
+              record={record}
+              isEditing={editingId === record._id}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))}
         </ul>
       )}
     </section>
+  )
+}
+
+function RecordListItem({
+  record,
+  isEditing,
+  onEdit,
+  onDelete,
+}: {
+  record: Absence
+  isEditing: boolean
+  onEdit: (record: Absence) => void
+  onDelete: (record: Absence) => void
+}) {
+  const handleEdit = useStableCallback(() => onEdit(record))
+  const handleDelete = useStableCallback(() => onDelete(record))
+
+  return (
+    <li
+      className={`flex items-start gap-2 rounded-md border p-3 ${
+        isEditing
+          ? "border-blue-400 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20"
+          : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50"
+      }`}
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          {record.studentName}
+        </p>
+      </div>
+      <RecordRowActions
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        editLabel={`Edit ${record.type} for ${record.studentName}`}
+        deleteLabel={`Delete ${record.type} for ${record.studentName}`}
+      />
+    </li>
   )
 }

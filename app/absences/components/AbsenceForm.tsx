@@ -8,6 +8,7 @@ import type {
   AbsenceType,
   PartOfDay,
 } from "@/lib/domain/entities/absence"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import FormHeader from "./form/FormHeader"
 import RadioPillGroup from "./form/RadioPillGroup"
 import StudentNameAutocomplete from "./form/StudentNameAutocomplete"
@@ -107,7 +108,7 @@ export function AbsenceForm({
           onCancel={onCancel}
         />
 
-        {errorMessage && <ErrorBanner>{errorMessage}</ErrorBanner>}
+        {errorMessage ? <ErrorBanner>{errorMessage}</ErrorBanner> : null}
 
         <AbsenceFormContext value={ctx}>{children}</AbsenceFormContext>
       </form>
@@ -142,6 +143,11 @@ export function StudentNameField() {
 
 export function DateField() {
   const { idPrefix, state, isSubmitting } = useAbsenceFormContext()
+  const handleChange = useStableCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      state.setDate(e.target.value)
+    }
+  )
   return (
     <div className="space-y-2">
       <label
@@ -155,7 +161,7 @@ export function DateField() {
         id={`${idPrefix}-date`}
         name="date"
         value={state.date}
-        onChange={(e) => state.setDate(e.target.value)}
+        onChange={handleChange}
         disabled={isSubmitting}
         required
         className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"

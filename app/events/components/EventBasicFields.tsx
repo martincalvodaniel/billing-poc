@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import FormField from "@/app/components/FormField"
 import type { PartialDateValue } from "@/app/components/partialDatePicker-utils"
@@ -12,10 +11,11 @@ import {
 import { formatTimeOfDay } from "./eventsUi"
 
 const PartialDatePicker = dynamic(
-  () => import("@/app/components/PartialDatePicker"),
+  () => {
+    return import("@/app/components/PartialDatePicker")
+  },
   { ssr: false }
 )
-
 interface EventBasicFieldsProps {
   idPrefix: string
   values: EventFormValues
@@ -32,7 +32,6 @@ interface EventBasicFieldsProps {
   onDateChange: (next: PartialDateValue) => void
   onTimeChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
-
 export default function EventBasicFields({
   idPrefix,
   values,
@@ -43,12 +42,17 @@ export default function EventBasicFields({
   onDateChange,
   onTimeChange,
 }: EventBasicFieldsProps) {
+  function handleChangeField() {
+    const setDayOfWeek = onChangeField("dayOfWeek")
+    setDayOfWeek({
+      target: { value: "" },
+    } as React.ChangeEvent<HTMLSelectElement>)
+  }
   const timeValue = formatTimeOfDay(
     stringToOptionalNumber(values.hour),
     stringToOptionalNumber(values.minute)
   )
   const hasConcreteDay = values.day.trim().length > 0
-
   return (
     <>
       <FormField id={`${idPrefix}-title`} label="Title">
@@ -108,22 +112,17 @@ export default function EventBasicFields({
               <option value="6">Saturday</option>
               <option value="0">Sunday</option>
             </select>
-            {!hasConcreteDay && values.dayOfWeek && (
+            {!hasConcreteDay && values.dayOfWeek ? (
               <button
                 type="button"
-                onClick={() => {
-                  const setDayOfWeek = onChangeField("dayOfWeek")
-                  setDayOfWeek({
-                    target: { value: "" },
-                  } as React.ChangeEvent<HTMLSelectElement>)
-                }}
+                onClick={handleChangeField}
                 disabled={isSubmitting}
                 aria-label="Clear repeat weekly"
                 className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
               >
                 <span aria-hidden="true">×</span>
               </button>
-            )}
+            ) : null}
           </div>
         </FormField>
       </div>

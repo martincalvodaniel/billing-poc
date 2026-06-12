@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useRef, useState } from "react"
 import DayPickerPanel from "./DayPickerPanel"
 import MonthPickerPanel from "./MonthPickerPanel"
@@ -20,9 +19,7 @@ interface PartialDatePickerProps {
   disableDay?: boolean
   ariaLabelPrefix?: string
 }
-
 type Segment = "year" | "month" | "day"
-
 const MONTH_NAMES = [
   "Jan",
   "Feb",
@@ -37,19 +34,15 @@ const MONTH_NAMES = [
   "Nov",
   "Dec",
 ]
-
 function formatYear(year?: number): string {
   return typeof year === "number" ? String(year) : "YEAR"
 }
-
 function formatMonth(month?: number): string {
   return typeof month === "number" ? MONTH_NAMES[month - 1] : "MONTH"
 }
-
 function formatDay(day?: number): string {
   return typeof day === "number" ? String(day) : "DAY"
 }
-
 export default function PartialDatePicker({
   value,
   onChange,
@@ -57,13 +50,13 @@ export default function PartialDatePicker({
   disableDay = false,
   ariaLabelPrefix = "Date",
 }: PartialDatePickerProps) {
+  const closePicker = () => setOpenSegment(null)
   const [openSegment, setOpenSegment] = useState<Segment | null>(null)
   const [yearPageBase, setYearPageBase] = useState<number>(() => {
     const current = value.year ?? new Date().getFullYear()
     return current - 5
   })
   const containerRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     if (!openSegment) return
     const handleClickOutside = (event: MouseEvent) => {
@@ -79,7 +72,6 @@ export default function PartialDatePicker({
       document.removeEventListener("pointerdown", handleClickOutside)
     }
   }, [openSegment])
-
   const toggleSegment = (segment: Segment) => {
     if (disabled) return
     setOpenSegment((prev) => (prev === segment ? null : segment))
@@ -88,22 +80,18 @@ export default function PartialDatePicker({
       setYearPageBase(current - 5)
     }
   }
-
   const handleClearDay = () => {
     if (disabled) return
     onChange(coerceValue({ year: value.year, month: value.month }))
   }
-
   const handleSelectYear = (year: number) => {
     onChange(coerceValue({ year, month: value.month, day: value.day }))
     setOpenSegment("month")
   }
-
   const handleSelectMonth = (month: number) => {
     onChange(coerceValue({ year: value.year, month, day: value.day }))
     setOpenSegment("day")
   }
-
   const handleSelectDay = (day: number) => {
     onChange(coerceValue({ year: value.year, month: value.month, day }))
     setOpenSegment(null)
@@ -118,16 +106,21 @@ export default function PartialDatePicker({
 
   const dayClearButtonClass =
     "absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
-
   const months = monthsValidFor(value.year)
   const days = daysValidFor(value.year, value.month)
-
   return (
     <div
       className="relative inline-flex flex-wrap items-center gap-2 md:flex-nowrap"
       ref={containerRef}
     >
       {(["year", "month", "day"] as const).map((segment) => {
+        function handleClearDayClick(
+          event: React.MouseEvent<HTMLButtonElement>
+        ) {
+          event.stopPropagation()
+          handleClearDay()
+        }
+        const handleToggleSegment = () => toggleSegment(segment)
         const display =
           segment === "year"
             ? formatYear(value.year)
@@ -149,61 +142,56 @@ export default function PartialDatePicker({
           <div className="relative flex items-center" key={segment}>
             <button
               type="button"
-              onClick={() => toggleSegment(segment)}
+              onClick={handleToggleSegment}
               disabled={segmentDisabled}
               aria-label={`${ariaLabelPrefix} ${segment}`}
               aria-expanded={openSegment === segment}
-              className={`${segmentButtonClass(openSegment === segment)} ${
-                segment === "day" && hasValue && !disableDay ? "pr-6" : ""
-              }`}
+              className={`${segmentButtonClass(openSegment === segment)} ${segment === "day" && hasValue && !disableDay ? "pr-6" : ""}`}
             >
               {display}
             </button>
-            {segment === "day" && hasValue && !disableDay && (
+            {segment === "day" && hasValue && !disableDay ? (
               <button
                 type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  handleClearDay()
-                }}
+                onClick={handleClearDayClick}
                 disabled={disabled}
                 aria-label={`Clear ${ariaLabelPrefix} ${segment}`}
                 className={dayClearButtonClass}
               >
                 <span aria-hidden="true">×</span>
               </button>
-            )}
+            ) : null}
           </div>
         )
       })}
 
-      {openSegment === "year" && (
+      {openSegment === "year" ? (
         <YearPickerPanel
           yearPageBase={yearPageBase}
           selectedYear={value.year}
           onSelect={handleSelectYear}
           onPageChange={setYearPageBase}
-          onClose={() => setOpenSegment(null)}
+          onClose={closePicker}
         />
-      )}
+      ) : null}
 
-      {openSegment === "month" && (
+      {openSegment === "month" ? (
         <MonthPickerPanel
           months={months}
           selectedMonth={value.month}
           onSelect={handleSelectMonth}
-          onClose={() => setOpenSegment(null)}
+          onClose={closePicker}
         />
-      )}
+      ) : null}
 
-      {openSegment === "day" && (
+      {openSegment === "day" ? (
         <DayPickerPanel
           days={days}
           selectedDay={value.day}
           onSelect={handleSelectDay}
-          onClose={() => setOpenSegment(null)}
+          onClose={closePicker}
         />
-      )}
+      ) : null}
     </div>
   )
 }

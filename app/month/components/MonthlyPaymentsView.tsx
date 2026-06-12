@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import { useMemo, useState } from "react"
 import ClientFormModal from "@/app/clients/components/ClientFormModal"
@@ -23,9 +22,9 @@ export default function MonthlyPaymentsView({
   selectedDate: Date
   showCharts?: boolean
 }) {
+  const handleEditingClientIdChange = () => setEditingClientId(null)
   const year = selectedDate.getFullYear()
   const month = selectedDate.getMonth() + 1
-
   const {
     payments,
     isLoading,
@@ -34,7 +33,6 @@ export default function MonthlyPaymentsView({
   // 100 is the API max page size; enough for name lookups in this view.
   const { clients } = useClients({ page: 1, pageSize: 100 })
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
-
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>()
     for (const client of clients) {
@@ -42,12 +40,11 @@ export default function MonthlyPaymentsView({
     }
     return map
   }, [clients])
-
-  const editingClient: Client | undefined = useMemo(
-    () => clients.find((client) => client._id === editingClientId),
-    [clients, editingClientId]
-  )
-
+  const editingClient: Client | undefined = useMemo(() => {
+    return clients.find((client) => {
+      return client._id === editingClientId
+    })
+  }, [clients, editingClientId])
   const {
     sort,
     filters,
@@ -59,7 +56,6 @@ export default function MonthlyPaymentsView({
     handleTagToggle,
     clearTagFilter,
   } = useMonthlyPaymentsFilters(payments)
-
   const {
     actionError,
     showSuccess,
@@ -80,7 +76,6 @@ export default function MonthlyPaymentsView({
     handleEditDeleted,
     handleConfirmDelete,
   } = useMonthlyPaymentsActions({ payments, isLoading, year, month })
-
   // Combine iterations: compute totals, counts, and tag breakdowns in a single pass (js-combine-iterations)
   const {
     totalIncome,
@@ -108,7 +103,6 @@ export default function MonthlyPaymentsView({
       </div>
     )
   }
-
   const displayError =
     actionError ??
     (fetchError instanceof Error
@@ -116,14 +110,13 @@ export default function MonthlyPaymentsView({
       : fetchError
         ? "Failed to fetch payments"
         : null)
-
   return (
     <div className="w-full space-y-2">
-      {showSuccess && (
+      {showSuccess ? (
         <Toast message={successMessage} onClose={dismissSuccess} />
-      )}
+      ) : null}
 
-      {showCharts && (
+      {showCharts ? (
         <PaymentsSummary
           totalIncome={totalIncome}
           totalOutcome={totalOutcome}
@@ -138,18 +131,18 @@ export default function MonthlyPaymentsView({
           typeFilter={filters.type}
           onTypeFilterToggle={handleTypeFilterToggle}
         />
-      )}
+      ) : null}
 
-      {showCharts && (
+      {showCharts ? (
         <PaymentCharts
           incomeByTag={incomeByTag}
           outcomeByTag={outcomeByTag}
           selectedTags={filters.tags}
           onToggleTag={handleTagToggle}
         />
-      )}
+      ) : null}
 
-      {filters.tags.length > 0 && (
+      {filters.tags.length > 0 ? (
         <div className="flex justify-end">
           <button
             type="button"
@@ -159,7 +152,7 @@ export default function MonthlyPaymentsView({
             Clear tag filter
           </button>
         </div>
-      )}
+      ) : null}
 
       <PaymentsTable
         payments={payments}
@@ -186,7 +179,7 @@ export default function MonthlyPaymentsView({
       <ClientFormModal
         client={editingClient}
         isOpen={!!editingClient}
-        onClose={() => setEditingClientId(null)}
+        onClose={handleEditingClientIdChange}
       />
 
       <MonthlyPaymentsModals

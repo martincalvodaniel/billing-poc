@@ -1,3 +1,4 @@
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import type {
   ClientDiffField,
   ClientDiffRow,
@@ -9,7 +10,6 @@ interface WordpressClientDiffPanelProps {
   selectedDiffFields: SelectedClientDiffFields
   onFieldToggle: (field: ClientDiffField, checked: boolean) => void
 }
-
 export function WordpressClientDiffPanel({
   clientDiff,
   selectedDiffFields,
@@ -24,52 +24,72 @@ export function WordpressClientDiffPanel({
       </div>
       <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
         {clientDiff.map((row) => (
-          <div key={row.field} className="space-y-3 px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-medium text-zinc-700 dark:text-zinc-300">
-                {row.label}
-              </p>
-              <label className="inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
-                <input
-                  type="checkbox"
-                  checked={selectedDiffFields[row.field]}
-                  onChange={(event) => {
-                    onFieldToggle(row.field, event.target.checked)
-                  }}
-                  className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                />
-                <span>Store</span>
-              </label>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <DiffValueCard label="Current" value={row.currentValue} />
-              <DiffValueCard
-                label="Incoming"
-                value={row.nextValue}
-                variant="incoming"
-              />
-            </div>
-          </div>
+          <ClientDiffRowItem
+            key={row.field}
+            row={row}
+            selected={selectedDiffFields[row.field]}
+            onFieldToggle={onFieldToggle}
+          />
         ))}
       </div>
     </div>
   )
 }
 
+function ClientDiffRowItem({
+  row,
+  selected,
+  onFieldToggle,
+}: {
+  row: ClientDiffRow
+  selected: boolean
+  onFieldToggle: (field: ClientDiffField, checked: boolean) => void
+}) {
+  const handleChange = useStableCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onFieldToggle(row.field, event.target.checked)
+    }
+  )
+
+  return (
+    <div className="space-y-3 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-medium text-zinc-700 dark:text-zinc-300">
+          {row.label}
+        </p>
+        <label className="inline-flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={handleChange}
+            className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+          />
+          <span>Store</span>
+        </label>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <DiffValueCard label="Current" value={row.currentValue} />
+        <DiffValueCard
+          label="Incoming"
+          value={row.nextValue}
+          variant="incoming"
+        />
+      </div>
+    </div>
+  )
+}
 interface DiffValueCardProps {
   label: string
   value: string
   variant?: "current" | "incoming"
 }
-
 function DiffValueCard({
   label,
   value,
   variant = "current",
 }: DiffValueCardProps) {
   const isIncoming = variant === "incoming"
-
   return (
     <div
       className={

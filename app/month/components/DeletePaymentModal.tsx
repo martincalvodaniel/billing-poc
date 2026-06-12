@@ -2,7 +2,6 @@ import { Badge } from "@/app/components/Badge"
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import type { Payment } from "@/lib/domain/entities/payment"
 import { formatCurrency, formatDate } from "@/lib/formatters"
-
 export default function DeletePaymentModal({
   payment,
   isDeleting,
@@ -15,7 +14,6 @@ export default function DeletePaymentModal({
   onConfirm: () => void
 }) {
   if (!payment) return null
-
   return (
     <ConfirmDialog
       isOpen
@@ -41,12 +39,12 @@ export default function DeletePaymentModal({
             {payment.type.charAt(0).toUpperCase() + payment.type.slice(1)}
           </Badge>
         </div>
-        {payment.tag && (
+        {payment.tag ? (
           <div className="flex justify-between text-sm">
             <span className="text-zinc-600 dark:text-zinc-400">Tag:</span>
             <Badge tone="info">{payment.tag}</Badge>
           </div>
-        )}
+        ) : null}
         <div className="flex justify-between text-sm font-medium">
           <span className="text-zinc-600 dark:text-zinc-400">Total:</span>
           <span className="text-zinc-900 dark:text-zinc-100">

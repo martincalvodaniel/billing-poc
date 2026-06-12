@@ -1,5 +1,4 @@
 "use client"
-
 import type { Ref } from "react"
 import { useCallback, useImperativeHandle, useRef, useState } from "react"
 import { useCreatePayment } from "@/lib/hooks/usePaymentMutations"
@@ -18,12 +17,12 @@ interface PaymentFormProps {
     submit: () => void
   } | null>
 }
-
 const PaymentForm = function PaymentForm({
   onPaymentSaved,
   initialDate,
   ref,
 }: PaymentFormProps) {
+  const handleShowSuccessChange = () => setShowSuccess(false)
   const {
     formData,
     suggestedTags,
@@ -44,14 +43,11 @@ const PaymentForm = function PaymentForm({
     calculateNetAmount,
     calculateDiscount,
   } = usePaymentForm(undefined, initialDate)
-
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
-
   const { trigger: createPayment } = useCreatePayment()
   const formRef = useRef<HTMLFormElement>(null)
-
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
     setFormDate,
@@ -63,14 +59,12 @@ const PaymentForm = function PaymentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-
     try {
       // Validate concepts
       const validation = validateConcepts(formData.concepts)
       if (!validation.isValid) {
         throw new Error(validation.error || "Validation failed")
       }
-
       const conceptsTotal = calculateTotal()
       const discountValidation = validateDiscount(
         formData.discount,
@@ -79,22 +73,18 @@ const PaymentForm = function PaymentForm({
       if (!discountValidation.isValid) {
         throw new Error(discountValidation.error || "Validation failed")
       }
-
       await createPayment({
         ...formData,
         paymentMethod: formData.paymentMethod || undefined,
       })
-
       // Add new tag to available tags if it's not already there
       // Note: availableTags is managed in usePaymentForm hook
       if (formData.tag) {
         setShowTagSuggestions(false)
         setSuggestedTags([])
       }
-
       // Reset concepts and client while keeping type and date sticky
       resetForm()
-
       // Show success toast
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 4000)
@@ -105,26 +95,22 @@ const PaymentForm = function PaymentForm({
       console.error(`Error saving payment: ${err}`)
     }
   }
-
   const handleFormFieldChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     conceptIndex?: number
   ) => {
     handleChange(e, conceptIndex)
-
     // Handle tag suggestions with debounce (managed in hook, but keep dropdown state in sync here)
     if (e.target.name === "tag") {
       setShowTagSuggestions(true)
     }
   }
-
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLFormElement>) => {
       // Don't submit if tag dropdown is open (ENTER should select tag)
       if (showTagSuggestions) {
         return
       }
-
       if (e.key === "Enter") {
         e.preventDefault()
         e.stopPropagation()
@@ -136,16 +122,15 @@ const PaymentForm = function PaymentForm({
     },
     [showTagSuggestions]
   )
-
   return (
     <>
       {/* Success Toast Notification */}
-      {showSuccess && (
+      {showSuccess ? (
         <Toast
           message="Payment saved successfully!"
-          onClose={() => setShowSuccess(false)}
+          onClose={handleShowSuccessChange}
         />
-      )}
+      ) : null}
 
       <form
         ref={formRef}
@@ -153,7 +138,7 @@ const PaymentForm = function PaymentForm({
         onKeyDown={handleKeyDown}
         className="space-y-4"
       >
-        {error && <ErrorBanner>{error}</ErrorBanner>}
+        {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 
         <PaymentFormFields
           formData={formData}
@@ -177,5 +162,4 @@ const PaymentForm = function PaymentForm({
     </>
   )
 }
-
 export default PaymentForm

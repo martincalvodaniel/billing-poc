@@ -3,6 +3,7 @@ import { CardIcon } from "@/app/components/icons/CardIcon"
 import { CashIcon } from "@/app/components/icons/CashIcon"
 import { XIcon } from "@/app/components/icons/XIcon"
 import type { Payment } from "@/lib/domain/entities/payment"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import type {
   PaymentSortKey,
   PaymentSortState,
@@ -66,6 +67,7 @@ export function SortableHeader({
   onSortChange?: (key: PaymentSortKey) => void
   align: ColumnAlign
 }) {
+  const handleSort = useStableCallback(() => onSortChange?.(sortKey))
   const active = sort?.sortBy === sortKey
   const dir = sort?.sortDir ?? "desc"
   const ariaSort: "ascending" | "descending" | "none" = active
@@ -85,7 +87,7 @@ export function SortableHeader({
     <th aria-sort={ariaSort} className={baseTh}>
       <button
         type="button"
-        onClick={() => onSortChange(sortKey)}
+        onClick={handleSort}
         aria-label={`Sort by ${label}`}
         className={`inline-flex w-full items-center gap-1 ${justify} cursor-pointer rounded text-inherit hover:text-zinc-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:hover:text-zinc-100`}
       >

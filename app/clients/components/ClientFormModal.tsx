@@ -39,13 +39,13 @@ export default function ClientFormModal({
       title="Edit Client"
       maxWidth="md"
     >
-      {client && (
+      {client ? (
         <ClientForm
           client={client}
           onSubmit={handleSubmit}
           onCancel={onClose}
         />
-      )}
+      ) : null}
     </Modal>
   )
 }

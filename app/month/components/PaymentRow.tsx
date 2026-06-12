@@ -14,7 +14,6 @@ import {
   PaymentMethodMarker,
   ReceiptMarker,
 } from "./PaymentsTableCells"
-
 export default function PaymentRow({
   payment,
   hasSurcharge,
@@ -48,25 +47,58 @@ export default function PaymentRow({
   clientNameById: Map<string, string>
   onClientClick: (clientId: string) => void
 }) {
+  function handleRowClick() {
+    return onRowClick(payment._id || "")
+  }
+  function handleInvoiceFilterToggle(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    onInvoiceFilterToggle(hasInvoice)
+  }
+  function handleReceiptFilterToggle(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    onReceiptFilterToggle(hasReceipt)
+  }
+  function handleTypeFilterToggle(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    onTypeFilterToggle(payment.type)
+  }
+  function handleTagFilterToggle(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    onTagFilterToggle(payment.tag ?? "")
+  }
+  function handleClientClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    onClientClick(payment.clientId ?? "")
+  }
+  function handleDuplicateClick(
+    e: Parameters<
+      NonNullable<React.ComponentProps<typeof IconButton>["onClick"]>
+    >[0]
+  ) {
+    return onDuplicateClick(e, payment._id || "")
+  }
+  function handleDeleteClick(
+    e: Parameters<
+      NonNullable<React.ComponentProps<typeof IconButton>["onClick"]>
+    >[0]
+  ) {
+    return onDeleteClick(e, payment._id || "")
+  }
   const hasInvoice = paymentHasInvoiceKind(payment, "invoice")
   const hasReceipt = paymentHasInvoiceKind(payment, "receipt")
   const clientName = payment.clientId
     ? clientNameById.get(payment.clientId)
     : undefined
-
   return (
     <tr
-      onClick={() => onRowClick(payment._id || "")}
+      onClick={handleRowClick}
       className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
     >
       <td className="px-3 py-4 text-zinc-900 dark:text-zinc-100">
         <div className="inline-flex items-center gap-1">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onInvoiceFilterToggle(hasInvoice)
-            }}
+            onClick={handleInvoiceFilterToggle}
             aria-label={
               hasInvoice
                 ? "Filter by payments with invoice"
@@ -84,10 +116,7 @@ export default function PaymentRow({
           </button>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onReceiptFilterToggle(hasReceipt)
-            }}
+            onClick={handleReceiptFilterToggle}
             aria-label={
               hasReceipt
                 ? "Filter by payments with receipt"
@@ -116,10 +145,7 @@ export default function PaymentRow({
       <td className="px-6 py-4">
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onTypeFilterToggle(payment.type)
-          }}
+          onClick={handleTypeFilterToggle}
           aria-label={`Filter by ${payment.type}`}
           className="rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
@@ -137,10 +163,7 @@ export default function PaymentRow({
         {payment.tag ? (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onTagFilterToggle(payment.tag ?? "")
-            }}
+            onClick={handleTagFilterToggle}
             aria-label={`Filter by tag ${payment.tag}`}
             className="rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
@@ -163,10 +186,7 @@ export default function PaymentRow({
         {clientName && payment.clientId ? (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onClientClick(payment.clientId ?? "")
-            }}
+            onClick={handleClientClick}
             aria-label={`Edit client ${clientName}`}
             className="truncate rounded text-left text-emerald-700 hover:underline focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:text-emerald-400"
           >
@@ -189,7 +209,7 @@ export default function PaymentRow({
       <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
         ({payment.vat}%) {formatCurrency(payment.vatAmount)}
       </td>
-      {hasSurcharge && (
+      {hasSurcharge ? (
         <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
           {typeof payment.surcharge === "number" && payment.surcharge !== 0 ? (
             <span>
@@ -200,13 +220,13 @@ export default function PaymentRow({
             <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
           )}
         </td>
-      )}
+      ) : null}
       <td className="px-6 py-4 text-right">
         <div className="inline-flex items-center justify-end gap-1">
           <IconButton
             variant="info"
             stopPropagation
-            onClick={(e) => onDuplicateClick(e, payment._id || "")}
+            onClick={handleDuplicateClick}
             ariaLabel="Duplicate payment"
           >
             <DuplicateIcon />
@@ -214,7 +234,7 @@ export default function PaymentRow({
           <IconButton
             variant="danger"
             stopPropagation
-            onClick={(e) => onDeleteClick(e, payment._id || "")}
+            onClick={handleDeleteClick}
             ariaLabel="Delete payment"
           >
             <TrashIcon />

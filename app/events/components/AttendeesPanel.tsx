@@ -1,5 +1,4 @@
 "use client"
-
 import { useId } from "react"
 import ClientFormModal from "@/app/clients/components/ClientFormModal"
 import ClientSelector from "@/app/components/ClientSelector"
@@ -18,12 +17,39 @@ interface AttendeesPanelProps {
   onActionSuccess: (message: string) => void
   onActionError: (message: string) => void
 }
-
 export default function AttendeesPanel({
   event,
   onActionSuccess,
   onActionError,
 }: AttendeesPanelProps) {
+  function closePaymentDetail() {
+    return setSelectedPayment(null)
+  }
+  function updateSelectedPayment(
+    payment: Parameters<
+      NonNullable<React.ComponentProps<typeof PaymentDetailModal>["onUpdate"]>
+    >[0]
+  ) {
+    return setSelectedPayment(payment)
+  }
+  function handleCopyEmailsClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation()
+    void handleCopyEmails()
+  }
+  function handleClientSelection(
+    clientId: Parameters<
+      NonNullable<React.ComponentProps<typeof ClientSelector>["onChange"]>
+    >[0]
+  ) {
+    if (clientId) void handleClientChange(clientId)
+  }
+  function handleInlineCreateClient(
+    name: Parameters<
+      NonNullable<React.ComponentProps<typeof ClientSelector>["onCreateClient"]>
+    >[0]
+  ) {
+    return void handleCreateClient(name)
+  }
   const id = useId()
   const {
     clientNameById,
@@ -52,7 +78,6 @@ export default function AttendeesPanel({
     handleOpenPayment,
     handleSelectedPaymentDeleted,
   } = useAttendeesPanel({ event, onActionSuccess, onActionError })
-
   return (
     <section className="space-y-3">
       <CapacityBar used={seats} max={event.maxAttendees} />
@@ -64,10 +89,7 @@ export default function AttendeesPanel({
           </h3>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              void handleCopyEmails()
-            }}
+            onClick={handleCopyEmailsClick}
             disabled={!hasEmails}
             aria-label="Copy attendee emails"
             title={hasEmails ? "Copy attendee emails" : "No attendees to copy"}
@@ -116,32 +138,30 @@ export default function AttendeesPanel({
       <div className="rounded-md border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Add attendee
-          {remaining !== undefined && (
+          {remaining !== undefined ? (
             <span className="ml-2 font-normal normal-case">
               ({remaining} seat{remaining === 1 ? "" : "s"} remaining)
             </span>
-          )}
+          ) : null}
         </p>
         <ClientSelector
           key={selectorResetKey}
-          onChange={(clientId) => {
-            if (clientId) void handleClientChange(clientId)
-          }}
+          onChange={handleClientSelection}
           label="Client"
           required
-          onCreateClient={(name) => void handleCreateClient(name)}
+          onCreateClient={handleInlineCreateClient}
           isCreating={isCreatingClient}
         />
       </div>
 
-      {invoiceGuard && (
+      {invoiceGuard ? (
         <InvoiceGuardModal
           isOpen
           onClose={closeInvoiceGuard}
           invoiceType={invoiceGuard.invoiceType}
           invoiceId={invoiceGuard.invoiceId}
         />
-      )}
+      ) : null}
 
       <ClientFormModal
         client={editingClient}
@@ -149,14 +169,14 @@ export default function AttendeesPanel({
         onClose={closeEditClient}
       />
 
-      {selectedPayment && (
+      {selectedPayment ? (
         <PaymentDetailModal
           payment={selectedPayment}
-          onClose={() => setSelectedPayment(null)}
-          onUpdate={(payment) => setSelectedPayment(payment)}
+          onClose={closePaymentDetail}
+          onUpdate={updateSelectedPayment}
           onDelete={handleSelectedPaymentDeleted}
         />
-      )}
+      ) : null}
     </section>
   )
 }

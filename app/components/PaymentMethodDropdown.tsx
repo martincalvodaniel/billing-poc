@@ -1,5 +1,4 @@
 "use client"
-
 import { useId, useMemo, useRef, useState } from "react"
 import {
   PAYMENT_METHOD_LABELS,
@@ -7,6 +6,7 @@ import {
   type PaymentMethod,
 } from "@/lib/domain/entities/payment"
 import { useClickOutside } from "@/lib/hooks/useClickOutside"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import { BankTransferIcon } from "./icons/BankTransferIcon"
 import { CardIcon } from "./icons/CardIcon"
 import { CashIcon } from "./icons/CashIcon"
@@ -36,22 +36,21 @@ const PAYMENT_METHOD_CONFIG: Record<
     iconClassName: "text-zinc-700 dark:text-zinc-300",
   },
 }
-
 interface PaymentMethodDropdownProps {
   value?: PaymentMethod | ""
   onChange: (value: PaymentMethod | "") => void
   label?: string
 }
-
 export default function PaymentMethodDropdown({
   value,
   onChange,
   label = "Payment Method (Optional)",
 }: PaymentMethodDropdownProps) {
+  const handleClearSelection = () => handleSelect("")
+  const handleIsOpenChange = () => setIsOpen((prev) => !prev)
   const id = useId()
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-
   useClickOutside(
     containerRef,
     () => {
@@ -72,7 +71,6 @@ export default function PaymentMethodDropdown({
     onChange(nextValue)
     setIsOpen(false)
   }
-
   return (
     <div className="space-y-2">
       <label
@@ -85,7 +83,7 @@ export default function PaymentMethodDropdown({
         <button
           id={`${id}-paymentMethod-trigger`}
           type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={handleIsOpenChange}
           aria-haspopup="menu"
           aria-expanded={isOpen}
           aria-controls={`${id}-paymentMethod-list`}
@@ -122,7 +120,7 @@ export default function PaymentMethodDropdown({
           </svg>
         </button>
 
-        {isOpen && (
+        {isOpen ? (
           <ul
             id={`${id}-paymentMethod-list`}
             aria-label="Payment method options"
@@ -132,7 +130,7 @@ export default function PaymentMethodDropdown({
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => handleSelect("")}
+                onClick={handleClearSelection}
                 className="flex w-full items-center gap-2 px-4 py-2 text-left text-zinc-900 hover:bg-zinc-100 focus:outline-none focus:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:bg-zinc-700"
               >
                 <XIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -140,27 +138,39 @@ export default function PaymentMethodDropdown({
               </button>
             </li>
 
-            {PAYMENT_METHODS.map((method) => {
-              const option = PAYMENT_METHOD_CONFIG[method]
-              return (
-                <li key={method}>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => handleSelect(method)}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-zinc-900 hover:bg-zinc-100 focus:outline-none focus:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:bg-zinc-700"
-                  >
-                    <option.Icon
-                      className={`h-4 w-4 ${option.iconClassName}`}
-                    />
-                    <span>{option.label}</span>
-                  </button>
-                </li>
-              )
-            })}
+            {PAYMENT_METHODS.map((method) => (
+              <PaymentMethodOption
+                key={method}
+                method={method}
+                onSelect={handleSelect}
+              />
+            ))}
           </ul>
-        )}
+        ) : null}
       </div>
     </div>
+  )
+}
+function PaymentMethodOption({
+  method,
+  onSelect,
+}: {
+  method: PaymentMethod
+  onSelect: (method: PaymentMethod) => void
+}) {
+  const handleClick = useStableCallback(() => onSelect(method))
+  const option = PAYMENT_METHOD_CONFIG[method]
+  return (
+    <li>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={handleClick}
+        className="flex w-full items-center gap-2 px-4 py-2 text-left text-zinc-900 hover:bg-zinc-100 focus:outline-none focus:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:bg-zinc-700"
+      >
+        <option.Icon className={`h-4 w-4 ${option.iconClassName}`} />
+        <span>{option.label}</span>
+      </button>
+    </li>
   )
 }

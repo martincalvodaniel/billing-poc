@@ -1,6 +1,7 @@
 "use client"
 
 import type { MouseEvent, ReactNode } from "react"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import {
   getIconButtonClass,
   type IconButtonSize,
@@ -32,12 +33,12 @@ export function IconButton({
   type = "button",
   stopPropagation = false,
 }: IconButtonProps) {
-  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleClick = useStableCallback((e: MouseEvent<HTMLButtonElement>) => {
     if (stopPropagation) {
       e.stopPropagation()
     }
     onClick(e)
-  }
+  })
 
   return (
     <button

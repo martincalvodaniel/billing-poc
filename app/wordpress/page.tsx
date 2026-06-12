@@ -1,5 +1,4 @@
 "use client"
-
 import { useMemo, useState } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
@@ -14,8 +13,81 @@ import { WordpressOrdersHeader } from "./components/WordpressOrdersHeader"
 import { WordpressOrdersTable } from "./components/WordpressOrdersTable"
 import { WordpressPagination } from "./components/WordpressPagination"
 import { extractApiError } from "./components/wordpress-view-utils"
-
 export default function WordpressPage() {
+  function clearToast() {
+    return setToastMessage(null)
+  }
+  function handlePageChange() {
+    if (page === 1) {
+      void mutate()
+      return
+    }
+    setPage(1)
+  }
+  function handleSelectedOrderChange(
+    order: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof WordpressOrdersTable>["onSelectOrder"]
+      >
+    >[0]
+  ) {
+    return setSelectedOrder(order)
+  }
+  function handleBillingOrderChange(
+    order: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof WordpressOrdersTable>["onSelectBilling"]
+      >
+    >[0]
+  ) {
+    return setBillingOrder(order)
+  }
+  function handleStatusOrderChange(
+    order: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof WordpressOrdersTable>["onSelectStatus"]
+      >
+    >[0]
+  ) {
+    return setStatusOrder(order)
+  }
+  function showPreviousPage() {
+    return setPage((current) => {
+      return Math.max(1, current - 1)
+    })
+  }
+  function showNextPage() {
+    return setPage((current) => {
+      return current + 1
+    })
+  }
+  function closeOrderDetails() {
+    return setSelectedOrder(null)
+  }
+  function closeBillingModal() {
+    return setBillingOrder(null)
+  }
+  function showBillingConfirmation(
+    message: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof WordpressBillingClientModal>["onConfirmed"]
+      >
+    >[0]
+  ) {
+    return setToastMessage(message)
+  }
+  function closeStatusModal() {
+    return setStatusOrder(null)
+  }
+  function showStatusConfirmation(
+    message: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof WordpressOrderStatusModal>["onConfirmed"]
+      >
+    >[0]
+  ) {
+    return setToastMessage(message)
+  }
   const [page, setPage] = useState(1)
   const [selectedOrder, setSelectedOrder] = useState<WordPressOrder | null>(
     null
@@ -23,34 +95,25 @@ export default function WordpressPage() {
   const [billingOrder, setBillingOrder] = useState<WordPressOrder | null>(null)
   const [statusOrder, setStatusOrder] = useState<WordPressOrder | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
-
   const { data, orders, isLoading, error, mutate } = useWordpressOrders({
     page,
   })
-
   const errorMessage = useMemo(() => {
     if (!error) return null
     return extractApiError(error, "Failed to fetch WordPress orders")
   }, [error])
-
   const pagination = data?.pagination
-
   return (
     <PageLayout navigationSubtitle="WordPress Orders">
       <section className="space-y-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
         <WordpressOrdersHeader
-          onReload={() => {
-            if (page === 1) {
-              void mutate()
-              return
-            }
-
-            setPage(1)
-          }}
+          onReload={handlePageChange}
           isReloadDisabled={isLoading}
         />
 
-        {errorMessage && <ErrorBanner bordered>{errorMessage}</ErrorBanner>}
+        {errorMessage ? (
+          <ErrorBanner bordered>{errorMessage}</ErrorBanner>
+        ) : null}
 
         {isLoading && orders.length === 0 ? (
           <EmptyState variant="card">Loading WordPress orders...</EmptyState>
@@ -59,40 +122,40 @@ export default function WordpressPage() {
         ) : (
           <WordpressOrdersTable
             orders={orders}
-            onSelectOrder={(order) => setSelectedOrder(order)}
-            onSelectBilling={(order) => setBillingOrder(order)}
-            onSelectStatus={(order) => setStatusOrder(order)}
+            onSelectOrder={handleSelectedOrderChange}
+            onSelectBilling={handleBillingOrderChange}
+            onSelectStatus={handleStatusOrderChange}
           />
         )}
 
         <WordpressPagination
           pagination={pagination}
           isLoading={isLoading}
-          onPrevious={() => setPage((current) => Math.max(1, current - 1))}
-          onNext={() => setPage((current) => current + 1)}
+          onPrevious={showPreviousPage}
+          onNext={showNextPage}
         />
       </section>
 
       <WordpressOrderDetailsModal
         order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
+        onClose={closeOrderDetails}
       />
 
       <WordpressBillingClientModal
         order={billingOrder}
-        onClose={() => setBillingOrder(null)}
-        onConfirmed={(message) => setToastMessage(message)}
+        onClose={closeBillingModal}
+        onConfirmed={showBillingConfirmation}
       />
 
       <WordpressOrderStatusModal
         order={statusOrder}
-        onClose={() => setStatusOrder(null)}
-        onConfirmed={(message) => setToastMessage(message)}
+        onClose={closeStatusModal}
+        onConfirmed={showStatusConfirmation}
       />
 
-      {toastMessage && (
-        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-      )}
+      {toastMessage ? (
+        <Toast message={toastMessage} onClose={clearToast} />
+      ) : null}
     </PageLayout>
   )
 }

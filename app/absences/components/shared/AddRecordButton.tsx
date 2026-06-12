@@ -39,7 +39,7 @@ export default function AddRecordButton({
       className={`inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-800 ${className}`}
     >
       <PlusIcon />
-      {label && <span>{label}</span>}
+      {label ? <span>{label}</span> : null}
     </button>
   )
 }

@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import PageLayout from "@/app/components/PageLayout"
 import Toast from "@/app/components/Toast"
@@ -9,17 +8,109 @@ import EventsMonthCalendar from "./EventsMonthCalendar"
 import EventsPageHeader from "./EventsPageHeader"
 import { useEventsPageState } from "./useEventsPageState"
 
-const DayEventsModal = dynamic(() => import("./DayEventsModal"), {
-  ssr: false,
-})
-const EditEventModal = dynamic(() => import("./EditEventModal"), {
-  ssr: false,
-})
-const NewEventModal = dynamic(() => import("./NewEventModal"), {
-  ssr: false,
-})
-
+const DayEventsModal = dynamic(
+  () => {
+    return import("./DayEventsModal")
+  },
+  {
+    ssr: false,
+  }
+)
+const EditEventModal = dynamic(
+  () => {
+    return import("./EditEventModal")
+  },
+  {
+    ssr: false,
+  }
+)
+const NewEventModal = dynamic(
+  () => {
+    return import("./NewEventModal")
+  },
+  {
+    ssr: false,
+  }
+)
 export default function EventsPageContent() {
+  function clearToast() {
+    return setToast(null)
+  }
+  function closeDayModal() {
+    return setDayModalKey(null)
+  }
+  function editDayEvent(
+    e: Parameters<
+      NonNullable<React.ComponentProps<typeof DayEventsModal>["onEdit"]>
+    >[0]
+  ) {
+    setDayModalKey(null)
+    openEdit(e)
+  }
+  function handleDayEventDelete(
+    e: Parameters<
+      NonNullable<React.ComponentProps<typeof DayEventsModal>["onDelete"]>
+    >[0]
+  ) {
+    void handleDelete(e)
+  }
+  function handleDaySkipOccurrence(
+    e: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof DayEventsModal>["onSkipOccurrence"]
+      >
+    >[0],
+    key: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof DayEventsModal>["onSkipOccurrence"]
+      >
+    >[1]
+  ) {
+    void handleSkipOccurrence(e, key)
+  }
+  function addEventForDay(
+    day: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof DayEventsModal>["onAddEventForDay"]
+      >
+    >[0]
+  ) {
+    setDayModalKey(null)
+    openCreate(day)
+  }
+  function openNewEvent() {
+    return openCreate()
+  }
+  function showAttendeeSuccess(
+    msg: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof EditEventModal>["onAttendeeSuccess"]
+      >
+    >[0]
+  ) {
+    return setToast(msg)
+  }
+  function showAttendeeError(
+    msg: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof EditEventModal>["onAttendeeError"]
+      >
+    >[0]
+  ) {
+    return setToast(msg)
+  }
+  function handleExcludedDatesChange(
+    excludedDates: Parameters<
+      NonNullable<
+        React.ComponentProps<typeof EditEventModal>["onExcludedDatesChange"]
+      >
+    >[0]
+  ) {
+    void handlePersistExcludedDates(excludedDates)
+  }
+  function handleDeleteConfirm() {
+    return void handleConfirmDelete()
+  }
   const {
     events,
     selectedDate,
@@ -56,7 +147,6 @@ export default function EventsPageContent() {
     handleSkipOccurrence,
     handlePersistExcludedDates,
   } = useEventsPageState()
-
   return (
     <PageLayout
       navigationSubtitle="Events"
@@ -68,11 +158,11 @@ export default function EventsPageContent() {
           isViewingCurrentMonth={isViewingCurrentMonth}
           onGoToCurrentMonth={handleGoToCurrentMonth}
           onMonthChange={handleMonthChange}
-          onAddEvent={() => openCreate()}
+          onAddEvent={openNewEvent}
         />
       }
     >
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      {toast ? <Toast message={toast} onClose={clearToast} /> : null}
 
       <div className="space-y-8">
         <EventsMonthCalendar
@@ -99,11 +189,9 @@ export default function EventsPageContent() {
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           errorMessage={formError}
-          onAttendeeSuccess={(msg) => setToast(msg)}
-          onAttendeeError={(msg) => setToast(msg)}
-          onExcludedDatesChange={(excludedDates) => {
-            void handlePersistExcludedDates(excludedDates)
-          }}
+          onAttendeeSuccess={showAttendeeSuccess}
+          onAttendeeError={showAttendeeError}
+          onExcludedDatesChange={handleExcludedDatesChange}
         />
       ) : (
         <NewEventModal
@@ -118,34 +206,24 @@ export default function EventsPageContent() {
         />
       )}
 
-      {dayModalKey && (
+      {dayModalKey ? (
         <DayEventsModal
           dateKey={dayModalKey}
           events={dayEvents}
-          onClose={() => setDayModalKey(null)}
-          onEdit={(e) => {
-            setDayModalKey(null)
-            openEdit(e)
-          }}
-          onDelete={(e) => {
-            void handleDelete(e)
-          }}
-          onSkipOccurrence={(e, key) => {
-            void handleSkipOccurrence(e, key)
-          }}
-          onAddEventForDay={(day) => {
-            setDayModalKey(null)
-            openCreate(day)
-          }}
+          onClose={closeDayModal}
+          onEdit={editDayEvent}
+          onDelete={handleDayEventDelete}
+          onSkipOccurrence={handleDaySkipOccurrence}
+          onAddEventForDay={addEventForDay}
         />
-      )}
+      ) : null}
 
       <EventDeleteDialog
         event={deleteDialogEvent}
         isPending={isDeletePending}
         error={deleteDialogError}
         onCancel={handleCancelDelete}
-        onConfirm={() => void handleConfirmDelete()}
+        onConfirm={handleDeleteConfirm}
       />
     </PageLayout>
   )

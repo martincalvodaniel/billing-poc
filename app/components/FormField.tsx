@@ -4,7 +4,6 @@ interface FormFieldProps {
   required?: boolean
   children: React.ReactNode
 }
-
 export default function FormField({
   id,
   label,
@@ -18,7 +17,7 @@ export default function FormField({
         className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
       >
         {label}
-        {required && <span className="ml-1 text-red-600">*</span>}
+        {required ? <span className="ml-1 text-red-600">*</span> : null}
       </label>
       {children}
     </div>
