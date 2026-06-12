@@ -96,6 +96,11 @@ export default function EventFormShell({
       }
     })
   }
+  const handleValueChange = (field: keyof EventFormValues) => {
+    return (value: string) => {
+      setValues((prev) => ({ ...prev, [field]: value }))
+    }
+  }
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const parsed = parseTimeOfDay(e.target.value)
     setValues((prev) => {
@@ -154,14 +159,14 @@ export default function EventFormShell({
           idPrefix={id}
           values={values}
           isSubmitting={isSubmitting}
-          onChangeField={handleChange}
+          onChangeValue={handleValueChange}
         />
 
         <EventPricingFields
           idPrefix={id}
           values={values}
           isSubmitting={isSubmitting}
-          onChangeField={handleChange}
+          onChangeValue={handleValueChange}
         />
 
         <div className="flex items-center justify-end gap-2 pt-2">
