@@ -133,7 +133,7 @@ export default function DayDetailModal({
         <Toast message={toastMessage} onClose={clearToast} />
       ) : null}
 
-      <Modal isOpen onClose={onClose} title={formatDate(date)} maxWidth="lg">
+      <Modal isOpen onClose={onClose} title={formatDate(date)} maxWidth="xl">
         <div className="space-y-6">
           <PartSection
             part="morning"

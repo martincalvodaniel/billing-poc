@@ -115,7 +115,7 @@ export default function PaymentDetailModal({
         isOpen={true}
         onClose={onClose}
         title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
-        maxWidth="lg"
+        maxWidth="xl"
         headerActions={
           !isDuplicate ? (
             <IconButton

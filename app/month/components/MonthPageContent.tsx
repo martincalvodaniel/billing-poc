@@ -144,7 +144,7 @@ export default function MonthPageContent() {
           isOpen={showPaymentModal}
           onClose={handleCloseModal}
           title="New Payment"
-          maxWidth="lg"
+          maxWidth="xl"
           footer={
             <div className="flex gap-2">
               <button

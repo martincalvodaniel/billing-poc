@@ -69,46 +69,48 @@ export default function PaymentAdditionalFields({
             />
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor={`${id}-surcharge`}
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Surcharge (%) - Optional
-            </label>
-            <NumberStepperInput
-              id={`${id}-surcharge`}
-              name="surcharge"
-              value={formData.surcharge ? String(formData.surcharge) : ""}
-              onValueChange={handleSurchargeChange}
-              step={0.5}
-              min={-100}
-              max={100}
-              placeholder="0"
-              inputMode="decimal"
-              emptyStepBase={0}
-              ariaLabel="Surcharge percentage"
-            />
-          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="min-w-0 space-y-2">
+              <label
+                htmlFor={`${id}-surcharge`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Surcharge (%) - Optional
+              </label>
+              <NumberStepperInput
+                id={`${id}-surcharge`}
+                name="surcharge"
+                value={formData.surcharge ? String(formData.surcharge) : ""}
+                onValueChange={handleSurchargeChange}
+                step={0.5}
+                min={-100}
+                max={100}
+                placeholder="0"
+                inputMode="decimal"
+                emptyStepBase={0}
+                ariaLabel="Surcharge percentage"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor={`${id}-discount`}
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Discount (€) - Optional
-            </label>
-            <input
-              type="number"
-              id={`${id}-discount`}
-              name="discount"
-              value={formData.discount || ""}
-              onChange={onChangeField}
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            />
+            <div className="min-w-0 space-y-2">
+              <label
+                htmlFor={`${id}-discount`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Discount (€) - Optional
+              </label>
+              <input
+                type="number"
+                id={`${id}-discount`}
+                name="discount"
+                value={formData.discount || ""}
+                onChange={onChangeField}
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
           </div>
         </div>
       ) : null}

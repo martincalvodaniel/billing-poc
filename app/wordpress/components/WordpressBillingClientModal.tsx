@@ -204,7 +204,7 @@ export function WordpressBillingClientModal({
           ? `Import billing into clients - Order #${order.id}`
           : "Import billing into clients"
       }
-      maxWidth="lg"
+      maxWidth="xl"
       footer={
         <WordpressBillingClientModalFooter
           confirmLabel={confirmLabel}

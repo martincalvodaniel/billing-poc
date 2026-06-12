@@ -53,7 +53,7 @@ export default function NewEventModal({
       onClose={onClose}
       title="New event"
       submitLabel="Create event"
-      maxWidth="lg"
+      maxWidth="xl"
       resetKey={resetKey ?? "create"}
       computeInitialValues={computeInitialValues}
       onSubmit={onSubmit}

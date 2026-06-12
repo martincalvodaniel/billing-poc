@@ -136,20 +136,20 @@ export default function AttendeeRow({
               Saving…
             </span>
           ) : null}
-          {hasPayment && !isSaving && attendee.paymentId ? (
-            <button
-              type="button"
-              onClick={handleOpenPayment}
-              disabled={isOpeningPayment}
-              aria-label={`Open payment for ${name}`}
-              className={`inline-flex items-center rounded-full font-medium transition-colors hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-green-900/50 ${getBadgeSizeClass("sm")} ${getBadgeToneClass("success")}`}
-            >
-              {isOpeningPayment ? "Opening…" : "Payment ✓"}
-            </button>
-          ) : null}
         </div>
       </div>
       <div className="flex items-center gap-1">
+        {hasPayment && !isSaving && attendee.paymentId ? (
+          <button
+            type="button"
+            onClick={handleOpenPayment}
+            disabled={isOpeningPayment}
+            aria-label={`Open payment for ${name}`}
+            className={`inline-flex items-center rounded-full font-medium transition-colors hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-green-900/50 ${getBadgeSizeClass("sm")} ${getBadgeToneClass("success")}`}
+          >
+            {isOpeningPayment ? "€ …" : "€ ✓"}
+          </button>
+        ) : null}
         <IconButton
           variant="success"
           isPending={isGenerating}
