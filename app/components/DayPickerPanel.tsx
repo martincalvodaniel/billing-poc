@@ -1,5 +1,6 @@
 "use client"
 import { useStableCallback } from "@/lib/hooks/useStableCallback"
+import { WEEKDAY_HEADERS } from "./calendar-constants"
 import PickerOverlay from "./PickerOverlay"
 import { dayCalendarOffset } from "./partialDatePicker-utils"
 
@@ -11,7 +12,6 @@ interface DayPickerPanelProps {
   onSelect: (day: number) => void
   onClose: () => void
 }
-const WEEKDAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 export default function DayPickerPanel({
   year,
