@@ -23,7 +23,7 @@ import {
 export function useMonthlyPaymentsFilters(payments: Payment[]) {
   const [sort, setSort] = useState<PaymentSortState>({
     sortBy: "day",
-    sortDir: "asc",
+    sortDir: "desc",
   })
   const [filters, setFilters] = useState<PaymentFilters>({
     type: "all",
