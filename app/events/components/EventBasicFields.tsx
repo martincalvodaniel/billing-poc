@@ -131,7 +131,6 @@ export default function EventBasicFields({
         <input
           id={`${idPrefix}-time`}
           type="time"
-          step={60}
           value={timeValue}
           onChange={onTimeChange}
           disabled={isSubmitting}
