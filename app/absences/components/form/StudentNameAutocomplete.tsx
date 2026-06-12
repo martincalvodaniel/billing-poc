@@ -20,6 +20,9 @@ export default function StudentNameAutocomplete({
   disabled,
   inputRef,
 }: StudentNameAutocompleteProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    onChange(e.target.value)
+
   const { students: options } = useAbsenceStudents(value)
   return (
     <div className="space-y-2">
@@ -36,7 +39,7 @@ export default function StudentNameAutocomplete({
         list={datalistId}
         ref={inputRef}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
         disabled={disabled}
         required
         autoComplete="off"

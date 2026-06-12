@@ -16,6 +16,8 @@ interface ClientListProps {
 }
 
 export default function ClientList({ clients }: ClientListProps) {
+  const handleCopyToastChange = () => setCopyToast(null)
+  const handleDeletingClientIdChange = () => setDeletingClientId(null)
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -58,11 +60,11 @@ export default function ClientList({ clients }: ClientListProps) {
 
   return (
     <>
-      {copyToast && (
-        <Toast message={copyToast} onClose={() => setCopyToast(null)} />
-      )}
+      {copyToast ? (
+        <Toast message={copyToast} onClose={handleCopyToastChange} />
+      ) : null}
 
-      {error && <ErrorBanner bordered>{error}</ErrorBanner>}
+      {error ? <ErrorBanner bordered>{error}</ErrorBanner> : null}
 
       <ClientFormModal
         client={editingClient}
@@ -74,7 +76,7 @@ export default function ClientList({ clients }: ClientListProps) {
         client={deletingClient}
         isOpen={!!deletingClientId && !!deletingClient}
         isDeleting={isDeleting}
-        onCancel={() => setDeletingClientId(null)}
+        onCancel={handleDeletingClientIdChange}
         onConfirm={handleConfirmDelete}
       />
 

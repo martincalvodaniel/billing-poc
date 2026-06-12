@@ -21,7 +21,7 @@ export default function FormHeader({
         {title}
       </h3>
       <div className="flex shrink-0 items-center gap-1">
-        {onCancel && (
+        {onCancel ? (
           <button
             type="button"
             onClick={onCancel}
@@ -32,7 +32,7 @@ export default function FormHeader({
           >
             <XIcon />
           </button>
-        )}
+        ) : null}
         <button
           type="submit"
           disabled={isSubmitting || !canSubmit}

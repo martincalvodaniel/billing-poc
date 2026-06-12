@@ -1,5 +1,4 @@
 "use client"
-
 import { useCallback, useState } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
@@ -30,32 +29,27 @@ function extractApiError(err: unknown, fallback: string): string {
   }
   return fallback
 }
-
 export default function ClientsPage() {
+  const handleShowFormChange = () => setShowForm(false)
+  const toggleCreateForm = () => setShowForm(!showForm)
   const [searchQuery, setSearchQuery] = useState("")
   const [page, setPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
-
   const {
     data,
     clients,
     isLoading,
     error: fetchError,
   } = useClients({ search: searchQuery, page, pageSize: PAGE_SIZE })
-
   const { trigger: createClient } = useCreateClient()
-
   const pagination = data?.pagination
-
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
     setPage(1) // Reset to page 1 on search
   }, [])
-
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage)
   }, [])
-
   const handleCreateClient = async (formData: ClientFormData) => {
     try {
       await createClient(formData)
@@ -65,17 +59,15 @@ export default function ClientsPage() {
     setShowForm(false)
     setPage(1) // Reset to page 1 after create
   }
-
   const errorMessage =
     fetchError instanceof Error
       ? fetchError.message
       : fetchError
         ? "Failed to fetch clients"
         : null
-
   return (
     <PageLayout navigationSubtitle="Clients">
-      {errorMessage && <ErrorBanner bordered>{errorMessage}</ErrorBanner>}
+      {errorMessage ? <ErrorBanner bordered>{errorMessage}</ErrorBanner> : null}
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -84,24 +76,24 @@ export default function ClientsPage() {
           </div>
           <button
             type="button"
-            onClick={() => setShowForm(!showForm)}
+            onClick={toggleCreateForm}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
           >
             {showForm ? "Cancel" : "Add Client"}
           </button>
         </div>
 
-        {showForm && (
+        {showForm ? (
           <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               Create New Client
             </h3>
             <ClientForm
               onSubmit={handleCreateClient}
-              onCancel={() => setShowForm(false)}
+              onCancel={handleShowFormChange}
             />
           </div>
-        )}
+        ) : null}
       </div>
 
       {isLoading && clients.length === 0 ? (
@@ -110,7 +102,7 @@ export default function ClientsPage() {
         <>
           <ClientList clients={clients} />
 
-          {pagination && pagination.total > 0 && (
+          {pagination && pagination.total > 0 ? (
             <div className="flex justify-center">
               <PaginationControls
                 currentPage={pagination.page}
@@ -122,7 +114,7 @@ export default function ClientsPage() {
                 onPageChange={handlePageChange}
               />
             </div>
-          )}
+          ) : null}
         </>
       )}
     </PageLayout>

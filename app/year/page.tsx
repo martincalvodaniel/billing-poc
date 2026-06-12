@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import { useEffect, useMemo, useState } from "react"
 import { CHART_COLORS } from "@/lib/constants"
@@ -18,25 +17,26 @@ const DonutChart = dynamic(() => import("../components/DonutChart"), {
 })
 
 export default function YearSummaryPage() {
+  function handleSelectedYearChange() {
+    if (!isViewingCurrentYear) {
+      setSelectedYear(currentYear)
+    }
+  }
   const [selectedYear, setSelectedYear] = useState(() =>
     new Date().getFullYear()
   )
   const [showCharts, setShowCharts] = useState(true)
-
   const { payments, isLoading, error } = usePayments({ year: selectedYear })
   const errorMessage =
     error instanceof Error ? error.message : error ? "An error occurred" : null
-
   // On mobile, hide charts by default after mount
   useEffect(() => {
     if (!window.matchMedia("(min-width: 640px)").matches) {
       setShowCharts(false)
     }
   }, [])
-
   const currentYear = useMemo(() => new Date().getFullYear(), [])
   const isViewingCurrentYear = selectedYear === currentYear
-
   // Combine iterations: compute monthly buckets and tag breakdowns in a single pass (js-combine-iterations)
   const {
     monthlyTotals,
@@ -54,7 +54,6 @@ export default function YearSummaryPage() {
     const outByTag: Record<string, number> = {}
     let incCount = 0
     let outCount = 0
-
     for (const payment of payments) {
       const paymentMonth = new Date(payment.date).getMonth()
       const bucket = buckets[paymentMonth]
@@ -117,11 +116,7 @@ export default function YearSummaryPage() {
                 selectedYear={selectedYear}
                 onYearChange={setSelectedYear}
                 isViewingCurrentYear={isViewingCurrentYear}
-                onGoToCurrentYear={() => {
-                  if (!isViewingCurrentYear) {
-                    setSelectedYear(currentYear)
-                  }
-                }}
+                onGoToCurrentYear={handleSelectedYearChange}
               />
             </div>
           </div>
@@ -129,7 +124,7 @@ export default function YearSummaryPage() {
       }
     >
       <div className="space-y-2">
-        {showCharts && (
+        {showCharts ? (
           <div className="grid gap-4 sm:grid-cols-3">
             <SummaryCard
               label={`Total Income (${incomeCount})`}
@@ -151,7 +146,7 @@ export default function YearSummaryPage() {
               }
             />
           </div>
-        )}
+        ) : null}
 
         {payments.length === 0 ? (
           <EmptyState variant="card">
@@ -159,7 +154,7 @@ export default function YearSummaryPage() {
           </EmptyState>
         ) : (
           <div className="space-y-2">
-            {showCharts && (
+            {showCharts ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <DonutChart
                   data={incomeByTagYear}
@@ -172,7 +167,7 @@ export default function YearSummaryPage() {
                   colors={CHART_COLORS}
                 />
               </div>
-            )}
+            ) : null}
 
             <MonthlyBreakdown
               monthlyTotals={monthlyTotals}
@@ -183,15 +178,15 @@ export default function YearSummaryPage() {
           </div>
         )}
 
-        {errorMessage && <ErrorBanner>{errorMessage}</ErrorBanner>}
+        {errorMessage ? <ErrorBanner>{errorMessage}</ErrorBanner> : null}
 
-        {isLoading && (
+        {isLoading ? (
           <div className="space-y-4">
             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
             <div className="h-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
           </div>
-        )}
+        ) : null}
       </div>
     </PageLayout>
   )

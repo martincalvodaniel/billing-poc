@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import ClientFormModal from "@/app/clients/components/ClientFormModal"
 import ClientSelector from "@/app/components/ClientSelector"
@@ -22,7 +21,6 @@ interface ClientSelectorFieldProps {
   /** Surface creation errors to the caller (e.g. a toast or error banner). */
   onError?: (message: string) => void
 }
-
 /**
  * Reusable client field combining a searchable selector with inline client
  * creation and an edit affordance for the selected client. Shared across the
@@ -36,10 +34,26 @@ export default function ClientSelectorField({
   newClientType = "individual",
   onError,
 }: ClientSelectorFieldProps) {
+  function handleCreateClientRequest(
+    name: Parameters<
+      NonNullable<React.ComponentProps<typeof ClientSelector>["onCreateClient"]>
+    >[0]
+  ) {
+    return void handleCreateClient(name)
+  }
+  function editSelectedClient(
+    client: Parameters<
+      NonNullable<React.ComponentProps<typeof ClientSelector>["onEditClient"]>
+    >[0]
+  ) {
+    return setEditingClient(client)
+  }
+  function closeEditClient() {
+    return setEditingClient(null)
+  }
   const { trigger: createClient } = useCreateClient()
   const [isCreatingClient, setIsCreatingClient] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
-
   const handleCreateClient = async (name: string) => {
     setIsCreatingClient(true)
     try {
@@ -51,7 +65,6 @@ export default function ClientSelectorField({
       setIsCreatingClient(false)
     }
   }
-
   return (
     <>
       <ClientSelector
@@ -59,15 +72,15 @@ export default function ClientSelectorField({
         onChange={onChange}
         label={label}
         required={required}
-        onCreateClient={(name) => void handleCreateClient(name)}
+        onCreateClient={handleCreateClientRequest}
         isCreating={isCreatingClient}
-        onEditClient={(client) => setEditingClient(client)}
+        onEditClient={editSelectedClient}
       />
 
       <ClientFormModal
         client={editingClient ?? undefined}
         isOpen={!!editingClient}
-        onClose={() => setEditingClient(null)}
+        onClose={closeEditClient}
       />
     </>
   )

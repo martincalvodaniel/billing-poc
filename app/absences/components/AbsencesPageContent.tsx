@@ -42,6 +42,8 @@ function StudentModalContainer({
 }
 
 export default function AbsencesPageContent() {
+  const handleDayModalDateChange = () => setDayModalDate(null)
+  const handleStudentModalNameChange = () => setStudentModalName(null)
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const today = new Date()
     return new Date(today.getFullYear(), today.getMonth(), 1)
@@ -128,20 +130,20 @@ export default function AbsencesPageContent() {
         />
       </div>
 
-      {dayModalDate && (
+      {dayModalDate ? (
         <DayDetailModal
           date={dayModalDate}
           records={dayModalRecords}
-          onClose={() => setDayModalDate(null)}
+          onClose={handleDayModalDateChange}
         />
-      )}
+      ) : null}
 
-      {studentModalName && (
+      {studentModalName ? (
         <StudentModalContainer
           studentName={studentModalName}
-          onClose={() => setStudentModalName(null)}
+          onClose={handleStudentModalNameChange}
         />
-      )}
+      ) : null}
     </PageLayout>
   )
 }

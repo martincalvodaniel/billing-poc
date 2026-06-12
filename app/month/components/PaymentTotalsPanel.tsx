@@ -1,5 +1,4 @@
 "use client"
-
 interface PaymentTotalsPanelProps {
   surcharge: string
   discount: string
@@ -9,7 +8,6 @@ interface PaymentTotalsPanelProps {
   calculateNetAmount: () => string
   calculateDiscount: () => string
 }
-
 export default function PaymentTotalsPanel({
   surcharge,
   discount,
@@ -35,7 +33,7 @@ export default function PaymentTotalsPanel({
           €{calculateNetAmount()}
         </span>
       </div>
-      {showDiscount && (
+      {showDiscount ? (
         <div className="flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-700">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Discount
@@ -44,8 +42,8 @@ export default function PaymentTotalsPanel({
             -€{calculateDiscount()}
           </span>
         </div>
-      )}
-      {showDiscount && (
+      ) : null}
+      {showDiscount ? (
         <div className="flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-700">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Total after discount
@@ -54,7 +52,7 @@ export default function PaymentTotalsPanel({
             €{grandTotal.toFixed(2)}
           </span>
         </div>
-      )}
+      ) : null}
       <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -64,7 +62,7 @@ export default function PaymentTotalsPanel({
           €{calculateVatAmount()}
         </span>
       </div>
-      {showSurcharge && (
+      {showSurcharge ? (
         <div className="flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-700">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Surcharge Amount
@@ -73,7 +71,7 @@ export default function PaymentTotalsPanel({
             €{calculateSurchargeAmount()}
           </span>
         </div>
-      )}
+      ) : null}
       <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">

@@ -1,9 +1,9 @@
 "use client"
-
 import { useState } from "react"
 import { EmptyState } from "@/app/components/EmptyState"
 import type { AbsenceSummaryRow } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/formatters"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 
 type SortKey =
   | "studentName"
@@ -103,21 +103,18 @@ export default function AbsencesSummaryTable({
       </span>
     )
   }
-
-  const handleRowKeyDown = (e: React.KeyboardEvent, studentName: string) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault()
-      onStudentClick(studentName)
+  const handleFilterChange = useStableCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFilter(event.target.value)
     }
-  }
-
+  )
   return (
     <div className="space-y-4">
       <div>
         <input
           type="text"
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={handleFilterChange}
           placeholder="Filter by student..."
           aria-label="Filter by student"
           className="w-full max-w-sm rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
@@ -128,26 +125,14 @@ export default function AbsencesSummaryTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
-              {COLUMNS.map((col) => (
-                <th
-                  key={col.key}
-                  scope="col"
-                  aria-sort={ariaSortFor(col.key)}
-                  className={`px-6 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50 ${
-                    col.align === "right" ? "text-right" : "text-left"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSort(col.key)}
-                    className={`inline-flex items-center gap-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      col.align === "right" ? "justify-end" : "justify-start"
-                    } hover:text-blue-600 dark:hover:text-blue-400`}
-                  >
-                    <span>{col.label}</span>
-                    {sortIndicator(col.key)}
-                  </button>
-                </th>
+              {COLUMNS.map((column) => (
+                <SummaryColumnHeader
+                  key={column.key}
+                  column={column}
+                  ariaSort={ariaSortFor(column.key)}
+                  indicator={sortIndicator(column.key)}
+                  onSort={handleSort}
+                />
               ))}
             </tr>
           </thead>
@@ -162,45 +147,100 @@ export default function AbsencesSummaryTable({
               </tr>
             ) : (
               displayed.map((row, index) => (
-                // biome-ignore lint/a11y/useSemanticElements: <tr> must remain a table row; role="button" provides clickable semantics
-                <tr
+                <SummaryStudentRow
                   key={row.studentName}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onStudentClick(row.studentName)}
-                  onKeyDown={(e) => handleRowKeyDown(e, row.studentName)}
-                  aria-label={`View details for ${row.studentName}`}
-                  className={`border-b border-zinc-200 cursor-pointer transition-colors hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:border-zinc-700 dark:hover:bg-blue-900/20 dark:focus:bg-blue-900/20 ${
-                    index % 2 === 0
-                      ? "bg-white dark:bg-zinc-900"
-                      : "bg-zinc-50 dark:bg-zinc-800/50"
-                  }`}
-                >
-                  <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    {row.studentName}
-                  </td>
-                  <td
-                    className={`px-6 py-4 text-right text-sm ${getPendingClass(row.pending)}`}
-                  >
-                    {row.pending}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm text-zinc-600 dark:text-zinc-400">
-                    {row.totalAbsences}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm text-zinc-600 dark:text-zinc-400">
-                    {row.totalRecoveries}
-                  </td>
-                  <td className="px-6 py-4 text-left text-sm text-zinc-600 dark:text-zinc-400">
-                    {row.lastAbsenceDate === null
-                      ? "—"
-                      : formatDate(row.lastAbsenceDate)}
-                  </td>
-                </tr>
+                  row={row}
+                  striped={index % 2 !== 0}
+                  onStudentClick={onStudentClick}
+                />
               ))
             )}
           </tbody>
         </table>
       </div>
     </div>
+  )
+}
+
+type SummaryColumn = (typeof COLUMNS)[number]
+
+function SummaryColumnHeader({
+  column,
+  ariaSort,
+  indicator,
+  onSort,
+}: {
+  column: SummaryColumn
+  ariaSort: "ascending" | "descending" | "none"
+  indicator: React.ReactNode
+  onSort: (key: SortKey) => void
+}) {
+  const handleSort = useStableCallback(() => onSort(column.key))
+  return (
+    <th
+      scope="col"
+      aria-sort={ariaSort}
+      className={`px-6 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50 ${column.align === "right" ? "text-right" : "text-left"}`}
+    >
+      <button
+        type="button"
+        onClick={handleSort}
+        className={`inline-flex items-center gap-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${column.align === "right" ? "justify-end" : "justify-start"} hover:text-blue-600 dark:hover:text-blue-400`}
+      >
+        <span>{column.label}</span>
+        {indicator}
+      </button>
+    </th>
+  )
+}
+
+function SummaryStudentRow({
+  row,
+  striped,
+  onStudentClick,
+}: {
+  row: AbsenceSummaryRow
+  striped: boolean
+  onStudentClick: (studentName: string) => void
+}) {
+  const openStudent = useStableCallback(() => onStudentClick(row.studentName))
+  const handleKeyDown = useStableCallback(
+    (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault()
+        openStudent()
+      }
+    }
+  )
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: <tr> must remain a table row; role="button" provides clickable semantics
+    <tr
+      role="button"
+      tabIndex={0}
+      onClick={openStudent}
+      onKeyDown={handleKeyDown}
+      aria-label={`View details for ${row.studentName}`}
+      className={`border-b border-zinc-200 cursor-pointer transition-colors hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:border-zinc-700 dark:hover:bg-blue-900/20 dark:focus:bg-blue-900/20 ${
+        striped ? "bg-zinc-50 dark:bg-zinc-800/50" : "bg-white dark:bg-zinc-900"
+      }`}
+    >
+      <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+        {row.studentName}
+      </td>
+      <td
+        className={`px-6 py-4 text-right text-sm ${getPendingClass(row.pending)}`}
+      >
+        {row.pending}
+      </td>
+      <td className="px-6 py-4 text-right text-sm text-zinc-600 dark:text-zinc-400">
+        {row.totalAbsences}
+      </td>
+      <td className="px-6 py-4 text-right text-sm text-zinc-600 dark:text-zinc-400">
+        {row.totalRecoveries}
+      </td>
+      <td className="px-6 py-4 text-left text-sm text-zinc-600 dark:text-zinc-400">
+        {row.lastAbsenceDate === null ? "—" : formatDate(row.lastAbsenceDate)}
+      </td>
+    </tr>
   )
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import {
   coerceValue,
+  dayCalendarOffset,
   daysValidFor,
   monthsValidFor,
 } from "./partialDatePicker-utils"
@@ -102,5 +103,19 @@ describe("daysValidFor", () => {
   it("returns [] for out-of-range months", () => {
     expect(daysValidFor(2024, 0)).toEqual([])
     expect(daysValidFor(2024, 13)).toEqual([])
+  })
+})
+
+describe("dayCalendarOffset", () => {
+  it("uses a Monday-first calendar", () => {
+    expect(dayCalendarOffset(2026, 6)).toBe(0)
+    expect(dayCalendarOffset(2026, 7)).toBe(2)
+    expect(dayCalendarOffset(2026, 8)).toBe(5)
+  })
+
+  it("returns 0 when year or month are missing or invalid", () => {
+    expect(dayCalendarOffset(undefined, 6)).toBe(0)
+    expect(dayCalendarOffset(2026, undefined)).toBe(0)
+    expect(dayCalendarOffset(2026, 13)).toBe(0)
   })
 })

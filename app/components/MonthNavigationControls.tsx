@@ -14,7 +14,6 @@ interface MonthNavigationControlsProps {
   onNextMonth: () => void
   overlay?: ReactNode
 }
-
 export default function MonthNavigationControls({
   selectedDate,
   showCalendar,
@@ -25,6 +24,7 @@ export default function MonthNavigationControls({
   onNextMonth,
   overlay,
 }: MonthNavigationControlsProps) {
+  const handleShowCalendarChange = () => onShowCalendarChange(!showCalendar)
   return (
     <>
       <GoToCurrentButton
@@ -38,7 +38,7 @@ export default function MonthNavigationControls({
           <CurrentMonthButton
             selectedDate={selectedDate}
             showCalendar={showCalendar}
-            onToggle={() => onShowCalendarChange(!showCalendar)}
+            onToggle={handleShowCalendarChange}
           />
           {overlay}
         </div>

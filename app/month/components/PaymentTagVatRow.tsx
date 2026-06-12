@@ -1,7 +1,9 @@
 "use client"
 
 import { useId } from "react"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 
 interface PaymentTagVatRowProps {
   formData: PaymentFormData
@@ -23,6 +25,11 @@ export default function PaymentTagVatRow({
   onTagBlur,
 }: PaymentTagVatRowProps) {
   const id = useId()
+  const handleVatChange = (value: string) => {
+    onChangeField({
+      target: { name: "vat", value },
+    } as React.ChangeEvent<HTMLInputElement>)
+  }
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="relative space-y-2">
@@ -47,23 +54,15 @@ export default function PaymentTagVatRow({
           className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         />
 
-        {showTagSuggestions && suggestedTags.length > 0 && (
+        {showTagSuggestions && suggestedTags.length > 0 ? (
           <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
             <ul className="max-h-48 overflow-y-auto py-1">
               {suggestedTags.map((tag) => (
-                <li key={tag}>
-                  <button
-                    type="button"
-                    onClick={() => onTagSelect(tag)}
-                    className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
-                  >
-                    {tag}
-                  </button>
-                </li>
+                <TagSuggestion key={tag} tag={tag} onSelect={onTagSelect} />
               ))}
             </ul>
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -73,20 +72,41 @@ export default function PaymentTagVatRow({
         >
           VAT (%)
         </label>
-        <input
-          type="number"
+        <NumberStepperInput
           id={`${id}-vat`}
           name="vat"
           value={formData.vat}
-          onChange={onChangeField}
-          step="0.5"
-          min="0"
-          max="100"
+          onValueChange={handleVatChange}
+          step={0.5}
+          min={0}
+          max={100}
           placeholder="0"
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          inputMode="decimal"
+          ariaLabel="VAT percentage"
           required
         />
       </div>
     </div>
+  )
+}
+
+function TagSuggestion({
+  tag,
+  onSelect,
+}: {
+  tag: string
+  onSelect: (tag: string) => void
+}) {
+  const handleClick = useStableCallback(() => onSelect(tag))
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={handleClick}
+        className="w-full px-4 py-2 text-left text-sm text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
+      >
+        {tag}
+      </button>
+    </li>
   )
 }

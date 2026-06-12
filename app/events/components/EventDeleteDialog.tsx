@@ -1,5 +1,4 @@
 "use client"
-
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatEventDateTime } from "./eventsUi"
@@ -11,7 +10,6 @@ interface EventDeleteDialogProps {
   onCancel: () => void
   onConfirm: () => void
 }
-
 export default function EventDeleteDialog({
   event,
   isPending,
@@ -38,11 +36,11 @@ export default function EventDeleteDialog({
         </span>
         ? This cannot be undone.
       </p>
-      {event && (
+      {event ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Date & Time: {formatEventDateTime(event)}
         </p>
-      )}
+      ) : null}
     </ConfirmDialog>
   )
 }

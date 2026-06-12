@@ -1,5 +1,4 @@
 "use client"
-
 import { useCallback } from "react"
 import ClientSelectorField from "@/app/components/ClientSelectorField"
 import PaymentMethodDropdown from "@/app/components/PaymentMethodDropdown"
@@ -34,7 +33,6 @@ interface PaymentFormFieldsProps {
   calculateNetAmount: () => string
   calculateDiscount: () => string
 }
-
 /**
  * Reusable molecule component for payment form fields.
  * Shared between PaymentForm and PaymentDetailModal.
@@ -57,6 +55,13 @@ export default function PaymentFormFields({
   calculateNetAmount,
   calculateDiscount,
 }: PaymentFormFieldsProps) {
+  function handleClientChange(
+    clientId: Parameters<
+      NonNullable<React.ComponentProps<typeof ClientSelectorField>["onChange"]>
+    >[0]
+  ) {
+    return onClientChange(clientId)
+  }
   const handlePaymentMethodChange = useCallback(
     (value: PaymentMethod | "") => {
       onChangeField({
@@ -65,7 +70,6 @@ export default function PaymentFormFields({
     },
     [onChangeField]
   )
-
   return (
     <div className="space-y-4">
       <PaymentTypeDateRow formData={formData} onChangeField={onChangeField} />
@@ -81,7 +85,7 @@ export default function PaymentFormFields({
       <div className="grid gap-4 md:grid-cols-2">
         <ClientSelectorField
           value={formData.clientId}
-          onChange={(clientId) => onClientChange(clientId)}
+          onChange={handleClientChange}
           label="Client (Optional)"
           required={false}
         />

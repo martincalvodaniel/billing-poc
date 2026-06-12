@@ -1,16 +1,20 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Event } from "@/lib/domain/entities/event"
 import { formatDate } from "@/lib/formatters"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import EventFormShell from "./EventFormShell"
 import { type EventFormValues, valuesFromEvent } from "./eventFormModal-utils"
 
-const AttendeesPanel = dynamic(() => import("./AttendeesPanel"), {
-  ssr: false,
-})
-
+const AttendeesPanel = dynamic(
+  () => {
+    return import("./AttendeesPanel")
+  },
+  {
+    ssr: false,
+  }
+)
 interface EditEventModalProps {
   event: Event
   isOpen: boolean
@@ -22,14 +26,12 @@ interface EditEventModalProps {
   onAttendeeError?: (msg: string) => void
   onExcludedDatesChange?: (excludedDates: string[]) => void
 }
-
 function toIsoDate(year: number, month: number, day: number): string {
   const y = String(year)
   const m = String(month).padStart(2, "0")
   const d = String(day).padStart(2, "0")
   return `${y}-${m}-${d}`
 }
-
 function recurringMonthOccurrences(event: Event): string[] {
   if (
     event.year === undefined ||
@@ -38,7 +40,6 @@ function recurringMonthOccurrences(event: Event): string[] {
   ) {
     return []
   }
-
   const daysInMonth = new Date(event.year, event.month, 0).getDate()
   const out: string[] = []
   for (let day = 1; day <= daysInMonth; day++) {
@@ -49,7 +50,6 @@ function recurringMonthOccurrences(event: Event): string[] {
   }
   return out
 }
-
 export default function EditEventModal({
   event,
   isOpen,
@@ -61,34 +61,34 @@ export default function EditEventModal({
   onAttendeeError,
   onExcludedDatesChange,
 }: EditEventModalProps) {
-  const computeInitialValues = useCallback(
-    () => valuesFromEvent(event),
-    [event]
-  )
-
+  const computeInitialValues = useCallback(() => {
+    return valuesFromEvent(event)
+  }, [event])
   const [excludedDatesDraft, setExcludedDatesDraft] = useState<string[]>(
     event.excludedDates ?? []
   )
-
   useEffect(() => {
     setExcludedDatesDraft(event.excludedDates ?? [])
   }, [event.excludedDates])
-
-  const occurrences = useMemo(() => recurringMonthOccurrences(event), [event])
-
+  const occurrences = useMemo(() => {
+    return recurringMonthOccurrences(event)
+  }, [event])
   const toggleOccurrence = (date: string) => {
     setExcludedDatesDraft((prev) => {
       const next = prev.includes(date)
-        ? prev.filter((value) => value !== date)
-        : [...prev, date].sort((a, b) => a.localeCompare(b))
+        ? prev.filter((value) => {
+            return value !== date
+          })
+        : [...prev, date].sort((a, b) => {
+            return a.localeCompare(b)
+          })
       onExcludedDatesChange?.(next)
       return next
     })
   }
-
   const attendeesPanel = event._id ? (
     <div className="space-y-4 pb-4">
-      {event.dayOfWeek !== undefined && occurrences.length > 0 && (
+      {event.dayOfWeek !== undefined && occurrences.length > 0 ? (
         <div className="rounded-md border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-900/20">
           <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
             This month occurrences
@@ -97,26 +97,17 @@ export default function EditEventModal({
             Toggle each occurrence: green is active, red is excluded.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {occurrences.map((date) => {
-              const isExcluded = excludedDatesDraft.includes(date)
-              return (
-                <button
-                  type="button"
-                  onClick={() => toggleOccurrence(date)}
-                  key={date}
-                  className={`rounded-full border px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isExcluded
-                      ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"
-                      : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                  }`}
-                >
-                  {formatDate(date)}
-                </button>
-              )
-            })}
+            {occurrences.map((date) => (
+              <OccurrenceToggle
+                key={date}
+                date={date}
+                excluded={excludedDatesDraft.includes(date)}
+                onToggle={toggleOccurrence}
+              />
+            ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -130,7 +121,6 @@ export default function EditEventModal({
       </div>
     </div>
   ) : null
-
   return (
     <EventFormShell
       isOpen={isOpen}
@@ -145,5 +135,30 @@ export default function EditEventModal({
       errorMessage={errorMessage}
       headerSlot={attendeesPanel}
     />
+  )
+}
+
+function OccurrenceToggle({
+  date,
+  excluded,
+  onToggle,
+}: {
+  date: string
+  excluded: boolean
+  onToggle: (date: string) => void
+}) {
+  const handleClick = useStableCallback(() => onToggle(date))
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`rounded-full border px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        excluded
+          ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"
+          : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+      }`}
+    >
+      {formatDate(date)}
+    </button>
   )
 }

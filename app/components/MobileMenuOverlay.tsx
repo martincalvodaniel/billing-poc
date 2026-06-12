@@ -1,16 +1,13 @@
 "use client"
-
 import Image from "next/image"
 import Link from "next/link"
 import { useRef } from "react"
 import { useFocusTrap } from "@/lib/hooks/useFocusTrap"
-
 export interface NavItem {
   href: string
   label: string
   matches: (pathname: string) => boolean
 }
-
 interface SessionLike {
   user?: {
     name?: string | null
@@ -18,7 +15,6 @@ interface SessionLike {
     image?: string | null
   } | null
 }
-
 interface MobileMenuOverlayProps {
   items: readonly NavItem[]
   pathname: string
@@ -27,7 +23,6 @@ interface MobileMenuOverlayProps {
   onClose: () => void
   onSignOut: () => void
 }
-
 export default function MobileMenuOverlay({
   items,
   pathname,
@@ -97,10 +92,10 @@ export default function MobileMenuOverlay({
           })}
         </div>
 
-        {session?.user && (
+        {session?.user ? (
           <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
             <div className="mb-3 flex items-center gap-3">
-              {session.user.image && (
+              {session.user.image ? (
                 <Image
                   src={session.user.image}
                   alt={session.user.name ?? "User avatar"}
@@ -109,7 +104,7 @@ export default function MobileMenuOverlay({
                   className="h-8 w-8 rounded-full"
                   referrerPolicy="no-referrer"
                 />
-              )}
+              ) : null}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {session.user.name}
@@ -127,7 +122,7 @@ export default function MobileMenuOverlay({
               Sign out
             </button>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

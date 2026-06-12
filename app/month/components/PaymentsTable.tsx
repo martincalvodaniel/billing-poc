@@ -10,7 +10,6 @@ import type {
 } from "./monthlyPaymentsView-filters"
 import PaymentRow from "./PaymentRow"
 import { SortableHeader } from "./PaymentsTableCells"
-
 export default function PaymentsTable({
   payments,
   filteredPayments,
@@ -58,7 +57,7 @@ export default function PaymentsTable({
 
   return (
     <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      {error && <ErrorBanner className="m-6">{error}</ErrorBanner>}
+      {error ? <ErrorBanner className="m-6">{error}</ErrorBanner> : null}
 
       {payments.length === 0 ? (
         <EmptyState variant="inline" className="px-6 py-12">
@@ -119,7 +118,7 @@ export default function PaymentsTable({
                   onSortChange={onSortChange}
                   align="right"
                 />
-                {hasSurcharge && (
+                {hasSurcharge ? (
                   <SortableHeader
                     label="Surcharge"
                     sortKey="surcharge"
@@ -127,31 +126,33 @@ export default function PaymentsTable({
                     onSortChange={onSortChange}
                     align="right"
                   />
-                )}
+                ) : null}
                 <th />
               </tr>
             </thead>
             <tbody>
-              {filteredPayments.map((payment) => (
-                <PaymentRow
-                  key={payment._id}
-                  payment={payment}
-                  hasSurcharge={hasSurcharge}
-                  onRowClick={onRowClick}
-                  onDeleteClick={onDeleteClick}
-                  onDuplicateClick={onDuplicateClick}
-                  typeFilter={typeFilter}
-                  hasInvoiceFilter={hasInvoiceFilter}
-                  hasReceiptFilter={hasReceiptFilter}
-                  selectedTags={selectedTags}
-                  onTypeFilterToggle={onTypeFilterToggle}
-                  onInvoiceFilterToggle={onInvoiceFilterToggle}
-                  onReceiptFilterToggle={onReceiptFilterToggle}
-                  onTagFilterToggle={onTagFilterToggle}
-                  clientNameById={clientNameById}
-                  onClientClick={onClientClick}
-                />
-              ))}
+              {filteredPayments.map((payment) => {
+                return (
+                  <PaymentRow
+                    key={payment._id}
+                    payment={payment}
+                    hasSurcharge={hasSurcharge}
+                    onRowClick={onRowClick}
+                    onDeleteClick={onDeleteClick}
+                    onDuplicateClick={onDuplicateClick}
+                    typeFilter={typeFilter}
+                    hasInvoiceFilter={hasInvoiceFilter}
+                    hasReceiptFilter={hasReceiptFilter}
+                    selectedTags={selectedTags}
+                    onTypeFilterToggle={onTypeFilterToggle}
+                    onInvoiceFilterToggle={onInvoiceFilterToggle}
+                    onReceiptFilterToggle={onReceiptFilterToggle}
+                    onTagFilterToggle={onTagFilterToggle}
+                    clientNameById={clientNameById}
+                    onClientClick={onClientClick}
+                  />
+                )
+              })}
             </tbody>
           </table>
         </div>

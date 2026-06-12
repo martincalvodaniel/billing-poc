@@ -1,6 +1,6 @@
 import { formatCurrency } from "@/lib/formatters"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import SummaryCard from "../../components/SummaryCard"
-
 export default function PaymentsSummary({
   totalIncome,
   totalOutcome,
@@ -40,32 +40,24 @@ export default function PaymentsSummary({
         }
       >
         <div className="space-y-1 text-xs">
-          <button
-            type="button"
-            onClick={() => onTypeFilterToggle("income")}
-            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              typeFilter === "income"
-                ? "ring-1 ring-blue-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
+          <SummaryFilterButton
+            type="income"
+            activeType={typeFilter}
+            onToggle={onTypeFilterToggle}
           >
             <span className="text-green-600 dark:text-green-400">
               Income ({incomeCount}): {formatCurrency(totalIncome)}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onTypeFilterToggle("outcome")}
-            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              typeFilter === "outcome"
-                ? "ring-1 ring-blue-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
+          </SummaryFilterButton>
+          <SummaryFilterButton
+            type="outcome"
+            activeType={typeFilter}
+            onToggle={onTypeFilterToggle}
           >
             <span className="text-red-600 dark:text-red-400">
               Outcome ({outcomeCount}): {formatCurrency(totalOutcome)}
             </span>
-          </button>
+          </SummaryFilterButton>
         </div>
       </SummaryCard>
       <SummaryCard
@@ -78,34 +70,24 @@ export default function PaymentsSummary({
         }
       >
         <div className="space-y-1 text-xs">
-          <button
-            type="button"
-            onClick={() => onTypeFilterToggle("income")}
-            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              typeFilter === "income"
-                ? "ring-1 ring-blue-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
-            aria-label="Filter table by income payments"
+          <SummaryFilterButton
+            type="income"
+            activeType={typeFilter}
+            onToggle={onTypeFilterToggle}
           >
             <span className="text-green-600 dark:text-green-400">
               Income ({incomeCount}): {formatCurrency(totalNetIncome)}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onTypeFilterToggle("outcome")}
-            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              typeFilter === "outcome"
-                ? "ring-1 ring-blue-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
-            aria-label="Filter table by outcome payments"
+          </SummaryFilterButton>
+          <SummaryFilterButton
+            type="outcome"
+            activeType={typeFilter}
+            onToggle={onTypeFilterToggle}
           >
             <span className="text-red-600 dark:text-red-400">
               Outcome ({outcomeCount}): {formatCurrency(totalNetOutcome)}
             </span>
-          </button>
+          </SummaryFilterButton>
         </div>
       </SummaryCard>
       <SummaryCard
@@ -118,36 +100,54 @@ export default function PaymentsSummary({
         }
       >
         <div className="space-y-1 text-xs">
-          <button
-            type="button"
-            onClick={() => onTypeFilterToggle("income")}
-            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              typeFilter === "income"
-                ? "ring-1 ring-blue-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
-            aria-label="Filter table by income payments"
+          <SummaryFilterButton
+            type="income"
+            activeType={typeFilter}
+            onToggle={onTypeFilterToggle}
           >
             <span className="text-green-600 dark:text-green-400">
               Income ({incomeCount}): {formatCurrency(totalVatIncome)}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onTypeFilterToggle("outcome")}
-            className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              typeFilter === "outcome"
-                ? "ring-1 ring-blue-500"
-                : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-            }`}
-            aria-label="Filter table by outcome payments"
+          </SummaryFilterButton>
+          <SummaryFilterButton
+            type="outcome"
+            activeType={typeFilter}
+            onToggle={onTypeFilterToggle}
           >
             <span className="text-red-600 dark:text-red-400">
               Outcome ({outcomeCount}): {formatCurrency(totalVatOutcome)}
             </span>
-          </button>
+          </SummaryFilterButton>
         </div>
       </SummaryCard>
     </div>
+  )
+}
+
+function SummaryFilterButton({
+  type,
+  activeType,
+  onToggle,
+  children,
+}: {
+  type: "income" | "outcome"
+  activeType: "all" | "income" | "outcome"
+  onToggle: (type: "income" | "outcome") => void
+  children: React.ReactNode
+}) {
+  const handleClick = useStableCallback(() => onToggle(type))
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`block w-full rounded px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        activeType === type
+          ? "ring-1 ring-blue-500"
+          : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+      }`}
+      aria-label={`Filter table by ${type} payments`}
+    >
+      {children}
+    </button>
   )
 }

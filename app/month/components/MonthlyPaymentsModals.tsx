@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import type { Payment } from "@/lib/domain/entities/payment"
 
@@ -39,37 +38,40 @@ export default function MonthlyPaymentsModals({
 }) {
   return (
     <>
-      {deleteConfirmPaymentId && (
+      {deleteConfirmPaymentId ? (
         <DeletePaymentModal
           payment={payments.find((p) => p._id === deleteConfirmPaymentId)}
           isDeleting={isDeleting}
           onClose={onCloseDelete}
           onConfirm={onConfirmDelete}
         />
-      )}
+      ) : null}
 
-      {editPaymentId &&
-        (() => {
-          const selectedPayment = payments.find((p) => p._id === editPaymentId)
-          if (!selectedPayment) return null
-          return (
-            <PaymentDetailModal
-              payment={selectedPayment}
-              onClose={onCloseEdit}
-              onUpdate={onUpdate}
-              onDelete={onDeleteEdit}
-            />
-          )
-        })()}
+      {editPaymentId
+        ? (() => {
+            const selectedPayment = payments.find(
+              (p) => p._id === editPaymentId
+            )
+            if (!selectedPayment) return null
+            return (
+              <PaymentDetailModal
+                payment={selectedPayment}
+                onClose={onCloseEdit}
+                onUpdate={onUpdate}
+                onDelete={onDeleteEdit}
+              />
+            )
+          })()
+        : null}
 
-      {duplicateSeed && (
+      {duplicateSeed ? (
         <PaymentDetailModal
           payment={duplicateSeed}
           mode="duplicate"
           onClose={onCloseDuplicate}
           onCreate={onCreateDuplicate}
         />
-      )}
+      ) : null}
     </>
   )
 }

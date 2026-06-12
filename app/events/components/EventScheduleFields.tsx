@@ -1,55 +1,44 @@
 "use client"
 
 import FormField from "@/app/components/FormField"
-import { type EventFormValues, inputClass } from "./eventFormModal-utils"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
+import type { EventFormValues } from "./eventFormModal-utils"
 
 interface EventScheduleFieldsProps {
   idPrefix: string
   values: EventFormValues
   isSubmitting: boolean
-  onChangeField: (
-    field: keyof EventFormValues
-  ) => (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => void
+  onChangeValue: (field: keyof EventFormValues) => (value: string) => void
 }
 
 export default function EventScheduleFields({
   idPrefix,
   values,
   isSubmitting,
-  onChangeField,
+  onChangeValue,
 }: EventScheduleFieldsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid min-w-0 grid-cols-2 gap-3">
       <FormField id={`${idPrefix}-duration`} label="Duration (minutes)">
-        <input
+        <NumberStepperInput
           id={`${idPrefix}-duration`}
-          type="number"
-          inputMode="numeric"
           min={30}
           step={30}
           value={values.durationMinutes}
-          onChange={onChangeField("durationMinutes")}
+          onValueChange={onChangeValue("durationMinutes")}
           disabled={isSubmitting}
-          aria-label="Duration in minutes"
-          className={inputClass}
+          ariaLabel="Duration in minutes"
         />
       </FormField>
       <FormField id={`${idPrefix}-max`} label="Max attendees">
-        <input
+        <NumberStepperInput
           id={`${idPrefix}-max`}
-          type="number"
-          inputMode="numeric"
           min={1}
           step={1}
           value={values.maxAttendees}
-          onChange={onChangeField("maxAttendees")}
+          onValueChange={onChangeValue("maxAttendees")}
           disabled={isSubmitting}
-          aria-label="Max attendees"
-          className={inputClass}
+          ariaLabel="Max attendees"
         />
       </FormField>
     </div>

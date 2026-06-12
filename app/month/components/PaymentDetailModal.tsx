@@ -1,5 +1,4 @@
 "use client"
-
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
@@ -27,7 +26,6 @@ interface PaymentDetailModalProps {
   onCreate?: (payment: { id: string }) => void
   onDelete?: (paymentId: string) => void
 }
-
 export default function PaymentDetailModal({
   payment,
   mode = "edit",
@@ -36,6 +34,17 @@ export default function PaymentDetailModal({
   onCreate,
   onDelete,
 }: PaymentDetailModalProps) {
+  function handleShowDeleteConfirmChange() {
+    setShowDeleteConfirm(false)
+    setDeleteError(null)
+  }
+  function handleConfirmDeleteClick() {
+    void handleConfirmDelete()
+  }
+  function handleDeleteErrorChange() {
+    setDeleteError(null)
+    setShowDeleteConfirm(true)
+  }
   const router = useRouter()
   const isDuplicate = mode === "duplicate"
   const paymentId = payment._id ?? null
@@ -43,7 +52,6 @@ export default function PaymentDetailModal({
   const initialFormData: PaymentFormData = isDuplicate
     ? buildDuplicateSeed(payment)
     : buildEditFormData(payment)
-
   const {
     formData,
     suggestedTags,
@@ -60,9 +68,7 @@ export default function PaymentDetailModal({
     calculateNetAmount,
     calculateDiscount,
   } = usePaymentForm(initialFormData)
-
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)
-
   const {
     error,
     isSaving,
@@ -90,7 +96,6 @@ export default function PaymentDetailModal({
     onDelete,
     onClose,
   })
-
   const handleOpenLinkedEvent = () => {
     if (!linkedEvent) return
     const params = new URLSearchParams()
@@ -104,24 +109,20 @@ export default function PaymentDetailModal({
     onClose()
     router.push(`/events?${params.toString()}`)
   }
-
   return (
     <>
       <Modal
         isOpen={true}
         onClose={onClose}
         title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
-        maxWidth="lg"
+        maxWidth="xl"
         headerActions={
           !isDuplicate ? (
             <IconButton
               variant="danger"
               ariaLabel="Delete payment"
               title="Delete payment"
-              onClick={() => {
-                setDeleteError(null)
-                setShowDeleteConfirm(true)
-              }}
+              onClick={handleDeleteErrorChange}
             >
               <TrashIcon />
             </IconButton>
@@ -156,9 +157,9 @@ export default function PaymentDetailModal({
         }
       >
         <div className="space-y-4">
-          {error && <ErrorBanner>{error}</ErrorBanner>}
+          {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 
-          {linkedEvent && (
+          {linkedEvent ? (
             <div className="rounded-md border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/60 dark:bg-blue-900/20">
               <button
                 type="button"
@@ -169,7 +170,7 @@ export default function PaymentDetailModal({
                 {formatEventDateTime(linkedEvent)}
               </button>
             </div>
-          )}
+          ) : null}
 
           <PaymentFormFields
             formData={formData}
@@ -195,21 +196,21 @@ export default function PaymentDetailModal({
               Invoices
             </h3>
 
-            {!isDuplicate && (
+            {!isDuplicate ? (
               <PaymentInvoicesSection payment={payment} onUpdate={onUpdate} />
-            )}
+            ) : null}
 
-            {isDuplicate && (
+            {isDuplicate ? (
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Invoice and receipt links can be added after the duplicated
                 payment is created.
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       </Modal>
 
-      {!isDuplicate && (
+      {!isDuplicate ? (
         <ConfirmDialog
           isOpen={showDeleteConfirm}
           title="Delete payment"
@@ -218,19 +219,14 @@ export default function PaymentDetailModal({
           variant="danger"
           isPending={isDeleting}
           error={deleteError}
-          onCancel={() => {
-            setShowDeleteConfirm(false)
-            setDeleteError(null)
-          }}
-          onConfirm={() => {
-            void handleConfirmDelete()
-          }}
+          onCancel={handleShowDeleteConfirmChange}
+          onConfirm={handleConfirmDeleteClick}
         >
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             Delete this payment? This action cannot be undone.
           </p>
         </ConfirmDialog>
-      )}
+      ) : null}
     </>
   )
 }

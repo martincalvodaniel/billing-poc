@@ -30,7 +30,7 @@ export default function DeleteClientModal({
       onConfirm={onConfirm}
     >
       <p>Are you sure you want to delete this client?</p>
-      {client && (
+      {client ? (
         <div className="space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
           <p>
             <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -49,7 +49,7 @@ export default function DeleteClientModal({
             </span>
           </p>
         </div>
-      )}
+      ) : null}
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         This action cannot be undone.
       </p>

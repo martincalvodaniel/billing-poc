@@ -4,17 +4,17 @@ import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { authClient } from "@/lib/auth-client"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 
 function SignInContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get("error")
-
-  const handleSignIn = async () => {
+  const handleSignIn = useStableCallback(async () => {
     await authClient.signIn.social({
       provider: "google",
       callbackURL: "/",
     })
-  }
+  })
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
@@ -28,13 +28,13 @@ function SignInContent() {
           </p>
         </div>
 
-        {error && (
+        {error ? (
           <ErrorBanner className="mb-4">
             {error === "AccessDenied"
               ? "Your email is not authorized to access this application."
               : "Sign-in failed."}
           </ErrorBanner>
-        )}
+        ) : null}
 
         <button
           type="button"

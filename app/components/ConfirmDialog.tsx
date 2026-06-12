@@ -1,8 +1,8 @@
 "use client"
-
 import type { ReactNode } from "react"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
 import { ConfirmFooter, Modal } from "@/app/components/Modal"
+import { useStableCallback } from "@/lib/hooks/useStableCallback"
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -17,7 +17,6 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   children: ReactNode
 }
-
 export function ConfirmDialog({
   isOpen,
   title,
@@ -31,12 +30,13 @@ export function ConfirmDialog({
   onConfirm,
   children,
 }: ConfirmDialogProps) {
+  const handleClose = useStableCallback(() => {
+    if (!isPending) onCancel()
+  })
   return (
     <Modal
       isOpen={isOpen}
-      onClose={() => {
-        if (!isPending) onCancel()
-      }}
+      onClose={handleClose}
       title={title}
       maxWidth="sm"
       footer={
@@ -52,7 +52,7 @@ export function ConfirmDialog({
       }
     >
       <div className="space-y-3">
-        {error && <ErrorBanner>{error}</ErrorBanner>}
+        {error ? <ErrorBanner>{error}</ErrorBanner> : null}
         {children}
       </div>
     </Modal>

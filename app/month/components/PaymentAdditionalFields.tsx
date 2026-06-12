@@ -1,6 +1,6 @@
 "use client"
-
 import { useId } from "react"
+import NumberStepperInput from "@/app/components/NumberStepperInput"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 
 interface PaymentAdditionalFieldsProps {
@@ -11,19 +11,25 @@ interface PaymentAdditionalFieldsProps {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void
 }
-
 export default function PaymentAdditionalFields({
   formData,
   showAdditionalFields,
   onSetShowAdditionalFields,
   onChangeField,
 }: PaymentAdditionalFieldsProps) {
+  const handleSetShowAdditionalFields = () =>
+    onSetShowAdditionalFields(!showAdditionalFields)
+  const handleSurchargeChange = (value: string) => {
+    onChangeField({
+      target: { name: "surcharge", value },
+    } as React.ChangeEvent<HTMLInputElement>)
+  }
   const id = useId()
   return (
     <div className="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
       <button
         type="button"
-        onClick={() => onSetShowAdditionalFields(!showAdditionalFields)}
+        onClick={handleSetShowAdditionalFields}
         className="flex w-full items-center justify-between rounded-md bg-zinc-100 px-4 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
       >
         <span>Additional Fields</span>
@@ -43,7 +49,7 @@ export default function PaymentAdditionalFields({
         </svg>
       </button>
 
-      {showAdditionalFields && (
+      {showAdditionalFields ? (
         <div className="space-y-4 rounded-md bg-zinc-50 p-4 dark:bg-zinc-800/50">
           <div className="space-y-2">
             <label
@@ -63,48 +69,51 @@ export default function PaymentAdditionalFields({
             />
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor={`${id}-surcharge`}
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Surcharge (%) - Optional
-            </label>
-            <input
-              type="number"
-              id={`${id}-surcharge`}
-              name="surcharge"
-              value={formData.surcharge}
-              onChange={onChangeField}
-              step="0.1"
-              min="-100"
-              max="100"
-              placeholder="0"
-              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="min-w-0 space-y-2">
+              <label
+                htmlFor={`${id}-surcharge`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Surcharge (%) - Optional
+              </label>
+              <NumberStepperInput
+                id={`${id}-surcharge`}
+                name="surcharge"
+                value={formData.surcharge ? String(formData.surcharge) : ""}
+                onValueChange={handleSurchargeChange}
+                step={0.5}
+                min={-100}
+                max={100}
+                placeholder="0"
+                inputMode="decimal"
+                emptyStepBase={0}
+                ariaLabel="Surcharge percentage"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor={`${id}-discount`}
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Discount (€) - Optional
-            </label>
-            <input
-              type="number"
-              id={`${id}-discount`}
-              name="discount"
-              value={formData.discount || ""}
-              onChange={onChangeField}
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            />
+            <div className="min-w-0 space-y-2">
+              <label
+                htmlFor={`${id}-discount`}
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Discount (€) - Optional
+              </label>
+              <input
+                type="number"
+                id={`${id}-discount`}
+                name="discount"
+                value={formData.discount || ""}
+                onChange={onChangeField}
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              />
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

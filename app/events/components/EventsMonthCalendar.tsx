@@ -1,5 +1,4 @@
 "use client"
-
 import { useMemo } from "react"
 import MonthCalendarGrid from "@/app/components/MonthCalendarGrid"
 import type { Event } from "@/lib/domain/entities/event"
@@ -19,7 +18,6 @@ interface EventsMonthCalendarProps {
   onSwipeToPreviousMonth: () => void
   onSwipeToNextMonth: () => void
 }
-
 export default function EventsMonthCalendar({
   events,
   selectedDate,
@@ -28,41 +26,41 @@ export default function EventsMonthCalendar({
   onSwipeToPreviousMonth,
   onSwipeToNextMonth,
 }: EventsMonthCalendarProps) {
-  const grouped = useMemo(
-    () =>
-      groupEventsByDate(
-        events,
-        selectedDate.getFullYear(),
-        selectedDate.getMonth() + 1
-      ),
-    [events, selectedDate]
-  )
-  const todayKey = useMemo(() => toDateKey(new Date()), [])
-  const cells = useMemo(
-    () => buildMonthCells(selectedDate, todayKey),
-    [selectedDate, todayKey]
-  )
-
+  function handleGet(cell: ReturnType<typeof buildMonthCells>[number]) {
+    const dayEvents = grouped.get(cell.key) ?? []
+    return (
+      <EventDayCell
+        key={cell.key}
+        date={cell.date}
+        inMonth={cell.inMonth}
+        isToday={cell.isToday}
+        events={dayEvents}
+        ariaLabel={buildDayAriaLabel(cell.date, dayEvents.length)}
+        dateKey={cell.key}
+        onClick={onDayClick}
+        onEventClick={onEventClick}
+      />
+    )
+  }
+  const grouped = useMemo(() => {
+    return groupEventsByDate(
+      events,
+      selectedDate.getFullYear(),
+      selectedDate.getMonth() + 1
+    )
+  }, [events, selectedDate])
+  const todayKey = useMemo(() => {
+    return toDateKey(new Date())
+  }, [])
+  const cells = useMemo(() => {
+    return buildMonthCells(selectedDate, todayKey)
+  }, [selectedDate, todayKey])
   return (
     <MonthCalendarGrid
       cells={cells}
       onSwipeToPreviousMonth={onSwipeToPreviousMonth}
       onSwipeToNextMonth={onSwipeToNextMonth}
-      renderCell={(cell) => {
-        const dayEvents = grouped.get(cell.key) ?? []
-        return (
-          <EventDayCell
-            key={cell.key}
-            date={cell.date}
-            inMonth={cell.inMonth}
-            isToday={cell.isToday}
-            events={dayEvents}
-            ariaLabel={buildDayAriaLabel(cell.date, dayEvents.length)}
-            onClick={() => onDayClick(cell.key)}
-            onEventClick={onEventClick}
-          />
-        )
-      }}
+      renderCell={handleGet}
     />
   )
 }

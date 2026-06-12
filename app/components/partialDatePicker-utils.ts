@@ -62,3 +62,18 @@ export function daysValidFor(
   }
   return Array.from({ length }, (_, i) => i + 1)
 }
+
+/**
+ * Returns the number of empty Monday-first calendar cells before day 1.
+ * Month is 1-indexed. Returns 0 when year or month are missing or invalid.
+ */
+export function dayCalendarOffset(
+  year: number | undefined,
+  month: number | undefined
+): number {
+  if (typeof year !== "number" || typeof month !== "number") return 0
+  if (month < 1 || month > 12) return 0
+  const firstOfMonth = new Date(0, month - 1, 1)
+  firstOfMonth.setFullYear(year)
+  return (firstOfMonth.getDay() + 6) % 7
+}

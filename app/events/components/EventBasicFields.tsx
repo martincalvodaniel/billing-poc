@@ -1,5 +1,4 @@
 "use client"
-
 import dynamic from "next/dynamic"
 import FormField from "@/app/components/FormField"
 import type { PartialDateValue } from "@/app/components/partialDatePicker-utils"
@@ -12,10 +11,11 @@ import {
 import { formatTimeOfDay } from "./eventsUi"
 
 const PartialDatePicker = dynamic(
-  () => import("@/app/components/PartialDatePicker"),
+  () => {
+    return import("@/app/components/PartialDatePicker")
+  },
   { ssr: false }
 )
-
 interface EventBasicFieldsProps {
   idPrefix: string
   values: EventFormValues
@@ -32,7 +32,6 @@ interface EventBasicFieldsProps {
   onDateChange: (next: PartialDateValue) => void
   onTimeChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
-
 export default function EventBasicFields({
   idPrefix,
   values,
@@ -43,12 +42,17 @@ export default function EventBasicFields({
   onDateChange,
   onTimeChange,
 }: EventBasicFieldsProps) {
+  function handleChangeField() {
+    const setDayOfWeek = onChangeField("dayOfWeek")
+    setDayOfWeek({
+      target: { value: "" },
+    } as React.ChangeEvent<HTMLSelectElement>)
+  }
   const timeValue = formatTimeOfDay(
     stringToOptionalNumber(values.hour),
     stringToOptionalNumber(values.minute)
   )
   const hasConcreteDay = values.day.trim().length > 0
-
   return (
     <>
       <FormField id={`${idPrefix}-title`} label="Title">
@@ -76,8 +80,8 @@ export default function EventBasicFields({
           className={inputClass}
         />
       </FormField>
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:gap-3">
-        <div className="space-y-1 md:flex-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 md:grid-cols-[auto_auto_auto]">
+        <div className="min-w-0 space-y-1">
           <span className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
             Date (optional)
           </span>
@@ -90,55 +94,51 @@ export default function EventBasicFields({
           />
         </div>
 
-        <FormField id={`${idPrefix}-dayOfWeek`} label="Repeat weekly on">
-          <div className="relative">
-            <select
-              id={`${idPrefix}-dayOfWeek`}
-              value={hasConcreteDay ? "" : values.dayOfWeek}
-              onChange={onChangeField("dayOfWeek")}
-              disabled={isSubmitting || hasConcreteDay}
-              className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 md:w-[180px] md:pr-8 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
-            >
-              <option value="">— Not recurring —</option>
-              <option value="1">Monday</option>
-              <option value="2">Tuesday</option>
-              <option value="3">Wednesday</option>
-              <option value="4">Thursday</option>
-              <option value="5">Friday</option>
-              <option value="6">Saturday</option>
-              <option value="0">Sunday</option>
-            </select>
-            {!hasConcreteDay && values.dayOfWeek && (
-              <button
-                type="button"
-                onClick={() => {
-                  const setDayOfWeek = onChangeField("dayOfWeek")
-                  setDayOfWeek({
-                    target: { value: "" },
-                  } as React.ChangeEvent<HTMLSelectElement>)
-                }}
-                disabled={isSubmitting}
-                aria-label="Clear repeat weekly"
-                className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            )}
-          </div>
+        <FormField id={`${idPrefix}-time`} label="Time (optional)">
+          <input
+            id={`${idPrefix}-time`}
+            type="time"
+            value={timeValue}
+            onChange={onTimeChange}
+            disabled={isSubmitting}
+            className="min-h-11 w-[100px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+          />
         </FormField>
-      </div>
 
-      <FormField id={`${idPrefix}-time`} label="Time (optional)">
-        <input
-          id={`${idPrefix}-time`}
-          type="time"
-          step={60}
-          value={timeValue}
-          onChange={onTimeChange}
-          disabled={isSubmitting}
-          className={inputClass}
-        />
-      </FormField>
+        <div className="col-span-2 md:col-span-1">
+          <FormField id={`${idPrefix}-dayOfWeek`} label="Repeat weekly on">
+            <div className="relative">
+              <select
+                id={`${idPrefix}-dayOfWeek`}
+                value={hasConcreteDay ? "" : values.dayOfWeek}
+                onChange={onChangeField("dayOfWeek")}
+                disabled={isSubmitting || hasConcreteDay}
+                className="min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:w-[180px] md:pr-8 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+              >
+                <option value="">— Not recurring —</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+                <option value="0">Sunday</option>
+              </select>
+              {!hasConcreteDay && values.dayOfWeek ? (
+                <button
+                  type="button"
+                  onClick={handleChangeField}
+                  disabled={isSubmitting}
+                  aria-label="Clear repeat weekly"
+                  className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              ) : null}
+            </div>
+          </FormField>
+        </div>
+      </div>
     </>
   )
 }

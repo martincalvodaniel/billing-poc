@@ -1,16 +1,7 @@
 "use client"
 
 import { type PointerEvent, type ReactNode, useRef } from "react"
-
-const DEFAULT_WEEKDAY_HEADERS = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-  "Sun",
-] as const
+import { WEEKDAY_HEADERS } from "./calendar-constants"
 
 interface MonthCalendarGridProps<TCell extends { key: string }> {
   cells: readonly TCell[]
@@ -25,7 +16,7 @@ const SWIPE_THRESHOLD_PX = 48
 export default function MonthCalendarGrid<TCell extends { key: string }>({
   cells,
   renderCell,
-  weekdayHeaders = DEFAULT_WEEKDAY_HEADERS,
+  weekdayHeaders = WEEKDAY_HEADERS,
   onSwipeToPreviousMonth,
   onSwipeToNextMonth,
 }: MonthCalendarGridProps<TCell>) {

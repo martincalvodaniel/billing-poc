@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { ConfirmDialog } from "@/app/components/ConfirmDialog"
 import { ErrorBanner } from "@/app/components/ErrorBanner"
@@ -26,41 +25,48 @@ interface PaymentInvoicesSectionProps {
   payment: Payment
   onUpdate?: (payment: Payment) => void
 }
-
 const BASE_BUTTON =
   "flex-1 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
-
 const PRIMARY_BLUE =
   "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:ring-blue-500"
-
 const RECTIFICATIVE_AMBER =
   "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 focus:ring-amber-500"
-
 function buttonClasses(action: InvoiceButtonAction): string {
   return `${BASE_BUTTON} ${action.rectificative ? RECTIFICATIVE_AMBER : PRIMARY_BLUE}`
 }
-
 function extractMessage(err: unknown, fallback: string): string {
   if (err instanceof FetchError) return err.message
   if (err instanceof Error) return err.message
   return fallback
 }
-
 export default function PaymentInvoicesSection({
   payment,
   onUpdate,
 }: PaymentInvoicesSectionProps) {
+  function handleGenerateStandardInvoice() {
+    void handleGenerate(state.primary.series)
+  }
+  function handleGenerateSimpleInvoice() {
+    void handleGenerate(state.simple.series)
+  }
+  function handleShowRemoveConfirmChange() {
+    if (isRemoving) return
+    setShowRemoveConfirm(false)
+    setPendingRemoveLink(null)
+    setRemoveError(null)
+  }
+  function handleConfirmRemoveLinkClick() {
+    void handleConfirmRemoveLink()
+  }
   const paymentId = payment._id ?? ""
   const isIncome = payment.type === "income"
   const invoices = getPaymentInvoices(payment)
-
   const { trigger: generateInvoice, isMutating: isGenerating } =
     useGenerateInvoice()
   const { trigger: appendLink, isMutating: isAppending } =
     useAppendLinkInvoice(paymentId)
   const { trigger: removeLink, isMutating: isRemoving } =
     useRemoveLinkInvoice(paymentId)
-
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [linkError, setLinkError] = useState<string | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
@@ -70,11 +76,9 @@ export default function PaymentInvoicesSection({
   const [pendingRemoveLink, setPendingRemoveLink] = useState<string | null>(
     null
   )
-
   const state = invoiceButtonState(invoices)
   const generateDisabled = isGenerating || !paymentId
   const linkDisabled = isAppending || !paymentId || linkUrl.trim().length === 0
-
   const handleGenerate = async (type: InvoiceType) => {
     setGenerateError(null)
     try {
@@ -91,7 +95,6 @@ export default function PaymentInvoicesSection({
       setGenerateError(extractMessage(err, "Failed to generate invoice"))
     }
   }
-
   const handleAppendLink = async (e: React.FormEvent) => {
     e.preventDefault()
     setLinkError(null)
@@ -115,12 +118,10 @@ export default function PaymentInvoicesSection({
       setLinkError(extractMessage(err, "Failed to add invoice link"))
     }
   }
-
   const handleRemoveLink = (link: string) => {
     setPendingRemoveLink(link)
     setShowRemoveConfirm(true)
   }
-
   const handleConfirmRemoveLink = async () => {
     if (!paymentId || !pendingRemoveLink) return
     setRemoveError(null)
@@ -140,7 +141,6 @@ export default function PaymentInvoicesSection({
       setRemoveError(extractMessage(err, "Failed to remove invoice link"))
     }
   }
-
   return (
     <div className="space-y-4">
       <PaymentInvoicesList
@@ -149,13 +149,13 @@ export default function PaymentInvoicesSection({
         isRemoving={isRemoving}
         onRemoveLink={handleRemoveLink}
       />
-      {isIncome && (
+      {isIncome ? (
         <div className="space-y-2">
-          {generateError && <ErrorBanner>{generateError}</ErrorBanner>}
+          {generateError ? <ErrorBanner>{generateError}</ErrorBanner> : null}
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
-              onClick={() => handleGenerate(state.primary.series)}
+              onClick={handleGenerateStandardInvoice}
               disabled={generateDisabled}
               aria-busy={isGenerating}
               className={buttonClasses(state.primary)}
@@ -164,7 +164,7 @@ export default function PaymentInvoicesSection({
             </button>
             <button
               type="button"
-              onClick={() => handleGenerate(state.simple.series)}
+              onClick={handleGenerateSimpleInvoice}
               disabled={generateDisabled}
               aria-busy={isGenerating}
               className={buttonClasses(state.simple)}
@@ -173,7 +173,7 @@ export default function PaymentInvoicesSection({
             </button>
           </div>
         </div>
-      )}
+      ) : null}
 
       <PaymentInvoiceLinkForm
         linkUrl={linkUrl}
@@ -186,7 +186,7 @@ export default function PaymentInvoicesSection({
         onSubmit={handleAppendLink}
       />
 
-      {removeError && <ErrorBanner>{removeError}</ErrorBanner>}
+      {removeError ? <ErrorBanner>{removeError}</ErrorBanner> : null}
 
       <ConfirmDialog
         isOpen={showRemoveConfirm}
@@ -196,15 +196,8 @@ export default function PaymentInvoicesSection({
         variant="danger"
         isPending={isRemoving}
         error={removeError}
-        onCancel={() => {
-          if (isRemoving) return
-          setShowRemoveConfirm(false)
-          setPendingRemoveLink(null)
-          setRemoveError(null)
-        }}
-        onConfirm={() => {
-          void handleConfirmRemoveLink()
-        }}
+        onCancel={handleShowRemoveConfirmChange}
+        onConfirm={handleConfirmRemoveLinkClick}
       >
         <p className="text-sm text-zinc-700 dark:text-zinc-300">
           Delete this invoice link?
