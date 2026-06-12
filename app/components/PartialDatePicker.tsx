@@ -184,8 +184,12 @@ export default function PartialDatePicker({
         />
       ) : null}
 
-      {openSegment === "day" ? (
+      {openSegment === "day" &&
+      typeof value.year === "number" &&
+      typeof value.month === "number" ? (
         <DayPickerPanel
+          year={value.year}
+          month={value.month}
           days={days}
           selectedDay={value.day}
           onSelect={handleSelectDay}

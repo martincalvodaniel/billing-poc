@@ -1,19 +1,33 @@
 "use client"
 import { useStableCallback } from "@/lib/hooks/useStableCallback"
 import PickerOverlay from "./PickerOverlay"
+import { dayCalendarOffset } from "./partialDatePicker-utils"
 
 interface DayPickerPanelProps {
+  year: number
+  month: number
   days: number[]
   selectedDay?: number
   onSelect: (day: number) => void
   onClose: () => void
 }
+const WEEKDAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
 export default function DayPickerPanel({
+  year,
+  month,
   days,
   selectedDay,
   onSelect,
   onClose,
 }: DayPickerPanelProps) {
+  const offset = dayCalendarOffset(year, month)
+  const firstOfMonth = new Date(0, month - 1, 1)
+  firstOfMonth.setFullYear(year)
+  const monthLabel = firstOfMonth.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  })
   return (
     <PickerOverlay
       onClose={onClose}
@@ -21,7 +35,23 @@ export default function DayPickerPanel({
       desktopAlign="left"
     >
       <div className="px-4 pb-4">
+        <div className="mb-3 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          {monthLabel}
+        </div>
+        <div className="mb-1 grid grid-cols-7 gap-1">
+          {WEEKDAY_HEADERS.map((weekday) => (
+            <div
+              key={weekday}
+              className="py-1 text-center text-[10px] font-semibold uppercase text-zinc-500 dark:text-zinc-400"
+            >
+              {weekday}
+            </div>
+          ))}
+        </div>
         <div className="grid grid-cols-7 gap-1">
+          {WEEKDAY_HEADERS.slice(0, offset).map((weekday) => (
+            <div aria-hidden="true" key={`empty-${weekday}`} />
+          ))}
           {days.map((day) => (
             <DayOption
               key={day}
