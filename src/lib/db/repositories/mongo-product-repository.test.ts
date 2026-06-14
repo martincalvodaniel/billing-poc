@@ -8,9 +8,15 @@ type BuildProductUpdateOps =
   typeof import("./mongo-product-repository")["buildProductUpdateOps"]
 
 let buildProductUpdateOps: BuildProductUpdateOps
+let buildProductStockAdjustmentFilter: typeof import("./mongo-product-repository")["buildProductStockAdjustmentFilter"]
+let buildProductStockAdjustmentUpdate: typeof import("./mongo-product-repository")["buildProductStockAdjustmentUpdate"]
 
 beforeAll(async () => {
-  ;({ buildProductUpdateOps } = await import("./mongo-product-repository"))
+  ;({
+    buildProductUpdateOps,
+    buildProductStockAdjustmentFilter,
+    buildProductStockAdjustmentUpdate,
+  } = await import("./mongo-product-repository"))
 })
 
 describe("buildProductUpdateOps", () => {
@@ -33,5 +39,32 @@ describe("buildProductUpdateOps", () => {
   test("trims the product name before persisting", () => {
     const ops = buildProductUpdateOps({ name: "  Product A  " })
     expect(ops.$set?.name).toBe("Product A")
+  })
+})
+
+describe("buildProductStockAdjustmentFilter", () => {
+  test("requires enough stock when decrementing", () => {
+    expect(
+      buildProductStockAdjustmentFilter("507f1f77bcf86cd799439011", -3)
+    ).toEqual({
+      _id: expect.any(Object),
+      stock: { $gte: 3 },
+    })
+  })
+
+  test("does not add a stock guard when incrementing", () => {
+    expect(
+      buildProductStockAdjustmentFilter("507f1f77bcf86cd799439011", 2)
+    ).toEqual({
+      _id: expect.any(Object),
+    })
+  })
+})
+
+describe("buildProductStockAdjustmentUpdate", () => {
+  test("increments stock and refreshes updatedAt", () => {
+    const ops = buildProductStockAdjustmentUpdate(-2)
+    expect(ops.$inc).toEqual({ stock: -2 })
+    expect(ops.$set?.updatedAt).toBeInstanceOf(Date)
   })
 })

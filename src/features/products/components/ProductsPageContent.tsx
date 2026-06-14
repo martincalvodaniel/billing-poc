@@ -1,13 +1,17 @@
 "use client"
 
 import { useCallback, useMemo, useState } from "react"
+import { useSWRConfig } from "swr"
 import PageLayout from "@/components/shared/PageLayout"
 import AddButton from "@/components/ui/AddButton"
 import { IconButton } from "@/components/ui/IconButton"
 import { CardIcon } from "@/components/ui/icons/CardIcon"
 import { CashIcon } from "@/components/ui/icons/CashIcon"
 import PaymentFormModal from "@/features/payments/components/PaymentFormModal"
-import { useProducts } from "@/features/products/hooks/useProducts"
+import {
+  isProductsKey,
+  useProducts,
+} from "@/features/products/hooks/useProducts"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import type { Product } from "@/lib/domain/entities/product"
 import ProductFormModal from "./ProductFormModal"
@@ -26,6 +30,7 @@ function buildSelectedProducts(products: Product[], selectedIds: string[]) {
 
 export default function ProductsPageContent() {
   const { products, isLoading } = useProducts()
+  const { mutate } = useSWRConfig()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
@@ -94,8 +99,9 @@ export default function ProductsPageContent() {
   const closeSalePayment = useCallback(() => setSaleTag(null), [])
   const handleSalePaymentSaved = useCallback(() => {
     setSelectedProductIds([])
+    mutate(isProductsKey, undefined, { revalidate: true })
     closeSalePayment()
-  }, [closeSalePayment])
+  }, [closeSalePayment, mutate])
 
   return (
     <PageLayout

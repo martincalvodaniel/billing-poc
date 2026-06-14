@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth/require-auth"
 import { getClientById, getPaymentById } from "@/lib/db/cache"
 import { MongoEventRepository } from "@/lib/db/repositories/mongo-event-repository"
 import { MongoPaymentRepository } from "@/lib/db/repositories/mongo-payment-repository"
+import { MongoProductRepository } from "@/lib/db/repositories/mongo-product-repository"
 import { unlinkPaymentFromEvents } from "@/lib/domain/services/event-payment-service"
 import { computePaymentFinancials } from "@/lib/domain/services/payment-calculator"
 import { zodError } from "@/lib/utils/validation"
@@ -15,6 +16,72 @@ import {
 
 const payments = new MongoPaymentRepository()
 const events = new MongoEventRepository()
+const products = new MongoProductRepository()
+type SaleTag = "LocalSale" | "MarketSale"
+
+interface ProductSaleConcept {
+  productId?: string
+  name: string
+  quantity: number
+}
+
+function isProductSaleTag(tag: string | undefined): tag is SaleTag {
+  return tag === "LocalSale" || tag === "MarketSale"
+}
+
+function getProductSaleConcepts(concepts: ProductSaleConcept[]) {
+  return concepts
+    .filter((concept) => concept.productId)
+    .map((concept) => ({
+      productId: concept.productId as string,
+      quantity: Number(concept.quantity),
+      name: concept.name,
+    }))
+}
+
+async function rollbackProductStockChanges(
+  changes: Array<{ productId: string; quantity: number }>
+) {
+  for (const change of [...changes].reverse()) {
+    await products.adjustStock(change.productId, change.quantity)
+  }
+}
+
+async function reserveProductStockForSale(
+  concepts: ProductSaleConcept[]
+): Promise<
+  | { success: true; changes: Array<{ productId: string; quantity: number }> }
+  | { success: false; error: string }
+> {
+  const changes = getProductSaleConcepts(concepts)
+  const appliedChanges: Array<{ productId: string; quantity: number }> = []
+
+  for (const change of changes) {
+    if (!Number.isInteger(change.quantity) || change.quantity <= 0) {
+      await rollbackProductStockChanges(appliedChanges)
+      return {
+        success: false,
+        error: `Invalid quantity for product ${change.name}`,
+      }
+    }
+
+    const decremented = await products.adjustStock(
+      change.productId,
+      -change.quantity
+    )
+    if (!decremented) {
+      await rollbackProductStockChanges(appliedChanges)
+      return {
+        success: false,
+        error: `Insufficient stock for product ${change.name}`,
+      }
+    }
+
+    appliedChanges.push(change)
+  }
+
+  return { success: true, changes: appliedChanges }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -92,23 +159,47 @@ export async function POST(request: NextRequest) {
       discountVal
     )
 
-    const id = await payments.create({
-      type,
-      date,
-      tag: tag || undefined,
-      clientId: clientId || undefined,
-      deliveryNoteRef: deliveryNoteRef || undefined,
-      paymentMethod: paymentMethod || undefined,
-      concepts,
-      vat,
-      surcharge: surchargeVal !== 0 ? surchargeVal : undefined,
-      discount: discountVal > 0 ? discountVal : undefined,
-      ...financials,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
+    let stockReservation:
+      | {
+          success: true
+          changes: Array<{ productId: string; quantity: number }>
+        }
+      | { success: false; error: string }
+      | undefined
+    if (isProductSaleTag(tag)) {
+      stockReservation = await reserveProductStockForSale(concepts)
+      if (!stockReservation.success) {
+        return NextResponse.json(
+          { error: stockReservation.error },
+          { status: 400 }
+        )
+      }
+    }
 
-    return NextResponse.json({ success: true, id }, { status: 201 })
+    try {
+      const id = await payments.create({
+        type,
+        date,
+        tag: tag || undefined,
+        clientId: clientId || undefined,
+        deliveryNoteRef: deliveryNoteRef || undefined,
+        paymentMethod: paymentMethod || undefined,
+        concepts,
+        vat,
+        surcharge: surchargeVal !== 0 ? surchargeVal : undefined,
+        discount: discountVal > 0 ? discountVal : undefined,
+        ...financials,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+
+      return NextResponse.json({ success: true, id }, { status: 201 })
+    } catch (error) {
+      if (stockReservation?.success) {
+        await rollbackProductStockChanges(stockReservation.changes)
+      }
+      throw error
+    }
   } catch (error) {
     console.error(`Error creating payment: ${error}`)
     return NextResponse.json(

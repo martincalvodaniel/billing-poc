@@ -16,6 +16,7 @@ export type InvoiceType =
   | "Receipt"
 
 export interface PaymentConcept {
+  productId?: string
   name: string
   amount: number
   quantity: number

@@ -32,6 +32,30 @@ export function buildProductUpdateOps(data: Partial<Omit<Product, "_id">>) {
   return builder.build()
 }
 
+export function buildProductStockAdjustmentFilter(
+  id: string,
+  delta: number
+): Record<string, unknown> {
+  const filter: Record<string, unknown> = {
+    _id: toObjectId(id),
+  }
+
+  if (delta < 0) {
+    filter.stock = { $gte: Math.abs(delta) }
+  }
+
+  return filter
+}
+
+export function buildProductStockAdjustmentUpdate(
+  delta: number
+): Record<string, unknown> {
+  return {
+    $inc: { stock: delta },
+    $set: { updatedAt: new Date() },
+  }
+}
+
 export class MongoProductRepository implements ProductRepository {
   private async collection() {
     const db = await getDatabase()
@@ -76,6 +100,18 @@ export class MongoProductRepository implements ProductRepository {
       buildProductUpdateOps(data)
     )
     return result.matchedCount > 0
+  }
+
+  async adjustStock(id: string, delta: number): Promise<boolean> {
+    if (!isValidObjectId(id)) return false
+    if (delta === 0) return true
+
+    const col = await this.collection()
+    const result = await col.updateOne(
+      buildProductStockAdjustmentFilter(id, delta),
+      buildProductStockAdjustmentUpdate(delta)
+    )
+    return result.matchedCount > 0 && result.modifiedCount > 0
   }
 
   async delete(id: string): Promise<boolean> {

@@ -2,6 +2,7 @@ import { z } from "zod"
 import { PAYMENT_METHODS } from "@/lib/domain/entities/payment"
 
 const conceptSchema = z.object({
+  productId: z.string().optional(),
   name: z.string().min(1, "Concept name is required"),
   amount: z.coerce.number({ message: "Invalid concept amount" }),
   quantity: z.coerce.number().default(1),

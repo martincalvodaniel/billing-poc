@@ -12,6 +12,7 @@ export function buildSalePaymentFormData(
     type: "income",
     date,
     concepts: products.map((product) => ({
+      productId: product._id,
       name: product.name,
       amount: product.finalPrice,
       quantity: 1,
