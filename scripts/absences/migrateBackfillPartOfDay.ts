@@ -16,7 +16,7 @@
  *   bun run migrate:absences:partOfDay -- --dry-run # report counts only
  */
 
-import { getDatabase } from "../../lib/mongodb"
+import { getDatabase } from "@/lib/db/client"
 
 async function main(): Promise<void> {
   const dryRun = process.argv.slice(2).includes("--dry-run")

@@ -1,0 +1,107 @@
+import { z } from "zod"
+import { PAYMENT_METHODS } from "@/lib/domain/entities/payment"
+
+const conceptSchema = z.object({
+  name: z.string().min(1, "Concept name is required"),
+  amount: z.coerce.number({ message: "Invalid concept amount" }),
+  quantity: z.coerce.number().default(1),
+})
+
+const paymentBaseSchema = z.object({
+  type: z.enum(["income", "outcome"]),
+  date: z.string().min(1, "Date is required"),
+  concepts: z.array(conceptSchema).min(1, "At least one concept is required"),
+  vat: z.coerce
+    .number({ message: "Invalid VAT percentage" })
+    .min(0, "VAT must be between 0 and 100")
+    .max(100, "VAT must be between 0 and 100"),
+  surcharge: z.coerce
+    .number()
+    .min(-100, "Surcharge must be between -100 and 100")
+    .max(100, "Surcharge must be between -100 and 100")
+    .optional()
+    .default(0),
+  discount: z.coerce
+    .number()
+    .min(0, "Discount must be non-negative")
+    .optional()
+    .default(0),
+  tag: z.string().optional(),
+  clientId: z.string().optional(),
+  deliveryNoteRef: z.string().optional(),
+  paymentMethod: z
+    .union([z.enum(PAYMENT_METHODS), z.literal(""), z.undefined()])
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+})
+
+export const createPaymentSchema = paymentBaseSchema.superRefine(
+  (data, ctx) => {
+    if (!Array.isArray(data.concepts)) return
+    const conceptsTotal = data.concepts.reduce(
+      (sum, c) => sum + c.amount * (c.quantity ?? 1),
+      0
+    )
+    if (data.discount > conceptsTotal) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["discount"],
+        message: "Discount cannot exceed concepts total",
+      })
+    }
+  }
+)
+
+export const updatePaymentSchema = z
+  .object({
+    id: z.string().min(1, "Missing payment ID"),
+    type: z.enum(["income", "outcome"]).optional(),
+    date: z.string().min(1, "Date cannot be empty").optional(),
+    concepts: z
+      .array(conceptSchema)
+      .min(1, "At least one concept is required")
+      .optional(),
+    vat: z.coerce
+      .number({ message: "Invalid VAT percentage" })
+      .min(0, "VAT must be between 0 and 100")
+      .max(100, "VAT must be between 0 and 100")
+      .optional(),
+    surcharge: z.coerce
+      .number()
+      .min(-100, "Surcharge must be between -100 and 100")
+      .max(100, "Surcharge must be between -100 and 100")
+      .optional(),
+    discount: z.coerce
+      .number()
+      .min(0, "Discount must be non-negative")
+      .optional(),
+    tag: z.string().optional(),
+    clientId: z.string().nullable().optional(),
+    deliveryNoteRef: z.string().optional(),
+    paymentMethod: z
+      .union([z.enum(PAYMENT_METHODS), z.literal(""), z.undefined()])
+      .optional()
+      .transform((v) => (v ? v : undefined)),
+    total: z.coerce.number().optional(),
+  })
+  .refine(
+    (data) => {
+      const { id: _id, ...rest } = data
+      return Object.values(rest).some((v) => v !== undefined)
+    },
+    { message: "No fields to update" }
+  )
+
+export const deletePaymentSchema = z.object({
+  id: z.string().min(1, "Missing payment ID"),
+})
+
+export const paymentQuerySchema = z.object({
+  year: z.coerce.number().int().optional(),
+  month: z.coerce
+    .number()
+    .int()
+    .min(1, "Invalid month")
+    .max(12, "Invalid month")
+    .optional(),
+})

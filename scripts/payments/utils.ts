@@ -1,7 +1,7 @@
 import type {
   PaymentConcept,
   PaymentFormData,
-} from "../../lib/domain/entities/payment"
+} from "@/lib/domain/entities/payment"
 
 const INCOME_NAMES = [
   "Client Invoice",

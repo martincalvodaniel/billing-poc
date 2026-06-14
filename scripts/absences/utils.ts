@@ -2,7 +2,7 @@ import type {
   AbsenceFormData,
   AbsenceType,
   PartOfDay,
-} from "../../lib/domain/entities/absence"
+} from "@/lib/domain/entities/absence"
 
 const STUDENT_NAMES = [
   "María García",

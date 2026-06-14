@@ -1,5 +1,5 @@
-import { ensureIndexes } from "../lib/adapters/repositories/ensure-indexes"
-import { getDatabase } from "../lib/mongodb"
+import { getDatabase } from "@/lib/db/client"
+import { ensureIndexes } from "@/lib/db/repositories/ensure-indexes"
 
 async function main(): Promise<void> {
   const db = await getDatabase()
