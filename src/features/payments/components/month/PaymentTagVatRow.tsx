@@ -39,6 +39,7 @@ export default function PaymentTagVatRow({
     <div className="grid gap-3 sm:grid-cols-2">
       <SuggestionInput
         label="Tag (Optional)"
+        ariaLabel="Tag (Optional)"
         name="tag"
         value={formData.tag || ""}
         options={availableTags}

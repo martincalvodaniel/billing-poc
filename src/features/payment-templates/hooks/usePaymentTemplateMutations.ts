@@ -4,7 +4,10 @@ import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
 import { FetchError } from "@/lib/client/swr-fetcher"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
-import { buildCreatePaymentTemplatePayload } from "../utils"
+import {
+  buildCreatePaymentTemplatePayload,
+  buildUpdatePaymentTemplatePayload,
+} from "../utils"
 import { isPaymentTemplatesKey } from "./usePaymentTemplates"
 
 export interface CreatePaymentTemplateInput {
@@ -12,15 +15,29 @@ export interface CreatePaymentTemplateInput {
   formData: PaymentFormData
 }
 
+export interface UpdatePaymentTemplateInput {
+  id: string
+  name: string
+  formData: PaymentFormData
+}
+
+export interface DeletePaymentTemplateInput {
+  id: string
+}
+
 export interface CreatePaymentTemplateResponse {
   success: boolean
   id: string
 }
 
+export interface MutationResponse {
+  success: boolean
+}
+
 const PAYMENT_TEMPLATES_URL = "/api/payment-templates"
 
 export function buildPaymentTemplateRequest<TBody>(
-  method: "POST",
+  method: "POST" | "PUT" | "DELETE",
   body: TBody
 ): { url: string; init: RequestInit } {
   return {
@@ -35,7 +52,7 @@ export function buildPaymentTemplateRequest<TBody>(
 }
 
 async function paymentTemplateMutationFetcher<TBody, TResponse>(
-  method: "POST",
+  method: "POST" | "PUT" | "DELETE",
   body: TBody
 ): Promise<TResponse> {
   const { url, init } = buildPaymentTemplateRequest(method, body)
@@ -92,18 +109,7 @@ export function useCreatePaymentTemplate(): MutationResult<
     CreatePaymentTemplateInput
   >(PAYMENT_TEMPLATES_URL, (_url, { arg }) =>
     paymentTemplateMutationFetcher<
-      {
-        name: string
-        type: PaymentFormData["type"]
-        concepts: PaymentFormData["concepts"]
-        vat: number
-        surcharge?: number
-        discount?: number
-        tag?: string
-        clientId?: string
-        deliveryNoteRef?: string
-        paymentMethod?: PaymentFormData["paymentMethod"]
-      },
+      ReturnType<typeof buildCreatePaymentTemplatePayload>,
       CreatePaymentTemplateResponse
     >("POST", buildCreatePaymentTemplatePayload(arg.name, arg.formData))
   )
@@ -111,6 +117,62 @@ export function useCreatePaymentTemplate(): MutationResult<
   const wrappedTrigger = async (
     input: CreatePaymentTemplateInput
   ): Promise<CreatePaymentTemplateResponse> => {
+    const result = await trigger(input)
+    await invalidate()
+    return result
+  }
+
+  return { trigger: wrappedTrigger, isMutating, error, data, reset }
+}
+
+export function useUpdatePaymentTemplate(): MutationResult<
+  UpdatePaymentTemplateInput,
+  MutationResponse
+> {
+  const invalidate = useInvalidatePaymentTemplates()
+  const { trigger, isMutating, error, data, reset } = useSWRMutation<
+    MutationResponse,
+    Error,
+    typeof PAYMENT_TEMPLATES_URL,
+    UpdatePaymentTemplateInput
+  >(PAYMENT_TEMPLATES_URL, (_url, { arg }) =>
+    paymentTemplateMutationFetcher<
+      ReturnType<typeof buildUpdatePaymentTemplatePayload>,
+      MutationResponse
+    >("PUT", buildUpdatePaymentTemplatePayload(arg.id, arg.name, arg.formData))
+  )
+
+  const wrappedTrigger = async (
+    input: UpdatePaymentTemplateInput
+  ): Promise<MutationResponse> => {
+    const result = await trigger(input)
+    await invalidate()
+    return result
+  }
+
+  return { trigger: wrappedTrigger, isMutating, error, data, reset }
+}
+
+export function useDeletePaymentTemplate(): MutationResult<
+  DeletePaymentTemplateInput,
+  MutationResponse
+> {
+  const invalidate = useInvalidatePaymentTemplates()
+  const { trigger, isMutating, error, data, reset } = useSWRMutation<
+    MutationResponse,
+    Error,
+    typeof PAYMENT_TEMPLATES_URL,
+    DeletePaymentTemplateInput
+  >(PAYMENT_TEMPLATES_URL, (_url, { arg }) =>
+    paymentTemplateMutationFetcher<
+      DeletePaymentTemplateInput,
+      MutationResponse
+    >("DELETE", arg)
+  )
+
+  const wrappedTrigger = async (
+    input: DeletePaymentTemplateInput
+  ): Promise<MutationResponse> => {
     const result = await trigger(input)
     await invalidate()
     return result

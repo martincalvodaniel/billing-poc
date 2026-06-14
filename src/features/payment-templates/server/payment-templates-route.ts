@@ -2,7 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth/require-auth"
 import { MongoPaymentTemplateRepository } from "@/lib/db/repositories/mongo-payment-template-repository"
 import { zodError } from "@/lib/utils/validation"
-import { createPaymentTemplateSchema } from "@/schemas/payment-template-validator"
+import {
+  createPaymentTemplateSchema,
+  deletePaymentTemplateSchema,
+  updatePaymentTemplateSchema,
+} from "@/schemas/payment-template-validator"
 
 const paymentTemplates = new MongoPaymentTemplateRepository()
 
@@ -60,6 +64,71 @@ export async function POST(request: NextRequest) {
     console.error(`Error creating payment template: ${error}`)
     return NextResponse.json(
       { error: "Failed to create payment template" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
+    const body = await request.json()
+    const parsed = updatePaymentTemplateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
+    }
+
+    const { id, ...fields } = parsed.data
+    const updated = await paymentTemplates.update(id, fields)
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Payment template not found" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 })
+  } catch (error) {
+    console.error(`Error updating payment template: ${error}`)
+    return NextResponse.json(
+      { error: "Failed to update payment template" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const denied = await requireAuth()
+    if (denied) return denied
+
+    const body = await request.json()
+    const parsed = deletePaymentTemplateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
+    }
+
+    const deleted = await paymentTemplates.delete(parsed.data.id)
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Payment template not found" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 })
+  } catch (error) {
+    console.error(`Error deleting payment template: ${error}`)
+    return NextResponse.json(
+      { error: "Failed to delete payment template" },
       { status: 500 }
     )
   }

@@ -1,18 +1,30 @@
 "use client"
 
-import type { ReactNode } from "react"
+import type {
+  ChangeEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactNode,
+} from "react"
 import { useCallback, useId, useMemo, useRef, useState } from "react"
+import { IconButton } from "@/components/ui/IconButton"
+import { CheckIcon } from "@/components/ui/icons/CheckIcon"
+import { PencilIcon } from "@/components/ui/icons/PencilIcon"
+import { TrashIcon } from "@/components/ui/icons/TrashIcon"
 import { useClickOutside } from "@/hooks/useClickOutside"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
 import { useStableCallback } from "@/hooks/useStableCallback"
 
 interface SuggestionInputProps {
-  label: string
+  label?: string
+  ariaLabel: string
   value: string
   options: string[]
   onChange: (value: string) => void
   onSelect: (value: string) => void
   onCreateNew?: (value: string) => void | Promise<void>
+  onEditOption?: (value: string) => void
+  onDeleteOption?: (value: string) => void
+  selectedOption?: string
   placeholder?: string
   required?: boolean
   name?: string
@@ -25,11 +37,15 @@ const SEARCH_DEBOUNCE_MS = 300
 
 export default function SuggestionInput({
   label,
+  ariaLabel,
   value,
   options,
   onChange,
   onSelect,
   onCreateNew,
+  onEditOption,
+  onDeleteOption,
+  selectedOption,
   placeholder = "Start typing to see suggestions...",
   required = false,
   name,
@@ -60,7 +76,7 @@ export default function SuggestionInput({
     }, 200)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value)
     setShowSuggestions(true)
   }
@@ -83,7 +99,7 @@ export default function SuggestionInput({
     void handleCreateNew()
   })
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) =>
+  const handleMouseDown = (e: ReactMouseEvent<HTMLButtonElement>) =>
     e.preventDefault()
 
   const handleKeyDown = useCallback(
@@ -117,18 +133,21 @@ export default function SuggestionInput({
 
   return (
     <div ref={containerRef} className="relative space-y-2">
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
+      {label ? (
+        <label
+          htmlFor={id}
+          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
+          {label}
+        </label>
+      ) : null}
 
       <div className="relative">
         <input
           type="text"
           id={id}
           name={name}
+          aria-label={ariaLabel}
           value={value}
           onChange={handleChange}
           onFocus={handleFocus}
@@ -148,6 +167,9 @@ export default function SuggestionInput({
                     key={option}
                     label={option}
                     onSelect={handleSelect}
+                    onEditOption={onEditOption}
+                    onDeleteOption={onDeleteOption}
+                    selected={selectedOption === option}
                     leading={leading}
                     onMouseDown={handleMouseDown}
                   />
@@ -180,29 +202,83 @@ export default function SuggestionInput({
 function SuggestionItem({
   label,
   onSelect,
+  onEditOption,
+  onDeleteOption,
+  selected,
   leading,
   onMouseDown,
 }: {
   label: string
   onSelect: (value: string) => void
+  onEditOption?: (value: string) => void
+  onDeleteOption?: (value: string) => void
+  selected?: boolean
   leading?: ReactNode
   onMouseDown: (e: React.MouseEvent<HTMLButtonElement>) => void
 }) {
   const handleClick = useStableCallback(() => onSelect(label))
+  const handleEditClick = useStableCallback(
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onEditOption?.(label)
+    }
+  )
+  const handleDeleteClick = useStableCallback(
+    (e: ReactMouseEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onDeleteOption?.(label)
+    }
+  )
 
   return (
     <li>
-      <button
-        type="button"
-        onMouseDown={onMouseDown}
-        onClick={handleClick}
-        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
+      <div
+        className={`flex w-full items-center gap-1 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 ${
+          selected ? "bg-blue-50 dark:bg-blue-900/20" : ""
+        }`}
       >
-        {leading}
-        <span className="truncate text-zinc-900 dark:text-zinc-100">
-          {label}
-        </span>
-      </button>
+        <button
+          type="button"
+          onMouseDown={onMouseDown}
+          onClick={handleClick}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          {leading}
+          <span className="truncate text-zinc-900 dark:text-zinc-100">
+            {label}
+          </span>
+        </button>
+        {selected ? (
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+            <CheckIcon className="h-3.5 w-3.5" />
+            Selected
+          </span>
+        ) : null}
+        {onEditOption ? (
+          <IconButton
+            onClick={handleEditClick}
+            onMouseDown={onMouseDown}
+            ariaLabel={`Edit payment template ${label}`}
+            variant="neutral"
+            size="sm"
+          >
+            <PencilIcon className="h-3.5 w-3.5" />
+          </IconButton>
+        ) : null}
+        {onDeleteOption ? (
+          <IconButton
+            onClick={handleDeleteClick}
+            onMouseDown={onMouseDown}
+            ariaLabel={`Delete payment template ${label}`}
+            variant="danger"
+            size="sm"
+          >
+            <TrashIcon className="h-3.5 w-3.5" />
+          </IconButton>
+        ) : null}
+      </div>
     </li>
   )
 }

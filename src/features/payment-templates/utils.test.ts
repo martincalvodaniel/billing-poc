@@ -3,6 +3,7 @@ import type { PaymentTemplate } from "@/lib/domain/entities/payment-template"
 import {
   buildCreatePaymentTemplatePayload,
   buildPaymentTemplateFormData,
+  buildUpdatePaymentTemplatePayload,
 } from "./utils"
 
 const template: PaymentTemplate = {
@@ -52,6 +53,41 @@ describe("buildCreatePaymentTemplatePayload", () => {
     })
 
     expect(payload).toEqual({
+      name: "Consulting",
+      type: "income",
+      concepts: [{ name: "Service", amount: 100, quantity: 1 }],
+      vat: 21,
+      surcharge: 5,
+      discount: 10,
+      tag: "monthly",
+      clientId: "client-id",
+      deliveryNoteRef: "DN-1",
+      paymentMethod: "card",
+    })
+  })
+})
+
+describe("buildUpdatePaymentTemplatePayload", () => {
+  test("includes the template id and trims the payload", () => {
+    const payload = buildUpdatePaymentTemplatePayload(
+      "template-id",
+      "  Consulting  ",
+      {
+        date: "2026-06-14",
+        type: "income",
+        concepts: [{ name: "Service", amount: 100, quantity: 1 }],
+        vat: "21",
+        surcharge: "5",
+        discount: "10",
+        tag: "  monthly  ",
+        clientId: " client-id ",
+        deliveryNoteRef: "  DN-1  ",
+        paymentMethod: "card",
+      }
+    )
+
+    expect(payload).toEqual({
+      id: "template-id",
       name: "Consulting",
       type: "income",
       concepts: [{ name: "Service", amount: 100, quantity: 1 }],

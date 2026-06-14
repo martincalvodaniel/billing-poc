@@ -1,18 +1,24 @@
 "use client"
 
-import { useCallback, useEffect, useId, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useState } from "react"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import { Modal } from "@/components/ui/Modal"
 import PaymentFormFields from "@/features/payments/components/month/PaymentFormFields"
 import { usePaymentForm } from "@/features/payments/components/month/usePaymentForm"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
-import { useCreatePaymentTemplate } from "../hooks/usePaymentTemplateMutations"
+import type { PaymentTemplate } from "@/lib/domain/entities/payment-template"
+import {
+  useCreatePaymentTemplate,
+  useUpdatePaymentTemplate,
+} from "../hooks/usePaymentTemplateMutations"
+import { buildPaymentTemplateFormData } from "../utils"
 
 interface PaymentTemplateFormModalProps {
   isOpen: boolean
   initialName?: string
+  template?: PaymentTemplate | null
   onClose: () => void
-  onCreated?: (name: string) => void
+  onSaved?: (name: string) => void
 }
 
 function extractPaymentTemplateError(error: unknown, fallback: string): string {
@@ -28,10 +34,12 @@ function extractPaymentTemplateError(error: unknown, fallback: string): string {
 function PaymentTemplateForm({
   formId,
   initialName,
+  initialData,
   onSubmit,
 }: {
   formId: string
   initialName?: string
+  initialData?: PaymentFormData
   onSubmit: (name: string, formData: PaymentFormData) => Promise<void>
 }) {
   const [name, setName] = useState(initialName ?? "")
@@ -50,8 +58,16 @@ function PaymentTemplateForm({
     calculateSurchargeAmount,
     calculateNetAmount,
     calculateDiscount,
-  } = usePaymentForm(undefined, new Date().toISOString().split("T")[0])
+  } = usePaymentForm(
+    initialData,
+    initialData?.date ?? new Date().toISOString().split("T")[0]
+  )
   const id = useId()
+
+  useEffect(() => {
+    setName(initialName ?? "")
+    setError(null)
+  }, [initialName])
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -127,22 +143,35 @@ function PaymentTemplateForm({
 export default function PaymentTemplateFormModal({
   isOpen,
   initialName,
+  template,
   onClose,
-  onCreated,
+  onSaved,
 }: PaymentTemplateFormModalProps) {
-  const { trigger: createPaymentTemplate, isMutating } =
+  const { trigger: createPaymentTemplate, isMutating: isCreating } =
     useCreatePaymentTemplate()
+  const { trigger: updatePaymentTemplate, isMutating: isUpdating } =
+    useUpdatePaymentTemplate()
   const formId = useId()
-  const [formKey, setFormKey] = useState(0)
-
-  useEffect(() => {
-    if (!isOpen) return
-    setFormKey((current) => current + 1)
-  }, [isOpen])
+  const isEditMode = Boolean(template?._id)
+  const initialData = template
+    ? buildPaymentTemplateFormData(
+        template,
+        new Date().toISOString().split("T")[0]
+      )
+    : undefined
+  const formKey = useMemo(
+    () =>
+      `${isOpen ? "open" : "closed"}-${template?._id ?? "new"}-${initialName ?? ""}`,
+    [initialName, isOpen, template?._id]
+  )
 
   const handleSubmit = async (name: string, formData: PaymentFormData) => {
-    await createPaymentTemplate({ name, formData })
-    onCreated?.(name)
+    if (template?._id) {
+      await updatePaymentTemplate({ id: template._id, name, formData })
+    } else {
+      await createPaymentTemplate({ name, formData })
+    }
+    onSaved?.(name)
     onClose()
   }
 
@@ -150,14 +179,14 @@ export default function PaymentTemplateFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="New Payment Template"
+      title={isEditMode ? "Edit Payment Template" : "New Payment Template"}
       maxWidth="xl"
       footer={
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onClose}
-            disabled={isMutating}
+            disabled={isCreating || isUpdating}
             className="flex-1 rounded bg-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 dark:focus:ring-offset-zinc-900"
           >
             Cancel
@@ -165,11 +194,11 @@ export default function PaymentTemplateFormModal({
           <button
             type="submit"
             form={formId}
-            disabled={isMutating}
-            aria-busy={isMutating}
+            disabled={isCreating || isUpdating}
+            aria-busy={isCreating || isUpdating}
             className="flex-1 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-zinc-900"
           >
-            {String(isMutating ? "Saving..." : "Save Template")}
+            {String(isCreating || isUpdating ? "Saving..." : "Save Template")}
           </button>
         </div>
       }
@@ -177,7 +206,8 @@ export default function PaymentTemplateFormModal({
       <PaymentTemplateForm
         key={formKey}
         formId={formId}
-        initialName={initialName}
+        initialName={initialName ?? template?.name}
+        initialData={initialData}
         onSubmit={handleSubmit}
       />
     </Modal>

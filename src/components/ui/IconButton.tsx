@@ -10,6 +10,7 @@ import {
 
 interface IconButtonProps {
   onClick: (e: MouseEvent<HTMLButtonElement>) => void
+  onMouseDown?: (e: MouseEvent<HTMLButtonElement>) => void
   ariaLabel: string
   children: ReactNode
   variant?: IconButtonVariant
@@ -23,6 +24,7 @@ interface IconButtonProps {
 
 export function IconButton({
   onClick,
+  onMouseDown,
   ariaLabel,
   children,
   variant = "neutral",
@@ -44,6 +46,7 @@ export function IconButton({
     <button
       type={type}
       onClick={handleClick}
+      onMouseDown={onMouseDown}
       aria-label={ariaLabel}
       aria-busy={isPending}
       disabled={disabled || isPending}

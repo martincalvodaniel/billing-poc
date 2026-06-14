@@ -36,7 +36,12 @@ export interface CreatePaymentTemplatePayload {
   paymentMethod?: PaymentTemplate["paymentMethod"]
 }
 
-export function buildCreatePaymentTemplatePayload(
+export interface UpdatePaymentTemplatePayload
+  extends CreatePaymentTemplatePayload {
+  id: string
+}
+
+function buildPaymentTemplatePayload(
   name: string,
   formData: PaymentFormData
 ): CreatePaymentTemplatePayload {
@@ -57,5 +62,23 @@ export function buildCreatePaymentTemplatePayload(
     clientId: formData.clientId?.trim() ? formData.clientId.trim() : undefined,
     deliveryNoteRef: deliveryNoteRef ? deliveryNoteRef : undefined,
     paymentMethod: formData.paymentMethod || undefined,
+  }
+}
+
+export function buildCreatePaymentTemplatePayload(
+  name: string,
+  formData: PaymentFormData
+): CreatePaymentTemplatePayload {
+  return buildPaymentTemplatePayload(name, formData)
+}
+
+export function buildUpdatePaymentTemplatePayload(
+  id: string,
+  name: string,
+  formData: PaymentFormData
+): UpdatePaymentTemplatePayload {
+  return {
+    id,
+    ...buildPaymentTemplatePayload(name, formData),
   }
 }

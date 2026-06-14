@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import { createPaymentTemplateSchema } from "./payment-template-validator"
+import {
+  createPaymentTemplateSchema,
+  deletePaymentTemplateSchema,
+  updatePaymentTemplateSchema,
+} from "./payment-template-validator"
 
 describe("createPaymentTemplateSchema", () => {
   const valid = {
@@ -50,5 +54,43 @@ describe("createPaymentTemplateSchema", () => {
         discount: 101,
       }).success
     ).toBe(false)
+  })
+})
+
+describe("updatePaymentTemplateSchema", () => {
+  test("accepts a partial update with trimmed fields", () => {
+    const result = updatePaymentTemplateSchema.safeParse({
+      id: "template-id",
+      name: "  Updated template  ",
+      tag: "  monthly  ",
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.name).toBe("Updated template")
+      expect(result.data.tag).toBe("monthly")
+    }
+  })
+
+  test("rejects empty updates", () => {
+    expect(
+      updatePaymentTemplateSchema.safeParse({ id: "template-id" }).success
+    ).toBe(false)
+  })
+
+  test("rejects discount greater than concepts total when concepts are updated", () => {
+    expect(
+      updatePaymentTemplateSchema.safeParse({
+        id: "template-id",
+        concepts: [{ name: "Service", amount: 100, quantity: 1 }],
+        discount: 101,
+      }).success
+    ).toBe(false)
+  })
+})
+
+describe("deletePaymentTemplateSchema", () => {
+  test("requires an id", () => {
+    expect(deletePaymentTemplateSchema.safeParse({}).success).toBe(false)
   })
 })
