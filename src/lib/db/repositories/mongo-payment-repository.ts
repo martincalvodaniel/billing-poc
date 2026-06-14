@@ -193,6 +193,10 @@ export class MongoPaymentRepository implements PaymentRepository {
       ])
       .toArray()
 
-    return result.length > 0 ? (result[0] as { tags: string[] }).tags.sort((a, b) => a.localeCompare(b)) : []
+    return result.length > 0
+      ? (result[0] as { tags: string[] }).tags.sort((a, b) =>
+          a.localeCompare(b)
+        )
+      : []
   }
 }

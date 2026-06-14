@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test"
 import { ObjectId } from "mongodb"
-import { attendeeToMongo } from "./mongo-event-repository-helpers"
 
 mock.module("server-only", () => ({}))
 
@@ -8,11 +7,15 @@ process.env.MONGODB_URI ??= "mongodb://localhost:27017/test"
 
 type BuildEventListQuery =
   typeof import("./mongo-event-repository")["buildEventListQuery"]
+type MongoEventRepositoryHelpers =
+  typeof import("./mongo-event-repository-helpers")
 
 let buildEventListQuery: BuildEventListQuery
+let attendeeToMongo: MongoEventRepositoryHelpers["attendeeToMongo"]
 
 beforeAll(async () => {
   ;({ buildEventListQuery } = await import("./mongo-event-repository"))
+  ;({ attendeeToMongo } = await import("./mongo-event-repository-helpers"))
 })
 
 describe("buildEventListQuery", () => {

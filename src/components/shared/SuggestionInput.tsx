@@ -12,10 +12,13 @@ interface SuggestionInputProps {
   options: string[]
   onChange: (value: string) => void
   onSelect: (value: string) => void
+  onCreateNew?: (value: string) => void | Promise<void>
   placeholder?: string
   required?: boolean
   name?: string
   leading?: ReactNode
+  createNewLabel?: string
+  createNewHint?: string
 }
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -26,10 +29,13 @@ export default function SuggestionInput({
   options,
   onChange,
   onSelect,
+  onCreateNew,
   placeholder = "Start typing to see suggestions...",
   required = false,
   name,
   leading,
+  createNewLabel = "No suggestions found",
+  createNewHint = "Press Enter to create a new item.",
 }: SuggestionInputProps) {
   const id = useId()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -64,16 +70,44 @@ export default function SuggestionInput({
     setShowSuggestions(false)
   })
 
+  const handleCreateNew = useStableCallback(async () => {
+    if (!onCreateNew) return
+    try {
+      await onCreateNew(value.trim())
+    } finally {
+      setShowSuggestions(false)
+    }
+  })
+
+  const handleCreateNewClick = useStableCallback(() => {
+    void handleCreateNew()
+  })
+
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) =>
     e.preventDefault()
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === "Enter" && showSuggestions) {
+        if (
+          filteredOptions.length === 0 &&
+          value.trim() !== "" &&
+          onCreateNew
+        ) {
+          event.preventDefault()
+          void handleCreateNew()
+          return
+        }
         event.preventDefault()
       }
     },
-    [showSuggestions]
+    [
+      filteredOptions.length,
+      handleCreateNew,
+      onCreateNew,
+      showSuggestions,
+      value,
+    ]
   )
 
   const handleOutsideClick = useStableCallback(() => {
@@ -119,6 +153,18 @@ export default function SuggestionInput({
                   />
                 ))}
               </ul>
+            ) : value.trim() !== "" && onCreateNew ? (
+              <button
+                type="button"
+                onMouseDown={handleMouseDown}
+                onClick={handleCreateNewClick}
+                className="flex w-full flex-col items-start px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              >
+                <span className="font-medium">{createNewLabel}</span>
+                <span className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  {createNewHint}
+                </span>
+              </button>
             ) : (
               <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
                 No suggestions found

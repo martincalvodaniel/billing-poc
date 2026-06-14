@@ -26,6 +26,7 @@ describe("INDEX_SPECS", () => {
       "absences",
       "events",
       "invoiceCounters",
+      "paymentTemplates",
     ]) {
       expect(cols.has(c)).toBe(true)
     }

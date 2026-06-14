@@ -18,11 +18,16 @@ import type { Client } from "@/lib/domain/entities/client"
 import type { Event, EventAttendee } from "@/lib/domain/entities/event"
 import type { InvoiceCounter } from "@/lib/domain/entities/invoice"
 import type { Payment } from "@/lib/domain/entities/payment"
+import type { PaymentTemplate } from "@/lib/domain/entities/payment-template"
 import type { Product } from "@/lib/domain/entities/product"
 
 export type MongoPayment = Omit<Payment, "_id" | "clientId"> & {
   _id?: ObjectId
   clientId?: ObjectId
+}
+
+export type MongoPaymentTemplate = Omit<PaymentTemplate, "_id"> & {
+  _id?: ObjectId
 }
 
 export type MongoClient = Omit<Client, "_id"> & {

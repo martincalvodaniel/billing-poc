@@ -1,9 +1,13 @@
 "use client"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import PageLayout from "@/components/shared/PageLayout"
+import SuggestionInput from "@/components/shared/SuggestionInput"
 import AddButton from "@/components/ui/AddButton"
 import ChartsToggle from "@/components/ui/ChartsToggle"
+import PaymentTemplateFormModal from "@/features/payment-templates/components/PaymentTemplateFormModal"
+import { usePaymentTemplates } from "@/features/payment-templates/hooks/usePaymentTemplates"
+import { buildPaymentTemplateFormData } from "@/features/payment-templates/utils"
 import PaymentFormModal from "../PaymentFormModal"
 import MonthlyPaymentsView from "./MonthlyPaymentsView"
 import MonthPicker from "./MonthPicker"
@@ -29,9 +33,16 @@ function formatDateString(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0")
   return `${yearStr}-${monthStr}-${day}`
 }
+
 export default function MonthPageContent() {
   const searchParams = useSearchParams()
+  const { paymentTemplates } = usePaymentTemplates()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showPaymentTemplateModal, setShowPaymentTemplateModal] =
+    useState(false)
+  const [paymentTemplateQuery, setPaymentTemplateQuery] = useState("")
+  const [selectedPaymentTemplateName, setSelectedPaymentTemplateName] =
+    useState<string | undefined>()
   const [selectedDate, setSelectedDate] = useState(() =>
     parseSearchParamsDate(searchParams)
   )
@@ -55,6 +66,18 @@ export default function MonthPageContent() {
   const initialDate = isViewingCurrentMonth
     ? formatDateString(currentMonthDate)
     : formatDateString(selectedDate)
+  const selectedPaymentTemplate = useMemo(
+    () =>
+      paymentTemplates.find(
+        (paymentTemplate) =>
+          paymentTemplate.name === selectedPaymentTemplateName
+      ),
+    [paymentTemplates, selectedPaymentTemplateName]
+  )
+  const initialPaymentData = useMemo(() => {
+    if (!selectedPaymentTemplate) return undefined
+    return buildPaymentTemplateFormData(selectedPaymentTemplate, initialDate)
+  }, [initialDate, selectedPaymentTemplate])
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -64,8 +87,30 @@ export default function MonthPageContent() {
   const handleAddPaymentClick = () => {
     setShowPaymentModal(true)
   }
+  const handlePaymentTemplateQueryChange = (value: string) => {
+    setPaymentTemplateQuery(value)
+    if (selectedPaymentTemplateName && value !== selectedPaymentTemplateName) {
+      setSelectedPaymentTemplateName(undefined)
+    }
+  }
+  const handlePaymentTemplateSelect = (value: string) => {
+    setPaymentTemplateQuery(value)
+    setSelectedPaymentTemplateName(value)
+  }
+  const handleCreatePaymentTemplate = (value: string) => {
+    setPaymentTemplateQuery(value)
+    setSelectedPaymentTemplateName(undefined)
+    setShowPaymentTemplateModal(true)
+  }
+  const handlePaymentTemplateCreated = (name: string) => {
+    setPaymentTemplateQuery(name)
+    setSelectedPaymentTemplateName(name)
+  }
   const handleCloseModal = () => {
     setShowPaymentModal(false)
+  }
+  const handleClosePaymentTemplateModal = () => {
+    setShowPaymentTemplateModal(false)
   }
   const handleCalendarMonthSelect = (year: number, month: number) => {
     const nextDate = new Date(year, month, 1)
@@ -89,20 +134,42 @@ export default function MonthPageContent() {
                 Overview for {formatMonthYear(selectedDate)}
               </h3>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <AddButton
-                ariaLabel="Add payment"
-                onClick={handleAddPaymentClick}
-              />
-              <ChartsToggle showCharts={showCharts} onToggle={setShowCharts} />
-              <MonthPicker
-                selectedDate={selectedDate}
-                onMonthChange={handleCalendarMonthSelect}
-                showCalendar={showCalendar}
-                onShowCalendarChange={setShowCalendar}
-                isViewingCurrentMonth={isViewingCurrentMonth}
-                onGoToCurrentMonth={handleGoToCurrentMonth}
-              />
+            <div className="flex flex-col gap-3">
+              <div className="flex min-w-0 flex-nowrap items-end gap-2">
+                <AddButton
+                  ariaLabel="Add payment"
+                  onClick={handleAddPaymentClick}
+                />
+                <div className="min-w-0 flex-1">
+                  <SuggestionInput
+                    label="Payment template"
+                    value={paymentTemplateQuery}
+                    options={paymentTemplates.map(
+                      (paymentTemplate) => paymentTemplate.name
+                    )}
+                    onChange={handlePaymentTemplateQueryChange}
+                    onSelect={handlePaymentTemplateSelect}
+                    onCreateNew={handleCreatePaymentTemplate}
+                    placeholder="Choose or type a template..."
+                    createNewLabel="No payment template found"
+                    createNewHint="Press Enter or click here to create a new template."
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <ChartsToggle
+                  showCharts={showCharts}
+                  onToggle={setShowCharts}
+                />
+                <MonthPicker
+                  selectedDate={selectedDate}
+                  onMonthChange={handleCalendarMonthSelect}
+                  showCalendar={showCalendar}
+                  onShowCalendarChange={setShowCalendar}
+                  isViewingCurrentMonth={isViewingCurrentMonth}
+                  onGoToCurrentMonth={handleGoToCurrentMonth}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -120,6 +187,14 @@ export default function MonthPageContent() {
         onClose={handleCloseModal}
         title="New Payment"
         initialDate={initialDate}
+        initialData={initialPaymentData}
+      />
+
+      <PaymentTemplateFormModal
+        isOpen={showPaymentTemplateModal}
+        initialName={paymentTemplateQuery}
+        onClose={handleClosePaymentTemplateModal}
+        onCreated={handlePaymentTemplateCreated}
       />
     </PageLayout>
   )

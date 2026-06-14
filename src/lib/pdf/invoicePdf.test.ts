@@ -1,13 +1,27 @@
-import { describe, expect, test } from "bun:test"
+import { beforeAll, describe, expect, mock, test } from "bun:test"
 import type { InvoiceType } from "@/lib/domain/entities/payment"
-import {
-  formatInvoiceAmount,
-  formatInvoiceDateES,
-  formatInvoiceNumber,
-  invoiceTitle,
-  parseInvoiceId,
-  paymentMethodLabelES,
-} from "./generate"
+
+mock.module("server-only", () => ({}))
+
+type GenerateModule = typeof import("./generate")
+
+let formatInvoiceAmount: GenerateModule["formatInvoiceAmount"]
+let formatInvoiceDateES: GenerateModule["formatInvoiceDateES"]
+let formatInvoiceNumber: GenerateModule["formatInvoiceNumber"]
+let invoiceTitle: GenerateModule["invoiceTitle"]
+let parseInvoiceId: GenerateModule["parseInvoiceId"]
+let paymentMethodLabelES: GenerateModule["paymentMethodLabelES"]
+
+beforeAll(async () => {
+  ;({
+    formatInvoiceAmount,
+    formatInvoiceDateES,
+    formatInvoiceNumber,
+    invoiceTitle,
+    parseInvoiceId,
+    paymentMethodLabelES,
+  } = await import("./generate"))
+})
 
 describe("formatInvoiceNumber", () => {
   test("Invoice prefix F", () => {

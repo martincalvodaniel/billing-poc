@@ -23,6 +23,11 @@ export const INDEX_SPECS: IndexSpec[] = [
     options: { name: "name_asc" },
   },
   {
+    collection: "paymentTemplates",
+    keys: { name: 1 },
+    options: { name: "name_asc" },
+  },
+  {
     collection: "absences",
     keys: { studentNameLower: 1, date: 1, partOfDay: 1 },
     options: { name: "uniq_student_date_part", unique: true },

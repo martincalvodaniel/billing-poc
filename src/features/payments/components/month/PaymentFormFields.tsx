@@ -16,6 +16,7 @@ interface PaymentFormFieldsProps {
   formData: PaymentFormData
   availableTags: string[]
   showAdditionalFields: boolean
+  showDate?: boolean
   onSetShowAdditionalFields: (show: boolean) => void
   onChangeField: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -39,6 +40,7 @@ export default function PaymentFormFields({
   formData,
   availableTags,
   showAdditionalFields,
+  showDate = true,
   onSetShowAdditionalFields,
   onChangeField,
   onTagSelect,
@@ -68,7 +70,11 @@ export default function PaymentFormFields({
   )
   return (
     <div className="space-y-4">
-      <PaymentTypeDateRow formData={formData} onChangeField={onChangeField} />
+      <PaymentTypeDateRow
+        formData={formData}
+        onChangeField={onChangeField}
+        showDate={showDate}
+      />
       <PaymentTagVatRow
         formData={formData}
         availableTags={availableTags}

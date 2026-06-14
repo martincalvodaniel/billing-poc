@@ -8,15 +8,18 @@ interface PaymentTypeDateRowProps {
   onChangeField: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void
+  showDate?: boolean
 }
 
 export default function PaymentTypeDateRow({
   formData,
   onChangeField,
+  showDate = true,
 }: PaymentTypeDateRowProps) {
   const id = useId()
+  const gridClassName = showDate ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className={gridClassName}>
       <div className="space-y-2">
         <label
           htmlFor={`${id}-type`}
@@ -37,23 +40,25 @@ export default function PaymentTypeDateRow({
         </select>
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor={`${id}-date`}
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Date
-        </label>
-        <input
-          type="date"
-          id={`${id}-date`}
-          name="date"
-          value={formData.date}
-          onChange={onChangeField}
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          required
-        />
-      </div>
+      {showDate ? (
+        <div className="space-y-2">
+          <label
+            htmlFor={`${id}-date`}
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            Date
+          </label>
+          <input
+            type="date"
+            id={`${id}-date`}
+            name="date"
+            value={formData.date}
+            onChange={onChangeField}
+            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            required
+          />
+        </div>
+      ) : null}
     </div>
   )
 }
