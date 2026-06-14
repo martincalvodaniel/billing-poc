@@ -4,9 +4,8 @@ import { useCallback, useMemo, useState } from "react"
 import { useSWRConfig } from "swr"
 import PageLayout from "@/components/shared/PageLayout"
 import AddButton from "@/components/ui/AddButton"
-import { IconButton } from "@/components/ui/IconButton"
-import { CardIcon } from "@/components/ui/icons/CardIcon"
-import { CashIcon } from "@/components/ui/icons/CashIcon"
+import { LocalSaleIcon } from "@/components/ui/icons/LocalSaleIcon"
+import { MarketSaleIcon } from "@/components/ui/icons/MarketSaleIcon"
 import PaymentFormModal from "@/features/payments/components/PaymentFormModal"
 import {
   isProductsKey,
@@ -23,6 +22,8 @@ import {
 } from "./productPayment-utils"
 
 const TODAY = new Date().toISOString().split("T")[0]
+const headerActionButtonClass =
+  "inline-flex min-h-11 min-w-11 items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
 
 function buildSelectedProducts(products: Product[], selectedIds: string[]) {
   const selectedSet = new Set(selectedIds)
@@ -134,8 +135,9 @@ export default function ProductsPageContent() {
                   ariaLabel="Add product"
                   onClick={handleCreateProduct}
                 />
-                <IconButton
-                  ariaLabel="Create payment with LocalSale tag"
+                <button
+                  type="button"
+                  aria-label="Create payment with LocalSale tag"
                   title={
                     selectedProducts.length > 0
                       ? "Create payment with LocalSale"
@@ -143,11 +145,14 @@ export default function ProductsPageContent() {
                   }
                   onClick={handleLocalSaleClick}
                   disabled={selectedProducts.length === 0}
+                  className={headerActionButtonClass}
                 >
-                  <CashIcon />
-                </IconButton>
-                <IconButton
-                  ariaLabel="Create payment with MarketSale tag"
+                  <LocalSaleIcon />
+                  <span>Local</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Create payment with MarketSale tag"
                   title={
                     selectedProducts.length > 0
                       ? "Create payment with MarketSale"
@@ -155,9 +160,11 @@ export default function ProductsPageContent() {
                   }
                   onClick={handleMarketSaleClick}
                   disabled={selectedProducts.length === 0}
+                  className={headerActionButtonClass}
                 >
-                  <CardIcon />
-                </IconButton>
+                  <MarketSaleIcon />
+                  <span>Market</span>
+                </button>
                 <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
                   {selectedProductIds.length} selected
                 </span>
