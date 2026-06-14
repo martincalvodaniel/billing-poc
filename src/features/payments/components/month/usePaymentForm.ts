@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 import { useTags } from "@/features/payments/hooks/useTags"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import {
@@ -35,9 +35,6 @@ export const usePaymentForm = (
   )
 
   const { tags: availableTags } = useTags(formData.type)
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([])
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false)
-  const tagDebounceTimer = useRef<NodeJS.Timeout | null>(null)
 
   const handleChange = useCallback(
     (
@@ -64,40 +61,12 @@ export const usePaymentForm = (
 
       // Handle form-level fields
       setFormData((prev) => ({ ...prev, [name]: value }))
-
-      // Handle tag suggestions with debounce
-      if (name === "tag") {
-        setShowTagSuggestions(true)
-
-        if (tagDebounceTimer.current) {
-          clearTimeout(tagDebounceTimer.current)
-        }
-
-        tagDebounceTimer.current = setTimeout(() => {
-          if (value.trim() === "") {
-            setSuggestedTags(availableTags)
-          } else {
-            const filtered = availableTags.filter((tag) =>
-              tag.toLowerCase().includes(value.toLowerCase())
-            )
-            setSuggestedTags(filtered)
-          }
-        }, 300)
-      }
     },
-    [availableTags]
+    []
   )
 
   const handleTagSelect = useCallback((tag: string) => {
     setFormData((prev) => ({ ...prev, tag }))
-    setShowTagSuggestions(false)
-    setSuggestedTags([])
-  }, [])
-
-  const handleTagBlur = useCallback(() => {
-    setTimeout(() => {
-      setShowTagSuggestions(false)
-    }, 200)
   }, [])
 
   const handleClientChange = useCallback((clientId: string | undefined) => {
@@ -187,15 +156,10 @@ export const usePaymentForm = (
     formData,
     setFormData,
     availableTags,
-    suggestedTags,
-    setSuggestedTags,
-    showTagSuggestions,
-    setShowTagSuggestions,
 
     // Handlers
     handleChange,
     handleTagSelect,
-    handleTagBlur,
     handleClientChange,
     addConcept,
     removeConcept,

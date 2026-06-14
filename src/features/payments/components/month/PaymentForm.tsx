@@ -1,6 +1,6 @@
 "use client"
 import type { Ref } from "react"
-import { useCallback, useImperativeHandle, useRef, useState } from "react"
+import { useImperativeHandle, useRef, useState } from "react"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import Toast from "@/components/ui/Toast"
 import { useCreatePayment } from "@/features/payments/hooks/usePaymentMutations"
@@ -28,13 +28,9 @@ const PaymentForm = function PaymentForm({
   const handleShowSuccessChange = () => setShowSuccess(false)
   const {
     formData,
-    suggestedTags,
-    showTagSuggestions,
-    setSuggestedTags,
-    setShowTagSuggestions,
+    availableTags,
     handleChange,
     handleTagSelect,
-    handleTagBlur,
     handleClientChange,
     addConcept,
     removeConcept,
@@ -80,12 +76,6 @@ const PaymentForm = function PaymentForm({
         ...formData,
         paymentMethod: formData.paymentMethod || undefined,
       })
-      // Add new tag to available tags if it's not already there
-      // Note: availableTags is managed in usePaymentForm hook
-      if (formData.tag) {
-        setShowTagSuggestions(false)
-        setSuggestedTags([])
-      }
       // Reset concepts and client while keeping type and date sticky
       resetForm()
       // Show success toast
@@ -98,33 +88,6 @@ const PaymentForm = function PaymentForm({
       console.error(`Error saving payment: ${err}`)
     }
   }
-  const handleFormFieldChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    conceptIndex?: number
-  ) => {
-    handleChange(e, conceptIndex)
-    // Handle tag suggestions with debounce (managed in hook, but keep dropdown state in sync here)
-    if (e.target.name === "tag") {
-      setShowTagSuggestions(true)
-    }
-  }
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLFormElement>) => {
-      // Don't submit if tag dropdown is open (ENTER should select tag)
-      if (showTagSuggestions) {
-        return
-      }
-      if (e.key === "Enter") {
-        e.preventDefault()
-        e.stopPropagation()
-        const submitButton = (e.currentTarget as HTMLFormElement).querySelector(
-          'button[type="submit"]'
-        ) as HTMLButtonElement
-        submitButton?.click()
-      }
-    },
-    [showTagSuggestions]
-  )
   return (
     <>
       {/* Success Toast Notification */}
@@ -135,23 +98,16 @@ const PaymentForm = function PaymentForm({
         />
       ) : null}
 
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        onKeyDown={handleKeyDown}
-        className="space-y-4"
-      >
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
         {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 
         <PaymentFormFields
           formData={formData}
-          suggestedTags={suggestedTags}
-          showTagSuggestions={showTagSuggestions}
+          availableTags={availableTags}
           showAdditionalFields={showAdditionalFields}
           onSetShowAdditionalFields={setShowAdditionalFields}
-          onChangeField={handleFormFieldChange}
+          onChangeField={handleChange}
           onTagSelect={handleTagSelect}
-          onTagBlur={handleTagBlur}
           onClientChange={handleClientChange}
           onAddConcept={addConcept}
           onRemoveConcept={removeConcept}

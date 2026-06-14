@@ -54,11 +54,9 @@ export default function PaymentDetailModal({
     : buildEditFormData(payment)
   const {
     formData,
-    suggestedTags,
-    showTagSuggestions,
+    availableTags,
     handleChange,
     handleTagSelect,
-    handleTagBlur,
     handleClientChange,
     addConcept,
     removeConcept,
@@ -174,13 +172,11 @@ export default function PaymentDetailModal({
 
           <PaymentFormFields
             formData={formData}
-            suggestedTags={suggestedTags}
-            showTagSuggestions={showTagSuggestions}
+            availableTags={availableTags}
             showAdditionalFields={showAdditionalFields}
             onSetShowAdditionalFields={setShowAdditionalFields}
             onChangeField={handleChange}
             onTagSelect={handleTagSelect}
-            onTagBlur={handleTagBlur}
             onClientChange={handleClientChange}
             onAddConcept={addConcept}
             onRemoveConcept={removeConcept}

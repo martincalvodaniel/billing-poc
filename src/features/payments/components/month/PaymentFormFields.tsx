@@ -14,8 +14,7 @@ import PaymentTypeDateRow from "./PaymentTypeDateRow"
 
 interface PaymentFormFieldsProps {
   formData: PaymentFormData
-  suggestedTags: string[]
-  showTagSuggestions: boolean
+  availableTags: string[]
   showAdditionalFields: boolean
   onSetShowAdditionalFields: (show: boolean) => void
   onChangeField: (
@@ -23,7 +22,6 @@ interface PaymentFormFieldsProps {
     conceptIndex?: number
   ) => void
   onTagSelect: (tag: string) => void
-  onTagBlur: () => void
   onClientChange: (clientId: string | undefined) => void
   onAddConcept: () => void
   onRemoveConcept: (index: number) => void
@@ -39,13 +37,11 @@ interface PaymentFormFieldsProps {
  */
 export default function PaymentFormFields({
   formData,
-  suggestedTags,
-  showTagSuggestions,
+  availableTags,
   showAdditionalFields,
   onSetShowAdditionalFields,
   onChangeField,
   onTagSelect,
-  onTagBlur,
   onClientChange,
   onAddConcept,
   onRemoveConcept,
@@ -75,11 +71,9 @@ export default function PaymentFormFields({
       <PaymentTypeDateRow formData={formData} onChangeField={onChangeField} />
       <PaymentTagVatRow
         formData={formData}
-        suggestedTags={suggestedTags}
-        showTagSuggestions={showTagSuggestions}
+        availableTags={availableTags}
         onChangeField={onChangeField}
         onTagSelect={onTagSelect}
-        onTagBlur={onTagBlur}
       />
 
       <div className="grid gap-4 md:grid-cols-2">
