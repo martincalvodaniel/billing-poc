@@ -34,6 +34,7 @@ src/lib/domain/services/      → Business logic (calculators, Zod validators, a
 - `SessionProvider` wraps app via `src/components/shared/Providers.tsx`; `SWRConfig` is mounted inside `SessionProvider` in the same file
 
 ## Universal Rules
+- All code files must be written in English, including comments, variable names, and commit messages
 - TypeScript strict mode everywhere; no `any` without `unknown` guard
 - Domain entities in `src/lib/domain/entities/`; Mongo persistence shapes
   (`Mongo*`, derived from the entities via `Omit`) live in `src/lib/db/types.ts`
