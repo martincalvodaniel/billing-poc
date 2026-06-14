@@ -18,8 +18,8 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
   { href: "/clients", label: "Clients", matches: (p) => p === "/clients" },
   { href: "/events", label: "Events", matches: (p) => p === "/events" },
-  { href: "/month", label: "Monthly Overview", matches: (p) => p === "/month" },
-  { href: "/year", label: "Yearly Overview", matches: (p) => p === "/year" },
+  { href: "/month", label: "Month", matches: (p) => p === "/month" },
+  { href: "/year", label: "Year", matches: (p) => p === "/year" },
   {
     href: "/wordpress",
     label: "WordPress",
