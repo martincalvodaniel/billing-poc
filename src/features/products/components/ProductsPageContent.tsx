@@ -129,12 +129,19 @@ export default function ProductsPageContent() {
               </p>
             </div>
             <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-row lg:items-center lg:justify-end">
-              <ProductsSearch onSearch={handleSearch} />
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex w-full flex-nowrap items-center gap-2 lg:w-auto">
                 <AddButton
                   ariaLabel="Add product"
                   onClick={handleCreateProduct}
                 />
+                <div className="min-w-0 flex-1">
+                  <ProductsSearch onSearch={handleSearch} />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
+                  {selectedProductIds.length} selected
+                </span>
                 <button
                   type="button"
                   aria-label="Create payment with LocalSale tag"
@@ -165,9 +172,6 @@ export default function ProductsPageContent() {
                   <MarketSaleIcon />
                   <span>Market</span>
                 </button>
-                <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-                  {selectedProductIds.length} selected
-                </span>
               </div>
             </div>
           </div>
