@@ -14,13 +14,33 @@ const NAV_ITEMS: readonly NavItem[] = [
   {
     href: "/",
     label: "Absences",
-    matches: (p) => p === "/" || p === "/absences",
+    matches: (p) => p === "/absences",
   },
-  { href: "/clients", label: "Clients", matches: (p) => p === "/clients" },
-  { href: "/products", label: "Products", matches: (p) => p === "/products" },
-  { href: "/events", label: "Events", matches: (p) => p === "/events" },
-  { href: "/month", label: "Month", matches: (p) => p === "/month" },
-  { href: "/year", label: "Year", matches: (p) => p === "/year" },
+  {
+    href: "/clients",
+    label: "Clients",
+    matches: (p) => p === "/clients",
+  },
+  {
+    href: "/products",
+    label: "Products",
+    matches: (p) => p === "/products",
+  },
+  {
+    href: "/events",
+    label: "Events",
+    matches: (p) => p === "/events",
+  },
+  {
+    href: "/month",
+    label: "Month",
+    matches: (p) => p === "/" || p === "/month",
+  },
+  {
+    href: "/year",
+    label: "Year",
+    matches: (p) => p === "/year",
+  },
   {
     href: "/wordpress",
     label: "WordPress",
