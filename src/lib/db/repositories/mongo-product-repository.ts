@@ -3,6 +3,7 @@ import type { Product } from "../../domain/entities/product"
 import type {
   ProductFilter,
   ProductRepository,
+  ProductUpdateData,
 } from "../../domain/ports/product-repository"
 import { getDatabase } from "../client"
 import type { MongoProduct } from "../types"
@@ -14,24 +15,29 @@ import {
 } from "./mongo-utils"
 
 function toDomain(doc: MongoProduct): Product {
-  return {
+  const product: Product = {
     _id: doc._id?.toString(),
     name: doc.name,
     finalPrice: doc.finalPrice,
     taxes: doc.taxes,
-    stock: doc.stock,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
+
+  if (doc.stock !== undefined && doc.stock !== null) {
+    product.stock = doc.stock
+  }
+
+  return product
 }
 
-export function buildProductUpdateOps(data: Partial<Omit<Product, "_id">>) {
+export function buildProductUpdateOps(data: ProductUpdateData) {
   const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
   if (data.name !== undefined) builder.set("name", data.name.trim())
   if (data.finalPrice !== undefined) builder.set("finalPrice", data.finalPrice)
   if (data.taxes !== undefined) builder.set("taxes", data.taxes)
-  if (data.stock !== undefined) builder.set("stock", data.stock)
+  if (data.stock !== undefined) builder.setOrUnset("stock", data.stock)
 
   return builder.build()
 }
@@ -107,10 +113,7 @@ export class MongoProductRepository implements ProductRepository {
     return result.insertedId.toString()
   }
 
-  async update(
-    id: string,
-    data: Partial<Omit<Product, "_id">>
-  ): Promise<boolean> {
+  async update(id: string, data: ProductUpdateData): Promise<boolean> {
     if (!isValidObjectId(id)) return false
     const col = await this.collection()
     const result = await col.updateOne(

@@ -65,7 +65,7 @@ export default function ProductTableRow({
         {product.taxes}%
       </td>
       <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-        {product.stock}
+        {product.stock != null ? product.stock : "No stock"}
       </td>
     </tr>
   )

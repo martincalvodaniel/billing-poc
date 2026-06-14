@@ -38,6 +38,14 @@ describe("buildProductUpdateOps", () => {
     expect(ops.$set?.stock).toBe(4)
   })
 
+  test("removes stock when null is provided", () => {
+    const ops = buildProductUpdateOps({
+      stock: null,
+    })
+
+    expect(ops.$unset).toEqual({ stock: true })
+  })
+
   test("trims the product name before persisting", () => {
     const ops = buildProductUpdateOps({ name: "  Product A  " })
     expect(ops.$set?.name).toBe("Product A")

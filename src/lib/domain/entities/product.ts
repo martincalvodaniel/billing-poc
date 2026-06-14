@@ -3,7 +3,7 @@ export interface Product {
   name: string
   finalPrice: number
   taxes: number
-  stock: number
+  stock?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -12,5 +12,5 @@ export interface ProductFormData {
   name: string
   finalPrice: string
   taxes: string
-  stock: string
+  stock: string | null
 }

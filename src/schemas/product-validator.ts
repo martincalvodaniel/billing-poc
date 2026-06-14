@@ -14,6 +14,43 @@ function requiredNumberSchema<T extends z.ZodNumber>(
   }, z.coerce.number().pipe(schema)) as z.ZodType<number>
 }
 
+function buildStockNumberSchema() {
+  return z
+    .number()
+    .int("Stock must be a whole number")
+    .min(0, "Stock must be 0 or greater")
+}
+
+function createStockSchema(): z.ZodType<number | undefined> {
+  return z.preprocess((value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "")
+    ) {
+      return undefined
+    }
+    if (typeof value === "string") {
+      return Number(value.trim())
+    }
+    return value
+  }, buildStockNumberSchema().optional()) as z.ZodType<number | undefined>
+}
+
+function updateStockSchema(): z.ZodType<number | null | undefined> {
+  return z.preprocess((value) => {
+    if (typeof value === "string" && value.trim() === "") {
+      return null
+    }
+    if (typeof value === "string") {
+      return Number(value.trim())
+    }
+    return value
+  }, z.union([buildStockNumberSchema(), z.null()]).optional()) as z.ZodType<
+    number | null | undefined
+  >
+}
+
 const productPriceSchema = requiredNumberSchema(
   z.number().min(0, "Final price must be 0 or greater")
 )
@@ -23,18 +60,11 @@ const productTaxesSchema = requiredNumberSchema(
     .min(0, "Taxes must be between 0 and 100")
     .max(100, "Taxes must be between 0 and 100")
 )
-const productStockSchema = requiredNumberSchema(
-  z
-    .number()
-    .int("Stock must be a whole number")
-    .min(0, "Stock must be 0 or greater")
-)
-
 export const createProductSchema = z.object({
   name: productNameSchema,
   finalPrice: productPriceSchema,
   taxes: productTaxesSchema,
-  stock: productStockSchema,
+  stock: createStockSchema(),
 })
 
 export const updateProductSchema = z
@@ -43,7 +73,7 @@ export const updateProductSchema = z
     name: productNameSchema.optional(),
     finalPrice: productPriceSchema.optional(),
     taxes: productTaxesSchema.optional(),
-    stock: productStockSchema.optional(),
+    stock: updateStockSchema(),
   })
   .refine(
     (data) => {

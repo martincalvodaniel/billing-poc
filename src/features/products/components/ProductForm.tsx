@@ -16,7 +16,7 @@ function toFormData(product?: Product): ProductFormData {
     name: product?.name ?? "",
     finalPrice: product ? String(product.finalPrice) : "",
     taxes: product ? String(product.taxes) : "21",
-    stock: product ? String(product.stock) : "0",
+    stock: product?.stock != null ? String(product.stock) : null,
   }
 }
 
@@ -70,7 +70,9 @@ export default function ProductForm({
     const name = formData.name.trim()
     const finalPrice = Number.parseFloat(formData.finalPrice)
     const taxes = Number.parseFloat(formData.taxes)
-    const stock = Number.parseFloat(formData.stock)
+    const stockInput = (formData.stock ?? "").trim()
+    const stock =
+      stockInput.length > 0 ? Number.parseFloat(stockInput) : undefined
 
     if (!name) {
       setError("Name is required")
@@ -84,7 +86,10 @@ export default function ProductForm({
       setError("Taxes must be between 0 and 100")
       return
     }
-    if (Number.isNaN(stock) || stock < 0 || !Number.isInteger(stock)) {
+    if (
+      stock !== undefined &&
+      (Number.isNaN(stock) || stock < 0 || !Number.isInteger(stock))
+    ) {
       setError("Stock must be a whole number greater than or equal to 0")
       return
     }
@@ -95,7 +100,7 @@ export default function ProductForm({
         name,
         finalPrice: formData.finalPrice,
         taxes: formData.taxes,
-        stock: formData.stock,
+        stock: stockInput.length > 0 ? stockInput : null,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -182,11 +187,14 @@ export default function ProductForm({
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
           >
             Current stock
+            <span className="ml-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+              optional
+            </span>
           </label>
           <NumberStepperInput
             id={`${id}-product-stock`}
             name="stock"
-            value={formData.stock}
+            value={formData.stock ?? ""}
             onValueChange={handleStockChange}
             ariaLabel="Current stock"
             step={1}

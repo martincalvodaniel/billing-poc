@@ -65,6 +65,19 @@ async function reserveProductStockForSale(
       }
     }
 
+    const product = await products.findById(change.productId)
+    if (!product) {
+      await rollbackProductStockChanges(appliedChanges)
+      return {
+        success: false,
+        error: `Product not found for concept ${change.name}`,
+      }
+    }
+
+    if (product.stock == null) {
+      continue
+    }
+
     const decremented = await products.adjustStock(
       change.productId,
       -change.quantity
