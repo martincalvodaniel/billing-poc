@@ -1,5 +1,3 @@
-import "server-only"
-
 import { type Db, MongoClient } from "mongodb"
 import { ensureIndexes } from "./repositories/ensure-indexes"
 

@@ -1,5 +1,3 @@
-import "server-only"
-
 import { buildAccentInsensitivePattern } from "@/lib/utils/text-search"
 import type { Client, PaginatedResponse } from "../../domain/entities/client"
 import type {

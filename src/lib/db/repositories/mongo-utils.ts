@@ -1,5 +1,3 @@
-import "server-only"
-
 /**
  * Mongo write helpers enforcing the repository rule: never persist `null` or
  * `undefined` field values. Use `omitNullish` for inserts and additive

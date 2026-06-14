@@ -1,5 +1,3 @@
-import "server-only"
-
 import type { Payment } from "../../domain/entities/payment"
 import type { PaymentFilter } from "../../domain/ports/payment-repository"
 import { MongoUpdateBuilder, toObjectId, type UpdateOps } from "./mongo-utils"

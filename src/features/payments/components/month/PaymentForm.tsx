@@ -4,6 +4,7 @@ import { useCallback, useImperativeHandle, useRef, useState } from "react"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import Toast from "@/components/ui/Toast"
 import { useCreatePayment } from "@/features/payments/hooks/usePaymentMutations"
+import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import PaymentFormFields from "./PaymentFormFields"
 import { extractPaymentFormError } from "./paymentForm-utils"
 import { validateConcepts, validateDiscount } from "./paymentUtils"
@@ -12,6 +13,7 @@ import { usePaymentForm } from "./usePaymentForm"
 interface PaymentFormProps {
   onPaymentSaved?: (date: string) => void
   initialDate?: string
+  initialData?: PaymentFormData
   ref?: Ref<{
     setFormDate: (dateString: string) => void
     submit: () => void
@@ -20,6 +22,7 @@ interface PaymentFormProps {
 const PaymentForm = function PaymentForm({
   onPaymentSaved,
   initialDate,
+  initialData,
   ref,
 }: PaymentFormProps) {
   const handleShowSuccessChange = () => setShowSuccess(false)
@@ -42,7 +45,7 @@ const PaymentForm = function PaymentForm({
     calculateSurchargeAmount,
     calculateNetAmount,
     calculateDiscount,
-  } = usePaymentForm(undefined, initialDate)
+  } = usePaymentForm(initialData, initialDate)
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showAdditionalFields, setShowAdditionalFields] = useState(false)

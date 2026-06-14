@@ -1,5 +1,3 @@
-import "server-only"
-
 import type { InvoiceMetadata, Payment } from "../../domain/entities/payment"
 import type { MongoPayment } from "../types"
 

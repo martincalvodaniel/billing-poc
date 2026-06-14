@@ -1,5 +1,3 @@
-import "server-only"
-
 import type { CreateIndexesOptions, Db, IndexSpecification } from "mongodb"
 
 export interface IndexSpec {
@@ -16,6 +14,11 @@ export const INDEX_SPECS: IndexSpec[] = [
   },
   {
     collection: "clients",
+    keys: { name: 1 },
+    options: { name: "name_asc" },
+  },
+  {
+    collection: "products",
     keys: { name: 1 },
     options: { name: "name_asc" },
   },
