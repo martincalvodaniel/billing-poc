@@ -15,7 +15,6 @@ function toFormData(product?: Product): ProductFormData {
   return {
     name: product?.name ?? "",
     finalPrice: product ? String(product.finalPrice) : "",
-    taxes: product ? String(product.taxes) : "21",
     stock: product?.stock != null ? String(product.stock) : null,
   }
 }
@@ -52,11 +51,6 @@ export default function ProductForm({
     [handleChange]
   )
 
-  const handleTaxesChange = useCallback(
-    (value: string) => handleChange("taxes", value),
-    [handleChange]
-  )
-
   const handleStockChange = useCallback(
     (value: string) => handleChange("stock", value),
     [handleChange]
@@ -69,7 +63,6 @@ export default function ProductForm({
 
     const name = formData.name.trim()
     const finalPrice = Number.parseFloat(formData.finalPrice)
-    const taxes = Number.parseFloat(formData.taxes)
     const stockInput = (formData.stock ?? "").trim()
     const stock =
       stockInput.length > 0 ? Number.parseFloat(stockInput) : undefined
@@ -80,10 +73,6 @@ export default function ProductForm({
     }
     if (Number.isNaN(finalPrice) || finalPrice < 0) {
       setError("Final price must be 0 or greater")
-      return
-    }
-    if (Number.isNaN(taxes) || taxes < 0 || taxes > 100) {
-      setError("Taxes must be between 0 and 100")
       return
     }
     if (
@@ -99,7 +88,6 @@ export default function ProductForm({
       await onSubmit({
         name,
         finalPrice: formData.finalPrice,
-        taxes: formData.taxes,
         stock: stockInput.length > 0 ? stockInput : null,
       })
     } catch (err) {
@@ -137,7 +125,7 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label
             htmlFor={`${id}-product-finalPrice`}
@@ -154,28 +142,6 @@ export default function ProductForm({
             step={0.5}
             inputMode="decimal"
             min={0}
-            emptyStepBase={0}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor={`${id}-product-taxes`}
-            className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
-          >
-            Taxes (%)
-          </label>
-          <NumberStepperInput
-            id={`${id}-product-taxes`}
-            name="taxes"
-            value={formData.taxes}
-            onValueChange={handleTaxesChange}
-            ariaLabel="Taxes percentage"
-            step={1}
-            min={0}
-            max={100}
-            inputMode="numeric"
             emptyStepBase={0}
             disabled={isSubmitting}
           />

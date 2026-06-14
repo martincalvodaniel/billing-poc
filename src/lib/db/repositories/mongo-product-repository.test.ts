@@ -30,11 +30,9 @@ describe("buildProductUpdateOps", () => {
   test("sets numeric fields when provided", () => {
     const ops = buildProductUpdateOps({
       finalPrice: 12.5,
-      taxes: 21,
       stock: 4,
     })
     expect(ops.$set?.finalPrice).toBe(12.5)
-    expect(ops.$set?.taxes).toBe(21)
     expect(ops.$set?.stock).toBe(4)
   })
 

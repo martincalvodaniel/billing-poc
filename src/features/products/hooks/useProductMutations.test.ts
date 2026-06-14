@@ -8,7 +8,6 @@ describe("buildProductsRequest", () => {
     const body = {
       name: "Widget",
       finalPrice: "10",
-      taxes: "21",
       stock: "5",
     }
     const { url, init } = buildProductsRequest("POST", body)

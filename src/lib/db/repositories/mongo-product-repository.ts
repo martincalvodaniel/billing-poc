@@ -19,7 +19,6 @@ function toDomain(doc: MongoProduct): Product {
     _id: doc._id?.toString(),
     name: doc.name,
     finalPrice: doc.finalPrice,
-    taxes: doc.taxes,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }
@@ -36,7 +35,6 @@ export function buildProductUpdateOps(data: ProductUpdateData) {
 
   if (data.name !== undefined) builder.set("name", data.name.trim())
   if (data.finalPrice !== undefined) builder.set("finalPrice", data.finalPrice)
-  if (data.taxes !== undefined) builder.set("taxes", data.taxes)
   if (data.stock !== undefined) builder.setOrUnset("stock", data.stock)
 
   return builder.build()
@@ -104,7 +102,6 @@ export class MongoProductRepository implements ProductRepository {
     const doc = omitNullish({
       name: product.name.trim(),
       finalPrice: product.finalPrice,
-      taxes: product.taxes,
       stock: product.stock,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

@@ -54,16 +54,9 @@ function updateStockSchema(): z.ZodType<number | null | undefined> {
 const productPriceSchema = requiredNumberSchema(
   z.number().min(0, "Final price must be 0 or greater")
 )
-const productTaxesSchema = requiredNumberSchema(
-  z
-    .number()
-    .min(0, "Taxes must be between 0 and 100")
-    .max(100, "Taxes must be between 0 and 100")
-)
 export const createProductSchema = z.object({
   name: productNameSchema,
   finalPrice: productPriceSchema,
-  taxes: productTaxesSchema,
   stock: createStockSchema(),
 })
 
@@ -72,7 +65,6 @@ export const updateProductSchema = z
     id: z.string().min(1, "Missing product ID"),
     name: productNameSchema.optional(),
     finalPrice: productPriceSchema.optional(),
-    taxes: productTaxesSchema.optional(),
     stock: updateStockSchema(),
   })
   .refine(

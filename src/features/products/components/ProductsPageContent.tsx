@@ -26,11 +26,6 @@ import {
 
 const TODAY = new Date().toISOString().split("T")[0]
 
-function buildSelectedProducts(products: Product[], selectedIds: string[]) {
-  const selectedSet = new Set(selectedIds)
-  return products.filter((product) => selectedSet.has(product._id ?? ""))
-}
-
 export default function ProductsPageContent() {
   const [search, setSearch] = useState("")
   const { products, isLoading } = useProducts({ search })
@@ -40,6 +35,9 @@ export default function ProductsPageContent() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [selectedProductsById, setSelectedProductsById] = useState<
+    Record<string, Product>
+  >({})
   const [saleTag, setSaleTag] = useState<SalePaymentTag | null>(null)
   const [deletingProductId, setDeletingProductId] = useState<string | null>(
     null
@@ -47,8 +45,11 @@ export default function ProductsPageContent() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const selectedProducts = useMemo(
-    () => buildSelectedProducts(products, selectedProductIds),
-    [products, selectedProductIds]
+    () =>
+      selectedProductIds
+        .map((productId) => selectedProductsById[productId])
+        .filter((product): product is Product => product !== undefined),
+    [selectedProductIds, selectedProductsById]
   )
 
   const editingProduct = useMemo(
@@ -71,6 +72,16 @@ export default function ProductsPageContent() {
         ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     )
+    setSelectedProductsById((prev) => {
+      if (prev[productId]) {
+        const next = { ...prev }
+        delete next[productId]
+        return next
+      }
+      const product = products.find((item) => item._id === productId)
+      if (!product) return prev
+      return { ...prev, [productId]: product }
+    })
   }
 
   const handleCreateProduct = () => {
@@ -81,7 +92,6 @@ export default function ProductsPageContent() {
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query)
-    setSelectedProductIds([])
   }, [])
 
   const handleEditProduct = (productId: string) => {
@@ -122,6 +132,12 @@ export default function ProductsPageContent() {
     setSelectedProductIds((prev) =>
       prev.filter((id) => id !== deletingProductId)
     )
+    setSelectedProductsById((prev) => {
+      if (!prev[deletingProductId]) return prev
+      const next = { ...prev }
+      delete next[deletingProductId]
+      return next
+    })
     setDeletingProductId(null)
     setDeleteError(null)
   }, [deleteProduct, deletingProductId])
@@ -167,7 +183,7 @@ export default function ProductsPageContent() {
                 Product catalog
               </h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Keep product prices, taxes and stock in sync.
+                Keep product prices and stock in sync.
               </p>
             </div>
             <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-row lg:items-center lg:justify-end">

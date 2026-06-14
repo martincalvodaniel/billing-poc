@@ -29,18 +29,13 @@ export default function ProductTableRow({
     index % 2 === 0
       ? "bg-white dark:bg-zinc-900"
       : "bg-zinc-50 dark:bg-zinc-800/50"
+  const selectedRowClass = selected
+    ? "bg-blue-200/90 shadow-[inset_0_0_0_2px_rgba(37,99,235,0.85)] dark:bg-blue-900/45 dark:shadow-[inset_0_0_0_2px_rgba(96,165,250,0.85)]"
+    : ""
 
   const handleRowClick = useCallback(
     () => onToggleSelected(productId),
     [onToggleSelected, productId]
-  )
-  const handleCheckboxChange = useCallback(
-    () => onToggleSelected(productId),
-    [onToggleSelected, productId]
-  )
-  const handleCheckboxClick = useCallback(
-    (e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation(),
-    []
   )
   const handleEditClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -60,30 +55,32 @@ export default function ProductTableRow({
   return (
     <tr
       onClick={handleRowClick}
-      className={`cursor-pointer border-b border-zinc-200 transition-colors hover:bg-blue-50 dark:border-zinc-700 dark:hover:bg-blue-900/20 ${stripe} ${
-        selected ? "bg-blue-50/70 dark:bg-blue-900/20" : ""
-      }`}
+      aria-selected={selected}
+      className={`cursor-pointer border-b border-zinc-200 transition-colors hover:bg-blue-50 dark:border-zinc-700 dark:hover:bg-blue-900/20 ${stripe} ${selectedRowClass}`}
     >
-      <td className="px-4 py-4">
-        <input
-          type="checkbox"
-          checked={selected}
-          onClick={handleCheckboxClick}
-          onChange={handleCheckboxChange}
-          aria-label={`Select product ${product.name}`}
-          className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:focus:ring-offset-zinc-900"
-        />
-      </td>
-      <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+      <td
+        className={`px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50 ${
+          selected ? "font-semibold" : "font-medium"
+        }`}
+      >
         {product.name}
       </td>
-      <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
+      <td
+        className={`px-6 py-4 text-sm ${
+          selected
+            ? "font-medium text-zinc-900 dark:text-zinc-100"
+            : "text-zinc-700 dark:text-zinc-300"
+        }`}
+      >
         {formatCurrency(product.finalPrice)}
       </td>
-      <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-        {product.taxes}%
-      </td>
-      <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
+      <td
+        className={`px-6 py-4 text-sm ${
+          selected
+            ? "font-medium text-zinc-900 dark:text-zinc-100"
+            : "text-zinc-700 dark:text-zinc-300"
+        }`}
+      >
         {product.stock != null ? product.stock : "No stock"}
       </td>
       <td className="px-4 py-4">

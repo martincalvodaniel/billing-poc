@@ -6,14 +6,12 @@ describe("createProductSchema", () => {
     const result = createProductSchema.parse({
       name: "Widget",
       finalPrice: "10",
-      taxes: "21",
       stock: "",
     })
 
     expect(result).toEqual({
       name: "Widget",
       finalPrice: 10,
-      taxes: 21,
       stock: undefined,
     })
   })
