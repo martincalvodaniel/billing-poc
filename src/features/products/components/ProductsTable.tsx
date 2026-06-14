@@ -9,6 +9,7 @@ interface ProductsTableProps {
   selectedProductIds: string[]
   onToggleSelected: (productId: string) => void
   onEdit: (productId: string) => void
+  onDelete: (productId: string) => void
 }
 
 export default function ProductsTable({
@@ -16,6 +17,7 @@ export default function ProductsTable({
   selectedProductIds,
   onToggleSelected,
   onEdit,
+  onDelete,
 }: ProductsTableProps) {
   if (products.length === 0) {
     return (
@@ -46,6 +48,9 @@ export default function ProductsTable({
             <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               Stock
             </th>
+            <th className="w-24 px-4 py-3 text-right text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -57,6 +62,7 @@ export default function ProductsTable({
               selected={selectedProductIds.includes(product._id ?? "")}
               onToggleSelected={onToggleSelected}
               onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))}
         </tbody>

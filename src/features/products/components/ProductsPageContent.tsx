@@ -4,17 +4,21 @@ import { useCallback, useMemo, useState } from "react"
 import { useSWRConfig } from "swr"
 import PageLayout from "@/components/shared/PageLayout"
 import AddButton from "@/components/ui/AddButton"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import PaymentFormModal from "@/features/payments/components/PaymentFormModal"
+import { useDeleteProduct } from "@/features/products/hooks/useProductMutations"
 import {
   isProductsKey,
   useProducts,
 } from "@/features/products/hooks/useProducts"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import type { Product } from "@/lib/domain/entities/product"
+import { formatCurrency } from "@/lib/utils/formatters"
 import ProductFormModal from "./ProductFormModal"
 import ProductsSaleActions from "./ProductsSaleActions"
 import ProductsSearch from "./ProductsSearch"
 import ProductsTable from "./ProductsTable"
+import { extractProductApiError } from "./product-utils"
 import {
   buildSalePaymentFormData,
   type SalePaymentTag,
@@ -31,10 +35,16 @@ export default function ProductsPageContent() {
   const [search, setSearch] = useState("")
   const { products, isLoading } = useProducts({ search })
   const { mutate } = useSWRConfig()
+  const { trigger: deleteProduct, isMutating: isDeletingProduct } =
+    useDeleteProduct()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
   const [saleTag, setSaleTag] = useState<SalePaymentTag | null>(null)
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(
+    null
+  )
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const selectedProducts = useMemo(
     () => buildSelectedProducts(products, selectedProductIds),
@@ -44,6 +54,10 @@ export default function ProductsPageContent() {
   const editingProduct = useMemo(
     () => products.find((product) => product._id === editingProductId),
     [editingProductId, products]
+  )
+  const deletingProduct = useMemo(
+    () => products.find((product) => product._id === deletingProductId),
+    [deletingProductId, products]
   )
 
   const salePaymentInitialData: PaymentFormData | undefined = useMemo(() => {
@@ -73,13 +87,44 @@ export default function ProductsPageContent() {
   const handleEditProduct = (productId: string) => {
     setShowCreateModal(false)
     setSaleTag(null)
+    setDeletingProductId(null)
+    setDeleteError(null)
     setEditingProductId(productId)
   }
+
+  const handleDeleteProduct = useCallback((productId: string) => {
+    setShowCreateModal(false)
+    setSaleTag(null)
+    setEditingProductId(null)
+    setDeletingProductId(productId)
+    setDeleteError(null)
+  }, [])
 
   const handleCloseProductModal = () => {
     setShowCreateModal(false)
     setEditingProductId(null)
   }
+
+  const handleCancelDeleteProduct = useCallback(() => {
+    if (isDeletingProduct) return
+    setDeletingProductId(null)
+    setDeleteError(null)
+  }, [isDeletingProduct])
+
+  const handleConfirmDeleteProduct = useCallback(async () => {
+    if (!deletingProductId) return
+    try {
+      await deleteProduct({ id: deletingProductId })
+    } catch (err) {
+      setDeleteError(extractProductApiError(err, "Failed to delete product"))
+      return
+    }
+    setSelectedProductIds((prev) =>
+      prev.filter((id) => id !== deletingProductId)
+    )
+    setDeletingProductId(null)
+    setDeleteError(null)
+  }, [deleteProduct, deletingProductId])
 
   const openSalePayment = useCallback(
     (tag: SalePaymentTag) => {
@@ -157,6 +202,7 @@ export default function ProductsPageContent() {
             selectedProductIds={selectedProductIds}
             onToggleSelected={toggleSelectedProduct}
             onEdit={handleEditProduct}
+            onDelete={handleDeleteProduct}
           />
         )}
       </div>
@@ -184,6 +230,43 @@ export default function ProductsPageContent() {
         initialData={salePaymentInitialData}
         onPaymentSaved={handleSalePaymentSaved}
       />
+
+      <ConfirmDialog
+        isOpen={deletingProductId !== null}
+        title="Delete Product"
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        variant="danger"
+        isPending={isDeletingProduct}
+        error={deleteError}
+        onCancel={handleCancelDeleteProduct}
+        onConfirm={handleConfirmDeleteProduct}
+      >
+        <p>Are you sure you want to delete this product?</p>
+        {deletingProduct ? (
+          <div className="space-y-2 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">
+            <p>
+              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Name:{" "}
+              </span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {deletingProduct.name}
+              </span>
+            </p>
+            <p>
+              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Final price:{" "}
+              </span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {formatCurrency(deletingProduct.finalPrice)}
+              </span>
+            </p>
+          </div>
+        ) : null}
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          This action cannot be undone.
+        </p>
+      </ConfirmDialog>
     </PageLayout>
   )
 }

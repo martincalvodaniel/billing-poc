@@ -1,6 +1,9 @@
 "use client"
 
 import { useCallback } from "react"
+import { IconButton } from "@/components/ui/IconButton"
+import { PencilIcon } from "@/components/ui/icons/PencilIcon"
+import { TrashIcon } from "@/components/ui/icons/TrashIcon"
 import type { Product } from "@/lib/domain/entities/product"
 import { formatCurrency } from "@/lib/utils/formatters"
 
@@ -10,6 +13,7 @@ interface ProductTableRowProps {
   selected: boolean
   onToggleSelected: (productId: string) => void
   onEdit: (productId: string) => void
+  onDelete: (productId: string) => void
 }
 
 export default function ProductTableRow({
@@ -18,6 +22,7 @@ export default function ProductTableRow({
   selected,
   onToggleSelected,
   onEdit,
+  onDelete,
 }: ProductTableRowProps) {
   const productId = product._id ?? ""
   const stripe =
@@ -26,8 +31,8 @@ export default function ProductTableRow({
       : "bg-zinc-50 dark:bg-zinc-800/50"
 
   const handleRowClick = useCallback(
-    () => onEdit(productId),
-    [onEdit, productId]
+    () => onToggleSelected(productId),
+    [onToggleSelected, productId]
   )
   const handleCheckboxChange = useCallback(
     () => onToggleSelected(productId),
@@ -36,6 +41,20 @@ export default function ProductTableRow({
   const handleCheckboxClick = useCallback(
     (e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation(),
     []
+  )
+  const handleEditClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation()
+      onEdit(productId)
+    },
+    [onEdit, productId]
+  )
+  const handleDeleteClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation()
+      onDelete(productId)
+    },
+    [onDelete, productId]
   )
 
   return (
@@ -66,6 +85,28 @@ export default function ProductTableRow({
       </td>
       <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
         {product.stock != null ? product.stock : "No stock"}
+      </td>
+      <td className="px-4 py-4">
+        <div className="flex items-center justify-end gap-2">
+          <IconButton
+            onClick={handleEditClick}
+            ariaLabel={`Edit product ${product.name}`}
+            variant="neutral"
+            size="sm"
+            stopPropagation
+          >
+            <PencilIcon className="h-3.5 w-3.5" />
+          </IconButton>
+          <IconButton
+            onClick={handleDeleteClick}
+            ariaLabel={`Delete product ${product.name}`}
+            variant="danger"
+            size="sm"
+            stopPropagation
+          >
+            <TrashIcon className="h-3.5 w-3.5" />
+          </IconButton>
+        </div>
       </td>
     </tr>
   )
