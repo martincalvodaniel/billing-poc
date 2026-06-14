@@ -1,5 +1,9 @@
+import { buildAccentInsensitivePattern } from "@/lib/utils/text-search"
 import type { Product } from "../../domain/entities/product"
-import type { ProductRepository } from "../../domain/ports/product-repository"
+import type {
+  ProductFilter,
+  ProductRepository,
+} from "../../domain/ports/product-repository"
 import { getDatabase } from "../client"
 import type { MongoProduct } from "../types"
 import {
@@ -56,15 +60,29 @@ export function buildProductStockAdjustmentUpdate(
   }
 }
 
+export function buildProductListQuery(
+  filter: ProductFilter = {}
+): Record<string, unknown> {
+  const query: Record<string, unknown> = {}
+  if (filter.search?.trim()) {
+    const pattern = buildAccentInsensitivePattern(filter.search.trim())
+    query.name = { $regex: pattern, $options: "i" }
+  }
+  return query
+}
+
 export class MongoProductRepository implements ProductRepository {
   private async collection() {
     const db = await getDatabase()
     return db.collection<MongoProduct>("products")
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(filter: ProductFilter = {}): Promise<Product[]> {
     const col = await this.collection()
-    const docs = await col.find({}).sort({ name: 1 }).toArray()
+    const docs = await col
+      .find(buildProductListQuery(filter))
+      .sort({ name: 1 })
+      .toArray()
     return docs.map(toDomain)
   }
 

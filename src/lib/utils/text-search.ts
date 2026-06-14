@@ -18,7 +18,7 @@ const ACCENT_MAP: Record<string, string> = {
 }
 
 export function buildAccentInsensitivePattern(input: string): string {
-  const lowered = input.toLowerCase()
+  const lowered = stripDiacritics(input.toLowerCase())
   let out = ""
   for (const ch of lowered) {
     const escaped = escapeRegex(ch)

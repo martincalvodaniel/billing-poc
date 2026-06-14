@@ -10,12 +10,14 @@ type BuildProductUpdateOps =
 let buildProductUpdateOps: BuildProductUpdateOps
 let buildProductStockAdjustmentFilter: typeof import("./mongo-product-repository")["buildProductStockAdjustmentFilter"]
 let buildProductStockAdjustmentUpdate: typeof import("./mongo-product-repository")["buildProductStockAdjustmentUpdate"]
+let buildProductListQuery: typeof import("./mongo-product-repository")["buildProductListQuery"]
 
 beforeAll(async () => {
   ;({
     buildProductUpdateOps,
     buildProductStockAdjustmentFilter,
     buildProductStockAdjustmentUpdate,
+    buildProductListQuery,
   } = await import("./mongo-product-repository"))
 })
 
@@ -66,5 +68,17 @@ describe("buildProductStockAdjustmentUpdate", () => {
     const ops = buildProductStockAdjustmentUpdate(-2)
     expect(ops.$inc).toEqual({ stock: -2 })
     expect(ops.$set?.updatedAt).toBeInstanceOf(Date)
+  })
+})
+
+describe("buildProductListQuery", () => {
+  test("returns an empty query without search", () => {
+    expect(buildProductListQuery()).toEqual({})
+  })
+
+  test("builds a case-insensitive accent-insensitive name filter", () => {
+    expect(buildProductListQuery({ search: "Café" })).toEqual({
+      name: { $regex: "[cç][aáàäâãåā]f[eéèëêē]", $options: "i" },
+    })
   })
 })

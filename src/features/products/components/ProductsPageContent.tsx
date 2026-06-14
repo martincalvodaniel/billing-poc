@@ -15,6 +15,7 @@ import {
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import type { Product } from "@/lib/domain/entities/product"
 import ProductFormModal from "./ProductFormModal"
+import ProductsSearch from "./ProductsSearch"
 import ProductsTable from "./ProductsTable"
 import {
   buildSalePaymentFormData,
@@ -29,7 +30,8 @@ function buildSelectedProducts(products: Product[], selectedIds: string[]) {
 }
 
 export default function ProductsPageContent() {
-  const { products, isLoading } = useProducts()
+  const [search, setSearch] = useState("")
+  const { products, isLoading } = useProducts({ search })
   const { mutate } = useSWRConfig()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
@@ -64,6 +66,11 @@ export default function ProductsPageContent() {
     setSaleTag(null)
     setShowCreateModal(true)
   }
+
+  const handleSearch = useCallback((query: string) => {
+    setSearch(query)
+    setSelectedProductIds([])
+  }, [])
 
   const handleEditProduct = (productId: string) => {
     setShowCreateModal(false)
@@ -108,7 +115,7 @@ export default function ProductsPageContent() {
       navigationSubtitle="Products"
       headerContent={
         <div className="space-y-2 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex flex-col gap-4 border-b border-zinc-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+          <div className="flex flex-col gap-4 border-b border-zinc-200 px-6 py-4 lg:flex-row lg:items-center lg:justify-between dark:border-zinc-800">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Inventory
@@ -120,38 +127,41 @@ export default function ProductsPageContent() {
                 Keep product prices, taxes and stock in sync.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <AddButton
-                ariaLabel="Add product"
-                onClick={handleCreateProduct}
-              />
-              <IconButton
-                ariaLabel="Create payment with LocalSale tag"
-                title={
-                  selectedProducts.length > 0
-                    ? "Create payment with LocalSale"
-                    : "Select one or more products first"
-                }
-                onClick={handleLocalSaleClick}
-                disabled={selectedProducts.length === 0}
-              >
-                <CashIcon />
-              </IconButton>
-              <IconButton
-                ariaLabel="Create payment with MarketSale tag"
-                title={
-                  selectedProducts.length > 0
-                    ? "Create payment with MarketSale"
-                    : "Select one or more products first"
-                }
-                onClick={handleMarketSaleClick}
-                disabled={selectedProducts.length === 0}
-              >
-                <CardIcon />
-              </IconButton>
-              <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-                {selectedProductIds.length} selected
-              </span>
+            <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-row lg:items-center lg:justify-end">
+              <ProductsSearch onSearch={handleSearch} />
+              <div className="flex flex-wrap items-center gap-2">
+                <AddButton
+                  ariaLabel="Add product"
+                  onClick={handleCreateProduct}
+                />
+                <IconButton
+                  ariaLabel="Create payment with LocalSale tag"
+                  title={
+                    selectedProducts.length > 0
+                      ? "Create payment with LocalSale"
+                      : "Select one or more products first"
+                  }
+                  onClick={handleLocalSaleClick}
+                  disabled={selectedProducts.length === 0}
+                >
+                  <CashIcon />
+                </IconButton>
+                <IconButton
+                  ariaLabel="Create payment with MarketSale tag"
+                  title={
+                    selectedProducts.length > 0
+                      ? "Create payment with MarketSale"
+                      : "Select one or more products first"
+                  }
+                  onClick={handleMarketSaleClick}
+                  disabled={selectedProducts.length === 0}
+                >
+                  <CardIcon />
+                </IconButton>
+                <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
+                  {selectedProductIds.length} selected
+                </span>
+              </div>
             </div>
           </div>
         </div>

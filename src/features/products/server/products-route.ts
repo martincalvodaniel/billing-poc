@@ -7,17 +7,27 @@ import { zodError } from "@/lib/utils/validation"
 import {
   createProductSchema,
   deleteProductSchema,
+  productQuerySchema,
   updateProductSchema,
 } from "@/schemas/product-validator"
 
 const products = new MongoProductRepository()
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const denied = await requireAuth()
     if (denied) return denied
 
-    const result = await products.findAll()
+    const params = Object.fromEntries(request.nextUrl.searchParams)
+    const parsed = productQuerySchema.safeParse(params)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodError(parsed.error) },
+        { status: 400 }
+      )
+    }
+
+    const result = await products.findAll({ search: parsed.data.search })
     console.log(`Fetched ${result.length} products`)
     return NextResponse.json({ products: result }, { status: 200 })
   } catch (error) {
