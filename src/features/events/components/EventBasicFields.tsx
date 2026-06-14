@@ -1,5 +1,6 @@
 "use client"
 import dynamic from "next/dynamic"
+import ClearButton from "@/components/ui/ClearButton"
 import FormField from "@/components/ui/FormField"
 import type { PartialDateValue } from "@/components/ui/partialDatePicker-utils"
 import {
@@ -107,13 +108,13 @@ export default function EventBasicFields({
 
         <div className="col-span-2 md:col-span-1">
           <FormField id={`${idPrefix}-dayOfWeek`} label="Repeat weekly on">
-            <div className="relative">
+            <div className="relative w-full md:w-[180px]">
               <select
                 id={`${idPrefix}-dayOfWeek`}
                 value={hasConcreteDay ? "" : values.dayOfWeek}
                 onChange={onChangeField("dayOfWeek")}
                 disabled={isSubmitting || hasConcreteDay}
-                className="min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:w-[180px] md:pr-8 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+                className="min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 pr-8 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
               >
                 <option value="">— Not recurring —</option>
                 <option value="1">Monday</option>
@@ -125,15 +126,11 @@ export default function EventBasicFields({
                 <option value="0">Sunday</option>
               </select>
               {!hasConcreteDay && values.dayOfWeek ? (
-                <button
-                  type="button"
+                <ClearButton
                   onClick={handleChangeField}
                   disabled={isSubmitting}
-                  aria-label="Clear repeat weekly"
-                  className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
-                >
-                  <span aria-hidden="true">×</span>
-                </button>
+                  ariaLabel="Clear repeat weekly"
+                />
               ) : null}
             </div>
           </FormField>

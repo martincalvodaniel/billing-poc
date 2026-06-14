@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
+import ClearButton from "./ClearButton"
 import DayPickerPanel from "./DayPickerPanel"
 import MonthPickerPanel from "./MonthPickerPanel"
 import {
@@ -104,8 +105,6 @@ export default function PartialDatePicker({
         : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
     } dark:focus:ring-offset-zinc-900`
 
-  const dayClearButtonClass =
-    "absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-300 bg-white text-[10px] leading-none text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/60 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/30"
   const months = monthsValidFor(value.year)
   const days = daysValidFor(value.year, value.month)
   return (
@@ -114,12 +113,6 @@ export default function PartialDatePicker({
       ref={containerRef}
     >
       {(["year", "month", "day"] as const).map((segment) => {
-        function handleClearDayClick(
-          event: React.MouseEvent<HTMLButtonElement>
-        ) {
-          event.stopPropagation()
-          handleClearDay()
-        }
         const handleToggleSegment = () => toggleSegment(segment)
         const display =
           segment === "year"
@@ -146,20 +139,16 @@ export default function PartialDatePicker({
               disabled={segmentDisabled}
               aria-label={`${ariaLabelPrefix} ${segment}`}
               aria-expanded={openSegment === segment}
-              className={`${segmentButtonClass(openSegment === segment)} ${segment === "day" && hasValue && !disableDay ? "pr-6" : ""}`}
+              className={`${segmentButtonClass(openSegment === segment)} ${segment === "day" && hasValue && !disableDay ? "pr-8" : ""}`}
             >
               {display}
             </button>
             {segment === "day" && hasValue && !disableDay ? (
-              <button
-                type="button"
-                onClick={handleClearDayClick}
+              <ClearButton
+                onClick={handleClearDay}
                 disabled={disabled}
-                aria-label={`Clear ${ariaLabelPrefix} ${segment}`}
-                className={dayClearButtonClass}
-              >
-                <span aria-hidden="true">×</span>
-              </button>
+                ariaLabel={`Clear ${ariaLabelPrefix} ${segment}`}
+              />
             ) : null}
           </div>
         )
