@@ -12,7 +12,7 @@ interface NavigationBarProps {
 }
 const NAV_ITEMS: readonly NavItem[] = [
   {
-    href: "/",
+    href: "/absences",
     label: "Absences",
     matches: (p) => p === "/absences",
   },
