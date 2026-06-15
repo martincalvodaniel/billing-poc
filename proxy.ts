@@ -4,13 +4,10 @@ import { type NextRequest, NextResponse } from "next/server"
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
-  // Public auth routes
   if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
     return NextResponse.next()
   }
 
-  // Edge-runtime safe: only check cookie presence, not validity.
-  // Full validation happens in API routes via requireAuth().
   const sessionCookie = getSessionCookie(request)
   if (sessionCookie) {
     return NextResponse.next()
