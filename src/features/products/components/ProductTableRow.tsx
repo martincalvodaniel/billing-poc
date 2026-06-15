@@ -59,14 +59,14 @@ export default function ProductTableRow({
       className={`cursor-pointer border-b border-zinc-200 transition-colors hover:bg-blue-50 dark:border-zinc-700 dark:hover:bg-blue-900/20 ${stripe} ${selectedRowClass}`}
     >
       <td
-        className={`px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50 ${
+        className={`px-4 py-4 text-sm text-zinc-900 dark:text-zinc-50 ${
           selected ? "font-semibold" : "font-medium"
         }`}
       >
         {product.name}
       </td>
       <td
-        className={`px-6 py-4 text-sm ${
+        className={`px-4 py-4 text-sm ${
           selected
             ? "font-medium text-zinc-900 dark:text-zinc-100"
             : "text-zinc-700 dark:text-zinc-300"
@@ -75,7 +75,7 @@ export default function ProductTableRow({
         {formatCurrency(product.finalPrice)}
       </td>
       <td
-        className={`px-6 py-4 text-sm ${
+        className={`px-4 py-4 text-sm ${
           selected
             ? "font-medium text-zinc-900 dark:text-zinc-100"
             : "text-zinc-700 dark:text-zinc-300"
@@ -83,7 +83,7 @@ export default function ProductTableRow({
       >
         {product.stock != null ? product.stock : "-"}
       </td>
-      <td className="px-4 py-4">
+      <td className="px-2 py-2">
         <div className="flex items-center justify-end gap-2">
           <IconButton
             onClick={handleEditClick}

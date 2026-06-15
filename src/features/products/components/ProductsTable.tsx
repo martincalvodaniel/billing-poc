@@ -47,7 +47,7 @@ export default function ProductsTable({
               align="left"
             />
             <SortableTableHeader
-              label="Final price"
+              label="Price"
               sortKey="finalPrice"
               sort={sortState}
               onSortChange={onSortChange}

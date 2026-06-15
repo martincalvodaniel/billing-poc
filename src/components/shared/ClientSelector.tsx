@@ -1,6 +1,7 @@
 "use client"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import useSWR from "swr"
+import RequiredAsterisk from "@/components/ui/RequiredAsterisk"
 import { useClients } from "@/features/clients/hooks/useClients"
 import { useClickOutside } from "@/hooks/useClickOutside"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
@@ -184,7 +185,7 @@ export default function ClientSelector({
         className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
       >
         {label}
-        {required ? <span className="ml-1 text-red-600">*</span> : null}
+        {required ? <RequiredAsterisk /> : null}
       </label>
 
       <div className="relative">

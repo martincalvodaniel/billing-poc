@@ -4,6 +4,7 @@ import { useCallback, useId, useState } from "react"
 import ClearButton from "@/components/ui/ClearButton"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import NumberStepperInput from "@/components/ui/NumberStepperInput"
+import RequiredAsterisk from "@/components/ui/RequiredAsterisk"
 import type { Product, ProductFormData } from "@/lib/domain/entities/product"
 
 interface ProductFormProps {
@@ -112,9 +113,7 @@ export default function ProductForm({
           className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
         >
           Name
-          <span className="ml-0.5 text-red-600" aria-hidden="true">
-            *
-          </span>
+          <RequiredAsterisk />
         </label>
         <input
           type="text"
@@ -137,6 +136,7 @@ export default function ProductForm({
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
           >
             Final price (€)
+            <RequiredAsterisk />
           </label>
           <NumberStepperInput
             id={`${id}-product-finalPrice`}

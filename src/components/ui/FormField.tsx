@@ -1,3 +1,5 @@
+import RequiredAsterisk from "./RequiredAsterisk"
+
 interface FormFieldProps {
   id: string
   label: string
@@ -17,7 +19,7 @@ export default function FormField({
         className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
       >
         {label}
-        {required ? <span className="ml-1 text-red-600">*</span> : null}
+        {required ? <RequiredAsterisk /> : null}
       </label>
       {children}
     </div>
