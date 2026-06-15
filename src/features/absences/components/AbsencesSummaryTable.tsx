@@ -1,9 +1,12 @@
 "use client"
 import { useState } from "react"
+import DebouncedSearchInput from "@/components/ui/DebouncedSearchInput"
 import { EmptyState } from "@/components/ui/EmptyState"
+import { SortableTableHeader } from "@/components/ui/SortableTableHeader"
 import { useStableCallback } from "@/hooks/useStableCallback"
 import type { AbsenceSummaryRow } from "@/lib/domain/entities/absence"
 import { formatDate } from "@/lib/utils/formatters"
+import { nextSortState, type SortState } from "@/lib/utils/sort-state"
 
 type SortKey =
   | "studentName"
@@ -11,8 +14,6 @@ type SortKey =
   | "totalAbsences"
   | "totalRecoveries"
   | "lastAbsenceDate"
-
-type SortDir = "asc" | "desc"
 
 interface AbsencesSummaryTableProps {
   rows: AbsenceSummaryRow[]
@@ -31,7 +32,7 @@ function compareValues(
   a: AbsenceSummaryRow,
   b: AbsenceSummaryRow,
   key: SortKey,
-  dir: SortDir
+  dir: SortState<SortKey>["sortDir"]
 ): number {
   // Nulls (only possible on lastAbsenceDate) always sort last regardless of dir.
   if (key === "lastAbsenceDate") {
@@ -67,17 +68,14 @@ export default function AbsencesSummaryTable({
   rows,
   onStudentClick,
 }: AbsencesSummaryTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey>("studentName")
-  const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [sort, setSort] = useState<SortState<SortKey>>({
+    sortBy: "studentName",
+    sortDir: "asc",
+  })
   const [filter, setFilter] = useState("")
 
   const handleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
-    } else {
-      setSortKey(key)
-      setSortDir("asc")
-    }
+    setSort((current) => nextSortState(current, key, "asc"))
   }
 
   const trimmedFilter = filter.trim().toLowerCase()
@@ -88,36 +86,22 @@ export default function AbsencesSummaryTable({
         : r.studentName.toLowerCase().includes(trimmedFilter)
     )
     .slice()
-    .sort((a, b) => compareValues(a, b, sortKey, sortDir))
+    .sort((a, b) => compareValues(a, b, sort.sortBy, sort.sortDir))
 
-  const ariaSortFor = (key: SortKey): "ascending" | "descending" | "none" => {
-    if (key !== sortKey) return "none"
-    return sortDir === "asc" ? "ascending" : "descending"
-  }
-
-  const sortIndicator = (key: SortKey) => {
-    if (key !== sortKey) return null
-    return (
-      <span aria-hidden="true" className="ml-1">
-        {sortDir === "asc" ? "▲" : "▼"}
-      </span>
-    )
-  }
-  const handleFilterChange = useStableCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFilter(event.target.value)
-    }
+  const handleFilterChange = useStableCallback((query: string) =>
+    setFilter(query)
   )
   return (
     <div className="space-y-4">
       <div>
-        <input
-          type="text"
-          value={filter}
-          onChange={handleFilterChange}
+        <DebouncedSearchInput
+          onSearch={handleFilterChange}
           placeholder="Filter by student..."
-          aria-label="Filter by student"
-          className="w-full max-w-sm rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          ariaLabel="Filter by student"
+          clearAriaLabel="Clear student filter"
+          debounceMs={0}
+          containerClassName="relative max-w-sm"
+          inputClassName="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
         />
       </div>
 
@@ -126,12 +110,13 @@ export default function AbsencesSummaryTable({
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800">
               {COLUMNS.map((column) => (
-                <SummaryColumnHeader
+                <SortableTableHeader
                   key={column.key}
-                  column={column}
-                  ariaSort={ariaSortFor(column.key)}
-                  indicator={sortIndicator(column.key)}
-                  onSort={handleSort}
+                  label={column.label}
+                  sortKey={column.key}
+                  sort={sort}
+                  onSortChange={handleSort}
+                  align={column.align}
                 />
               ))}
             </tr>
@@ -159,38 +144,6 @@ export default function AbsencesSummaryTable({
         </table>
       </div>
     </div>
-  )
-}
-
-type SummaryColumn = (typeof COLUMNS)[number]
-
-function SummaryColumnHeader({
-  column,
-  ariaSort,
-  indicator,
-  onSort,
-}: {
-  column: SummaryColumn
-  ariaSort: "ascending" | "descending" | "none"
-  indicator: React.ReactNode
-  onSort: (key: SortKey) => void
-}) {
-  const handleSort = useStableCallback(() => onSort(column.key))
-  return (
-    <th
-      scope="col"
-      aria-sort={ariaSort}
-      className={`px-6 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50 ${column.align === "right" ? "text-right" : "text-left"}`}
-    >
-      <button
-        type="button"
-        onClick={handleSort}
-        className={`inline-flex items-center gap-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${column.align === "right" ? "justify-end" : "justify-start"} hover:text-blue-600 dark:hover:text-blue-400`}
-      >
-        <span>{column.label}</span>
-        {indicator}
-      </button>
-    </th>
   )
 }
 

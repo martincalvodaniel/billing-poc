@@ -1,12 +1,13 @@
 import type { Product } from "@/lib/domain/entities/product"
+import {
+  nextSortState as buildNextSortState,
+  type SortDirection,
+  type SortState,
+} from "@/lib/utils/sort-state"
 
 export type ProductSortKey = "name" | "finalPrice" | "stock"
-export type ProductSortDir = "asc" | "desc"
-
-export interface ProductSortState {
-  sortBy: ProductSortKey
-  sortDir: ProductSortDir
-}
+export type ProductSortDir = SortDirection
+export type ProductSortState = SortState<ProductSortKey>
 
 export const DEFAULT_PRODUCT_SORT: ProductSortState = {
   sortBy: "name",
@@ -17,17 +18,7 @@ export function nextProductSortState(
   current: ProductSortState,
   clicked: ProductSortKey
 ): ProductSortState {
-  if (current.sortBy === clicked) {
-    return {
-      sortBy: clicked,
-      sortDir: current.sortDir === "asc" ? "desc" : "asc",
-    }
-  }
-
-  return {
-    sortBy: clicked,
-    sortDir: clicked === "name" ? "asc" : "asc",
-  }
+  return buildNextSortState(current, clicked, "asc")
 }
 
 function compareNullableNumbers(

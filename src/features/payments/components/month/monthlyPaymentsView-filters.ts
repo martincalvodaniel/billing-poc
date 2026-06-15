@@ -1,4 +1,9 @@
 import type { Payment } from "@/lib/domain/entities/payment"
+import {
+  nextSortState as buildNextSortState,
+  type SortDirection,
+  type SortState,
+} from "@/lib/utils/sort-state"
 
 export type PaymentSortKey =
   | "day"
@@ -10,7 +15,7 @@ export type PaymentSortKey =
   | "net"
   | "invoices"
 
-export type PaymentSortDir = "asc" | "desc"
+export type PaymentSortDir = SortDirection
 
 export type PaymentTypeFilter = "all" | "income" | "outcome"
 
@@ -24,10 +29,7 @@ export interface PaymentFilters {
   tags: string[]
 }
 
-export interface PaymentSortState {
-  sortBy: PaymentSortKey
-  sortDir: PaymentSortDir
-}
+export type PaymentSortState = SortState<PaymentSortKey>
 
 export function toggleTypeFilter(
   current: PaymentTypeFilter,
@@ -193,11 +195,5 @@ export function nextSortState(
   current: PaymentSortState,
   clicked: PaymentSortKey
 ): PaymentSortState {
-  if (current.sortBy === clicked) {
-    return {
-      sortBy: clicked,
-      sortDir: current.sortDir === "asc" ? "desc" : "asc",
-    }
-  }
-  return { sortBy: clicked, sortDir: "desc" }
+  return buildNextSortState(current, clicked, "desc")
 }

@@ -36,6 +36,7 @@ src/lib/domain/services/      → Business logic (calculators, Zod validators, a
 ## Universal Rules
 - All code files must be written in English, including comments, variable names, and commit messages
 - TypeScript strict mode everywhere; no `any` without `unknown` guard
+- Before implementing UI or stateful behavior ad hoc, actively search for existing patterns in the codebase and prefer extracting or extending shared reusable components/utilities instead of duplicating similar functionality
 - Domain entities in `src/lib/domain/entities/`; Mongo persistence shapes
   (`Mongo*`, derived from the entities via `Omit`) live in `src/lib/db/types.ts`
   and are imported only by repository adapters in `src/lib/db/repositories/`
@@ -91,4 +92,3 @@ src/lib/domain/services/      → Business logic (calculators, Zod validators, a
 - Before planning or making changes under the `src/lib/db/repositories/` directory, always read `src/lib/db/repositories/AGENTS.md`.
 - Before planning or making changes under the `src/app/(dashboard)/month/` directory, always read `src/app/(dashboard)/month/AGENTS.md`.
 - If an `AGENTS.md` file exists in the parent directory of any modified file, explicitly load it into context.
-
