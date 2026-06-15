@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { type StepDirection, stepValue } from "./numberStepperInput-utils"
 
 interface NumberStepperInputProps {
@@ -16,6 +17,7 @@ interface NumberStepperInputProps {
   placeholder?: string
   inputMode?: "decimal" | "numeric"
   emptyStepBase?: number
+  endAdornment?: ReactNode
 }
 
 export default function NumberStepperInput({
@@ -32,6 +34,7 @@ export default function NumberStepperInput({
   placeholder,
   inputMode = "numeric",
   emptyStepBase,
+  endAdornment,
 }: NumberStepperInputProps) {
   const parsedValue = value === "" ? Number.NaN : Number(value)
   const decrementDisabled =
@@ -51,6 +54,8 @@ export default function NumberStepperInput({
 
   const buttonClass =
     "flex h-9 w-10 shrink-0 items-center justify-center bg-zinc-50 text-lg font-medium text-zinc-700 transition hover:bg-zinc-100 focus:z-10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+  const inputClassName =
+    "h-9 min-w-0 flex-1 appearance-none bg-white px-1 text-center text-sm text-zinc-900 focus:outline-none disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-100"
 
   return (
     <div className="flex min-w-0 overflow-hidden rounded-md border border-zinc-300 bg-white shadow-sm focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">
@@ -63,22 +68,29 @@ export default function NumberStepperInput({
       >
         <span aria-hidden="true">−</span>
       </button>
-      <input
-        id={id}
-        name={name}
-        type="number"
-        inputMode={inputMode}
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={handleChange}
-        disabled={disabled}
-        required={required}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        className="h-9 min-w-0 flex-1 appearance-none bg-white px-1 text-center text-sm text-zinc-900 focus:outline-none disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-100"
-      />
+      <div className="relative min-w-0 flex-1">
+        <input
+          id={id}
+          name={name}
+          type="number"
+          inputMode={inputMode}
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          required={required}
+          placeholder={placeholder}
+          aria-label={ariaLabel}
+          className={inputClassName}
+        />
+        {endAdornment ? (
+          <div className="absolute inset-y-0 right-1 flex items-start pt-1">
+            {endAdornment}
+          </div>
+        ) : null}
+      </div>
       <button
         type="button"
         onClick={handleIncrement}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useId, useState } from "react"
+import ClearButton from "@/components/ui/ClearButton"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import NumberStepperInput from "@/components/ui/NumberStepperInput"
 import type { Product, ProductFormData } from "@/lib/domain/entities/product"
@@ -55,6 +56,10 @@ export default function ProductForm({
     (value: string) => handleChange("stock", value),
     [handleChange]
   )
+
+  const handleClearStock = useCallback(() => {
+    handleStockChange("")
+  }, [handleStockChange])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -139,7 +144,7 @@ export default function ProductForm({
             value={formData.finalPrice}
             onValueChange={handleFinalPriceChange}
             ariaLabel="Final price"
-            step={0.5}
+            step={5}
             inputMode="decimal"
             min={0}
             emptyStepBase={0}
@@ -168,6 +173,16 @@ export default function ProductForm({
             inputMode="numeric"
             emptyStepBase={0}
             disabled={isSubmitting}
+            endAdornment={
+              formData.stock != null && formData.stock !== "" ? (
+                <ClearButton
+                  onClick={handleClearStock}
+                  ariaLabel="Clear current stock"
+                  disabled={isSubmitting}
+                  className="top-1 right-1"
+                />
+              ) : null
+            }
           />
         </div>
       </div>
