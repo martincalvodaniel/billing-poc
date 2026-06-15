@@ -81,7 +81,7 @@ export default function ProductTableRow({
             : "text-zinc-700 dark:text-zinc-300"
         }`}
       >
-        {product.stock != null ? product.stock : "No stock"}
+        {product.stock != null ? product.stock : "-"}
       </td>
       <td className="px-4 py-4">
         <div className="flex items-center justify-end gap-2">

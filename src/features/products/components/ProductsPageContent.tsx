@@ -18,6 +18,13 @@ import ProductFormModal from "./ProductFormModal"
 import ProductsSaleActions from "./ProductsSaleActions"
 import ProductsSearch from "./ProductsSearch"
 import ProductsTable from "./ProductsTable"
+import {
+  DEFAULT_PRODUCT_SORT,
+  nextProductSortState,
+  type ProductSortKey,
+  type ProductSortState,
+  sortProducts,
+} from "./product-sort-utils"
 import { extractProductApiError } from "./product-utils"
 import {
   buildSalePaymentFormData,
@@ -39,10 +46,17 @@ export default function ProductsPageContent() {
     Record<string, Product>
   >({})
   const [saleTag, setSaleTag] = useState<SalePaymentTag | null>(null)
+  const [sortState, setSortState] =
+    useState<ProductSortState>(DEFAULT_PRODUCT_SORT)
   const [deletingProductId, setDeletingProductId] = useState<string | null>(
     null
   )
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const sortedProducts = useMemo(
+    () => sortProducts(products, sortState),
+    [products, sortState]
+  )
 
   const selectedProducts = useMemo(
     () =>
@@ -89,6 +103,10 @@ export default function ProductsPageContent() {
     setSaleTag(null)
     setShowCreateModal(true)
   }
+
+  const handleSortChange = useCallback((sortKey: ProductSortKey) => {
+    setSortState((current) => nextProductSortState(current, sortKey))
+  }, [])
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query)
@@ -214,8 +232,10 @@ export default function ProductsPageContent() {
           </div>
         ) : (
           <ProductsTable
-            products={products}
+            products={sortedProducts}
             selectedProductIds={selectedProductIds}
+            sortState={sortState}
+            onSortChange={handleSortChange}
             onToggleSelected={toggleSelectedProduct}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
