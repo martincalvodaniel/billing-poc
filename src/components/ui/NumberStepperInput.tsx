@@ -68,7 +68,7 @@ export default function NumberStepperInput({
       >
         <span aria-hidden="true">−</span>
       </button>
-      <div className="relative min-w-0 flex-1">
+      <div className="relative flex min-w-0 flex-1">
         <input
           id={id}
           name={name}
@@ -83,7 +83,7 @@ export default function NumberStepperInput({
           required={required}
           placeholder={placeholder}
           aria-label={ariaLabel}
-          className={inputClassName}
+          className={`${inputClassName} w-full`}
         />
         {endAdornment ? (
           <div className="absolute inset-y-0 right-1 flex items-start pt-1">
