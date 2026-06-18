@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import {
+  buildWordPressCouponsUrl,
+  buildWordPressCouponUrl,
   buildWordPressOrderStatusPayload,
   buildWordPressOrdersUrl,
   buildWordPressOrderUrl,
@@ -11,7 +13,29 @@ import {
 describe("buildWordPressOrdersUrl", () => {
   it("builds the WooCommerce orders page URL", () => {
     expect(buildWordPressOrdersUrl("https://example.com/wp-json/", 3)).toBe(
-      "https://example.com/wp-json/wc/v3/orders?page=3"
+      "https://example.com/wp-json/wc/v3/orders?page=3&per_page=5"
+    )
+  })
+})
+
+describe("buildWordPressCouponsUrl", () => {
+  it("builds the paginated WooCommerce coupons URL", () => {
+    expect(buildWordPressCouponsUrl("https://example.com/wp-json/", 2)).toBe(
+      "https://example.com/wp-json/wc/v3/coupons?page=2&per_page=5"
+    )
+  })
+
+  it("builds the coupons collection URL", () => {
+    expect(buildWordPressCouponsUrl("https://example.com/wp-json/")).toBe(
+      "https://example.com/wp-json/wc/v3/coupons"
+    )
+  })
+})
+
+describe("buildWordPressCouponUrl", () => {
+  it("builds the WooCommerce single coupon URL", () => {
+    expect(buildWordPressCouponUrl("https://example.com/wp-json/", 4688)).toBe(
+      "https://example.com/wp-json/wc/v3/coupons/4688"
     )
   })
 })

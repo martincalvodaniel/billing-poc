@@ -5,10 +5,22 @@ export const wordpressOrdersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
 })
 
+export const wordpressCouponsQuerySchema = wordpressOrdersQuerySchema
+
 export const wordpressOrderParamsSchema = z.object({
   orderId: z.coerce.number().int().min(1),
 })
 
+export const wordpressCouponParamsSchema = z.object({
+  couponId: z.coerce.number().int().min(1),
+})
+
 export const updateWordpressOrderStatusSchema = z.object({
   status: z.enum(WORDPRESS_ORDER_STATUSES),
+})
+
+export const createWordpressCouponSchema = z.object({
+  description: z.string().trim().email(),
+  amount: z.coerce.number().positive(),
+  dateExpires: z.iso.date(),
 })

@@ -1,8 +1,15 @@
-import type { WordPressOrdersPagination } from "@/lib/domain/entities/wordpress-order"
+interface WordpressPaginationData {
+  page: number
+  totalPages: number
+  total: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
 
 interface WordpressPaginationProps {
-  pagination: WordPressOrdersPagination | undefined
+  pagination: WordpressPaginationData | undefined
   isLoading: boolean
+  itemLabel?: string
   onPrevious: () => void
   onNext: () => void
 }
@@ -10,6 +17,7 @@ interface WordpressPaginationProps {
 export function WordpressPagination({
   pagination,
   isLoading,
+  itemLabel = "orders",
   onPrevious,
   onNext,
 }: WordpressPaginationProps) {
@@ -26,7 +34,7 @@ export function WordpressPagination({
 
       <p className="text-sm text-zinc-700 dark:text-zinc-300">
         {pagination
-          ? `Showing page ${pagination.page} of ${pagination.totalPages} (${pagination.total} orders)`
+          ? `Showing page ${pagination.page} of ${pagination.totalPages} (${pagination.total} ${itemLabel})`
           : "-"}
       </p>
 

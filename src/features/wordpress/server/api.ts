@@ -1,10 +1,16 @@
 import { z } from "zod"
 import type {
+  CreateWordPressCouponInput,
+  WordPressCoupon,
+  WordPressCouponsResponse,
+} from "@/lib/domain/entities/wordpress-coupon"
+import type {
   WordPressBilling,
   WordPressOrder,
   WordPressOrderStatus,
   WordPressOrdersResponse,
 } from "@/lib/domain/entities/wordpress-order"
+import { buildWordPressCouponPayload } from "@/lib/domain/services/wordpress-coupon"
 
 const stringLikeSchema = z
   .union([z.string(), z.number(), z.null(), z.undefined()])
@@ -104,6 +110,22 @@ const rawOrderSchema = z.object({
 
 const rawOrdersSchema = z.array(rawOrderSchema)
 
+const rawCouponSchema = z.object({
+  id: z.coerce.number().int(),
+  code: stringLikeSchema,
+  amount: stringLikeSchema,
+  status: stringLikeSchema,
+  description: stringLikeSchema,
+  date_expires_gmt: stringLikeSchema,
+  usage_count: z.coerce.number().int(),
+  usage_limit: z.coerce.number().int(),
+  used_by: z.array(stringLikeSchema).default([]),
+})
+
+const rawCouponsSchema = z.array(rawCouponSchema)
+
+const WORDPRESS_PAGE_SIZE = 5
+
 export class WordPressApiError extends Error {
   status: number
 
@@ -137,7 +159,10 @@ export function buildWordPressOrdersUrl(
   page: number
 ): string {
   const normalizedEndpoint = endpoint.replace(/\/$/, "")
-  const params = new URLSearchParams({ page: String(page) })
+  const params = new URLSearchParams({
+    page: String(page),
+    per_page: String(WORDPRESS_PAGE_SIZE),
+  })
   return `${normalizedEndpoint}/wc/v3/orders?${params.toString()}`
 }
 
@@ -147,6 +172,28 @@ export function buildWordPressOrderUrl(
 ): string {
   const normalizedEndpoint = endpoint.replace(/\/$/, "")
   return `${normalizedEndpoint}/wc/v3/orders/${orderId}`
+}
+
+export function buildWordPressCouponsUrl(
+  endpoint: string,
+  page?: number
+): string {
+  const normalizedEndpoint = endpoint.replace(/\/$/, "")
+  if (page === undefined) {
+    return `${normalizedEndpoint}/wc/v3/coupons`
+  }
+  const params = new URLSearchParams({
+    page: String(page),
+    per_page: String(WORDPRESS_PAGE_SIZE),
+  })
+  return `${normalizedEndpoint}/wc/v3/coupons?${params.toString()}`
+}
+
+export function buildWordPressCouponUrl(
+  endpoint: string,
+  couponId: number
+): string {
+  return `${buildWordPressCouponsUrl(endpoint)}/${couponId}`
 }
 
 export function buildWordPressOrderStatusPayload(
@@ -211,12 +258,61 @@ function projectOrder(order: z.infer<typeof rawOrderSchema>): WordPressOrder {
   }
 }
 
+function projectCoupon(
+  coupon: z.infer<typeof rawCouponSchema>
+): WordPressCoupon {
+  return {
+    id: coupon.id,
+    code: coupon.code,
+    amount: coupon.amount,
+    status: coupon.status,
+    description: coupon.description,
+    date_expires_gmt: coupon.date_expires_gmt,
+    usage_count: coupon.usage_count,
+    usage_limit: coupon.usage_limit,
+    used_by: coupon.used_by,
+  }
+}
+
+function getWordPressCredentials() {
+  return {
+    endpoint: getRequiredWordPressEnv("WORDPRESS_ENDPOINT"),
+    user: getRequiredWordPressEnv("WORDPRESS_USER"),
+    password: getRequiredWordPressEnv("WORDPRESS_PASSWORD"),
+  }
+}
+
+function getWordPressPagination(
+  response: Response,
+  page: number,
+  fallbackTotal: number
+) {
+  const headerTotalPages = Number(
+    response.headers.get("x-wp-totalpages") ?? "0"
+  )
+  const headerTotal = Number(response.headers.get("x-wp-total") ?? "0")
+  const totalPages =
+    Number.isFinite(headerTotalPages) && headerTotalPages > 0
+      ? headerTotalPages
+      : 1
+  const total =
+    Number.isFinite(headerTotal) && headerTotal >= 0
+      ? headerTotal
+      : fallbackTotal
+
+  return {
+    page,
+    total,
+    totalPages,
+    hasPrevPage: page > 1,
+    hasNextPage: page < totalPages,
+  }
+}
+
 export async function fetchWordPressOrdersPage(
   page: number
 ): Promise<WordPressOrdersResponse> {
-  const endpoint = getRequiredWordPressEnv("WORDPRESS_ENDPOINT")
-  const user = getRequiredWordPressEnv("WORDPRESS_USER")
-  const password = getRequiredWordPressEnv("WORDPRESS_PASSWORD")
+  const { endpoint, user, password } = getWordPressCredentials()
 
   const response = await fetch(buildWordPressOrdersUrl(endpoint, page), {
     method: "GET",
@@ -246,38 +342,120 @@ export async function fetchWordPressOrdersPage(
     )
   }
 
-  const headerTotalPages = Number(
-    response.headers.get("x-wp-totalpages") ?? "0"
-  )
-  const headerTotal = Number(response.headers.get("x-wp-total") ?? "0")
-  const totalPages =
-    Number.isFinite(headerTotalPages) && headerTotalPages > 0
-      ? headerTotalPages
-      : 1
-  const total =
-    Number.isFinite(headerTotal) && headerTotal >= 0
-      ? headerTotal
-      : parsed.data.length
-
   return {
     items: parsed.data.map(projectOrder),
-    pagination: {
-      page,
-      total,
-      totalPages,
-      hasPrevPage: page > 1,
-      hasNextPage: page < totalPages,
-    },
+    pagination: getWordPressPagination(response, page, parsed.data.length),
   }
+}
+
+export async function fetchWordPressCouponsPage(
+  page: number
+): Promise<WordPressCouponsResponse> {
+  const { endpoint, user, password } = getWordPressCredentials()
+  const response = await fetch(buildWordPressCouponsUrl(endpoint, page), {
+    method: "GET",
+    headers: {
+      Authorization: buildWordPressBasicAuthHeader(user, password),
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => "")
+    const suffix = bodyText.length > 0 ? `: ${bodyText}` : ""
+    throw new WordPressApiError(
+      `WordPress coupons request failed with status ${response.status}${suffix}`,
+      response.status
+    )
+  }
+
+  const rawData = await response.json()
+  const parsed = rawCouponsSchema.safeParse(rawData)
+  if (!parsed.success) {
+    throw new WordPressApiError(
+      "WordPress coupons payload validation failed",
+      502
+    )
+  }
+
+  return {
+    items: parsed.data.map(projectCoupon),
+    pagination: getWordPressPagination(response, page, parsed.data.length),
+  }
+}
+
+export async function createWordPressCoupon(
+  input: CreateWordPressCouponInput
+): Promise<WordPressCoupon> {
+  const { endpoint, user, password } = getWordPressCredentials()
+  const response = await fetch(buildWordPressCouponsUrl(endpoint), {
+    method: "POST",
+    headers: {
+      Authorization: buildWordPressBasicAuthHeader(user, password),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(buildWordPressCouponPayload(input)),
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => "")
+    const suffix = bodyText.length > 0 ? `: ${bodyText}` : ""
+    throw new WordPressApiError(
+      `WordPress coupon creation failed with status ${response.status}${suffix}`,
+      response.status
+    )
+  }
+
+  const parsed = rawCouponSchema.safeParse(await response.json())
+  if (!parsed.success) {
+    throw new WordPressApiError(
+      "WordPress coupon creation payload validation failed",
+      502
+    )
+  }
+  return projectCoupon(parsed.data)
+}
+
+export async function deleteWordPressCoupon(
+  couponId: number
+): Promise<WordPressCoupon> {
+  const { endpoint, user, password } = getWordPressCredentials()
+  const response = await fetch(buildWordPressCouponUrl(endpoint, couponId), {
+    method: "DELETE",
+    headers: {
+      Authorization: buildWordPressBasicAuthHeader(user, password),
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => "")
+    const suffix = bodyText.length > 0 ? `: ${bodyText}` : ""
+    throw new WordPressApiError(
+      `WordPress coupon deletion failed with status ${response.status}${suffix}`,
+      response.status
+    )
+  }
+
+  const parsed = rawCouponSchema.safeParse(await response.json())
+  if (!parsed.success) {
+    throw new WordPressApiError(
+      "WordPress coupon deletion payload validation failed",
+      502
+    )
+  }
+  return projectCoupon(parsed.data)
 }
 
 export async function updateWordPressOrderStatus(
   orderId: number,
   status: WordPressOrderStatus
 ): Promise<WordPressOrder> {
-  const endpoint = getRequiredWordPressEnv("WORDPRESS_ENDPOINT")
-  const user = getRequiredWordPressEnv("WORDPRESS_USER")
-  const password = getRequiredWordPressEnv("WORDPRESS_PASSWORD")
+  const { endpoint, user, password } = getWordPressCredentials()
 
   const response = await fetch(buildWordPressOrderUrl(endpoint, orderId), {
     method: "PUT",

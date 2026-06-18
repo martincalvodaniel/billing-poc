@@ -1,0 +1,177 @@
+import { Badge } from "@/components/ui/Badge"
+import { IconButton } from "@/components/ui/IconButton"
+import { TrashIcon } from "@/components/ui/icons/TrashIcon"
+import { useStableCallback } from "@/hooks/useStableCallback"
+import type { WordPressCoupon } from "@/lib/domain/entities/wordpress-coupon"
+import {
+  formatCouponExpiry,
+  getCouponStatusTone,
+} from "./wordpress-coupon-utils"
+import { formatAmount } from "./wordpress-view-utils"
+
+interface WordpressCouponsTableProps {
+  coupons: WordPressCoupon[]
+  onDelete: (coupon: WordPressCoupon) => void
+}
+
+export function WordpressCouponsTable({
+  coupons,
+  onDelete,
+}: WordpressCouponsTableProps) {
+  const handleDelete = useStableCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const couponId =
+        event.currentTarget.querySelector<HTMLElement>("[data-coupon-id]")
+          ?.dataset.couponId
+      const coupon = coupons.find((item) => String(item.id) === couponId)
+      if (coupon) onDelete(coupon)
+    }
+  )
+  return (
+    <>
+      <div className="space-y-3 md:hidden">
+        {coupons.map((coupon) => (
+          <article
+            key={coupon.id}
+            className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  {coupon.code}
+                </p>
+                <Badge tone={getCouponStatusTone(coupon.status)} size="sm">
+                  {coupon.status}
+                </Badge>
+              </div>
+              <IconButton
+                onClick={handleDelete}
+                ariaLabel={`Delete coupon ${coupon.code}`}
+                title="Delete coupon"
+                variant="danger"
+              >
+                <span data-coupon-id={coupon.id} className="contents">
+                  <TrashIcon />
+                </span>
+              </IconButton>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+              <div>
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Amount
+                </dt>
+                <dd className="text-zinc-900 dark:text-zinc-100">
+                  {formatAmount(coupon.amount)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Usage
+                </dt>
+                <dd className="text-zinc-900 dark:text-zinc-100">
+                  {coupon.usage_count}/{coupon.usage_limit || "∞"}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Description
+                </dt>
+                <dd className="break-all text-zinc-900 dark:text-zinc-100">
+                  {coupon.description || "-"}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Date expires
+                </dt>
+                <dd className="text-zinc-900 dark:text-zinc-100">
+                  {formatCouponExpiry(coupon.date_expires_gmt)}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Used by
+                </dt>
+                <dd className="break-all text-zinc-900 dark:text-zinc-100">
+                  {coupon.used_by.join(", ") || "-"}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700 md:block">
+        <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+          <thead className="bg-zinc-50 dark:bg-zinc-800/60">
+            <tr>
+              {[
+                "Code",
+                "Amount",
+                "Status",
+                "Description",
+                "Date expires",
+                "Usage",
+                "Used by",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300"
+                >
+                  {heading}
+                </th>
+              ))}
+              <th className="px-4 py-3">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-700 dark:bg-zinc-900">
+            {coupons.map((coupon) => (
+              <tr
+                key={coupon.id}
+                className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+              >
+                <td className="px-4 py-3 font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  {coupon.code}
+                </td>
+                <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
+                  {formatAmount(coupon.amount)}
+                </td>
+                <td className="px-4 py-3">
+                  <Badge tone={getCouponStatusTone(coupon.status)} size="sm">
+                    {coupon.status}
+                  </Badge>
+                </td>
+                <td className="max-w-56 break-all px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
+                  {coupon.description || "-"}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
+                  {formatCouponExpiry(coupon.date_expires_gmt)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
+                  {coupon.usage_count}/{coupon.usage_limit || "∞"}
+                </td>
+                <td className="max-w-56 break-all px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
+                  {coupon.used_by.join(", ") || "-"}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <IconButton
+                    onClick={handleDelete}
+                    ariaLabel={`Delete coupon ${coupon.code}`}
+                    title="Delete coupon"
+                    variant="danger"
+                  >
+                    <span data-coupon-id={coupon.id} className="contents">
+                      <TrashIcon />
+                    </span>
+                  </IconButton>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}

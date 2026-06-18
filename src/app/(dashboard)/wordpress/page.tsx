@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/EmptyState"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import Toast from "@/components/ui/Toast"
 import { WordpressBillingClientModal } from "@/features/wordpress/components/WordpressBillingClientModal"
+import { WordpressCouponsSection } from "@/features/wordpress/components/WordpressCouponsSection"
 import { WordpressOrderDetailsModal } from "@/features/wordpress/components/WordpressOrderDetailsModal"
 import { WordpressOrderStatusModal } from "@/features/wordpress/components/WordpressOrderStatusModal"
 import { WordpressOrdersHeader } from "@/features/wordpress/components/WordpressOrdersHeader"
@@ -135,6 +136,8 @@ export default function WordpressPage() {
           onNext={showNextPage}
         />
       </section>
+
+      <WordpressCouponsSection onConfirmed={setToastMessage} />
 
       <WordpressOrderDetailsModal
         order={selectedOrder}
