@@ -15,6 +15,10 @@ export const wordpressCouponParamsSchema = z.object({
   couponId: z.coerce.number().int().min(1),
 })
 
+export const wordpressCouponPdfQuerySchema = z.object({
+  expires: z.iso.date(),
+})
+
 export const updateWordpressOrderStatusSchema = z.object({
   status: z.enum(WORDPRESS_ORDER_STATUSES),
 })

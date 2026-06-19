@@ -9,6 +9,7 @@ import type {
   Payment,
 } from "@/lib/domain/entities/payment"
 import { generateInvoicePdf, parseInvoiceId } from "@/lib/pdf/generate"
+import { buildInlinePdfResponse } from "@/lib/pdf/http"
 import { REGULAR_INVOICE_TYPES } from "@/schemas/invoice-validator"
 
 /**
@@ -50,10 +51,5 @@ export async function buildInvoicePdfResponse(
     company,
   })
 
-  return new NextResponse(new Uint8Array(pdf), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${filename}"`,
-    },
-  })
+  return buildInlinePdfResponse(new Uint8Array(pdf), filename)
 }

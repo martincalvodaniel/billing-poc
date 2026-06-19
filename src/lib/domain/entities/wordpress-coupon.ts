@@ -1,3 +1,5 @@
+export const WORDPRESS_COUPON_VAT_RATE = 0.21
+
 export interface WordPressCoupon {
   id: number
   code: string

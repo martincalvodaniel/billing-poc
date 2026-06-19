@@ -1,13 +1,17 @@
 import { Badge } from "@/components/ui/Badge"
 import { IconButton } from "@/components/ui/IconButton"
+import { getIconButtonClass } from "@/components/ui/iconButton-utils"
+import { DocumentIcon } from "@/components/ui/icons/DocumentIcon"
 import { TrashIcon } from "@/components/ui/icons/TrashIcon"
 import { useStableCallback } from "@/hooks/useStableCallback"
 import type { WordPressCoupon } from "@/lib/domain/entities/wordpress-coupon"
 import {
+  buildWordpressCouponPdfUrl,
   formatCouponExpiry,
+  formatCouponFinalAmount,
+  getCouponLocalExpiryDate,
   getCouponStatusTone,
 } from "./wordpress-coupon-utils"
-import { formatAmount } from "./wordpress-view-utils"
 
 interface WordpressCouponsTableProps {
   coupons: WordPressCoupon[]
@@ -44,24 +48,39 @@ export function WordpressCouponsTable({
                   {coupon.status}
                 </Badge>
               </div>
-              <IconButton
-                onClick={handleDelete}
-                ariaLabel={`Delete coupon ${coupon.code}`}
-                title="Delete coupon"
-                variant="danger"
-              >
-                <span data-coupon-id={coupon.id} className="contents">
-                  <TrashIcon />
-                </span>
-              </IconButton>
+              <div className="flex items-center gap-1">
+                <a
+                  href={buildWordpressCouponPdfUrl(
+                    coupon.id,
+                    getCouponLocalExpiryDate(coupon.date_expires_gmt)
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Open gift card PDF for coupon ${coupon.code}`}
+                  title="Open gift card PDF"
+                  className={getIconButtonClass("info", "sm")}
+                >
+                  <DocumentIcon />
+                </a>
+                <IconButton
+                  onClick={handleDelete}
+                  ariaLabel={`Delete coupon ${coupon.code}`}
+                  title="Delete coupon"
+                  variant="danger"
+                >
+                  <span data-coupon-id={coupon.id} className="contents">
+                    <TrashIcon />
+                  </span>
+                </IconButton>
+              </div>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
               <div>
                 <dt className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Amount
+                  Final price
                 </dt>
                 <dd className="text-zinc-900 dark:text-zinc-100">
-                  {formatAmount(coupon.amount)}
+                  {formatCouponFinalAmount(coupon.amount)}
                 </dd>
               </div>
               <div>
@@ -107,7 +126,7 @@ export function WordpressCouponsTable({
             <tr>
               {[
                 "Code",
-                "Amount",
+                "Final price",
                 "Status",
                 "Description",
                 "Date expires",
@@ -136,7 +155,7 @@ export function WordpressCouponsTable({
                   {coupon.code}
                 </td>
                 <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
-                  {formatAmount(coupon.amount)}
+                  {formatCouponFinalAmount(coupon.amount)}
                 </td>
                 <td className="px-4 py-3">
                   <Badge tone={getCouponStatusTone(coupon.status)} size="sm">
@@ -155,17 +174,32 @@ export function WordpressCouponsTable({
                 <td className="max-w-56 break-all px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">
                   {coupon.used_by.join(", ") || "-"}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <IconButton
-                    onClick={handleDelete}
-                    ariaLabel={`Delete coupon ${coupon.code}`}
-                    title="Delete coupon"
-                    variant="danger"
-                  >
-                    <span data-coupon-id={coupon.id} className="contents">
-                      <TrashIcon />
-                    </span>
-                  </IconButton>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <a
+                      href={buildWordpressCouponPdfUrl(
+                        coupon.id,
+                        getCouponLocalExpiryDate(coupon.date_expires_gmt)
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Open gift card PDF for coupon ${coupon.code}`}
+                      title="Open gift card PDF"
+                      className={getIconButtonClass("info", "sm")}
+                    >
+                      <DocumentIcon />
+                    </a>
+                    <IconButton
+                      onClick={handleDelete}
+                      ariaLabel={`Delete coupon ${coupon.code}`}
+                      title="Delete coupon"
+                      variant="danger"
+                    >
+                      <span data-coupon-id={coupon.id} className="contents">
+                        <TrashIcon />
+                      </span>
+                    </IconButton>
+                  </div>
                 </td>
               </tr>
             ))}

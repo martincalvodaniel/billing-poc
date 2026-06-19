@@ -385,6 +385,38 @@ export async function fetchWordPressCouponsPage(
   }
 }
 
+export async function fetchWordPressCoupon(
+  couponId: number
+): Promise<WordPressCoupon> {
+  const { endpoint, user, password } = getWordPressCredentials()
+  const response = await fetch(buildWordPressCouponUrl(endpoint, couponId), {
+    method: "GET",
+    headers: {
+      Authorization: buildWordPressBasicAuthHeader(user, password),
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => "")
+    const suffix = bodyText.length > 0 ? `: ${bodyText}` : ""
+    throw new WordPressApiError(
+      `WordPress coupon request failed with status ${response.status}${suffix}`,
+      response.status
+    )
+  }
+
+  const parsed = rawCouponSchema.safeParse(await response.json())
+  if (!parsed.success) {
+    throw new WordPressApiError(
+      "WordPress coupon payload validation failed",
+      502
+    )
+  }
+  return projectCoupon(parsed.data)
+}
+
 export async function createWordPressCoupon(
   input: CreateWordPressCouponInput
 ): Promise<WordPressCoupon> {

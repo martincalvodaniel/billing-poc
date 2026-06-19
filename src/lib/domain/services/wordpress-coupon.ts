@@ -1,10 +1,12 @@
 import { randomInt } from "node:crypto"
-import type { CreateWordPressCouponInput } from "../entities/wordpress-coupon"
+import {
+  type CreateWordPressCouponInput,
+  WORDPRESS_COUPON_VAT_RATE,
+} from "../entities/wordpress-coupon"
 
 const COUPON_CODE_CHARACTERS =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const COUPON_CODE_LENGTH = 8
-const VAT_MULTIPLIER = 1.21
 const NET_AMOUNT_DECIMAL_PLACES = 13
 
 export interface WordPressCouponPayload {
@@ -26,7 +28,7 @@ export function generateWordPressCouponCode(): string {
 export function calculateWordPressCouponNetAmount(
   taxInclusiveAmount: number
 ): string {
-  return (taxInclusiveAmount / VAT_MULTIPLIER)
+  return (taxInclusiveAmount / (1 + WORDPRESS_COUPON_VAT_RATE))
     .toFixed(NET_AMOUNT_DECIMAL_PLACES)
     .replace(/\.?0+$/, "")
 }
