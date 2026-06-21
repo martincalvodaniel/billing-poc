@@ -51,6 +51,9 @@ export default function NumberStepperInput({
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onValueChange(event.target.value)
   }
+  const handleWheel = (event: React.WheelEvent<HTMLInputElement>) => {
+    event.currentTarget.blur()
+  }
 
   const buttonClass =
     "flex h-9 w-10 shrink-0 items-center justify-center bg-zinc-50 text-lg font-medium text-zinc-700 transition hover:bg-zinc-100 focus:z-10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -79,6 +82,7 @@ export default function NumberStepperInput({
           step="any"
           value={value}
           onChange={handleChange}
+          onWheel={handleWheel}
           disabled={disabled}
           required={required}
           placeholder={placeholder}
