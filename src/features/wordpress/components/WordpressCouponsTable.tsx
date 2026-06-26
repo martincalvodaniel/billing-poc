@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/Badge"
 import { IconButton } from "@/components/ui/IconButton"
-import { getIconButtonClass } from "@/components/ui/iconButton-utils"
+import { IconLink } from "@/components/ui/IconLink"
 import { DocumentIcon } from "@/components/ui/icons/DocumentIcon"
 import { TrashIcon } from "@/components/ui/icons/TrashIcon"
 import PaymentFormModal from "@/features/payments/components/PaymentFormModal"
@@ -89,19 +89,19 @@ export function WordpressCouponsTable({
               </div>
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1">
-                  <a
+                  <IconLink
                     href={buildWordpressCouponPdfUrl(
                       coupon.id,
                       getCouponLocalExpiryDate(coupon.date_expires_gmt)
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`Open gift card PDF for coupon ${coupon.code}`}
+                    ariaLabel={`Open gift card PDF for coupon ${coupon.code}`}
                     title="Open gift card PDF"
-                    className={getIconButtonClass("info", "sm")}
+                    variant="info"
                   >
                     <DocumentIcon />
-                  </a>
+                  </IconLink>
                   <IconButton
                     onClick={handleDelete}
                     ariaLabel={`Delete coupon ${coupon.code}`}
@@ -224,19 +224,19 @@ export function WordpressCouponsTable({
                 <td className="px-4 py-3">
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center justify-end gap-1">
-                      <a
+                      <IconLink
                         href={buildWordpressCouponPdfUrl(
                           coupon.id,
                           getCouponLocalExpiryDate(coupon.date_expires_gmt)
                         )}
                         target="_blank"
                         rel="noopener noreferrer"
-                        aria-label={`Open gift card PDF for coupon ${coupon.code}`}
+                        ariaLabel={`Open gift card PDF for coupon ${coupon.code}`}
                         title="Open gift card PDF"
-                        className={getIconButtonClass("info", "sm")}
+                        variant="info"
                       >
                         <DocumentIcon />
-                      </a>
+                      </IconLink>
                       <IconButton
                         onClick={handleDelete}
                         ariaLabel={`Delete coupon ${coupon.code}`}
