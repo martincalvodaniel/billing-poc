@@ -76,7 +76,7 @@ export const usePaymentForm = (
   const addConcept = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
-      concepts: [...prev.concepts, { name: "", amount: 0, quantity: 1 }],
+      concepts: [{ name: "", amount: 0, quantity: 1 }, ...prev.concepts],
     }))
   }, [])
 
