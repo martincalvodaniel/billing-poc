@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useId, useState } from "react"
+import ClientSelector from "@/components/shared/ClientSelector"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import { Modal } from "@/components/ui/Modal"
 import NumberStepperInput from "@/components/ui/NumberStepperInput"
 import RequiredAsterisk from "@/components/ui/RequiredAsterisk"
 import { useCreateWordpressCoupon } from "@/features/wordpress/hooks/useWordpressCouponMutations"
 import { useStableCallback } from "@/hooks/useStableCallback"
+import type { Client } from "@/lib/domain/entities/client"
 import { getDefaultCouponExpiryDate } from "./wordpress-coupon-utils"
 import { extractApiError } from "./wordpress-view-utils"
 
@@ -21,7 +23,15 @@ export function WordpressCouponCreateModal({
   onClose,
   onCreated,
 }: WordpressCouponCreateModalProps) {
+  function buildClientDescription(client: Client) {
+    return [client.email?.trim(), client.phone?.trim()]
+      .filter((value) => Boolean(value))
+      .join(" - ")
+  }
   const id = useId()
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(
+    undefined
+  )
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
   const [dateExpires, setDateExpires] = useState(() =>
@@ -31,6 +41,7 @@ export function WordpressCouponCreateModal({
 
   useEffect(() => {
     if (!isOpen) return
+    setSelectedClientId(undefined)
     setDescription("")
     setAmount("")
     setDateExpires(getDefaultCouponExpiryDate())
@@ -42,6 +53,13 @@ export function WordpressCouponCreateModal({
   })
   const handleAmountChange = useStableCallback((value: string) => {
     setAmount(value)
+  })
+  const handleClientChange = useStableCallback((clientId?: string) => {
+    setSelectedClientId(clientId)
+  })
+  const handleSelectClient = useStableCallback((client: Client | null) => {
+    if (!client) return
+    setDescription(buildClientDescription(client))
   })
   const handleDescriptionChange = useStableCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,16 +103,25 @@ export function WordpressCouponCreateModal({
         ) : null}
 
         <div>
+          <ClientSelector
+            value={selectedClientId}
+            onChange={handleClientChange}
+            onSelectClient={handleSelectClient}
+            label="Client (optional)"
+          />
+        </div>
+
+        <div>
           <label
             htmlFor={`${id}-description`}
             className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
           >
-            Description (user email)
+            Description
             <RequiredAsterisk />
           </label>
           <input
             id={`${id}-description`}
-            type="email"
+            type="text"
             value={description}
             onChange={handleDescriptionChange}
             disabled={isMutating}

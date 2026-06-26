@@ -24,7 +24,7 @@ export const updateWordpressOrderStatusSchema = z.object({
 })
 
 export const createWordpressCouponSchema = z.object({
-  description: z.string().trim().email(),
+  description: z.string().trim().min(1),
   amount: z.coerce.number().positive(),
   dateExpires: z.iso.date(),
 })
