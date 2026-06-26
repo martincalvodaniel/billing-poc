@@ -56,6 +56,9 @@ export function WordpressCouponsSection({
     setPage(1)
     onConfirmed(message)
   })
+  const handlePaymentSaved = useStableCallback((coupon: WordPressCoupon) => {
+    onConfirmed(`Payment created for coupon ${coupon.code}`)
+  })
   const handleDelete = useStableCallback(async () => {
     if (!couponToDelete) return
     try {
@@ -96,7 +99,11 @@ export function WordpressCouponsSection({
       ) : coupons.length === 0 ? (
         <EmptyState variant="card">No coupons found for this page.</EmptyState>
       ) : (
-        <WordpressCouponsTable coupons={coupons} onDelete={setCouponToDelete} />
+        <WordpressCouponsTable
+          coupons={coupons}
+          onDelete={setCouponToDelete}
+          onPaymentSaved={handlePaymentSaved}
+        />
       )}
 
       <WordpressPagination

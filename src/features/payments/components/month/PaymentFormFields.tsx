@@ -14,6 +14,8 @@ import PaymentTypeDateRow from "./PaymentTypeDateRow"
 
 interface PaymentFormFieldsProps {
   formData: PaymentFormData
+  initialClientQuery?: string
+  autoFocusClient?: boolean
   availableTags: string[]
   showAdditionalFields: boolean
   showDate?: boolean
@@ -38,6 +40,8 @@ interface PaymentFormFieldsProps {
  */
 export default function PaymentFormFields({
   formData,
+  initialClientQuery,
+  autoFocusClient = false,
   availableTags,
   showAdditionalFields,
   showDate = true,
@@ -85,6 +89,8 @@ export default function PaymentFormFields({
       <div className="grid gap-4 md:grid-cols-2">
         <ClientSelectorField
           value={formData.clientId}
+          initialQuery={initialClientQuery}
+          autoFocus={autoFocusClient}
           onChange={handleClientChange}
           label="Client (Optional)"
           required={false}

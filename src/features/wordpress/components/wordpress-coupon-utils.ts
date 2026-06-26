@@ -1,4 +1,9 @@
 import type { BadgeTone } from "@/components/ui/badge-utils"
+import type {
+  PaymentFormData,
+  PaymentMethod,
+} from "@/lib/domain/entities/payment"
+import type { WordPressCoupon } from "@/lib/domain/entities/wordpress-coupon"
 import { WORDPRESS_COUPON_VAT_RATE } from "@/lib/domain/entities/wordpress-coupon"
 import { formatCurrency } from "@/lib/utils/formatters"
 
@@ -35,10 +40,15 @@ export function getCouponLocalExpiryDate(value: string): string {
 }
 
 export function formatCouponFinalAmount(value: string): string {
+  return formatCurrency(getCouponFinalAmount(value))
+}
+
+export function getCouponFinalAmount(value: string): number {
   const netAmount = Number.parseFloat(value)
-  return formatCurrency(
-    Number.isFinite(netAmount) ? netAmount * (1 + WORDPRESS_COUPON_VAT_RATE) : 0
-  )
+  const finalAmount = Number.isFinite(netAmount)
+    ? netAmount * (1 + WORDPRESS_COUPON_VAT_RATE)
+    : 0
+  return Math.round(finalAmount * 100) / 100
 }
 
 export function buildWordpressCouponPdfUrl(
@@ -51,4 +61,29 @@ export function buildWordpressCouponPdfUrl(
 
 export function getCouponStatusTone(status: string): BadgeTone {
   return status.toLowerCase() === "publish" ? "success" : "neutral"
+}
+
+export function buildCouponPaymentFormData(
+  coupon: WordPressCoupon,
+  paymentMethod: PaymentMethod,
+  date: string
+): PaymentFormData {
+  return {
+    type: "income",
+    date,
+    concepts: [
+      {
+        name: "Bono regalo",
+        amount: getCouponFinalAmount(coupon.amount),
+        quantity: 1,
+      },
+    ],
+    vat: "21",
+    surcharge: "",
+    discount: "",
+    tag: "BonoRegalo",
+    clientId: undefined,
+    deliveryNoteRef: "",
+    paymentMethod,
+  }
 }

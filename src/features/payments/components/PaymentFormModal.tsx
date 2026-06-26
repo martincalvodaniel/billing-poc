@@ -11,6 +11,8 @@ interface PaymentFormModalProps {
   title: string
   initialDate?: string
   initialData?: PaymentFormData
+  initialClientQuery?: string
+  autoFocusClient?: boolean
   onPaymentSaved?: (date: string) => void
   saveLabel?: string
   pendingLabel?: string
@@ -22,6 +24,8 @@ export default function PaymentFormModal({
   title,
   initialDate,
   initialData,
+  initialClientQuery,
+  autoFocusClient = false,
   onPaymentSaved,
   saveLabel = "Save Payment",
   pendingLabel = "Saving...",
@@ -104,6 +108,8 @@ export default function PaymentFormModal({
         onPaymentSaved={handlePaymentSaved}
         initialDate={initialDate}
         initialData={initialData}
+        initialClientQuery={initialClientQuery}
+        autoFocusClient={autoFocusClient}
       />
     </Modal>
   )

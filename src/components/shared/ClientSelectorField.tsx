@@ -9,6 +9,10 @@ import ClientSelector from "./ClientSelector"
 interface ClientSelectorFieldProps {
   /** Currently selected client ID. */
   value?: string
+  /** Query shown before a client is selected. */
+  initialQuery?: string
+  /** Display name fallback for a selected client before it resolves. */
+  selectedClientName?: string
   /** Called when the selection changes (select, clear, or inline create). */
   onChange: (
     clientId: string | undefined,
@@ -16,6 +20,7 @@ interface ClientSelectorFieldProps {
   ) => void
   label?: string
   required?: boolean
+  autoFocus?: boolean
   /** Client type used when creating a client inline. Defaults to "individual". */
   newClientType?: ClientType
   /** Surface creation errors to the caller (e.g. a toast or error banner). */
@@ -28,9 +33,12 @@ interface ClientSelectorFieldProps {
  */
 export default function ClientSelectorField({
   value,
+  initialQuery,
+  selectedClientName,
   onChange,
   label,
   required = false,
+  autoFocus = false,
   newClientType = "individual",
   onError,
 }: ClientSelectorFieldProps) {
@@ -69,9 +77,12 @@ export default function ClientSelectorField({
     <>
       <ClientSelector
         value={value}
+        initialQuery={initialQuery}
+        selectedClientName={selectedClientName}
         onChange={onChange}
         label={label}
         required={required}
+        autoFocus={autoFocus}
         onCreateClient={handleCreateClientRequest}
         isCreating={isCreatingClient}
         onEditClient={editSelectedClient}

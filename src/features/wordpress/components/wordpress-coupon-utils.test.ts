@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test"
+import type { WordPressCoupon } from "@/lib/domain/entities/wordpress-coupon"
 import {
+  buildCouponPaymentFormData,
   buildWordpressCouponPdfUrl,
   formatCouponFinalAmount,
   getCouponLocalExpiryDate,
@@ -29,5 +31,34 @@ describe("buildWordpressCouponPdfUrl", () => {
     expect(buildWordpressCouponPdfUrl(4684, "2027-06-19")).toBe(
       "/api/wordpress/coupons/4684/pdf?expires=2027-06-19"
     )
+  })
+})
+
+describe("buildCouponPaymentFormData", () => {
+  test("builds an income gift-card payment from a coupon", () => {
+    const coupon: WordPressCoupon = {
+      id: 4684,
+      code: "GIFT2026",
+      amount: "45.4545454545455",
+      status: "publish",
+      description: "Ana Garcia",
+      date_expires_gmt: "2027-06-18T22:00:00",
+      usage_count: 0,
+      usage_limit: 1,
+      used_by: [],
+    }
+
+    expect(buildCouponPaymentFormData(coupon, "card", "2026-06-26")).toEqual({
+      type: "income",
+      date: "2026-06-26",
+      concepts: [{ name: "Bono regalo", amount: 55, quantity: 1 }],
+      vat: "21",
+      surcharge: "",
+      discount: "",
+      tag: "BonoRegalo",
+      clientId: undefined,
+      deliveryNoteRef: "",
+      paymentMethod: "card",
+    })
   })
 })

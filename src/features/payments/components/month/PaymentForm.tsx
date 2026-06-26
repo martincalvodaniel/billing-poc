@@ -14,6 +14,8 @@ interface PaymentFormProps {
   onPaymentSaved?: (date: string) => void
   initialDate?: string
   initialData?: PaymentFormData
+  initialClientQuery?: string
+  autoFocusClient?: boolean
   ref?: Ref<{
     setFormDate: (dateString: string) => void
     submit: () => void
@@ -23,6 +25,8 @@ const PaymentForm = function PaymentForm({
   onPaymentSaved,
   initialDate,
   initialData,
+  initialClientQuery,
+  autoFocusClient = false,
   ref,
 }: PaymentFormProps) {
   const handleShowSuccessChange = () => setShowSuccess(false)
@@ -103,6 +107,8 @@ const PaymentForm = function PaymentForm({
 
         <PaymentFormFields
           formData={formData}
+          initialClientQuery={initialClientQuery}
+          autoFocusClient={autoFocusClient}
           availableTags={availableTags}
           showAdditionalFields={showAdditionalFields}
           onSetShowAdditionalFields={setShowAdditionalFields}

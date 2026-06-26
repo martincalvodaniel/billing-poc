@@ -21,6 +21,7 @@ interface ClientSelectorProps {
   onSelectClient?: (client: Client | null) => void
   label?: string
   required?: boolean
+  autoFocus?: boolean
   onCreateClient?: (name: string) => void | Promise<void>
   isCreating?: boolean
   onEditClient?: (client: Client) => void
@@ -37,6 +38,7 @@ export default function ClientSelector({
   onSelectClient,
   label = "Client (Optional)",
   required = false,
+  autoFocus = false,
   onCreateClient,
   isCreating = false,
   onEditClient,
@@ -46,7 +48,7 @@ export default function ClientSelector({
       onEditClient(selectedClient)
     }
   }
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState(initialQuery?.trim() ?? "")
   const [manuallySelectedId, setManuallySelectedId] = useState<string | null>(
     null
   )
@@ -88,6 +90,7 @@ export default function ClientSelector({
   useEffect(() => {
     if (!value) {
       resolvedNameRef.current = null
+      if ((initialQuery?.trim() ?? "").length > 0) return
       setSearchQuery((q) => (q === "" ? q : ""))
       return
     }
@@ -97,7 +100,7 @@ export default function ClientSelector({
       resolvedNameRef.current = value
       setSearchQuery(resolvedName)
     }
-  }, [value, selectedClient, selectedClientName])
+  }, [value, selectedClient, selectedClientName, initialQuery])
   useEffect(() => {
     if (value) return
     const nextQuery = initialQuery?.trim() ?? ""
@@ -222,6 +225,7 @@ export default function ClientSelector({
       onKeyDown={handleInputKeyDown}
       label={label}
       required={required}
+      autoFocus={autoFocus}
       clearAriaLabel="Clear selection"
       rightAdornment={
         selectedClient && onEditClient ? (

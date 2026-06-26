@@ -1,11 +1,21 @@
+import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/Badge"
 import { IconButton } from "@/components/ui/IconButton"
 import { getIconButtonClass } from "@/components/ui/iconButton-utils"
+import { BankTransferIcon } from "@/components/ui/icons/BankTransferIcon"
+import { CardIcon } from "@/components/ui/icons/CardIcon"
+import { CashIcon } from "@/components/ui/icons/CashIcon"
 import { DocumentIcon } from "@/components/ui/icons/DocumentIcon"
 import { TrashIcon } from "@/components/ui/icons/TrashIcon"
+import PaymentFormModal from "@/features/payments/components/PaymentFormModal"
 import { useStableCallback } from "@/hooks/useStableCallback"
+import type {
+  PaymentFormData,
+  PaymentMethod,
+} from "@/lib/domain/entities/payment"
 import type { WordPressCoupon } from "@/lib/domain/entities/wordpress-coupon"
 import {
+  buildCouponPaymentFormData,
   buildWordpressCouponPdfUrl,
   formatCouponExpiry,
   formatCouponFinalAmount,
@@ -16,12 +26,27 @@ import {
 interface WordpressCouponsTableProps {
   coupons: WordPressCoupon[]
   onDelete: (coupon: WordPressCoupon) => void
+  onPaymentSaved?: (coupon: WordPressCoupon) => void
 }
 
 export function WordpressCouponsTable({
   coupons,
   onDelete,
+  onPaymentSaved,
 }: WordpressCouponsTableProps) {
+  const [paymentDraft, setPaymentDraft] = useState<{
+    coupon: WordPressCoupon
+    paymentMethod: PaymentMethod
+    date: string
+  } | null>(null)
+  const initialPaymentData: PaymentFormData | undefined = useMemo(() => {
+    if (!paymentDraft) return undefined
+    return buildCouponPaymentFormData(
+      paymentDraft.coupon,
+      paymentDraft.paymentMethod,
+      paymentDraft.date
+    )
+  }, [paymentDraft])
   const handleDelete = useStableCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       const couponId =
@@ -31,6 +56,22 @@ export function WordpressCouponsTable({
       if (coupon) onDelete(coupon)
     }
   )
+  const openPaymentModal = useStableCallback(
+    (coupon: WordPressCoupon, paymentMethod: PaymentMethod) => {
+      setPaymentDraft({
+        coupon,
+        paymentMethod,
+        date: new Date().toISOString().split("T")[0],
+      })
+    }
+  )
+  const closePaymentModal = useStableCallback(() => {
+    setPaymentDraft(null)
+  })
+  const handlePaymentSaved = useStableCallback(() => {
+    if (paymentDraft) onPaymentSaved?.(paymentDraft.coupon)
+    setPaymentDraft(null)
+  })
   return (
     <>
       <div className="space-y-3 md:hidden">
@@ -48,30 +89,38 @@ export function WordpressCouponsTable({
                   {coupon.status}
                 </Badge>
               </div>
-              <div className="flex items-center gap-1">
-                <a
-                  href={buildWordpressCouponPdfUrl(
-                    coupon.id,
-                    getCouponLocalExpiryDate(coupon.date_expires_gmt)
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Open gift card PDF for coupon ${coupon.code}`}
-                  title="Open gift card PDF"
-                  className={getIconButtonClass("info", "sm")}
-                >
-                  <DocumentIcon />
-                </a>
-                <IconButton
-                  onClick={handleDelete}
-                  ariaLabel={`Delete coupon ${coupon.code}`}
-                  title="Delete coupon"
-                  variant="danger"
-                >
-                  <span data-coupon-id={coupon.id} className="contents">
-                    <TrashIcon />
-                  </span>
-                </IconButton>
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-1">
+                  <a
+                    href={buildWordpressCouponPdfUrl(
+                      coupon.id,
+                      getCouponLocalExpiryDate(coupon.date_expires_gmt)
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open gift card PDF for coupon ${coupon.code}`}
+                    title="Open gift card PDF"
+                    className={getIconButtonClass("info", "sm")}
+                  >
+                    <DocumentIcon />
+                  </a>
+                  <IconButton
+                    onClick={handleDelete}
+                    ariaLabel={`Delete coupon ${coupon.code}`}
+                    title="Delete coupon"
+                    variant="danger"
+                  >
+                    <span data-coupon-id={coupon.id} className="contents">
+                      <TrashIcon />
+                    </span>
+                  </IconButton>
+                </div>
+                <div className="flex items-center gap-1">
+                  <CouponPaymentButtons
+                    coupon={coupon}
+                    onOpenPayment={openPaymentModal}
+                  />
+                </div>
               </div>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
@@ -175,30 +224,38 @@ export function WordpressCouponsTable({
                   {coupon.used_by.join(", ") || "-"}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <a
-                      href={buildWordpressCouponPdfUrl(
-                        coupon.id,
-                        getCouponLocalExpiryDate(coupon.date_expires_gmt)
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Open gift card PDF for coupon ${coupon.code}`}
-                      title="Open gift card PDF"
-                      className={getIconButtonClass("info", "sm")}
-                    >
-                      <DocumentIcon />
-                    </a>
-                    <IconButton
-                      onClick={handleDelete}
-                      ariaLabel={`Delete coupon ${coupon.code}`}
-                      title="Delete coupon"
-                      variant="danger"
-                    >
-                      <span data-coupon-id={coupon.id} className="contents">
-                        <TrashIcon />
-                      </span>
-                    </IconButton>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center justify-end gap-1">
+                      <a
+                        href={buildWordpressCouponPdfUrl(
+                          coupon.id,
+                          getCouponLocalExpiryDate(coupon.date_expires_gmt)
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open gift card PDF for coupon ${coupon.code}`}
+                        title="Open gift card PDF"
+                        className={getIconButtonClass("info", "sm")}
+                      >
+                        <DocumentIcon />
+                      </a>
+                      <IconButton
+                        onClick={handleDelete}
+                        ariaLabel={`Delete coupon ${coupon.code}`}
+                        title="Delete coupon"
+                        variant="danger"
+                      >
+                        <span data-coupon-id={coupon.id} className="contents">
+                          <TrashIcon />
+                        </span>
+                      </IconButton>
+                    </div>
+                    <div className="flex items-center justify-end gap-1">
+                      <CouponPaymentButtons
+                        coupon={coupon}
+                        onOpenPayment={openPaymentModal}
+                      />
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -206,6 +263,63 @@ export function WordpressCouponsTable({
           </tbody>
         </table>
       </div>
+
+      <PaymentFormModal
+        isOpen={paymentDraft !== null}
+        onClose={closePaymentModal}
+        title="New Gift Card Payment"
+        initialDate={paymentDraft?.date}
+        initialData={initialPaymentData}
+        initialClientQuery={paymentDraft?.coupon.description}
+        autoFocusClient
+        onPaymentSaved={handlePaymentSaved}
+      />
+    </>
+  )
+}
+
+function CouponPaymentButtons({
+  coupon,
+  onOpenPayment,
+}: {
+  coupon: WordPressCoupon
+  onOpenPayment: (coupon: WordPressCoupon, paymentMethod: PaymentMethod) => void
+}) {
+  const handleCashPayment = useStableCallback(() => {
+    onOpenPayment(coupon, "cash")
+  })
+  const handleCardPayment = useStableCallback(() => {
+    onOpenPayment(coupon, "card")
+  })
+  const handleBankTransferPayment = useStableCallback(() => {
+    onOpenPayment(coupon, "bank_transfer")
+  })
+  return (
+    <>
+      <IconButton
+        variant="success"
+        onClick={handleCashPayment}
+        ariaLabel={`Create cash gift card payment for coupon ${coupon.code}`}
+        title="Create cash payment"
+      >
+        <CashIcon />
+      </IconButton>
+      <IconButton
+        variant="info"
+        onClick={handleCardPayment}
+        ariaLabel={`Create card gift card payment for coupon ${coupon.code}`}
+        title="Create card payment"
+      >
+        <CardIcon />
+      </IconButton>
+      <IconButton
+        variant="neutral"
+        onClick={handleBankTransferPayment}
+        ariaLabel={`Create bank transfer gift card payment for coupon ${coupon.code}`}
+        title="Create bank transfer payment"
+      >
+        <BankTransferIcon />
+      </IconButton>
     </>
   )
 }

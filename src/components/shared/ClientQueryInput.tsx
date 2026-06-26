@@ -17,6 +17,7 @@ interface ClientQueryInputProps {
   placeholder?: string
   ariaLabel?: string
   clearAriaLabel?: string
+  autoFocus?: boolean
   debounceMs?: number
   skipInitialDebouncedChange?: boolean
   rightAdornment?: ReactNode
@@ -40,6 +41,7 @@ export default function ClientQueryInput({
   placeholder = "Search clients by name, email, or tax ID...",
   ariaLabel = "Search clients by name, tax ID, or email",
   clearAriaLabel = "Clear client search",
+  autoFocus = false,
   debounceMs = DEFAULT_DEBOUNCE_MS,
   skipInitialDebouncedChange = false,
   rightAdornment,
@@ -47,6 +49,7 @@ export default function ClientQueryInput({
 }: ClientQueryInputProps) {
   const id = useId()
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const isInitialMount = useRef(true)
   const [showDropdown, setShowDropdown] = useState(false)
   const debouncedValue = useDebouncedValue(value, debounceMs)
@@ -62,6 +65,18 @@ export default function ClientQueryInput({
     isInitialMount.current = false
     onDebouncedChange(debouncedValue)
   }, [debouncedValue, onDebouncedChange, skipInitialDebouncedChange])
+
+  useEffect(() => {
+    if (!autoFocus) return
+    const timeoutId = setTimeout(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+      if (renderDropdown) {
+        setShowDropdown(true)
+      }
+    }, 0)
+    return () => clearTimeout(timeoutId)
+  }, [autoFocus, renderDropdown])
 
   const closeDropdown = () => {
     setShowDropdown(false)
@@ -109,6 +124,7 @@ export default function ClientQueryInput({
 
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           id={id}
           value={value}
