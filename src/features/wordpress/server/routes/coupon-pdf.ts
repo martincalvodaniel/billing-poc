@@ -11,6 +11,7 @@ import {
   wordpressCouponParamsSchema,
   wordpressCouponPdfQuerySchema,
 } from "@/schemas/wordpress-validator"
+import { getCouponPdfDisplayExpiryDate } from "./coupon-pdf-utils"
 
 interface WordPressCouponPdfRouteParams {
   params: Promise<{ couponId: string }>
@@ -45,7 +46,7 @@ export async function GET(
     const coupon = await fetchWordPressCoupon(parsedParams.data.couponId)
     const pdf = await generateWordPressGiftCardPdf({
       code: coupon.code,
-      expiryDate: parsedQuery.data.expires,
+      expiryDate: getCouponPdfDisplayExpiryDate(parsedQuery.data.expires),
     })
 
     return buildInlinePdfResponse(
