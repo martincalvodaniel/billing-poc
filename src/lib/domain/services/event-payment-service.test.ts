@@ -183,7 +183,13 @@ describe("recomputeAttendeePayment", () => {
     const payment = makePayment({ concepts: [] })
     const { repo, updates } = makeFakeRepo(payment)
     const result = await recomputeAttendeePayment(
-      makeEvent({ pricePerSeat: 50, vatRate: 0, durationMinutes: 120 }),
+      makeEvent({
+        pricePerSeat: 50,
+        vatRate: 0,
+        durationMinutes: 120,
+        hour: 9,
+        minute: 5,
+      }),
       makeAttendee({ paymentId: "pay1" }),
       2,
       { payments: repo }
@@ -196,20 +202,20 @@ describe("recomputeAttendeePayment", () => {
       total: 100,
     })
     expect(updates[0].data.concepts).toEqual([
-      { name: "Workshop (Mayo)", amount: 50, quantity: 2 },
+      { name: "Workshop (14 May 09:05)", amount: 50, quantity: 2 },
     ])
   })
 
-  test("'updated' falls back to event title with month when concept name absent", async () => {
+  test("'updated' falls back to event title with date when concept name absent", async () => {
     const payment = makePayment({ concepts: [] })
     const { repo, updates } = makeFakeRepo(payment)
     await recomputeAttendeePayment(
-      makeEvent({ title: "Yoga class" }),
+      makeEvent({ title: "Yoga class", hour: 17, minute: 30 }),
       makeAttendee({ paymentId: "pay1" }),
       1,
       { payments: repo }
     )
-    expect(updates[0].data.concepts?.[0].name).toBe("Yoga class (Mayo)")
+    expect(updates[0].data.concepts?.[0].name).toBe("Yoga class (14 May 17:30)")
   })
 
   test("'updated' keeps title unchanged when event has no date", async () => {
@@ -246,7 +252,7 @@ describe("recomputeAttendeePayment", () => {
       { payments: repo }
     )
     expect(updates[0].data.concepts?.[0].name).toBe(
-      "Workshop (Mayo Martes 10:00)"
+      "Workshop (Martes May 10:00)"
     )
   })
 })

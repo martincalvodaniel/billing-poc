@@ -20,34 +20,35 @@ export function eventTag(event: Event): string {
   return trimmed && trimmed.length > 0 ? trimmed : DEFAULT_EVENT_TAG
 }
 
-function eventMonthLabel(event: Event): string {
+function eventDateParts(event: Event): {
+  year?: number
+  month?: number
+  day?: number
+} {
   let year = event.year
   let month = event.month
+  let day = event.day
 
-  if ((!year || !month) && event.date) {
+  if ((!year || !month || !day) && event.date) {
     const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(event.date)
     if (match) {
       year = Number(match[1])
       month = Number(match[2])
+      day = Number(match[3])
     }
   }
 
-  if (!year || !month || month < 1 || month > 12) {
-    return ""
-  }
+  return { year, month, day }
+}
 
-  const label = new Intl.DateTimeFormat("es-ES", {
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, 1)))
-
-  return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
+function eventTwoDigit(value: number): string {
+  return String(value).padStart(2, "0")
 }
 
 function eventTimeLabel(event: Event): string {
   if (event.hour === undefined) return ""
-  const hour = String(event.hour).padStart(2, "0")
-  const minute = String(event.minute ?? 0).padStart(2, "0")
+  const hour = eventTwoDigit(event.hour)
+  const minute = eventTwoDigit(event.minute ?? 0)
   return `${hour}:${minute}`
 }
 
@@ -68,18 +69,32 @@ function eventWeekdayLabel(event: Event): string {
   return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
 }
 
+function eventMonthLabel(month: number): string {
+  if (month < 1 || month > 12) return ""
+
+  const label = new Intl.DateTimeFormat("es-ES", {
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2026, month - 1, 1)))
+
+  return label.length > 0 ? `${label[0].toUpperCase()}${label.slice(1)}` : ""
+}
+
 function eventConceptName(event: Event): string {
-  const weekday = eventWeekdayLabel(event)
-  const month = eventMonthLabel(event)
+  const { month, day } = eventDateParts(event)
   const time = eventTimeLabel(event)
 
   let details = ""
-  if (weekday && month) {
-    details = `${month} ${weekday}`
-  } else if (weekday) {
-    details = weekday
-  } else if (month) {
-    details = month
+  if (month && month >= 1 && month <= 12) {
+    const monthLabel = eventMonthLabel(month)
+    if (day !== undefined && day >= 1 && day <= 31) {
+      details = `${day} ${monthLabel}`
+    } else {
+      const weekday = eventWeekdayLabel(event)
+      if (weekday) {
+        details = `${weekday} ${monthLabel}`
+      }
+    }
   }
 
   if (time) {
