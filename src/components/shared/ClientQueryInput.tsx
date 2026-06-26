@@ -51,6 +51,7 @@ export default function ClientQueryInput({
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const isInitialMount = useRef(true)
+  const hasAutoFocusedRef = useRef(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const debouncedValue = useDebouncedValue(value, debounceMs)
   const trimmedValue = value.trim()
@@ -67,16 +68,21 @@ export default function ClientQueryInput({
   }, [debouncedValue, onDebouncedChange, skipInitialDebouncedChange])
 
   useEffect(() => {
-    if (!autoFocus) return
+    if (!autoFocus) {
+      hasAutoFocusedRef.current = false
+      return
+    }
+    if (hasAutoFocusedRef.current) return
     const timeoutId = setTimeout(() => {
-      inputRef.current?.focus()
-      inputRef.current?.select()
-      if (renderDropdown) {
-        setShowDropdown(true)
-      }
+      const input = inputRef.current
+      if (!input || hasAutoFocusedRef.current) return
+      hasAutoFocusedRef.current = true
+      input.focus()
+      input.select()
+      setShowDropdown(true)
     }, 0)
     return () => clearTimeout(timeoutId)
-  }, [autoFocus, renderDropdown])
+  }, [autoFocus])
 
   const closeDropdown = () => {
     setShowDropdown(false)
