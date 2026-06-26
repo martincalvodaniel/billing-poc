@@ -124,7 +124,7 @@ export function WordpressCouponsTable({
               </div>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-              <div>
+              <div className="col-start-1 row-start-1">
                 <dt className="text-xs text-zinc-500 dark:text-zinc-400">
                   Final price
                 </dt>
@@ -132,7 +132,7 @@ export function WordpressCouponsTable({
                   {formatCouponFinalAmount(coupon.amount)}
                 </dd>
               </div>
-              <div>
+              <div className="col-start-2 row-start-1">
                 <dt className="text-xs text-zinc-500 dark:text-zinc-400">
                   Usage
                 </dt>
@@ -140,15 +140,7 @@ export function WordpressCouponsTable({
                   {coupon.usage_count}/{coupon.usage_limit || "∞"}
                 </dd>
               </div>
-              <div className="col-span-2">
-                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Description
-                </dt>
-                <dd className="break-all text-zinc-900 dark:text-zinc-100">
-                  {coupon.description || "-"}
-                </dd>
-              </div>
-              <div className="col-span-2">
+              <div className="col-start-1 row-start-2">
                 <dt className="text-xs text-zinc-500 dark:text-zinc-400">
                   Date expires
                 </dt>
@@ -156,12 +148,20 @@ export function WordpressCouponsTable({
                   {formatCouponExpiry(coupon.date_expires_gmt)}
                 </dd>
               </div>
-              <div className="col-span-2">
+              <div className="col-start-2 row-start-2">
                 <dt className="text-xs text-zinc-500 dark:text-zinc-400">
                   Used by
                 </dt>
                 <dd className="break-all text-zinc-900 dark:text-zinc-100">
                   {coupon.used_by.join(", ") || "-"}
+                </dd>
+              </div>
+              <div className="col-span-2 row-start-3">
+                <dt className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Description
+                </dt>
+                <dd className="break-all text-zinc-900 dark:text-zinc-100">
+                  {coupon.description || "-"}
                 </dd>
               </div>
             </dl>
