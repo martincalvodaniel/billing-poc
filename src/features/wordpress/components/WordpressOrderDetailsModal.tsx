@@ -1,3 +1,6 @@
+"use client"
+
+import { CopyToClipboardButton } from "@/components/ui/CopyToClipboardButton"
 import { Modal } from "@/components/ui/Modal"
 import type { WordPressOrder } from "@/lib/domain/entities/wordpress-order"
 import { formatAmount } from "./wordpress-view-utils"
@@ -36,8 +39,30 @@ export function WordpressOrderDetailsModal({
                   {order.billing.postcode} {order.billing.city}
                 </p>
                 <p>{order.billing.country}</p>
-                <p>{order.billing.email}</p>
-                <p>{order.billing.phone}</p>
+                <p className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 break-all">
+                    {order.billing.email}
+                  </span>
+                  <CopyToClipboardButton
+                    value={order.billing.email}
+                    disabled={!order.billing.email}
+                    ariaLabel="Copy billing email"
+                    title="Copy billing email"
+                    copiedTitle="Email copied"
+                  />
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 break-all">
+                    {order.billing.phone}
+                  </span>
+                  <CopyToClipboardButton
+                    value={order.billing.phone}
+                    disabled={!order.billing.phone}
+                    ariaLabel="Copy billing phone"
+                    title="Copy billing phone"
+                    copiedTitle="Phone copied"
+                  />
+                </p>
               </div>
             </div>
 

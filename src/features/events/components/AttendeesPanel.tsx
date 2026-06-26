@@ -1,9 +1,8 @@
 "use client"
-import { useId } from "react"
+import { useCallback, useId } from "react"
 import ClientSelector from "@/components/shared/ClientSelector"
+import { CopyToClipboardButton } from "@/components/ui/CopyToClipboardButton"
 import { EmptyState } from "@/components/ui/EmptyState"
-import { CheckIcon } from "@/components/ui/icons/CheckIcon"
-import { CopyIcon } from "@/components/ui/icons/CopyIcon"
 import ClientFormModal from "@/features/clients/components/ClientFormModal"
 import PaymentDetailModal from "@/features/payments/components/month/PaymentDetailModal"
 import type { Event } from "@/lib/domain/entities/event"
@@ -32,10 +31,6 @@ export default function AttendeesPanel({
   ) {
     return setSelectedPayment(payment)
   }
-  function handleCopyEmailsClick(e: React.MouseEvent<HTMLButtonElement>) {
-    e.stopPropagation()
-    void handleCopyEmails()
-  }
   function handleClientSelection(
     clientId: Parameters<
       NonNullable<React.ComponentProps<typeof ClientSelector>["onChange"]>
@@ -50,12 +45,18 @@ export default function AttendeesPanel({
   ) {
     return void handleCreateClient(name)
   }
+  const handleEmailsCopied = useCallback(() => {
+    onActionSuccess("Emails copied to clipboard")
+  }, [onActionSuccess])
+  const handleEmailsCopyError = useCallback(() => {
+    onActionError("Failed to copy emails")
+  }, [onActionError])
   const id = useId()
   const {
     clientNameById,
     editingClient,
     hasEmails,
-    copied,
+    emailsString,
     seats,
     remaining,
     pendingPayment,
@@ -74,7 +75,6 @@ export default function AttendeesPanel({
     commitSeats,
     handleRemove,
     handleGenerateOne,
-    handleCopyEmails,
     handleOpenPayment,
     handleSelectedPaymentDeleted,
   } = useAttendeesPanel({ event, onActionSuccess, onActionError })
@@ -87,20 +87,15 @@ export default function AttendeesPanel({
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Attendees
           </h3>
-          <button
-            type="button"
-            onClick={handleCopyEmailsClick}
+          <CopyToClipboardButton
+            value={emailsString}
             disabled={!hasEmails}
-            aria-label="Copy attendee emails"
+            ariaLabel="Copy attendee emails"
             title={hasEmails ? "Copy attendee emails" : "No attendees to copy"}
-            className="inline-flex items-center justify-center rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:disabled:hover:bg-transparent dark:disabled:hover:text-zinc-400"
-          >
-            {copied ? (
-              <CheckIcon className="h-4 w-4" />
-            ) : (
-              <CopyIcon className="h-4 w-4" />
-            )}
-          </button>
+            copiedTitle="Emails copied to clipboard"
+            onCopied={handleEmailsCopied}
+            onCopyError={handleEmailsCopyError}
+          />
         </div>
       </div>
 

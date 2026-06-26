@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { copyToClipboard } from "@/features/clients/components/clientTable-utils"
+import { useMemo, useState } from "react"
 import { useCreateClient } from "@/features/clients/hooks/useClientMutations"
 import { useClients } from "@/features/clients/hooks/useClients"
 import {
@@ -55,18 +54,7 @@ export function useAttendeesPanel({
   )
   const [isCreatingClient, setIsCreatingClient] = useState(false)
   const [selectorResetKey, setSelectorResetKey] = useState(0)
-  const [copied, setCopied] = useState(false)
-  const copiedTimeoutRef = useRef<number | null>(null)
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
-
-  useEffect(
-    () => () => {
-      if (copiedTimeoutRef.current) {
-        window.clearTimeout(copiedTimeoutRef.current)
-      }
-    },
-    []
-  )
 
   // 100 is the API max page size; sufficient for the lookup use-case in this POC.
   const { clients } = useClients({ pageSize: 100 })
@@ -206,25 +194,11 @@ export function useAttendeesPanel({
     }
   }
 
-  const handleCopyEmails = async () => {
-    const ok = await copyToClipboard(emailsString)
-    if (ok) {
-      setCopied(true)
-      onActionSuccess("Emails copied to clipboard")
-      if (copiedTimeoutRef.current) {
-        window.clearTimeout(copiedTimeoutRef.current)
-      }
-      copiedTimeoutRef.current = window.setTimeout(() => setCopied(false), 1500)
-    } else {
-      onActionError("Failed to copy emails")
-    }
-  }
-
   return {
     clientNameById,
     editingClient,
     hasEmails,
-    copied,
+    emailsString,
     seats,
     remaining,
     pendingPayment,
@@ -243,7 +217,6 @@ export function useAttendeesPanel({
     commitSeats,
     handleRemove,
     handleGenerateOne,
-    handleCopyEmails,
     handleOpenPayment,
     handleSelectedPaymentDeleted,
   }
