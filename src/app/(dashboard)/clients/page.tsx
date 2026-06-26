@@ -1,11 +1,11 @@
 "use client"
 import { useCallback, useState } from "react"
+import ClientQueryInput from "@/components/shared/ClientQueryInput"
 import PageLayout from "@/components/shared/PageLayout"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import ClientForm from "@/features/clients/components/ClientForm"
 import ClientList from "@/features/clients/components/ClientList"
-import ClientSearch from "@/features/clients/components/ClientSearch"
 import PaginationControls from "@/features/clients/components/PaginationControls"
 import { useCreateClient } from "@/features/clients/hooks/useClientMutations"
 import { useClients } from "@/features/clients/hooks/useClients"
@@ -32,6 +32,7 @@ function extractApiError(err: unknown, fallback: string): string {
 export default function ClientsPage() {
   const handleShowFormChange = () => setShowForm(false)
   const toggleCreateForm = () => setShowForm(!showForm)
+  const [searchInputValue, setSearchInputValue] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [page, setPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
@@ -72,7 +73,14 @@ export default function ClientsPage() {
       <div className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1">
-            <ClientSearch onSearch={handleSearch} />
+            <ClientQueryInput
+              value={searchInputValue}
+              onChange={setSearchInputValue}
+              onDebouncedChange={handleSearch}
+              ariaLabel="Search clients by name or tax ID"
+              clearAriaLabel="Clear search"
+              skipInitialDebouncedChange
+            />
           </div>
           <button
             type="button"
