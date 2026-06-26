@@ -77,8 +77,6 @@ export default function ClientsPage() {
               value={searchInputValue}
               onChange={setSearchInputValue}
               onDebouncedChange={handleSearch}
-              ariaLabel="Search clients by name or tax ID"
-              clearAriaLabel="Clear search"
               skipInitialDebouncedChange
             />
           </div>

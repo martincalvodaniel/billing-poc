@@ -1,4 +1,3 @@
-import { buildAccentInsensitivePattern } from "@/lib/utils/text-search"
 import type { Client, PaginatedResponse } from "../../domain/entities/client"
 import type {
   ClientFilter,
@@ -7,6 +6,7 @@ import type {
 } from "../../domain/ports/client-repository"
 import { getDatabase } from "../client"
 import type { MongoClient } from "../types"
+import { buildClientSearchQuery } from "./mongo-client-repository-helpers"
 import {
   isValidObjectId,
   MongoUpdateBuilder,
@@ -36,13 +36,7 @@ export class MongoClientRepository implements ClientRepository {
 
   async findAll(filter: ClientFilter): Promise<PaginatedResponse<Client>> {
     const col = await this.collection()
-    const query: Record<string, unknown> = {}
-
-    if (filter.search?.trim()) {
-      const pattern = buildAccentInsensitivePattern(filter.search.trim())
-      const searchPattern = { $regex: pattern, $options: "i" }
-      query.$or = [{ name: searchPattern }, { taxId: searchPattern }]
-    }
+    const query = buildClientSearchQuery(filter.search)
 
     const total = await col.countDocuments(query)
     const skip = (filter.page - 1) * filter.pageSize

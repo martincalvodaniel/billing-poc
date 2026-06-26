@@ -15,7 +15,7 @@ interface ClientQueryInputProps {
   label?: string
   required?: boolean
   placeholder?: string
-  ariaLabel: string
+  ariaLabel?: string
   clearAriaLabel?: string
   debounceMs?: number
   skipInitialDebouncedChange?: boolean
@@ -37,8 +37,8 @@ export default function ClientQueryInput({
   onKeyDown,
   label,
   required = false,
-  placeholder = "Search clients by name or tax ID...",
-  ariaLabel,
+  placeholder = "Search clients by name, email, or tax ID...",
+  ariaLabel = "Search clients by name, tax ID, or email",
   clearAriaLabel = "Clear client search",
   debounceMs = DEFAULT_DEBOUNCE_MS,
   skipInitialDebouncedChange = false,

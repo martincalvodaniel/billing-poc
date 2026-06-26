@@ -222,7 +222,6 @@ export default function ClientSelector({
       onKeyDown={handleInputKeyDown}
       label={label}
       required={required}
-      ariaLabel="Search clients by name or tax ID"
       clearAriaLabel="Clear selection"
       rightAdornment={
         selectedClient && onEditClient ? (
