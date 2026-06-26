@@ -3,42 +3,43 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "db:ensure-indexes": "bun run scripts/ensureIndexes.ts",
+    "dev": "next dev",
+    "format": "biome format --write",
+    "knip": "knip",
     "lint": "biome check",
     "lint:fix": "biome check --fix",
-    "format": "biome format --write",
-    "test": "bun test --preload ./test/setup.ts",
-    "test:watch": "bun test --watch --preload ./test/setup.ts",
-    "db:ensure-indexes": "bun run scripts/ensureIndexes.ts",
     "load-data:absences": "bun run scripts/absences/loadSampleAbsences.ts",
     "load-data:clients": "bun run scripts/clients/loadSampleClients.ts",
     "load-data:month": "bun run scripts/payments/loadRandomDataForMonth.ts",
     "load-data:year": "bun run scripts/payments/loadRandomDataForYear.ts",
     "migrate:absences:partOfDay": "bun run scripts/absences/migrateBackfillPartOfDay.ts",
-    "knip": "knip"
+    "start": "next start",
+    "test": "bun test --preload ./test/setup.ts",
+    "test:watch": "bun test --watch --preload ./test/setup.ts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "better-auth": "1.6.20",
-    "mongodb": "7.3.0",
+    "better-auth": "1.6.22",
+    "mongodb": "7.4.0",
     "next": "16.2.9",
     "pdf-lib": "1.17.1",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "server-only": "0.0.1",
-    "swr": "2.4.1",
+    "swr": "2.4.2",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.0",
+    "@biomejs/biome": "2.5.1",
     "@tailwindcss/postcss": "4.3.1",
     "@types/bun": "1.3.14",
-    "@types/node": "26.0.0",
+    "@types/node": "26.0.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "knip": "6.17.1",
+    "knip": "6.21.0",
     "tailwindcss": "4.3.1",
-    "typescript": "6.0.3"
+    "typescript": "7.0.1-rc"
   }
 }
