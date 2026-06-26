@@ -23,9 +23,18 @@ export function Modal({
   headerActions,
   maxWidth = "md",
 }: ModalProps) {
+  const startedOnBackdropRef = useRef(false)
+  const handleBackdropPointerDown = useStableCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      startedOnBackdropRef.current = e.target === e.currentTarget
+    }
+  )
   const handleBackdropClick = useStableCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
+      const shouldClose =
+        startedOnBackdropRef.current && e.target === e.currentTarget
+      startedOnBackdropRef.current = false
+      if (shouldClose) {
         onClose()
       }
     }
@@ -89,6 +98,7 @@ export function Modal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       role="presentation"
+      onPointerDown={handleBackdropPointerDown}
       onClick={handleBackdropClick}
     >
       <div
