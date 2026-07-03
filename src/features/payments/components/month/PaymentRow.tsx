@@ -2,7 +2,10 @@ import { Badge } from "@/components/ui/Badge"
 import { IconButton } from "@/components/ui/IconButton"
 import { DuplicateIcon } from "@/components/ui/icons/DuplicateIcon"
 import { TrashIcon } from "@/components/ui/icons/TrashIcon"
-import type { Payment } from "@/lib/domain/entities/payment"
+import {
+  getPaymentInvoices,
+  type Payment,
+} from "@/lib/domain/entities/payment"
 import { formatCurrency } from "@/lib/utils/formatters"
 import {
   type PaymentInvoiceFilter,
@@ -14,9 +17,13 @@ import {
   PaymentMethodMarker,
   ReceiptMarker,
 } from "./PaymentsTableCells"
+function isPresentInvoiceId(id: string | undefined): id is string {
+  return id !== undefined && id.length > 0
+}
+
 export default function PaymentRow({
   payment,
-  hasSurcharge,
+  showAllMoneyColumns,
   onRowClick,
   onDeleteClick,
   onDuplicateClick,
@@ -32,7 +39,7 @@ export default function PaymentRow({
   onClientClick,
 }: {
   payment: Payment
-  hasSurcharge: boolean
+  showAllMoneyColumns: boolean
   onRowClick: (paymentId: string) => void
   onDeleteClick: (e: React.MouseEvent, paymentId: string) => void
   onDuplicateClick: (e: React.MouseEvent, paymentId: string) => void
@@ -89,6 +96,10 @@ export default function PaymentRow({
   const clientName = payment.clientId
     ? clientNameById.get(payment.clientId)
     : undefined
+  const invoiceIds = getPaymentInvoices(payment)
+    .filter((invoice) => invoice.type !== "Receipt")
+    .map((invoice) => invoice.id)
+    .filter(isPresentInvoiceId)
   return (
     <tr
       onClick={handleRowClick}
@@ -136,6 +147,15 @@ export default function PaymentRow({
             <PaymentMethodMarker method={payment.paymentMethod} />
           </span>
         </div>
+      </td>
+      <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+        {invoiceIds.length > 0 ? (
+          <span className="whitespace-nowrap text-xs font-medium tabular-nums text-zinc-700 dark:text-zinc-300">
+            {invoiceIds.join(", ")}
+          </span>
+        ) : (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
+        )}
       </td>
       <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
         <span className="inline-block w-5 text-right tabular-nums">
@@ -203,13 +223,10 @@ export default function PaymentRow({
       <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
         {formatCurrency(payment.total)}
       </td>
-      <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
-        {formatCurrency(payment.netAmount)}
-      </td>
       <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
         ({payment.vat}%) {formatCurrency(payment.vatAmount)}
       </td>
-      {hasSurcharge ? (
+      {showAllMoneyColumns ? (
         <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
           {typeof payment.surcharge === "number" && payment.surcharge !== 0 ? (
             <span>
@@ -219,6 +236,11 @@ export default function PaymentRow({
           ) : (
             <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
           )}
+        </td>
+      ) : null}
+      {showAllMoneyColumns ? (
+        <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
+          {formatCurrency(payment.netAmount)}
         </td>
       ) : null}
       <td className="px-6 py-4 text-right">

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import type { Payment } from "@/lib/domain/entities/payment"
@@ -51,9 +52,9 @@ export default function PaymentsTable({
   clientNameById: Map<string, string>
   onClientClick: (clientId: string) => void
 }) {
-  const hasSurcharge = filteredPayments.some(
-    (p) => typeof p.surcharge === "number" && p.surcharge !== 0
-  )
+  const [showAllMoneyColumns, setShowAllMoneyColumns] = useState(false)
+  const showCompactMoneyColumns = () => setShowAllMoneyColumns(false)
+  const showDetailedMoneyColumns = () => setShowAllMoneyColumns(true)
 
   return (
     <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -68,94 +69,137 @@ export default function PaymentsTable({
           No payments in {formatMonthYear(selectedDate)}
         </EmptyState>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                <th className="w-14 px-3 py-3" />
-                <SortableHeader
-                  label="Day"
-                  sortKey="day"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="left"
-                />
-                <SortableHeader
-                  label="Type"
-                  sortKey="type"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="left"
-                />
-                <SortableHeader
-                  label="Tag"
-                  sortKey="tag"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="left"
-                />
-                <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
-                  Client
-                </th>
-                <SortableHeader
-                  label="Total"
-                  sortKey="total"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="right"
-                />
-                <SortableHeader
-                  label="Net"
-                  sortKey="net"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="right"
-                />
-                <SortableHeader
-                  label="VAT"
-                  sortKey="vat"
-                  sort={sort}
-                  onSortChange={onSortChange}
-                  align="right"
-                />
-                {hasSurcharge ? (
+        <>
+          <div className="flex justify-end border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+            <fieldset
+              className="inline-flex h-9 items-stretch overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700"
+              aria-label="Toggle money columns"
+            >
+              <legend className="sr-only">Toggle money columns</legend>
+              <button
+                type="button"
+                onClick={showCompactMoneyColumns}
+                aria-pressed={!showAllMoneyColumns}
+                className={`h-full px-3 text-sm font-medium transition ${
+                  !showAllMoneyColumns
+                    ? "bg-blue-600 text-white dark:bg-blue-700"
+                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                }`}
+              >
+                Compact
+              </button>
+              <button
+                type="button"
+                onClick={showDetailedMoneyColumns}
+                aria-pressed={showAllMoneyColumns}
+                className={`h-full px-3 text-sm font-medium transition ${
+                  showAllMoneyColumns
+                    ? "bg-blue-600 text-white dark:bg-blue-700"
+                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                }`}
+              >
+                All
+              </button>
+            </fieldset>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                  <th className="w-14 px-3 py-3" />
                   <SortableHeader
-                    label="Surcharge"
-                    sortKey="surcharge"
+                    label="Invoice"
+                    sortKey="invoices"
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    align="left"
+                  />
+                  <SortableHeader
+                    label="Day"
+                    sortKey="day"
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    align="left"
+                  />
+                  <SortableHeader
+                    label="Type"
+                    sortKey="type"
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    align="left"
+                  />
+                  <SortableHeader
+                    label="Tag"
+                    sortKey="tag"
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    align="left"
+                  />
+                  <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
+                    Client
+                  </th>
+                  <SortableHeader
+                    label="Total"
+                    sortKey="total"
                     sort={sort}
                     onSortChange={onSortChange}
                     align="right"
                   />
-                ) : null}
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPayments.map((payment) => {
-                return (
-                  <PaymentRow
-                    key={payment._id}
-                    payment={payment}
-                    hasSurcharge={hasSurcharge}
-                    onRowClick={onRowClick}
-                    onDeleteClick={onDeleteClick}
-                    onDuplicateClick={onDuplicateClick}
-                    typeFilter={typeFilter}
-                    hasInvoiceFilter={hasInvoiceFilter}
-                    hasReceiptFilter={hasReceiptFilter}
-                    selectedTags={selectedTags}
-                    onTypeFilterToggle={onTypeFilterToggle}
-                    onInvoiceFilterToggle={onInvoiceFilterToggle}
-                    onReceiptFilterToggle={onReceiptFilterToggle}
-                    onTagFilterToggle={onTagFilterToggle}
-                    clientNameById={clientNameById}
-                    onClientClick={onClientClick}
+                  <SortableHeader
+                    label="VAT"
+                    sortKey="vat"
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    align="right"
                   />
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                  {showAllMoneyColumns ? (
+                    <SortableHeader
+                      label="Surcharge"
+                      sortKey="surcharge"
+                      sort={sort}
+                      onSortChange={onSortChange}
+                      align="right"
+                    />
+                  ) : null}
+                  {showAllMoneyColumns ? (
+                    <SortableHeader
+                      label="Net"
+                      sortKey="net"
+                      sort={sort}
+                      onSortChange={onSortChange}
+                      align="right"
+                    />
+                  ) : null}
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPayments.map((payment) => {
+                  return (
+                    <PaymentRow
+                      key={payment._id}
+                      payment={payment}
+                      showAllMoneyColumns={showAllMoneyColumns}
+                      onRowClick={onRowClick}
+                      onDeleteClick={onDeleteClick}
+                      onDuplicateClick={onDuplicateClick}
+                      typeFilter={typeFilter}
+                      hasInvoiceFilter={hasInvoiceFilter}
+                      hasReceiptFilter={hasReceiptFilter}
+                      selectedTags={selectedTags}
+                      onTypeFilterToggle={onTypeFilterToggle}
+                      onInvoiceFilterToggle={onInvoiceFilterToggle}
+                      onReceiptFilterToggle={onReceiptFilterToggle}
+                      onTagFilterToggle={onTagFilterToggle}
+                      clientNameById={clientNameById}
+                      onClientClick={onClientClick}
+                    />
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
