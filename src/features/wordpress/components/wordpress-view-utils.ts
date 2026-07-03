@@ -2,7 +2,7 @@ import type { BadgeTone } from "@/components/ui/badge-utils"
 import { FetchError } from "@/lib/client/swr-fetcher"
 import { formatCurrency, formatDate } from "@/lib/utils/formatters"
 
-export function parseAmount(value: string): number {
+function parseAmount(value: string): number {
   const parsed = Number.parseFloat(value)
   return Number.isFinite(parsed) ? parsed : 0
 }

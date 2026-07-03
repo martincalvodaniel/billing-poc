@@ -43,7 +43,7 @@ export function formatCouponFinalAmount(value: string): string {
   return formatCurrency(getCouponFinalAmount(value))
 }
 
-export function getCouponFinalAmount(value: string): number {
+function getCouponFinalAmount(value: string): number {
   const netAmount = Number.parseFloat(value)
   const finalAmount = Number.isFinite(netAmount)
     ? netAmount * (1 + WORDPRESS_COUPON_VAT_RATE)

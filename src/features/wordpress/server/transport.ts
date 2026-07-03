@@ -29,10 +29,7 @@ export function getWordPressCredentials() {
   }
 }
 
-export function buildWordPressBasicAuthHeader(
-  user: string,
-  password: string
-): string {
+function buildWordPressBasicAuthHeader(user: string, password: string): string {
   return `Basic ${Buffer.from(`${user}:${password}`).toString("base64")}`
 }
 

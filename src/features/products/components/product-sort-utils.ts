@@ -6,7 +6,7 @@ import {
 } from "@/lib/utils/sort-state"
 
 export type ProductSortKey = "name" | "finalPrice" | "stock"
-export type ProductSortDir = SortDirection
+type ProductSortDir = SortDirection
 export type ProductSortState = SortState<ProductSortKey>
 
 export const DEFAULT_PRODUCT_SORT: ProductSortState = {

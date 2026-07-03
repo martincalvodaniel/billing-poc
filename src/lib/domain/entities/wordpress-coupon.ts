@@ -12,7 +12,7 @@ export interface WordPressCoupon {
   used_by: string[]
 }
 
-export interface WordPressCouponsPagination {
+interface WordPressCouponsPagination {
   page: number
   totalPages: number
   total: number

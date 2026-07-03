@@ -5,7 +5,9 @@ export const wordpressOrdersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
 })
 
-export const wordpressCouponsQuerySchema = wordpressOrdersQuerySchema
+export const wordpressCouponsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+})
 
 export const wordpressOrderParamsSchema = z.object({
   orderId: z.coerce.number().int().min(1),

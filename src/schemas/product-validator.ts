@@ -1,5 +1,4 @@
 import { z } from "zod"
-import { buildAccentInsensitivePattern } from "@/lib/utils/text-search"
 
 const productNameSchema = z.string().trim().min(1, "Name is required")
 
@@ -82,7 +81,3 @@ export const deleteProductSchema = z.object({
 export const productQuerySchema = z.object({
   search: z.string().optional(),
 })
-
-export function buildProductSearchPattern(search: string): string {
-  return buildAccentInsensitivePattern(search.trim())
-}

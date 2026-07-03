@@ -123,5 +123,3 @@ export const updatePaymentTemplateSchema = z
 export const deletePaymentTemplateSchema = z.object({
   id: z.string().min(1, "Missing template ID"),
 })
-
-export const paymentTemplateQuerySchema = z.object({})

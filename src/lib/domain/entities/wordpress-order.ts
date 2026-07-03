@@ -22,18 +22,18 @@ export interface WordPressBilling {
   phone: string
 }
 
-export interface WordPressLineItemTax {
+interface WordPressLineItemTax {
   id: number
   total: string
   subtotal: string
 }
 
-export interface WordPressLineItemImage {
+interface WordPressLineItemImage {
   id: string
   src: string
 }
 
-export interface WordPressLineItem {
+interface WordPressLineItem {
   name: string
   quantity: number
   subtotal: string
@@ -46,7 +46,7 @@ export interface WordPressLineItem {
   image: WordPressLineItemImage
 }
 
-export interface WordPressTaxLine {
+interface WordPressTaxLine {
   id: number
   rate_code: string
   rate_id: number
@@ -82,7 +82,7 @@ export interface WordPressOrder {
   currency_symbol: string
 }
 
-export interface WordPressOrdersPagination {
+interface WordPressOrdersPagination {
   page: number
   totalPages: number
   total: number

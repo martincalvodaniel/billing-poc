@@ -11,10 +11,7 @@ export {
   sanitizeWordPressPhone,
   toCapitalCase,
 } from "@/features/wordpress/server/sanitize"
-export {
-  buildWordPressBasicAuthHeader,
-  WordPressApiError,
-} from "@/features/wordpress/server/transport"
+export { WordPressApiError } from "@/features/wordpress/server/transport"
 export {
   buildWordPressCouponsUrl,
   buildWordPressCouponUrl,
