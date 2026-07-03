@@ -6,6 +6,7 @@ import {
   useUpdateEvent,
 } from "@/features/events/hooks/useEventMutations"
 import { useEvents } from "@/features/events/hooks/useEvents"
+import { useEventTags } from "@/features/events/hooks/useEventTags"
 import type { Event } from "@/lib/domain/entities/event"
 import { type EventFormValues, valuesFromEvent } from "./eventFormModal-utils"
 import {
@@ -43,16 +44,7 @@ export function useEventsPageState() {
   const month = selectedDate.getMonth() + 1
 
   const { events } = useEvents({ year, month })
-  const availableTags = useMemo(() => {
-    const tags = new Set<string>()
-    for (const event of events) {
-      const tag = event.tag?.trim()
-      if (tag) {
-        tags.add(tag)
-      }
-    }
-    return Array.from(tags).sort((a, b) => a.localeCompare(b))
-  }, [events])
+  const { tags: availableTags } = useEventTags()
 
   const createMutation = useCreateEvent()
   const updateMutation = useUpdateEvent()

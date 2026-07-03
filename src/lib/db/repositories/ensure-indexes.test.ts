@@ -38,4 +38,12 @@ describe("INDEX_SPECS", () => {
     expect(names).toContain("absences.uniq_student_date_part")
     expect(names).toContain("invoiceCounters.uniq_series_year")
   })
+
+  test("covers tag suggestion query patterns", () => {
+    expect(INDEX_SPECS).toContainEqual({
+      collection: "payments",
+      keys: { type: 1, tag: 1 },
+      options: { name: "type_asc_tag_asc" },
+    })
+  })
 })

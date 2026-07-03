@@ -13,6 +13,11 @@ export const INDEX_SPECS: IndexSpec[] = [
     options: { name: "date_desc_createdAt_desc" },
   },
   {
+    collection: "payments",
+    keys: { type: 1, tag: 1 },
+    options: { name: "type_asc_tag_asc" },
+  },
+  {
     collection: "clients",
     keys: { name: 1 },
     options: { name: "name_asc" },
