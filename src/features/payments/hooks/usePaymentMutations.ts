@@ -126,7 +126,7 @@ interface MutationResult<TInput, TResponse> {
 
 function useInvalidatePayments() {
   const { mutate } = useSWRConfig()
-  return () => mutate(isPaymentsKey, undefined, { revalidate: true })
+  return () => mutate(isPaymentsKey)
 }
 
 export function useCreatePayment(): MutationResult<
