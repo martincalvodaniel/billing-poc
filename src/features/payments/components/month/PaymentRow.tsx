@@ -2,10 +2,8 @@ import { Badge } from "@/components/ui/Badge"
 import { IconButton } from "@/components/ui/IconButton"
 import { DuplicateIcon } from "@/components/ui/icons/DuplicateIcon"
 import { TrashIcon } from "@/components/ui/icons/TrashIcon"
-import {
-  getPaymentInvoices,
-  type Payment,
-} from "@/lib/domain/entities/payment"
+import { buildOpenInvoiceUrl } from "@/features/invoices/hooks/useInvoiceMutations"
+import { getPaymentInvoices, type Payment } from "@/lib/domain/entities/payment"
 import { formatCurrency } from "@/lib/utils/formatters"
 import {
   type PaymentInvoiceFilter,
@@ -17,8 +15,14 @@ import {
   PaymentMethodMarker,
   ReceiptMarker,
 } from "./PaymentsTableCells"
+
 function isPresentInvoiceId(id: string | undefined): id is string {
   return id !== undefined && id.length > 0
+}
+
+function compactClientName(name: string): string {
+  const maxLength = 10
+  return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name
 }
 
 export default function PaymentRow({
@@ -77,6 +81,9 @@ export default function PaymentRow({
     e.stopPropagation()
     onClientClick(payment.clientId ?? "")
   }
+  function handleInvoiceClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.stopPropagation()
+  }
   function handleDuplicateClick(
     e: Parameters<
       NonNullable<React.ComponentProps<typeof IconButton>["onClick"]>
@@ -96,6 +103,7 @@ export default function PaymentRow({
   const clientName = payment.clientId
     ? clientNameById.get(payment.clientId)
     : undefined
+  const compactedClientName = clientName ? compactClientName(clientName) : ""
   const invoiceIds = getPaymentInvoices(payment)
     .filter((invoice) => invoice.type !== "Receipt")
     .map((invoice) => invoice.id)
@@ -150,8 +158,21 @@ export default function PaymentRow({
       </td>
       <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
         {invoiceIds.length > 0 ? (
-          <span className="whitespace-nowrap text-xs font-medium tabular-nums text-zinc-700 dark:text-zinc-300">
-            {invoiceIds.join(", ")}
+          <span className="inline-flex flex-wrap gap-x-1 text-xs font-medium tabular-nums">
+            {invoiceIds.map((invoiceId, index) => (
+              <span key={invoiceId} className="whitespace-nowrap">
+                <a
+                  href={buildOpenInvoiceUrl(payment._id ?? "", invoiceId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleInvoiceClick}
+                  className="text-blue-600 hover:underline focus:outline-none focus:ring-1 focus:ring-blue-500 dark:text-blue-400"
+                >
+                  {invoiceId}
+                </a>
+                {index < invoiceIds.length - 1 ? "," : ""}
+              </span>
+            ))}
           </span>
         ) : (
           <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
@@ -175,7 +196,7 @@ export default function PaymentRow({
               typeFilter === payment.type ? "ring-1 ring-blue-500" : undefined
             }
           >
-            {payment.type.charAt(0).toUpperCase() + payment.type.slice(1)}
+            {payment.type === "income" ? "I" : "O"}
           </Badge>
         </button>
       </td>
@@ -208,9 +229,10 @@ export default function PaymentRow({
             type="button"
             onClick={handleClientClick}
             aria-label={`Edit client ${clientName}`}
+            title={clientName}
             className="truncate rounded text-left text-emerald-700 hover:underline focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:text-emerald-400"
           >
-            {clientName}
+            {compactedClientName}
           </button>
         ) : payment.clientId ? (
           <span className="text-xs text-zinc-500 dark:text-zinc-500">
