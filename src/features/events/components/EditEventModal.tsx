@@ -21,6 +21,7 @@ interface EditEventModalProps {
   onClose: () => void
   onSubmit: (values: EventFormValues) => Promise<void>
   isSubmitting: boolean
+  availableTags: string[]
   errorMessage?: string | null
   onAttendeeSuccess?: (msg: string) => void
   onAttendeeError?: (msg: string) => void
@@ -56,6 +57,7 @@ export default function EditEventModal({
   onClose,
   onSubmit,
   isSubmitting,
+  availableTags,
   errorMessage,
   onAttendeeSuccess,
   onAttendeeError,
@@ -132,6 +134,7 @@ export default function EditEventModal({
       computeInitialValues={computeInitialValues}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
+      availableTags={availableTags}
       errorMessage={errorMessage}
       headerSlot={attendeesPanel}
     />

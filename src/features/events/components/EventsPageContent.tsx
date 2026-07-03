@@ -113,6 +113,7 @@ export default function EventsPageContent() {
   }
   const {
     events,
+    availableTags,
     selectedDate,
     showCalendar,
     setShowCalendar,
@@ -188,6 +189,7 @@ export default function EventsPageContent() {
           onClose={closeForm}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
+          availableTags={availableTags}
           errorMessage={formError}
           onAttendeeSuccess={showAttendeeSuccess}
           onAttendeeError={showAttendeeError}
@@ -199,6 +201,7 @@ export default function EventsPageContent() {
           onClose={closeForm}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
+          availableTags={availableTags}
           errorMessage={formError}
           defaults={formDefaults}
           seedValues={copySeed}

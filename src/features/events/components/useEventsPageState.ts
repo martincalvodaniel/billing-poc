@@ -43,6 +43,16 @@ export function useEventsPageState() {
   const month = selectedDate.getMonth() + 1
 
   const { events } = useEvents({ year, month })
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>()
+    for (const event of events) {
+      const tag = event.tag?.trim()
+      if (tag) {
+        tags.add(tag)
+      }
+    }
+    return Array.from(tags).sort((a, b) => a.localeCompare(b))
+  }, [events])
 
   const createMutation = useCreateEvent()
   const updateMutation = useUpdateEvent()
@@ -215,6 +225,7 @@ export function useEventsPageState() {
 
   return {
     events,
+    availableTags,
     selectedDate,
     showCalendar,
     setShowCalendar,

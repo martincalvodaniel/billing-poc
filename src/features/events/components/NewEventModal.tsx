@@ -13,6 +13,7 @@ interface NewEventModalProps {
   onClose: () => void
   onSubmit: (values: EventFormValues) => Promise<void>
   isSubmitting: boolean
+  availableTags: string[]
   errorMessage?: string | null
   /**
    * Field-level defaults applied ONLY to fields that are empty after
@@ -36,6 +37,7 @@ export default function NewEventModal({
   onClose,
   onSubmit,
   isSubmitting,
+  availableTags,
   errorMessage,
   defaults,
   seedValues,
@@ -58,6 +60,7 @@ export default function NewEventModal({
       computeInitialValues={computeInitialValues}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
+      availableTags={availableTags}
       errorMessage={errorMessage}
     />
   )

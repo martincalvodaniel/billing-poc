@@ -1,5 +1,6 @@
 "use client"
 import dynamic from "next/dynamic"
+import SuggestionInput from "@/components/shared/SuggestionInput"
 import ClearButton from "@/components/ui/ClearButton"
 import FormField from "@/components/ui/FormField"
 import type { PartialDateValue } from "@/components/ui/partialDatePicker-utils"
@@ -20,6 +21,7 @@ const PartialDatePicker = dynamic(
 interface EventBasicFieldsProps {
   idPrefix: string
   values: EventFormValues
+  availableTags: string[]
   isRecurring: boolean
   isSubmitting: boolean
   titleRef: React.Ref<HTMLInputElement>
@@ -36,6 +38,7 @@ interface EventBasicFieldsProps {
 export default function EventBasicFields({
   idPrefix,
   values,
+  availableTags,
   isRecurring,
   isSubmitting,
   titleRef,
@@ -48,6 +51,11 @@ export default function EventBasicFields({
     setDayOfWeek({
       target: { value: "" },
     } as React.ChangeEvent<HTMLSelectElement>)
+  }
+  function handleTagChange(value: string) {
+    onChangeField("tag")({
+      target: { value },
+    } as React.ChangeEvent<HTMLInputElement>)
   }
   const timeValue = formatTimeOfDay(
     stringToOptionalNumber(values.hour),
@@ -69,18 +77,23 @@ export default function EventBasicFields({
           className={inputClass}
         />
       </FormField>
-      <FormField id={`${idPrefix}-tag`} label="Tag (optional)">
-        <input
-          id={`${idPrefix}-tag`}
-          type="text"
-          value={values.tag}
-          onChange={onChangeField("tag")}
-          disabled={isSubmitting}
-          maxLength={100}
-          placeholder="event"
-          className={inputClass}
-        />
-      </FormField>
+      <SuggestionInput
+        label="Tag (optional)"
+        ariaLabel="Tag (optional)"
+        name="tag"
+        value={values.tag}
+        options={availableTags}
+        onChange={handleTagChange}
+        onSelect={handleTagChange}
+        disabled={isSubmitting}
+        maxLength={100}
+        placeholder="Start typing to see suggestions..."
+        leading={
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+            #
+          </span>
+        }
+      />
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 md:grid-cols-[auto_auto_auto]">
         <div className="min-w-0 space-y-1">
           <span className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">

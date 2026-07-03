@@ -27,6 +27,8 @@ interface SuggestionInputProps {
   selectedOption?: string
   placeholder?: string
   required?: boolean
+  disabled?: boolean
+  maxLength?: number
   name?: string
   leading?: ReactNode
   createNewLabel?: string
@@ -48,6 +50,8 @@ export default function SuggestionInput({
   selectedOption,
   placeholder = "Start typing to see suggestions...",
   required = false,
+  disabled = false,
+  maxLength,
   name,
   leading,
   createNewLabel = "No suggestions found",
@@ -154,11 +158,13 @@ export default function SuggestionInput({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           required={required}
+          disabled={disabled}
+          maxLength={maxLength}
         />
 
-        {showSuggestions ? (
+        {showSuggestions && !disabled ? (
           <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
             {filteredOptions.length > 0 ? (
               <ul className="max-h-60 overflow-y-auto py-1">

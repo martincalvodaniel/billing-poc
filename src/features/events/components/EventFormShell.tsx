@@ -27,6 +27,7 @@ export interface EventFormShellProps {
   computeInitialValues: () => EventFormValues
   onSubmit: (values: EventFormValues) => Promise<void>
   isSubmitting: boolean
+  availableTags: string[]
   errorMessage?: string | null
   /** Optional content rendered above the form (e.g. attendees panel). */
   headerSlot?: React.ReactNode
@@ -41,6 +42,7 @@ export default function EventFormShell({
   computeInitialValues,
   onSubmit,
   isSubmitting,
+  availableTags,
   errorMessage,
   headerSlot,
 }: EventFormShellProps) {
@@ -147,6 +149,7 @@ export default function EventFormShell({
         <EventBasicFields
           idPrefix={id}
           values={values}
+          availableTags={availableTags}
           isRecurring={values.dayOfWeek.length > 0}
           isSubmitting={isSubmitting}
           titleRef={titleRef}
