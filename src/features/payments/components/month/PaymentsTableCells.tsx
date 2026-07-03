@@ -32,7 +32,7 @@ export function SortableHeader({
       sort={sort}
       onSortChange={onSortChange}
       align={align}
-      className={`px-6 py-3 ${align === "right" ? "text-right" : "text-left"} font-medium text-zinc-700 dark:text-zinc-300`}
+      className={`px-1 py-2 ${align === "right" ? "text-right" : "text-left"} font-medium text-zinc-700 dark:text-zinc-300`}
       buttonClassName={`inline-flex w-full items-center gap-1 ${align === "right" ? "justify-end" : "justify-start"} cursor-pointer rounded text-inherit hover:text-zinc-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:hover:text-zinc-100`}
     />
   )

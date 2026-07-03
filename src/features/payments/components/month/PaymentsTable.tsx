@@ -106,7 +106,7 @@ export default function PaymentsTable({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="w-14 px-3 py-3" />
+                  <th className="w-14 px-1 py-2" />
                   <SortableHeader
                     label="Invoice"
                     sortKey="invoices"
@@ -135,7 +135,7 @@ export default function PaymentsTable({
                     onSortChange={onSortChange}
                     align="left"
                   />
-                  <th className="px-6 py-3 text-left font-medium text-zinc-700 dark:text-zinc-300">
+                  <th className="px-1 py-1 text-left font-medium text-zinc-700 dark:text-zinc-300">
                     Client
                   </th>
                   <SortableHeader

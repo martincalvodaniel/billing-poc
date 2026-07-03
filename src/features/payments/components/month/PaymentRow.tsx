@@ -113,7 +113,7 @@ export default function PaymentRow({
       onClick={handleRowClick}
       className="cursor-pointer border-b border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
     >
-      <td className="px-3 py-4 text-zinc-900 dark:text-zinc-100">
+      <td className="px-3 py-1 text-zinc-900 dark:text-zinc-100">
         <div className="inline-flex items-center gap-1">
           <button
             type="button"
@@ -156,7 +156,7 @@ export default function PaymentRow({
           </span>
         </div>
       </td>
-      <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+      <td className="px-1 py-1 text-zinc-900 dark:text-zinc-100">
         {invoiceIds.length > 0 ? (
           <span className="inline-flex flex-wrap gap-x-1 text-xs font-medium tabular-nums">
             {invoiceIds.map((invoiceId, index) => (
@@ -178,12 +178,12 @@ export default function PaymentRow({
           <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
         )}
       </td>
-      <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+      <td className="px-1 py-1 text-zinc-900 dark:text-zinc-100">
         <span className="inline-block w-5 text-right tabular-nums">
           {new Date(payment.date).getDate()}
         </span>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-1 py-1">
         <button
           type="button"
           onClick={handleTypeFilterToggle}
@@ -200,7 +200,7 @@ export default function PaymentRow({
           </Badge>
         </button>
       </td>
-      <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+      <td className="px-1 py-1 text-zinc-900 dark:text-zinc-100">
         {payment.tag ? (
           <button
             type="button"
@@ -223,7 +223,7 @@ export default function PaymentRow({
           <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
         )}
       </td>
-      <td className="px-6 py-4 text-zinc-900 dark:text-zinc-100">
+      <td className="px-1 py-1 text-zinc-900 dark:text-zinc-100">
         {clientName && payment.clientId ? (
           <button
             type="button"
@@ -242,14 +242,14 @@ export default function PaymentRow({
           <span className="text-xs text-zinc-500 dark:text-zinc-500">—</span>
         )}
       </td>
-      <td className="px-6 py-4 text-right font-medium text-zinc-900 dark:text-zinc-100">
+      <td className="px-1 py-1 text-right font-medium text-zinc-900 dark:text-zinc-100">
         {formatCurrency(payment.total)}
       </td>
-      <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+      <td className="px-1 py-1 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
         ({payment.vat}%) {formatCurrency(payment.vatAmount)}
       </td>
       {showAllMoneyColumns ? (
-        <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+        <td className="px-1 py-1 text-right text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
           {typeof payment.surcharge === "number" && payment.surcharge !== 0 ? (
             <span>
               ({payment.surcharge}%){" "}
@@ -261,11 +261,11 @@ export default function PaymentRow({
         </td>
       ) : null}
       {showAllMoneyColumns ? (
-        <td className="px-6 py-4 text-right text-zinc-900 dark:text-zinc-100">
+        <td className="px-1 py-1 text-right text-zinc-900 dark:text-zinc-100">
           {formatCurrency(payment.netAmount)}
         </td>
       ) : null}
-      <td className="px-6 py-4 text-right">
+      <td className="px-1 py-1 text-right">
         <div className="inline-flex items-center justify-end gap-1">
           <IconButton
             variant="info"
