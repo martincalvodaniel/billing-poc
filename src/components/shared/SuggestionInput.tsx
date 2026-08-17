@@ -151,6 +151,7 @@ export default function SuggestionInput({
           type="text"
           id={id}
           name={name}
+          autoComplete="off"
           aria-label={ariaLabel}
           value={value}
           onChange={handleChange}
