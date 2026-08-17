@@ -23,6 +23,7 @@ describe("INDEX_SPECS", () => {
     for (const c of [
       "payments",
       "clients",
+      "products",
       "absences",
       "events",
       "invoiceCounters",
@@ -44,6 +45,11 @@ describe("INDEX_SPECS", () => {
       collection: "payments",
       keys: { type: 1, tag: 1 },
       options: { name: "type_asc_tag_asc" },
+    })
+    expect(INDEX_SPECS).toContainEqual({
+      collection: "products",
+      keys: { tag: 1 },
+      options: { name: "tag_asc" },
     })
   })
 })

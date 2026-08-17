@@ -1,6 +1,11 @@
 import { z } from "zod"
 
 const productNameSchema = z.string().trim().min(1, "Name is required")
+const productTagSchema = z
+  .string()
+  .trim()
+  .max(100, "Tag must be 100 characters or fewer")
+  .optional()
 
 function requiredNumberSchema<T extends z.ZodNumber>(
   schema: T
@@ -55,6 +60,7 @@ const productPriceSchema = requiredNumberSchema(
 )
 export const createProductSchema = z.object({
   name: productNameSchema,
+  tag: productTagSchema,
   finalPrice: productPriceSchema,
   stock: createStockSchema(),
 })
@@ -63,6 +69,7 @@ export const updateProductSchema = z
   .object({
     id: z.string().min(1, "Missing product ID"),
     name: productNameSchema.optional(),
+    tag: productTagSchema,
     finalPrice: productPriceSchema.optional(),
     stock: updateStockSchema(),
   })
@@ -80,4 +87,5 @@ export const deleteProductSchema = z.object({
 
 export const productQuerySchema = z.object({
   search: z.string().optional(),
+  tags: z.array(z.string().trim().min(1)).optional(),
 })

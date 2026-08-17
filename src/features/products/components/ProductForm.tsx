@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useId, useState } from "react"
+import SuggestionInput from "@/components/shared/SuggestionInput"
 import ClearButton from "@/components/ui/ClearButton"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import NumberStepperInput from "@/components/ui/NumberStepperInput"
@@ -9,6 +10,7 @@ import type { Product, ProductFormData } from "@/lib/domain/entities/product"
 
 interface ProductFormProps {
   product?: Product
+  availableTags: string[]
   onSubmit: (data: ProductFormData) => Promise<void>
   onCancel: () => void
 }
@@ -16,6 +18,7 @@ interface ProductFormProps {
 function toFormData(product?: Product): ProductFormData {
   return {
     name: product?.name ?? "",
+    tag: product?.tag ?? "",
     finalPrice: product ? String(product.finalPrice) : "",
     stock: product?.stock != null ? String(product.stock) : null,
   }
@@ -23,6 +26,7 @@ function toFormData(product?: Product): ProductFormData {
 
 export default function ProductForm({
   product,
+  availableTags,
   onSubmit,
   onCancel,
 }: ProductFormProps) {
@@ -53,6 +57,11 @@ export default function ProductForm({
     [handleChange]
   )
 
+  const handleTagChange = useCallback(
+    (value: string) => handleChange("tag", value),
+    [handleChange]
+  )
+
   const handleStockChange = useCallback(
     (value: string) => handleChange("stock", value),
     [handleChange]
@@ -68,6 +77,7 @@ export default function ProductForm({
     setError(null)
 
     const name = formData.name.trim()
+    const tag = formData.tag.trim()
     const finalPrice = Number.parseFloat(formData.finalPrice)
     const stockInput = (formData.stock ?? "").trim()
     const stock =
@@ -93,6 +103,7 @@ export default function ProductForm({
     try {
       await onSubmit({
         name,
+        tag,
         finalPrice: formData.finalPrice,
         stock: stockInput.length > 0 ? stockInput : null,
       })
@@ -128,6 +139,24 @@ export default function ProductForm({
           disabled={isSubmitting}
         />
       </div>
+
+      <SuggestionInput
+        label="Tag (optional)"
+        ariaLabel="Tag (optional)"
+        name="tag"
+        value={formData.tag}
+        options={availableTags}
+        onChange={handleTagChange}
+        onSelect={handleTagChange}
+        disabled={isSubmitting}
+        maxLength={100}
+        placeholder="Start typing to see suggestions..."
+        leading={
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+            #
+          </span>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">

@@ -18,7 +18,14 @@ export async function GET(request: NextRequest) {
     const denied = await requireAuth()
     if (denied) return denied
 
-    const params = Object.fromEntries(request.nextUrl.searchParams)
+    const tagParams = request.nextUrl.searchParams
+      .getAll("tag")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+    const params = {
+      search: request.nextUrl.searchParams.get("search") ?? undefined,
+      tags: tagParams.length > 0 ? tagParams : undefined,
+    }
     const parsed = productQuerySchema.safeParse(params)
     if (!parsed.success) {
       return NextResponse.json(
@@ -27,7 +34,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const result = await products.findAll({ search: parsed.data.search })
+    const result = await products.findAll({
+      search: parsed.data.search,
+      tags: parsed.data.tags,
+    })
     console.log(`Fetched ${result.length} products`)
     return NextResponse.json({ products: result }, { status: 200 })
   } catch (error) {

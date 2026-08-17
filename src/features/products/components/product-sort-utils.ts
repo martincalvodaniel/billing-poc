@@ -5,7 +5,7 @@ import {
   type SortState,
 } from "@/lib/utils/sort-state"
 
-export type ProductSortKey = "name" | "finalPrice" | "stock"
+export type ProductSortKey = "name" | "tag" | "finalPrice" | "stock"
 type ProductSortDir = SortDirection
 export type ProductSortState = SortState<ProductSortKey>
 
@@ -46,6 +46,10 @@ function compareProducts(
 ): number {
   if (sortBy === "name") {
     return compareStrings(a.name, b.name, sortDir)
+  }
+
+  if (sortBy === "tag") {
+    return compareStrings(a.tag ?? "", b.tag ?? "", sortDir)
   }
 
   if (sortBy === "finalPrice") {

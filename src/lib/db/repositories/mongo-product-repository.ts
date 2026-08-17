@@ -18,6 +18,7 @@ function toDomain(doc: MongoProduct): Product {
   const product: Product = {
     _id: doc._id?.toString(),
     name: doc.name,
+    tag: doc.tag,
     finalPrice: doc.finalPrice,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -34,6 +35,10 @@ export function buildProductUpdateOps(data: ProductUpdateData) {
   const builder = new MongoUpdateBuilder().set("updatedAt", new Date())
 
   if (data.name !== undefined) builder.set("name", data.name.trim())
+  if (data.tag !== undefined) {
+    const trimmed = data.tag.trim()
+    builder.setOrUnset("tag", trimmed ? trimmed : undefined)
+  }
   if (data.finalPrice !== undefined) builder.set("finalPrice", data.finalPrice)
   if (data.stock !== undefined) builder.setOrUnset("stock", data.stock)
 
@@ -72,6 +77,9 @@ export function buildProductListQuery(
     const pattern = buildAccentInsensitivePattern(filter.search.trim())
     query.name = { $regex: pattern, $options: "i" }
   }
+  if (filter.tags && filter.tags.length > 0) {
+    query.tag = { $in: filter.tags }
+  }
   return query
 }
 
@@ -90,6 +98,16 @@ export class MongoProductRepository implements ProductRepository {
     return docs.map(toDomain)
   }
 
+  async findDistinctTags(): Promise<string[]> {
+    const col = await this.collection()
+    const tags = await col.distinct("tag", {
+      tag: { $type: "string", $ne: "" },
+    })
+    return tags
+      .filter((tag): tag is string => typeof tag === "string")
+      .sort((a, b) => a.localeCompare(b))
+  }
+
   async findById(id: string): Promise<Product | null> {
     if (!isValidObjectId(id)) return null
     const col = await this.collection()
@@ -101,6 +119,7 @@ export class MongoProductRepository implements ProductRepository {
     const col = await this.collection()
     const doc = omitNullish({
       name: product.name.trim(),
+      tag: product.tag?.trim() ? product.tag.trim() : undefined,
       finalPrice: product.finalPrice,
       stock: product.stock,
       createdAt: product.createdAt,

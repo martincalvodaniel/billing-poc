@@ -12,6 +12,7 @@ const PRODUCTS: Product[] = [
   {
     _id: "3",
     name: "Zeta",
+    tag: "Market",
     finalPrice: 30,
     stock: 2,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
@@ -20,6 +21,7 @@ const PRODUCTS: Product[] = [
   {
     _id: "1",
     name: "Alpha",
+    tag: "Local",
     finalPrice: 10,
     stock: 10,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
@@ -28,6 +30,7 @@ const PRODUCTS: Product[] = [
   {
     _id: "2",
     name: "Beta",
+    tag: undefined,
     finalPrice: 20,
     stock: undefined,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
@@ -56,6 +59,14 @@ describe("sortProducts", () => {
         (p) => p._id
       )
     ).toEqual(["3", "1", "2"])
+  })
+
+  test("sorts by tag", () => {
+    expect(
+      sortProducts(PRODUCTS, { sortBy: "tag", sortDir: "asc" }).map(
+        (p) => p._id
+      )
+    ).toEqual(["2", "1", "3"])
   })
 })
 

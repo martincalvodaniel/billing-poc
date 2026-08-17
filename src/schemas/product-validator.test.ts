@@ -11,9 +11,20 @@ describe("createProductSchema", () => {
 
     expect(result).toEqual({
       name: "Widget",
+      tag: undefined,
       finalPrice: 10,
       stock: undefined,
     })
+  })
+
+  test("trims product tags", () => {
+    const result = createProductSchema.parse({
+      name: "Widget",
+      tag: "  Local  ",
+      finalPrice: "10",
+    })
+
+    expect(result.tag).toBe("Local")
   })
 })
 
@@ -39,6 +50,18 @@ describe("updateProductSchema", () => {
     expect(result).toEqual({
       id: "abc123",
       stock: null,
+    })
+  })
+
+  test("allows clearing tag with a blank value", () => {
+    const result = updateProductSchema.parse({
+      id: "abc123",
+      tag: "",
+    })
+
+    expect(result).toEqual({
+      id: "abc123",
+      tag: "",
     })
   })
 })

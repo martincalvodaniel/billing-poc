@@ -28,6 +28,11 @@ export const INDEX_SPECS: IndexSpec[] = [
     options: { name: "name_asc" },
   },
   {
+    collection: "products",
+    keys: { tag: 1 },
+    options: { name: "tag_asc" },
+  },
+  {
     collection: "paymentTemplates",
     keys: { name: 1 },
     options: { name: "name_asc" },

@@ -1,6 +1,7 @@
 export interface Product {
   _id?: string
   name: string
+  tag?: string
   finalPrice: number
   stock?: number
   createdAt: Date
@@ -9,6 +10,7 @@ export interface Product {
 
 export interface ProductFormData {
   name: string
+  tag: string
   finalPrice: string
   stock: string | null
 }

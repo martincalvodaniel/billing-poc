@@ -65,6 +65,15 @@ export default function ProductTableRow({
       >
         {product.name}
       </td>
+      <td className="hidden px-4 py-4 text-sm lg:table-cell">
+        {product.tag ? (
+          <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            {product.tag}
+          </span>
+        ) : (
+          <span className="text-xs text-zinc-500 dark:text-zinc-500">-</span>
+        )}
+      </td>
       <td
         className={`px-4 py-4 text-sm ${
           selected

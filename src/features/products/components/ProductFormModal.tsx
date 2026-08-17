@@ -12,6 +12,7 @@ import { extractProductApiError } from "./product-utils"
 interface ProductFormModalProps {
   product?: Product
   isOpen: boolean
+  availableTags: string[]
   onClose: () => void
   onSuccess?: () => void
 }
@@ -19,6 +20,7 @@ interface ProductFormModalProps {
 export default function ProductFormModal({
   product,
   isOpen,
+  availableTags,
   onClose,
   onSuccess,
 }: ProductFormModalProps) {
@@ -49,6 +51,7 @@ export default function ProductFormModal({
       <ProductForm
         key={product?._id ?? "new"}
         product={product}
+        availableTags={availableTags}
         onSubmit={handleSubmit}
         onCancel={onClose}
       />

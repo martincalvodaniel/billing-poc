@@ -5,6 +5,7 @@ import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
 import { FetchError } from "@/lib/client/swr-fetcher"
 import type { ProductFormData } from "@/lib/domain/entities/product"
 import { isProductsKey } from "./useProducts"
+import { isProductTagsKey } from "./useProductTags"
 
 export const PRODUCTS_ENDPOINT = "/api/products"
 
@@ -77,7 +78,10 @@ async function sendJson<TBody, TResp>(
 
 function useInvalidateProducts() {
   const { mutate } = useSWRConfig()
-  return () => mutate(isProductsKey, undefined, { revalidate: true })
+  return () => {
+    void mutate(isProductsKey, undefined, { revalidate: true })
+    void mutate(isProductTagsKey, undefined, { revalidate: true })
+  }
 }
 
 export function useCreateProduct(): SWRMutationResponse<

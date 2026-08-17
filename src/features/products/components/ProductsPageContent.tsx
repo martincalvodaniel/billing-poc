@@ -11,6 +11,7 @@ import {
   isProductsKey,
   useProducts,
 } from "@/features/products/hooks/useProducts"
+import { useProductTags } from "@/features/products/hooks/useProductTags"
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import type { Product } from "@/lib/domain/entities/product"
 import { formatCurrency } from "@/lib/utils/formatters"
@@ -18,6 +19,7 @@ import ProductFormModal from "./ProductFormModal"
 import ProductsSaleActions from "./ProductsSaleActions"
 import ProductsSearch from "./ProductsSearch"
 import ProductsTable from "./ProductsTable"
+import ProductTagFilters from "./ProductTagFilters"
 import {
   DEFAULT_PRODUCT_SORT,
   nextProductSortState,
@@ -35,7 +37,9 @@ const TODAY = new Date().toISOString().split("T")[0]
 
 export default function ProductsPageContent() {
   const [search, setSearch] = useState("")
-  const { products, isLoading } = useProducts({ search })
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const { products, isLoading } = useProducts({ search, tags: selectedTags })
+  const { tags: availableTags } = useProductTags()
   const { mutate } = useSWRConfig()
   const { trigger: deleteProduct, isMutating: isDeletingProduct } =
     useDeleteProduct()
@@ -110,6 +114,18 @@ export default function ProductsPageContent() {
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query)
+  }, [])
+
+  const handleTagToggle = useCallback((tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag)
+        ? prev.filter((value) => value !== tag)
+        : [...prev, tag]
+    )
+  }, [])
+
+  const handleClearTags = useCallback(() => {
+    setSelectedTags([])
   }, [])
 
   const handleEditProduct = (productId: string) => {
@@ -222,6 +238,12 @@ export default function ProductsPageContent() {
               />
             </div>
           </div>
+          <ProductTagFilters
+            availableTags={availableTags}
+            selectedTags={selectedTags}
+            onToggleTag={handleTagToggle}
+            onClearTags={handleClearTags}
+          />
         </div>
       }
     >
@@ -246,12 +268,14 @@ export default function ProductsPageContent() {
       <ProductFormModal
         isOpen={showCreateModal}
         onClose={handleCloseProductModal}
+        availableTags={availableTags}
       />
 
       <ProductFormModal
         product={editingProduct ?? undefined}
         isOpen={!!editingProduct}
         onClose={handleCloseProductModal}
+        availableTags={availableTags}
       />
 
       <PaymentFormModal

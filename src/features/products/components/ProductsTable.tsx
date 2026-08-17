@@ -47,18 +47,26 @@ export default function ProductsTable({
               align="left"
             />
             <SortableTableHeader
+              label="Tag"
+              sortKey="tag"
+              sort={sortState}
+              onSortChange={onSortChange}
+              align="left"
+              className="hidden px-4 py-3 text-left text-sm font-semibold text-zinc-900 lg:table-cell dark:text-zinc-50"
+            />
+            <SortableTableHeader
               label="Price"
               sortKey="finalPrice"
               sort={sortState}
               onSortChange={onSortChange}
-              align="right"
+              align="left"
             />
             <SortableTableHeader
               label="Stock"
               sortKey="stock"
               sort={sortState}
               onSortChange={onSortChange}
-              align="right"
+              align="left"
             />
             <th className="w-24 px-4 py-3 text-right text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               <span className="sr-only">Actions</span>

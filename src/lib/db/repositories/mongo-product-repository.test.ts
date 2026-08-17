@@ -48,6 +48,17 @@ describe("buildProductUpdateOps", () => {
     const ops = buildProductUpdateOps({ name: "  Product A  " })
     expect(ops.$set?.name).toBe("Product A")
   })
+
+  test("sets trimmed tag when provided", () => {
+    const ops = buildProductUpdateOps({ tag: "  Market  " })
+    expect(ops.$set?.tag).toBe("Market")
+  })
+
+  test("empty-string tag becomes $unset", () => {
+    const ops = buildProductUpdateOps({ tag: "   " })
+    expect(ops.$unset?.tag).toBe(true)
+    expect(ops.$set?.tag).toBeUndefined()
+  })
 })
 
 describe("buildProductStockAdjustmentFilter", () => {
@@ -85,6 +96,12 @@ describe("buildProductListQuery", () => {
   test("builds a case-insensitive accent-insensitive name filter", () => {
     expect(buildProductListQuery({ search: "Café" })).toEqual({
       name: { $regex: "[cç][aáàäâãåā]f[eéèëêē]", $options: "i" },
+    })
+  })
+
+  test("adds a multi-tag filter", () => {
+    expect(buildProductListQuery({ tags: ["Local", "Market"] })).toEqual({
+      tag: { $in: ["Local", "Market"] },
     })
   })
 })
