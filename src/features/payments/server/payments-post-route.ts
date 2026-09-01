@@ -6,10 +6,10 @@ import { computePaymentFinancials } from "@/lib/domain/services/payment-calculat
 import { zodError } from "@/lib/utils/validation"
 import { createPaymentSchema } from "@/schemas/payment-validator"
 import {
-  isProductSaleTag,
   reserveProductStockForSale,
   rollbackProductStockChanges,
 } from "./payment-stock-reservation"
+import { isProductSaleTag } from "./product-sale-tags"
 
 const payments = new MongoPaymentRepository()
 

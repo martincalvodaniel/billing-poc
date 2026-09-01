@@ -34,6 +34,11 @@ import {
 } from "./productPayment-utils"
 
 const TODAY = new Date().toISOString().split("T")[0]
+const SALE_PAYMENT_TITLES: Record<SalePaymentTag, string> = {
+  LocalSale: "New Local Sale Payment",
+  MarketSale: "New Market Sale Payment",
+  Cocción: "New Firing Payment",
+}
 
 export default function ProductsPageContent() {
   const [search, setSearch] = useState("")
@@ -196,6 +201,11 @@ export default function ProductsPageContent() {
     [openSalePayment]
   )
 
+  const handleFiringClick = useCallback(
+    () => openSalePayment("Cocción"),
+    [openSalePayment]
+  )
+
   const closeSalePayment = useCallback(() => setSaleTag(null), [])
   const handleSalePaymentSaved = useCallback(() => {
     setSelectedProductIds([])
@@ -235,6 +245,7 @@ export default function ProductsPageContent() {
                 hasSelection={selectedProducts.length > 0}
                 onLocalSaleClick={handleLocalSaleClick}
                 onMarketSaleClick={handleMarketSaleClick}
+                onFiringClick={handleFiringClick}
               />
             </div>
           </div>
@@ -281,11 +292,7 @@ export default function ProductsPageContent() {
       <PaymentFormModal
         isOpen={saleTag !== null}
         onClose={closeSalePayment}
-        title={
-          saleTag === "LocalSale"
-            ? "New Local Sale Payment"
-            : "New Market Sale Payment"
-        }
+        title={saleTag ? SALE_PAYMENT_TITLES[saleTag] : "New Payment"}
         initialDate={TODAY}
         initialData={salePaymentInitialData}
         onPaymentSaved={handleSalePaymentSaved}
