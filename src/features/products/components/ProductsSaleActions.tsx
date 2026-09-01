@@ -1,6 +1,6 @@
 "use client"
 
-import { FiringIcon } from "@/components/ui/icons/FiringIcon"
+import { KilnIcon } from "@/components/ui/icons/KilnIcon"
 import { LocalSaleIcon } from "@/components/ui/icons/LocalSaleIcon"
 import { MarketSaleIcon } from "@/components/ui/icons/MarketSaleIcon"
 
@@ -9,7 +9,7 @@ interface ProductsSaleActionsProps {
   hasSelection: boolean
   onLocalSaleClick: () => void
   onMarketSaleClick: () => void
-  onFiringClick: () => void
+  onKilnClick: () => void
 }
 
 const saleActionButtonClass =
@@ -20,7 +20,7 @@ export default function ProductsSaleActions({
   hasSelection,
   onLocalSaleClick,
   onMarketSaleClick,
-  onFiringClick,
+  onKilnClick,
 }: ProductsSaleActionsProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -62,15 +62,15 @@ export default function ProductsSaleActions({
         aria-label="Create payment with Cocción tag"
         title={
           hasSelection
-            ? "Create firing payment"
+            ? "Create kiln payment"
             : "Select one or more products first"
         }
-        onClick={onFiringClick}
+        onClick={onKilnClick}
         disabled={!hasSelection}
         className={saleActionButtonClass}
       >
-        <FiringIcon />
-        <span>Firing</span>
+        <KilnIcon />
+        <span>Kiln</span>
       </button>
     </div>
   )
