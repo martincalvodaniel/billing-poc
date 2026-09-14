@@ -1,7 +1,7 @@
 import type { PaymentFormData } from "@/lib/domain/entities/payment"
 import type { Product } from "@/lib/domain/entities/product"
 
-export type SalePaymentTag = "LocalSale" | "MarketSale"
+export type SalePaymentTag = "LocalSale" | "MarketSale" | "Cocción"
 
 export function buildSalePaymentFormData(
   products: Product[],

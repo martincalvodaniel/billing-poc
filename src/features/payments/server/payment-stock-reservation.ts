@@ -2,8 +2,6 @@ import { MongoProductRepository } from "@/lib/db/repositories/mongo-product-repo
 
 const products = new MongoProductRepository()
 
-type SaleTag = "LocalSale" | "MarketSale"
-
 interface ProductSaleConcept {
   productId?: string
   name: string
@@ -11,10 +9,6 @@ interface ProductSaleConcept {
 }
 
 type ProductStockChange = { productId: string; quantity: number; name: string }
-
-export function isProductSaleTag(tag: string | undefined): tag is SaleTag {
-  return tag === "LocalSale" || tag === "MarketSale"
-}
 
 function getProductSaleConcepts(
   concepts: ProductSaleConcept[]
