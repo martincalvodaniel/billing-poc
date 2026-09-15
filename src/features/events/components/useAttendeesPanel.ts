@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useCreateClient } from "@/features/clients/hooks/useClientMutations"
-import { useClients } from "@/features/clients/hooks/useClients"
+import { useClientsByIds } from "@/features/clients/hooks/useClientsByIds"
 import {
   isInvoiceGuardError,
   useAddEventAttendee,
@@ -56,8 +56,15 @@ export function useAttendeesPanel({
   const [selectorResetKey, setSelectorResetKey] = useState(0)
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
 
-  // 100 is the API max page size; sufficient for the lookup use-case in this POC.
-  const { clients } = useClients({ pageSize: 100 })
+  const clientIds = useMemo(
+    () => event.attendees.map((attendee) => attendee.clientId),
+    [event.attendees]
+  )
+  const {
+    clients,
+    isLoading: areClientsLoading,
+    error: clientFetchError,
+  } = useClientsByIds(clientIds)
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>()
     for (const c of clients) {
@@ -196,6 +203,8 @@ export function useAttendeesPanel({
 
   return {
     clientNameById,
+    areClientsLoading,
+    clientFetchError,
     editingClient,
     hasEmails,
     emailsString,

@@ -18,6 +18,7 @@ export type ClientUpdateData = Partial<
 export interface ClientRepository {
   findAll(filter: ClientFilter): Promise<PaginatedResponse<Client>>
   findById(id: string): Promise<Client | null>
+  findByIds(ids: readonly string[]): Promise<Client[]>
   create(client: Omit<Client, "_id">): Promise<string>
   update(id: string, data: ClientUpdateData): Promise<boolean>
   delete(id: string): Promise<boolean>

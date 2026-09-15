@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import {
+  clientIdsQuerySchema,
   clientQuerySchema,
   createClientSchema,
   deleteClientSchema,
@@ -246,5 +247,31 @@ describe("clientQuerySchema", () => {
     if (result.success) {
       expect(result.data.search).toBe("acme")
     }
+  })
+})
+
+describe("clientIdsQuerySchema", () => {
+  it("accepts a non-empty list of client IDs", () => {
+    const result = clientIdsQuerySchema.safeParse({
+      ids: ["client-1", "client-2"],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("trims client IDs", () => {
+    const result = clientIdsQuerySchema.safeParse({ ids: ["  client-1  "] })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.ids).toEqual(["client-1"])
+    }
+  })
+
+  it("rejects an empty list", () => {
+    expect(clientIdsQuerySchema.safeParse({ ids: [] }).success).toBe(false)
+  })
+
+  it("rejects more than 100 IDs", () => {
+    const ids = Array.from({ length: 101 }, (_, index) => `client-${index}`)
+    expect(clientIdsQuerySchema.safeParse({ ids }).success).toBe(false)
   })
 })
