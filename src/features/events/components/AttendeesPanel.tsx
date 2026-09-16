@@ -54,6 +54,8 @@ export default function AttendeesPanel({
   const id = useId()
   const {
     clientNameById,
+    areClientsLoading,
+    clientFetchError,
     editingClient,
     hasEmails,
     emailsString,
@@ -99,8 +101,27 @@ export default function AttendeesPanel({
         </div>
       </div>
 
+      {clientFetchError ? (
+        <p
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+          className="text-sm text-red-600 dark:text-red-400"
+        >
+          Failed to load attendee client details.
+        </p>
+      ) : null}
+
       {event.attendees.length === 0 ? (
         <EmptyState>No attendees yet.</EmptyState>
+      ) : areClientsLoading ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-md border border-zinc-200 px-3 py-4 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"
+        >
+          Loading attendees…
+        </div>
       ) : (
         <ul className="divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
           {event.attendees.map((attendee) => {

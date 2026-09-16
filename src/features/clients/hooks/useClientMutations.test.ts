@@ -22,6 +22,10 @@ describe("isClientsKey", () => {
     expect(isClientsKey(["/api/clients"])).toBe(true)
   })
 
+  test("returns true for a client lookup by IDs", () => {
+    expect(isClientsKey(["/api/clients", "by-ids", '["a","b"]'])).toBe(true)
+  })
+
   test("returns false for a different resource key", () => {
     expect(isClientsKey(["/api/payments", 2026, 4])).toBe(false)
   })

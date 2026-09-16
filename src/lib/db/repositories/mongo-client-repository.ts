@@ -70,6 +70,28 @@ export class MongoClientRepository implements ClientRepository {
     return doc ? toDomain(doc) : null
   }
 
+  async findByIds(ids: readonly string[]): Promise<Client[]> {
+    const uniqueIds = [
+      ...new Set(
+        ids.filter(isValidObjectId).map((id) => toObjectId(id).toHexString())
+      ),
+    ]
+    if (uniqueIds.length === 0) return []
+
+    const col = await this.collection()
+    const docs = await col
+      .find({ _id: { $in: uniqueIds.map(toObjectId) } })
+      .toArray()
+    const clientsById = new Map(
+      docs.map((doc) => [doc._id.toString(), toDomain(doc)])
+    )
+
+    return uniqueIds.flatMap((id) => {
+      const client = clientsById.get(id)
+      return client ? [client] : []
+    })
+  }
+
   async create(client: Omit<Client, "_id">): Promise<string> {
     const col = await this.collection()
     const doc = omitNullish({

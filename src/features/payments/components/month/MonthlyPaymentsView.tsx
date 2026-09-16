@@ -3,7 +3,7 @@ import dynamic from "next/dynamic"
 import { useMemo, useState } from "react"
 import Toast from "@/components/ui/Toast"
 import ClientFormModal from "@/features/clients/components/ClientFormModal"
-import { useClients } from "@/features/clients/hooks/useClients"
+import { useClientsByIds } from "@/features/clients/hooks/useClientsByIds"
 import { usePayments } from "@/features/payments/hooks/usePayments"
 import type { Client } from "@/lib/domain/entities/client"
 import MonthlyPaymentsModals from "./MonthlyPaymentsModals"
@@ -27,11 +27,21 @@ export default function MonthlyPaymentsView({
   const month = selectedDate.getMonth() + 1
   const {
     payments,
-    isLoading,
+    isLoading: arePaymentsLoading,
     error: fetchError,
   } = usePayments({ year, month })
-  // 100 is the API max page size; enough for name lookups in this view.
-  const { clients } = useClients({ page: 1, pageSize: 100 })
+  const clientIds = useMemo(
+    () =>
+      payments.flatMap((payment) =>
+        payment.clientId ? [payment.clientId] : []
+      ),
+    [payments]
+  )
+  const {
+    clients,
+    isLoading: areClientsLoading,
+    error: clientFetchError,
+  } = useClientsByIds(clientIds)
   const [editingClientId, setEditingClientId] = useState<string | null>(null)
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -75,7 +85,12 @@ export default function MonthlyPaymentsView({
     handlePaymentUpdated,
     handleEditDeleted,
     handleConfirmDelete,
-  } = useMonthlyPaymentsActions({ payments, isLoading, year, month })
+  } = useMonthlyPaymentsActions({
+    payments,
+    isLoading: arePaymentsLoading,
+    year,
+    month,
+  })
   // Combine iterations: compute totals, counts, and tag breakdowns in a single pass (js-combine-iterations)
   const {
     totalIncome,
@@ -92,7 +107,7 @@ export default function MonthlyPaymentsView({
     outcomeByTag,
   } = useMemo(() => computePaymentTotals(payments), [payments])
 
-  if (isLoading) {
+  if (arePaymentsLoading || areClientsLoading) {
     return (
       <div className="w-full space-y-4">
         <div className="animate-pulse space-y-4">
@@ -109,7 +124,11 @@ export default function MonthlyPaymentsView({
       ? fetchError.message
       : fetchError
         ? "Failed to fetch payments"
-        : null)
+        : clientFetchError instanceof Error
+          ? clientFetchError.message
+          : clientFetchError
+            ? "Failed to fetch clients"
+            : null)
   return (
     <div className="w-full space-y-2">
       {showSuccess ? (

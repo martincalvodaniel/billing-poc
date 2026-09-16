@@ -28,7 +28,7 @@ interface ClientSelectorProps {
 }
 
 const SEARCH_DEBOUNCE_MS = 300
-const PAGE_SIZE = 20
+const PAGE_SIZE = 100
 
 export default function ClientSelector({
   value,
