@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
+import { exportPaymentsToXlsx } from "@/features/payments/utils/exportPaymentsToXlsx"
 import type { Payment } from "@/lib/domain/entities/payment"
 import { formatMonthYear } from "@/lib/utils/formatters"
 import type {
@@ -53,12 +54,34 @@ export default function PaymentsTable({
   onClientClick: (clientId: string) => void
 }) {
   const [showAllMoneyColumns, setShowAllMoneyColumns] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
   const showCompactMoneyColumns = () => setShowAllMoneyColumns(false)
   const showDetailedMoneyColumns = () => setShowAllMoneyColumns(true)
+  const handleExport = async () => {
+    setIsExporting(true)
+    setExportError(null)
+    try {
+      await exportPaymentsToXlsx({
+        payments,
+        clientNameById,
+        year: selectedDate.getFullYear(),
+        month: selectedDate.getMonth() + 1,
+      })
+    } catch (exportFailure) {
+      console.error(`Error exporting monthly payments: ${exportFailure}`)
+      setExportError("Failed to export payments")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+  const displayedError = exportError ?? error
 
   return (
     <div className="w-full rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      {error ? <ErrorBanner className="m-6">{error}</ErrorBanner> : null}
+      {displayedError ? (
+        <ErrorBanner className="m-6">{displayedError}</ErrorBanner>
+      ) : null}
 
       {payments.length === 0 ? (
         <EmptyState variant="inline" className="px-6 py-12">
@@ -71,36 +94,48 @@ export default function PaymentsTable({
       ) : (
         <>
           <div className="flex justify-end border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-            <fieldset
-              className="inline-flex h-9 items-stretch overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700"
-              aria-label="Toggle money columns"
-            >
-              <legend className="sr-only">Toggle money columns</legend>
+            <div className="inline-flex items-center gap-2">
               <button
                 type="button"
-                onClick={showCompactMoneyColumns}
-                aria-pressed={!showAllMoneyColumns}
-                className={`h-full px-3 text-sm font-medium transition ${
-                  !showAllMoneyColumns
-                    ? "bg-blue-600 text-white dark:bg-blue-700"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                }`}
+                onClick={handleExport}
+                disabled={isExporting}
+                aria-label="Export monthly payments to Excel"
+                className="h-9 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-900"
               >
-                Compact
+                {isExporting ? "Exporting..." : "Export"}
               </button>
-              <button
-                type="button"
-                onClick={showDetailedMoneyColumns}
-                aria-pressed={showAllMoneyColumns}
-                className={`h-full px-3 text-sm font-medium transition ${
-                  showAllMoneyColumns
-                    ? "bg-blue-600 text-white dark:bg-blue-700"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                }`}
+
+              <fieldset
+                className="inline-flex h-9 items-stretch overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700"
+                aria-label="Toggle money columns"
               >
-                All
-              </button>
-            </fieldset>
+                <legend className="sr-only">Toggle money columns</legend>
+                <button
+                  type="button"
+                  onClick={showCompactMoneyColumns}
+                  aria-pressed={!showAllMoneyColumns}
+                  className={`h-full px-3 text-sm font-medium transition ${
+                    !showAllMoneyColumns
+                      ? "bg-blue-600 text-white dark:bg-blue-700"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  }`}
+                >
+                  Compact
+                </button>
+                <button
+                  type="button"
+                  onClick={showDetailedMoneyColumns}
+                  aria-pressed={showAllMoneyColumns}
+                  className={`h-full px-3 text-sm font-medium transition ${
+                    showAllMoneyColumns
+                      ? "bg-blue-600 text-white dark:bg-blue-700"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  }`}
+                >
+                  All
+                </button>
+              </fieldset>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
