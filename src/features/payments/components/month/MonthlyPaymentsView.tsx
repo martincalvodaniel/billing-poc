@@ -203,12 +203,14 @@ export default function MonthlyPaymentsView({
 
       <MonthlyPaymentsModals
         payments={payments}
+        displayedPayments={filteredPayments}
         deleteConfirmPaymentId={deleteConfirmPaymentId}
         isDeleting={isDeleting}
         onCloseDelete={closeDeleteModal}
         onConfirmDelete={handleConfirmDelete}
         editPaymentId={editPaymentId}
         onCloseEdit={closeEditModal}
+        onNavigateEdit={handleRowClick}
         onUpdate={handlePaymentUpdated}
         onDeleteEdit={handleEditDeleted}
         duplicateSeed={duplicateSeed}

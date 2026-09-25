@@ -18,9 +18,17 @@ import {
 import { usePaymentDetailSave } from "./usePaymentDetailSave"
 import { usePaymentForm } from "./usePaymentForm"
 
+const ignoreNavigation = () => {}
+
 interface PaymentDetailModalProps {
   payment: Payment
   mode?: "edit" | "duplicate"
+  navigation?: {
+    currentPosition: number
+    total: number
+    onPrevious?: () => void
+    onNext?: () => void
+  }
   onClose: () => void
   onUpdate?: (payment: Payment) => void
   onCreate?: (payment: { id: string }) => void
@@ -29,6 +37,7 @@ interface PaymentDetailModalProps {
 export default function PaymentDetailModal({
   payment,
   mode = "edit",
+  navigation,
   onClose,
   onUpdate,
   onCreate,
@@ -116,14 +125,46 @@ export default function PaymentDetailModal({
         maxWidth="xl"
         headerActions={
           !isDuplicate ? (
-            <IconButton
-              variant="danger"
-              ariaLabel="Delete payment"
-              title="Delete payment"
-              onClick={handleDeleteErrorChange}
-            >
-              <TrashIcon />
-            </IconButton>
+            <div className="flex items-center gap-1">
+              {navigation ? (
+                <>
+                  <span
+                    className="min-w-12 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400"
+                    aria-hidden="true"
+                  >
+                    {navigation.currentPosition} / {navigation.total}
+                  </span>
+                  <span className="sr-only">
+                    Payment {navigation.currentPosition} of {navigation.total}
+                  </span>
+                  <IconButton
+                    ariaLabel="Previous displayed payment"
+                    title="Previous displayed payment"
+                    disabled={!navigation.onPrevious || isSaving || isDeleting}
+                    onClick={navigation.onPrevious ?? ignoreNavigation}
+                  >
+                    <span aria-hidden="true">←</span>
+                  </IconButton>
+                  <IconButton
+                    ariaLabel="Next displayed payment"
+                    title="Next displayed payment"
+                    disabled={!navigation.onNext || isSaving || isDeleting}
+                    onClick={navigation.onNext ?? ignoreNavigation}
+                  >
+                    <span aria-hidden="true">→</span>
+                  </IconButton>
+                </>
+              ) : null}
+              <IconButton
+                variant="danger"
+                ariaLabel="Delete payment"
+                title="Delete payment"
+                disabled={isSaving || isDeleting}
+                onClick={handleDeleteErrorChange}
+              >
+                <TrashIcon />
+              </IconButton>
+            </div>
           ) : undefined
         }
         footer={
