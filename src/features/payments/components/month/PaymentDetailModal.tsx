@@ -152,6 +152,7 @@ export default function PaymentDetailModal({
         title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
         maxWidth="xl"
         initialFocus={navigation ? "container" : "first"}
+        stickyHeader={!!navigation}
         leftAction={
           !isDuplicate && navigation ? (
             <PaymentSideNavigationButton
@@ -176,7 +177,7 @@ export default function PaymentDetailModal({
               {navigation ? (
                 <>
                   <span
-                    className="min-w-12 text-center text-xs tabular-nums text-zinc-500 dark:text-zinc-400"
+                    className="hidden min-w-12 text-center text-xs tabular-nums text-zinc-500 sm:inline-block dark:text-zinc-400"
                     aria-hidden="true"
                   >
                     {navigation.currentPosition} / {navigation.total}

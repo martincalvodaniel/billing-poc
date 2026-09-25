@@ -15,6 +15,7 @@ interface ModalProps {
   leftAction?: React.ReactNode
   rightAction?: React.ReactNode
   initialFocus?: "first" | "container"
+  stickyHeader?: boolean
   maxWidth?: "sm" | "md" | "lg" | "xl"
 }
 export function Modal({
@@ -27,6 +28,7 @@ export function Modal({
   leftAction,
   rightAction,
   initialFocus = "first",
+  stickyHeader = false,
   maxWidth = "md",
 }: ModalProps) {
   const startedOnBackdropRef = useRef(false)
@@ -115,21 +117,25 @@ export function Modal({
         aria-modal="true"
       >
         {leftAction ? (
-          <div className="absolute left-2 top-1/2 z-10 -translate-y-1/2 lg:-left-14">
+          <div className="absolute -left-14 top-1/2 z-10 hidden -translate-y-1/2 lg:block">
             {leftAction}
           </div>
         ) : null}
 
         <div className="max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <div
+            className={`flex items-center justify-between border-b border-zinc-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 ${
+              stickyHeader ? "sticky top-0 z-20 bg-white dark:bg-zinc-900" : ""
+            }`}
+          >
             <h2
               id={`${id}-modal-title`}
-              className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+              className="text-base font-semibold text-zinc-900 sm:text-lg dark:text-zinc-50"
             >
               {title}
             </h2>
-            <div className="ml-4 flex items-center gap-2">
+            <div className="ml-2 flex items-center gap-1 sm:ml-4 sm:gap-2">
               {headerActions}
               <CloseButton onClick={onClose} label="Close dialog" />
             </div>
@@ -147,7 +153,7 @@ export function Modal({
         </div>
 
         {rightAction ? (
-          <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2 lg:-right-14">
+          <div className="absolute -right-14 top-1/2 z-10 hidden -translate-y-1/2 lg:block">
             {rightAction}
           </div>
         ) : null}
