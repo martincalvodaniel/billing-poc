@@ -42,6 +42,11 @@ const NAV_ITEMS: readonly NavItem[] = [
     matches: (p) => p === "/year",
   },
   {
+    href: "/invoices",
+    label: "Invoices",
+    matches: (p) => p === "/invoices",
+  },
+  {
     href: "/wordpress",
     label: "WordPress",
     matches: (p) => p === "/wordpress",

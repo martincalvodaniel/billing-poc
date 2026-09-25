@@ -1,14 +1,31 @@
 import "server-only"
 
+import type { InvoiceCounter } from "../../domain/entities/invoice"
 import type { InvoiceType } from "../../domain/entities/payment"
 import type { InvoiceCounterRepository } from "../../domain/ports/invoice-counter-repository"
 import { getDatabase } from "../client"
 import type { MongoInvoiceCounter } from "../types"
 
+function toDomain(doc: MongoInvoiceCounter): InvoiceCounter {
+  return {
+    _id: doc._id?.toString(),
+    series: doc.series,
+    year: doc.year,
+    lastNumber: doc.lastNumber,
+    updatedAt: doc.updatedAt,
+  }
+}
+
 export class MongoInvoiceCounterRepository implements InvoiceCounterRepository {
   private async collection() {
     const db = await getDatabase()
     return db.collection<MongoInvoiceCounter>("invoiceCounters")
+  }
+
+  async findAll(): Promise<InvoiceCounter[]> {
+    const col = await this.collection()
+    const docs = await col.find({}).sort({ year: -1, series: 1 }).toArray()
+    return docs.map(toDomain)
   }
 
   async getNextNumber(series: InvoiceType, year: number): Promise<number> {
