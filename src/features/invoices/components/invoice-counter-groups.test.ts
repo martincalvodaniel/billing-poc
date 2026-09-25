@@ -24,12 +24,27 @@ describe("groupInvoiceCountersByYear", () => {
     ])
   })
 
-  test("ignores link-only receipt entries", () => {
-    expect(
-      groupInvoiceCountersByYear([
-        { series: "Receipt", year: 2026, lastNumber: 9 },
-      ])
-    ).toEqual([])
+  test("attaches generated invoices to their year and series", () => {
+    const groups = groupInvoiceCountersByYear(
+      [{ series: "Invoice", year: 2026, lastNumber: 9 }],
+      [
+        {
+          id: "F26_009",
+          series: "Invoice",
+          year: 2026,
+          number: 9,
+          generatedAt: "2026-03-12T11:00:00.000Z",
+          paymentId: "507f1f77bcf86cd799439011",
+          paymentDate: "2026-03-12",
+          paymentTotal: 121,
+          paymentDescription: "Workshop",
+        },
+      ]
+    )
+
+    expect(groups[0].counters[0].invoices.map((invoice) => invoice.id)).toEqual(
+      ["F26_009"]
+    )
   })
 })
 

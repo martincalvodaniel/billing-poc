@@ -67,6 +67,27 @@ export interface PaymentResponse {
   payment: Payment
 }
 
+export interface UsePaymentResult {
+  payment: Payment | undefined
+  isLoading: boolean
+  error: unknown
+  mutate: KeyedMutator<PaymentResponse>
+}
+
+export function usePayment(id: string | null): UsePaymentResult {
+  const { data, error, isLoading, mutate } = useSWR<PaymentResponse>(
+    id ? buildPaymentKey(id) : null,
+    () => fetcher<PaymentResponse>(buildPaymentUrl(id ?? ""))
+  )
+
+  return {
+    payment: data?.payment,
+    isLoading,
+    error,
+    mutate,
+  }
+}
+
 export interface PaymentsResponse {
   payments: Payment[]
 }

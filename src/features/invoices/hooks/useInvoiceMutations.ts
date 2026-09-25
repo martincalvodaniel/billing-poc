@@ -9,6 +9,7 @@ import type {
   Payment,
 } from "@/lib/domain/entities/payment"
 import { updateInvoicePaymentCaches } from "./invoice-payment-cache"
+import { isInvoiceCountersKey } from "./useInvoiceCounters"
 
 async function parseError(
   response: Response,
@@ -113,13 +114,16 @@ export function useGenerateInvoice(): UseGenerateInvoiceResult {
     "/api/invoices/generate",
     GenerateInvoiceInput
   >("/api/invoices/generate", generateInvoiceFetcher, {
-    onSuccess: (result) => {
-      void updateInvoicePaymentCaches(mutate, result.paymentId, (payment) => ({
-        ...payment,
-        invoice: undefined,
-        invoices: result.invoices,
-        updatedAt: new Date(),
-      }))
+    onSuccess: async (result) => {
+      await Promise.all([
+        updateInvoicePaymentCaches(mutate, result.paymentId, (payment) => ({
+          ...payment,
+          invoice: undefined,
+          invoices: result.invoices,
+          updatedAt: new Date(),
+        })),
+        mutate(isInvoiceCountersKey),
+      ])
     },
   })
 }

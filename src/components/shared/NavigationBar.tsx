@@ -22,24 +22,9 @@ const NAV_ITEMS: readonly NavItem[] = [
     matches: (p) => p === "/clients",
   },
   {
-    href: "/products",
-    label: "Products",
-    matches: (p) => p === "/products",
-  },
-  {
     href: "/events",
     label: "Events",
     matches: (p) => p === "/events",
-  },
-  {
-    href: "/month",
-    label: "Month",
-    matches: (p) => p === "/" || p === "/month",
-  },
-  {
-    href: "/year",
-    label: "Year",
-    matches: (p) => p === "/year",
   },
   {
     href: "/invoices",
@@ -47,9 +32,24 @@ const NAV_ITEMS: readonly NavItem[] = [
     matches: (p) => p === "/invoices",
   },
   {
+    href: "/month",
+    label: "Month",
+    matches: (p) => p === "/" || p === "/month",
+  },
+  {
+    href: "/products",
+    label: "Products",
+    matches: (p) => p === "/products",
+  },
+  {
     href: "/wordpress",
     label: "WordPress",
     matches: (p) => p === "/wordpress",
+  },
+  {
+    href: "/year",
+    label: "Year",
+    matches: (p) => p === "/year",
   },
 ]
 export default function NavigationBar({ subtitle }: NavigationBarProps) {

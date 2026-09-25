@@ -8,14 +8,70 @@ type BuildPaymentUpdateOps =
   typeof import("./mongo-payment-repository")["buildPaymentUpdateOps"]
 type BuildPaymentDateQuery =
   typeof import("./mongo-payment-repository")["buildPaymentDateQuery"]
+type BuildGeneratedInvoiceQuery =
+  typeof import("./mongo-payment-repository")["buildGeneratedInvoiceQuery"]
+type BuildGeneratedInvoiceIdsQuery =
+  typeof import("./mongo-payment-repository")["buildGeneratedInvoiceIdsQuery"]
+type BuildRemoveGeneratedInvoicesPipeline =
+  typeof import("./mongo-payment-repository")["buildRemoveGeneratedInvoicesPipeline"]
 
 let buildPaymentUpdateOps: BuildPaymentUpdateOps
 let buildPaymentDateQuery: BuildPaymentDateQuery
+let buildGeneratedInvoiceQuery: BuildGeneratedInvoiceQuery
+let buildGeneratedInvoiceIdsQuery: BuildGeneratedInvoiceIdsQuery
+let buildRemoveGeneratedInvoicesPipeline: BuildRemoveGeneratedInvoicesPipeline
 
 beforeAll(async () => {
-  ;({ buildPaymentUpdateOps, buildPaymentDateQuery } = await import(
-    "./mongo-payment-repository"
-  ))
+  ;({
+    buildPaymentUpdateOps,
+    buildPaymentDateQuery,
+    buildGeneratedInvoiceQuery,
+    buildGeneratedInvoiceIdsQuery,
+    buildRemoveGeneratedInvoicesPipeline,
+  } = await import("./mongo-payment-repository"))
+})
+
+describe("generated invoice persistence helpers", () => {
+  test("find query supports current and legacy invoice ids", () => {
+    expect(buildGeneratedInvoiceQuery()).toEqual({
+      $or: [
+        { "invoice.id": { $type: "string", $ne: "" } },
+        { "invoice.formattedNumber": { $type: "string", $ne: "" } },
+        { "invoices.id": { $type: "string", $ne: "" } },
+        { "invoices.formattedNumber": { $type: "string", $ne: "" } },
+      ],
+    })
+  })
+
+  test("removal query targets only the selected ids", () => {
+    expect(buildGeneratedInvoiceIdsQuery(["F26_003", "F26_004"])).toEqual({
+      $or: [
+        { "invoice.id": { $in: ["F26_003", "F26_004"] } },
+        {
+          "invoice.formattedNumber": { $in: ["F26_003", "F26_004"] },
+        },
+        { "invoices.id": { $in: ["F26_003", "F26_004"] } },
+        {
+          "invoices.formattedNumber": { $in: ["F26_003", "F26_004"] },
+        },
+      ],
+    })
+  })
+
+  test("removal pipeline filters arrays, unsets legacy entries, and timestamps", () => {
+    const updatedAt = new Date("2026-09-25T12:00:00Z")
+    const pipeline = buildRemoveGeneratedInvoicesPipeline(
+      ["F26_003"],
+      updatedAt
+    )
+    const serialized = JSON.stringify(pipeline)
+
+    expect(serialized).toContain("$$REMOVE")
+    expect(serialized).toContain("$invoice.formattedNumber")
+    expect(serialized).toContain("$$invoice.formattedNumber")
+    expect(serialized).toContain("F26_003")
+    expect(pipeline[0]).toMatchObject({ $set: { updatedAt } })
+  })
 })
 
 describe("buildPaymentDateQuery", () => {

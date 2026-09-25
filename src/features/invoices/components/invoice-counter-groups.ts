@@ -1,20 +1,19 @@
-import type { InvoiceType } from "@/lib/domain/entities/payment"
-import type { InvoiceCounterSnapshot } from "../hooks/useInvoiceCounters"
-
-export const NUMBERED_INVOICE_SERIES = [
-  "Invoice",
-  "SimpleInvoice",
-  "RectificativeInvoice",
-  "RectificativeSimpleInvoice",
-] as const satisfies readonly InvoiceType[]
-
-export type NumberedInvoiceSeries = (typeof NUMBERED_INVOICE_SERIES)[number]
+import {
+  NUMBERED_INVOICE_SERIES,
+  type NumberedInvoiceSeries,
+} from "@/lib/domain/entities/invoice"
+import { getInvoiceSeriesPrefix } from "@/lib/domain/services/invoice-numbering"
+import type {
+  GeneratedInvoiceSnapshot,
+  InvoiceCounterSnapshot,
+} from "../hooks/useInvoiceCounters"
 
 export interface InvoiceSeriesCounter {
   series: NumberedInvoiceSeries
   label: string
   prefix: string
   lastNumber: number
+  invoices: GeneratedInvoiceSnapshot[]
 }
 
 export interface InvoiceCounterYearGroup {
@@ -26,34 +25,45 @@ const SERIES_DETAILS: Record<
   NumberedInvoiceSeries,
   { label: string; prefix: string }
 > = {
-  Invoice: { label: "Invoice", prefix: "F" },
-  SimpleInvoice: { label: "Simplified invoice", prefix: "FS" },
-  RectificativeInvoice: { label: "Corrective invoice", prefix: "FR" },
+  Invoice: { label: "Invoice", prefix: getInvoiceSeriesPrefix("Invoice") },
+  SimpleInvoice: {
+    label: "Simplified invoice",
+    prefix: getInvoiceSeriesPrefix("SimpleInvoice"),
+  },
+  RectificativeInvoice: {
+    label: "Corrective invoice",
+    prefix: getInvoiceSeriesPrefix("RectificativeInvoice"),
+  },
   RectificativeSimpleInvoice: {
     label: "Corrective simplified invoice",
-    prefix: "FSR",
+    prefix: getInvoiceSeriesPrefix("RectificativeSimpleInvoice"),
   },
 }
 
-function isNumberedInvoiceSeries(
-  series: InvoiceType
-): series is NumberedInvoiceSeries {
-  return NUMBERED_INVOICE_SERIES.some((candidate) => candidate === series)
-}
-
 export function groupInvoiceCountersByYear(
-  counters: InvoiceCounterSnapshot[]
+  counters: InvoiceCounterSnapshot[],
+  invoices: GeneratedInvoiceSnapshot[] = []
 ): InvoiceCounterYearGroup[] {
   const countersByYear = new Map<
     number,
     Partial<Record<NumberedInvoiceSeries, number>>
   >()
+  const invoicesByYearAndSeries = new Map<string, GeneratedInvoiceSnapshot[]>()
 
   for (const counter of counters) {
-    if (!isNumberedInvoiceSeries(counter.series)) continue
     const yearCounters = countersByYear.get(counter.year) ?? {}
     yearCounters[counter.series] = counter.lastNumber
     countersByYear.set(counter.year, yearCounters)
+  }
+
+  for (const invoice of invoices) {
+    if (!countersByYear.has(invoice.year)) {
+      countersByYear.set(invoice.year, {})
+    }
+    const key = `${invoice.year}:${invoice.series}`
+    const seriesInvoices = invoicesByYearAndSeries.get(key) ?? []
+    seriesInvoices.push(invoice)
+    invoicesByYearAndSeries.set(key, seriesInvoices)
   }
 
   return Array.from(countersByYear.entries())
@@ -64,6 +74,7 @@ export function groupInvoiceCountersByYear(
         series,
         ...SERIES_DETAILS[series],
         lastNumber: yearCounters[series] ?? 0,
+        invoices: invoicesByYearAndSeries.get(`${year}:${series}`) ?? [],
       })),
     }))
 }

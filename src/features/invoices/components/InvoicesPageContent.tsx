@@ -1,20 +1,37 @@
 "use client"
 
-import { useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import PageLayout from "@/components/shared/PageLayout"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { ErrorBanner } from "@/components/ui/ErrorBanner"
+import Toast from "@/components/ui/Toast"
+import type { InvoiceReductionPreviewSnapshot } from "../hooks/useInvoiceCounterMutations"
 import { useInvoiceCounters } from "../hooks/useInvoiceCounters"
+import InvoicePaymentModal from "./InvoicePaymentModal"
+import InvoiceSeriesPanel from "./InvoiceSeriesPanel"
 import {
   formatInvoiceCounter,
   groupInvoiceCountersByYear,
+  type InvoiceSeriesCounter,
 } from "./invoice-counter-groups"
+import ReduceInvoiceCounterModal from "./ReduceInvoiceCounterModal"
+
+interface SelectedCounter {
+  counter: InvoiceSeriesCounter
+  year: number
+}
 
 export default function InvoicesPageContent() {
-  const { counters, error, isLoading } = useInvoiceCounters()
+  const { counters, invoices, error, isLoading } = useInvoiceCounters()
+  const [selectedCounter, setSelectedCounter] =
+    useState<SelectedCounter | null>(null)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
+    null
+  )
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const yearGroups = useMemo(
-    () => groupInvoiceCountersByYear(counters),
-    [counters]
+    () => groupInvoiceCountersByYear(counters, invoices),
+    [counters, invoices]
   )
   const errorMessage =
     error instanceof Error
@@ -22,6 +39,35 @@ export default function InvoicesPageContent() {
       : error
         ? "Failed to fetch invoice numbering"
         : null
+  const handleSelectCounter = useCallback(
+    (year: number, counter: InvoiceSeriesCounter) => {
+      setSelectedCounter({ year, counter })
+    },
+    []
+  )
+  const handleCloseModal = useCallback(() => setSelectedCounter(null), [])
+  const handleOpenPayment = useCallback((paymentId: string) => {
+    setSelectedCounter(null)
+    setSelectedPaymentId(paymentId)
+  }, [])
+  const handleClosePayment = useCallback(() => setSelectedPaymentId(null), [])
+  const handleClearSuccess = useCallback(() => setSuccessMessage(null), [])
+  const handleReductionSuccess = useCallback(
+    (preview: InvoiceReductionPreviewSnapshot) => {
+      setSuccessMessage(
+        `Numbering reduced to ${formatInvoiceCounter(preview.newLastNumber)}. ${preview.invoices.length} invoice${preview.invoices.length === 1 ? "" : "s"} removed from ${preview.affectedPaymentCount} payment${preview.affectedPaymentCount === 1 ? "" : "s"}.`
+      )
+      setSelectedCounter(null)
+    },
+    []
+  )
+  const handlePaymentUpdated = useCallback(() => {
+    setSuccessMessage("Payment updated successfully.")
+  }, [])
+  const handlePaymentDeleted = useCallback(() => {
+    setSelectedPaymentId(null)
+    setSuccessMessage("Payment deleted successfully.")
+  }, [])
 
   return (
     <PageLayout
@@ -35,13 +81,17 @@ export default function InvoicesPageContent() {
             Invoice numbering
           </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Current sequence number for every generated invoice series, grouped
-            by year.
+            Review generated invoices and safely manage each numbered series by
+            year.
           </p>
         </div>
       }
     >
       {errorMessage ? <ErrorBanner bordered>{errorMessage}</ErrorBanner> : null}
+
+      {successMessage ? (
+        <Toast message={successMessage} onClose={handleClearSuccess} />
+      ) : null}
 
       {isLoading && yearGroups.length === 0 ? (
         <EmptyState variant="card">Loading invoice numbering...</EmptyState>
@@ -62,35 +112,42 @@ export default function InvoicesPageContent() {
                   {group.year}
                 </h2>
               </div>
-              <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 p-4 lg:grid-cols-2">
                 {group.counters.map((counter) => (
-                  <article
+                  <InvoiceSeriesPanel
                     key={counter.series}
-                    className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                        {counter.label}
-                      </h3>
-                      <span className="rounded bg-zinc-200 px-2 py-0.5 font-mono text-xs font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-                        {counter.prefix}
-                      </span>
-                    </div>
-                    <p className="mt-5 font-mono text-3xl font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
-                      {formatInvoiceCounter(counter.lastNumber)}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {counter.lastNumber === 0
-                        ? "No invoices issued"
-                        : "Last assigned number"}
-                    </p>
-                  </article>
+                    counter={counter}
+                    year={group.year}
+                    onReduce={handleSelectCounter}
+                    onPaymentClick={handleOpenPayment}
+                  />
                 ))}
               </div>
             </section>
           ))}
         </div>
       )}
+
+      {selectedCounter ? (
+        <ReduceInvoiceCounterModal
+          key={`${selectedCounter.year}:${selectedCounter.counter.series}:${selectedCounter.counter.lastNumber}`}
+          counter={selectedCounter.counter}
+          year={selectedCounter.year}
+          onClose={handleCloseModal}
+          onPaymentClick={handleOpenPayment}
+          onSuccess={handleReductionSuccess}
+        />
+      ) : null}
+
+      {selectedPaymentId ? (
+        <InvoicePaymentModal
+          key={selectedPaymentId}
+          paymentId={selectedPaymentId}
+          onClose={handleClosePayment}
+          onUpdate={handlePaymentUpdated}
+          onDelete={handlePaymentDeleted}
+        />
+      ) : null}
     </PageLayout>
   )
 }

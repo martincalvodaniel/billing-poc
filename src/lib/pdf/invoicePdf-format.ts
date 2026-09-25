@@ -1,45 +1,13 @@
 import "server-only"
 
 import type { PaymentMethod } from "@/lib/domain/entities/payment"
+
+export {
+  formatInvoiceNumber,
+  parseInvoiceId,
+} from "@/lib/domain/services/invoice-numbering"
+
 import type { GeneratedInvoiceType } from "./invoicePdf-layout"
-
-const SERIES_PREFIX: Record<GeneratedInvoiceType, string> = {
-  Invoice: "F",
-  SimpleInvoice: "FS",
-  RectificativeInvoice: "FR",
-  RectificativeSimpleInvoice: "FSR",
-}
-
-const PREFIX_TO_TYPE: Record<string, GeneratedInvoiceType> = {
-  FSR: "RectificativeSimpleInvoice",
-  FS: "SimpleInvoice",
-  FR: "RectificativeInvoice",
-  F: "Invoice",
-}
-
-export function formatInvoiceNumber(
-  series: GeneratedInvoiceType,
-  year: number,
-  n: number
-): string {
-  const yy = String(year % 100).padStart(2, "0")
-  const nnn = String(n).padStart(3, "0")
-  return `${SERIES_PREFIX[series]}${yy}_${nnn}`
-}
-
-export function parseInvoiceId(
-  id: string
-): { type: GeneratedInvoiceType; year: number; n: number } | null {
-  const match = /^(FSR|FS|FR|F)(\d{2})_(\d{3,})$/.exec(id)
-  if (!match) return null
-  const prefix = match[1]
-  const type = PREFIX_TO_TYPE[prefix]
-  if (!type) return null
-  const yy = Number.parseInt(match[2], 10)
-  const n = Number.parseInt(match[3], 10)
-  if (!Number.isFinite(yy) || !Number.isFinite(n) || n <= 0) return null
-  return { type, year: 2000 + yy, n }
-}
 
 export function formatInvoiceDateES(date: string | Date): string {
   let d: Date

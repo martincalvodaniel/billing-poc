@@ -35,6 +35,81 @@ export function buildPaymentDateQuery(
   return {}
 }
 
+export function buildGeneratedInvoiceQuery(): Record<string, unknown> {
+  const generatedId = { $type: "string", $ne: "" }
+  return {
+    $or: [
+      { "invoice.id": generatedId },
+      { "invoice.formattedNumber": generatedId },
+      { "invoices.id": generatedId },
+      { "invoices.formattedNumber": generatedId },
+    ],
+  }
+}
+
+export function buildGeneratedInvoiceIdsQuery(
+  invoiceIds: string[]
+): Record<string, unknown> {
+  const matchingIds = { $in: invoiceIds }
+  return {
+    $or: [
+      { "invoice.id": matchingIds },
+      { "invoice.formattedNumber": matchingIds },
+      { "invoices.id": matchingIds },
+      { "invoices.formattedNumber": matchingIds },
+    ],
+  }
+}
+
+export function buildRemoveGeneratedInvoicesPipeline(
+  invoiceIds: string[],
+  updatedAt = new Date()
+): Record<string, unknown>[] {
+  const legacyInvoiceMatches = {
+    $or: [
+      { $in: ["$invoice.id", invoiceIds] },
+      { $in: ["$invoice.formattedNumber", invoiceIds] },
+    ],
+  }
+  const arrayInvoiceMatches = {
+    $or: [
+      { $in: ["$$invoice.id", invoiceIds] },
+      { $in: ["$$invoice.formattedNumber", invoiceIds] },
+    ],
+  }
+
+  return [
+    {
+      $set: {
+        invoice: {
+          $cond: [legacyInvoiceMatches, "$$REMOVE", "$invoice"],
+        },
+        invoices: {
+          $let: {
+            vars: {
+              remaining: {
+                $filter: {
+                  input: { $ifNull: ["$invoices", []] },
+                  as: "invoice",
+                  cond: { $not: [arrayInvoiceMatches] },
+                },
+              },
+            },
+            in: {
+              $cond: [
+                { $gt: [{ $size: "$$remaining" }, 0] },
+                "$$remaining",
+                "$$REMOVE",
+              ],
+            },
+          },
+        },
+        updatedAt,
+      },
+    },
+  ]
+}
+
 /**
  * Pure builder for the Mongo update document used by
  * `MongoPaymentRepository.update`. Extracted so it can be unit-tested

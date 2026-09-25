@@ -7,6 +7,7 @@ export interface PaymentFilter {
 
 export interface PaymentRepository {
   findAll(filter: PaymentFilter): Promise<Payment[]>
+  findAllWithGeneratedInvoices(): Promise<Payment[]>
   findById(id: string): Promise<Payment | null>
   create(payment: Omit<Payment, "_id">): Promise<string>
   update(id: string, data: Partial<Payment>): Promise<boolean>
@@ -14,4 +15,5 @@ export interface PaymentRepository {
   findDistinctTags(type?: string): Promise<string[]>
   appendInvoice(paymentId: string, invoice: InvoiceMetadata): Promise<boolean>
   removeLinkInvoice(paymentId: string, link: string): Promise<boolean>
+  removeGeneratedInvoices(invoiceIds: string[]): Promise<number>
 }

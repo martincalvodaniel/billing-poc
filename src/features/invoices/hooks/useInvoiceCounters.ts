@@ -2,7 +2,10 @@
 
 import useSWR from "swr"
 import { fetcher } from "@/lib/client/swr-fetcher"
-import type { InvoiceCounter } from "@/lib/domain/entities/invoice"
+import type {
+  GeneratedInvoiceRecord,
+  InvoiceCounter,
+} from "@/lib/domain/entities/invoice"
 
 export type InvoiceCounterSnapshot = Pick<
   InvoiceCounter,
@@ -11,9 +14,20 @@ export type InvoiceCounterSnapshot = Pick<
 
 export type InvoiceCountersKey = readonly ["/api/invoices/counters"]
 
-interface InvoiceCountersResponse {
-  counters: InvoiceCounterSnapshot[]
+export type GeneratedInvoiceSnapshot = Omit<
+  GeneratedInvoiceRecord,
+  "generatedAt"
+> & {
+  generatedAt: string
 }
+
+export interface InvoiceCountersResponse {
+  counters: InvoiceCounterSnapshot[]
+  invoices: GeneratedInvoiceSnapshot[]
+}
+
+const EMPTY_COUNTERS: InvoiceCounterSnapshot[] = []
+const EMPTY_INVOICES: GeneratedInvoiceSnapshot[] = []
 
 export function buildInvoiceCountersKey(): InvoiceCountersKey {
   return ["/api/invoices/counters"] as const
@@ -38,7 +52,8 @@ export function useInvoiceCounters() {
   )
 
   return {
-    counters: data?.counters ?? [],
+    counters: data?.counters ?? EMPTY_COUNTERS,
+    invoices: data?.invoices ?? EMPTY_INVOICES,
     isLoading,
     error,
     mutate,

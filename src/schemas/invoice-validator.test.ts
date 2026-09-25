@@ -7,6 +7,8 @@ import {
   assertCanGenerateInvoice,
   generateInvoiceSchema,
   type InvoiceCandidatePayment,
+  invoiceCounterReductionSchema,
+  invoiceCounterTargetSchema,
   REGULAR_INVOICE_TYPES,
 } from "./invoice-validator"
 
@@ -86,6 +88,52 @@ describe("generateInvoiceSchema", () => {
         paymentId: "507f1f77bcf86cd799439011",
         type: "Invoice",
         persist: "yes",
+      })
+    ).toThrow()
+  })
+})
+
+describe("invoice counter schemas", () => {
+  test("accepts a valid reduction preview target", () => {
+    expect(
+      invoiceCounterTargetSchema.parse({
+        series: "Invoice",
+        year: 2026,
+        newLastNumber: 9,
+      })
+    ).toEqual({ series: "Invoice", year: 2026, newLastNumber: 9 })
+  })
+
+  test("rejects receipts, negative counters, and decimal counters", () => {
+    expect(() =>
+      invoiceCounterTargetSchema.parse({
+        series: "Receipt",
+        year: 2026,
+        newLastNumber: 9,
+      })
+    ).toThrow()
+    expect(() =>
+      invoiceCounterTargetSchema.parse({
+        series: "Invoice",
+        year: 2026,
+        newLastNumber: -1,
+      })
+    ).toThrow()
+    expect(() =>
+      invoiceCounterTargetSchema.parse({
+        series: "Invoice",
+        year: 2026,
+        newLastNumber: 1.5,
+      })
+    ).toThrow()
+  })
+
+  test("requires the expected current number for confirmation", () => {
+    expect(() =>
+      invoiceCounterReductionSchema.parse({
+        series: "Invoice",
+        year: 2026,
+        newLastNumber: 2,
       })
     ).toThrow()
   })

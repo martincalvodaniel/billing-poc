@@ -6,8 +6,11 @@ import type {
 import { getDatabase } from "../client"
 import type { MongoPayment } from "../types"
 import {
+  buildGeneratedInvoiceIdsQuery,
+  buildGeneratedInvoiceQuery,
   buildPaymentDateQuery,
   buildPaymentUpdateOps,
+  buildRemoveGeneratedInvoicesPipeline,
 } from "./mongo-payment-repository-query"
 import { mapPaymentDocToDomain } from "./mongo-payment-repository-utils"
 import { isValidObjectId, omitNullish, toObjectId } from "./mongo-utils"
@@ -15,8 +18,11 @@ import { isValidObjectId, omitNullish, toObjectId } from "./mongo-utils"
 // Re-export the pure query/update builders so existing tests and consumers can
 // keep importing them from this module.
 export {
+  buildGeneratedInvoiceIdsQuery,
+  buildGeneratedInvoiceQuery,
   buildPaymentDateQuery,
   buildPaymentUpdateOps,
+  buildRemoveGeneratedInvoicesPipeline,
 } from "./mongo-payment-repository-query"
 
 function toDomain(doc: MongoPayment): Payment {
@@ -38,6 +44,15 @@ export class MongoPaymentRepository implements PaymentRepository {
       .sort({ date: -1, createdAt: -1 })
       .toArray()
 
+    return docs.map(toDomain)
+  }
+
+  async findAllWithGeneratedInvoices(): Promise<Payment[]> {
+    const col = await this.collection()
+    const docs = await col
+      .find(buildGeneratedInvoiceQuery())
+      .sort({ date: -1, createdAt: -1 })
+      .toArray()
     return docs.map(toDomain)
   }
 
@@ -174,6 +189,16 @@ export class MongoPaymentRepository implements PaymentRepository {
       }
     )
     return result.modifiedCount > 0
+  }
+
+  async removeGeneratedInvoices(invoiceIds: string[]): Promise<number> {
+    if (invoiceIds.length === 0) return 0
+    const col = await this.collection()
+    const result = await col.updateMany(
+      buildGeneratedInvoiceIdsQuery(invoiceIds),
+      buildRemoveGeneratedInvoicesPipeline(invoiceIds)
+    )
+    return result.modifiedCount
   }
 
   async findDistinctTags(type?: string): Promise<string[]> {
