@@ -82,6 +82,7 @@ describe("buildOpenInvoiceUrl", () => {
 describe("GenerateInvoiceResult", () => {
   test("parses the response shape returned by /api/invoices/generate", () => {
     const sample: GenerateInvoiceResult = {
+      paymentId: "pay",
       success: true,
       invoice: {
         type: "Invoice",

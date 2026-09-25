@@ -67,8 +67,25 @@ export interface PaymentResponse {
   payment: Payment
 }
 
-interface PaymentsResponse {
+export interface PaymentsResponse {
   payments: Payment[]
+}
+
+export function updatePaymentInResponse(
+  response: PaymentsResponse | undefined,
+  paymentId: string,
+  update: (payment: Payment) => Payment
+): PaymentsResponse | undefined {
+  if (!response) return response
+
+  let found = false
+  const payments = response.payments.map((payment) => {
+    if (payment._id !== paymentId) return payment
+    found = true
+    return update(payment)
+  })
+
+  return found ? { ...response, payments } : response
 }
 
 export interface UsePaymentsResult {

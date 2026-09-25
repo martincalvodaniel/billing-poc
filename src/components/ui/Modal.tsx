@@ -5,6 +5,24 @@ import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { useStableCallback } from "@/hooks/useStableCallback"
 import CloseButton from "./CloseButton"
 
+let openModalCount = 0
+let previousBodyOverflow = ""
+
+function lockPageScroll(): () => void {
+  if (openModalCount === 0) {
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+  }
+  openModalCount += 1
+
+  return () => {
+    openModalCount = Math.max(0, openModalCount - 1)
+    if (openModalCount === 0) {
+      document.body.style.overflow = previousBodyOverflow
+    }
+  }
+}
+
 interface ModalProps {
   isOpen: boolean
   onClose: () => void
@@ -60,6 +78,10 @@ export function Modal({
     onCloseRef.current = onClose
   })
   useFocusTrap(dialogRef, isOpen, initialFocus)
+  useEffect(() => {
+    if (!isOpen) return
+    return lockPageScroll()
+  }, [isOpen])
   // Browser Back button (desktop and mobile) closes the modal.
   // On open: push a sentinel history entry (same URL, state={modal:true}).
   // On Back: popstate fires → close the modal; the pointer is already at the
@@ -162,7 +184,7 @@ export function Modal({
         >
           {stickyHeader ? modalHeader : null}
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="min-h-0 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
             {!stickyHeader ? modalHeader : null}
             <div className="px-6 py-4">{children}</div>
             {!stickyFooter ? modalFooter : null}

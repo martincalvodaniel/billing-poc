@@ -1,6 +1,7 @@
 "use client"
 
 import { describe, expect, test } from "bun:test"
+import type { Payment } from "@/lib/domain/entities/payment"
 import {
   buildPaymentKey,
   buildPaymentsKey,
@@ -8,7 +9,23 @@ import {
   buildPaymentUrl,
   isPaymentKey,
   isPaymentsKey,
+  updatePaymentInResponse,
 } from "./usePayments"
+
+function createPayment(id: string): Payment {
+  return {
+    _id: id,
+    type: "income",
+    date: "2026-09-25",
+    concepts: [],
+    vat: 21,
+    netAmount: 100,
+    vatAmount: 21,
+    total: 121,
+    createdAt: new Date("2026-09-25T10:00:00Z"),
+    updatedAt: new Date("2026-09-25T10:00:00Z"),
+  }
+}
 
 describe("buildPaymentsKey", () => {
   test("returns a stable tuple for the same inputs", () => {
@@ -120,5 +137,41 @@ describe("isPaymentKey", () => {
     expect(isPaymentKey(null)).toBe(false)
     expect(isPaymentKey(undefined)).toBe(false)
     expect(isPaymentKey(42)).toBe(false)
+  })
+})
+
+describe("updatePaymentInResponse", () => {
+  test("updates only the matching payment", () => {
+    const first = createPayment("first")
+    const target = createPayment("target")
+    const response = { payments: [first, target] }
+
+    const result = updatePaymentInResponse(response, "target", (payment) => ({
+      ...payment,
+      invoices: [
+        {
+          type: "Invoice",
+          id: "F26_001",
+          generatedAt: new Date("2026-09-25T11:00:00Z"),
+        },
+      ],
+    }))
+
+    expect(result?.payments[0]).toBe(first)
+    expect(result?.payments[1].invoices?.[0].id).toBe("F26_001")
+  })
+
+  test("preserves the response when the payment is not present", () => {
+    const response = { payments: [createPayment("first")] }
+
+    expect(
+      updatePaymentInResponse(response, "missing", (payment) => payment)
+    ).toBe(response)
+  })
+
+  test("preserves an empty cache entry", () => {
+    expect(
+      updatePaymentInResponse(undefined, "target", (payment) => payment)
+    ).toBeUndefined()
   })
 })

@@ -1,12 +1,9 @@
 "use client"
 
-import { mutate } from "swr"
+import { useSWRConfig } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
-import {
-  isPaymentKey,
-  isPaymentsKey,
-} from "@/features/payments/hooks/usePayments"
 import { FetchError } from "@/lib/client/swr-fetcher"
+import { updateInvoicePaymentCaches } from "./invoice-payment-cache"
 
 export interface RemoveLinkInvoiceInput {
   link: string
@@ -14,6 +11,7 @@ export interface RemoveLinkInvoiceInput {
 
 export interface RemoveLinkInvoiceResult {
   ok: true
+  link: string
 }
 
 export function buildRemoveLinkInvoiceUrl(paymentId: string): string {
@@ -65,14 +63,8 @@ export async function removeLinkInvoiceFetcher(
   if (!response.ok) {
     await parseError(response, "Failed to remove link invoice")
   }
-  return (await response.json()) as RemoveLinkInvoiceResult
-}
-
-async function invalidatePayments(): Promise<void> {
-  await Promise.all([
-    mutate(isPaymentsKey, undefined, { revalidate: true }),
-    mutate(isPaymentKey, undefined, { revalidate: true }),
-  ])
+  const result = (await response.json()) as Pick<RemoveLinkInvoiceResult, "ok">
+  return { ...result, link: arg.link }
 }
 
 export type UseRemoveLinkInvoiceResult = SWRMutationResponse<
@@ -85,14 +77,22 @@ export type UseRemoveLinkInvoiceResult = SWRMutationResponse<
 export function useRemoveLinkInvoice(
   paymentId: string
 ): UseRemoveLinkInvoiceResult {
+  const { mutate } = useSWRConfig()
+
   return useSWRMutation<
     RemoveLinkInvoiceResult,
     Error,
     string,
     RemoveLinkInvoiceInput
   >(buildRemoveLinkInvoiceUrl(paymentId), removeLinkInvoiceFetcher, {
-    onSuccess: () => {
-      void invalidatePayments()
+    onSuccess: (result) => {
+      void updateInvoicePaymentCaches(mutate, paymentId, (payment) => ({
+        ...payment,
+        invoices: (payment.invoices ?? []).filter(
+          (invoice) => !(invoice.link === result.link && !invoice.id)
+        ),
+        updatedAt: new Date(),
+      }))
     },
   })
 }

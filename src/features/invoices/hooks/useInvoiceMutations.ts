@@ -1,18 +1,14 @@
 "use client"
 
-import { mutate } from "swr"
+import { useSWRConfig } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
-import { isPaymentsKey } from "@/features/payments/hooks/usePayments"
 import { FetchError } from "@/lib/client/swr-fetcher"
 import type {
   InvoiceMetadata,
   InvoiceType,
   Payment,
 } from "@/lib/domain/entities/payment"
-
-async function invalidatePayments(): Promise<void> {
-  await mutate(isPaymentsKey, undefined, { revalidate: true })
-}
+import { updateInvoicePaymentCaches } from "./invoice-payment-cache"
 
 async function parseError(
   response: Response,
@@ -49,6 +45,7 @@ export interface GenerateInvoiceInput {
 }
 
 export interface GenerateInvoiceResult {
+  paymentId: string
   success: boolean
   invoice: Payment["invoice"]
   invoices: InvoiceMetadata[]
@@ -93,7 +90,11 @@ async function generateInvoiceFetcher(
   if (!response.ok) {
     await parseError(response, "Failed to generate invoice")
   }
-  return (await response.json()) as GenerateInvoiceResult
+  const result = (await response.json()) as Omit<
+    GenerateInvoiceResult,
+    "paymentId"
+  >
+  return { ...result, paymentId: arg.paymentId }
 }
 
 export type UseGenerateInvoiceResult = SWRMutationResponse<
@@ -104,14 +105,21 @@ export type UseGenerateInvoiceResult = SWRMutationResponse<
 >
 
 export function useGenerateInvoice(): UseGenerateInvoiceResult {
+  const { mutate } = useSWRConfig()
+
   return useSWRMutation<
     GenerateInvoiceResult,
     Error,
     "/api/invoices/generate",
     GenerateInvoiceInput
   >("/api/invoices/generate", generateInvoiceFetcher, {
-    onSuccess: () => {
-      void invalidatePayments()
+    onSuccess: (result) => {
+      void updateInvoicePaymentCaches(mutate, result.paymentId, (payment) => ({
+        ...payment,
+        invoice: undefined,
+        invoices: result.invoices,
+        updatedAt: new Date(),
+      }))
     },
   })
 }
