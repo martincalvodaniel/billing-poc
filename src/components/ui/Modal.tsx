@@ -154,7 +154,7 @@ export function Modal({
         <div className="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-zinc-900">
           {stickyHeader ? modalHeader : null}
 
-          <div className="min-h-0 overflow-y-auto">
+          <div className="min-h-0 overflow-y-auto overscroll-contain">
             {!stickyHeader ? modalHeader : null}
             <div className="px-6 py-4">{children}</div>
             {!stickyFooter ? modalFooter : null}
