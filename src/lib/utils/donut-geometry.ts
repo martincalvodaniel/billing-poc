@@ -1,5 +1,6 @@
 export interface DonutSegment {
   tag: string
+  value: number
   percentage: number
   color: string
   path: string
@@ -61,7 +62,7 @@ export function computeDonutSegments({
         Z
       `
 
-      result.push({ tag, percentage, color, path: pathData })
+      result.push({ tag, value, percentage, color, path: pathData })
     } else {
       const endAngle = currentAngle + sliceAngle
       const startRad = (currentAngle * Math.PI) / 180
@@ -86,7 +87,7 @@ export function computeDonutSegments({
         Z
       `
 
-      result.push({ tag, percentage, color, path: pathData })
+      result.push({ tag, value, percentage, color, path: pathData })
       currentAngle = endAngle
     }
   })
