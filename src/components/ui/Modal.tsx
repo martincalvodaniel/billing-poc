@@ -12,6 +12,9 @@ interface ModalProps {
   children: React.ReactNode
   footer?: React.ReactNode
   headerActions?: React.ReactNode
+  leftAction?: React.ReactNode
+  rightAction?: React.ReactNode
+  initialFocus?: "first" | "container"
   maxWidth?: "sm" | "md" | "lg" | "xl"
 }
 export function Modal({
@@ -21,6 +24,9 @@ export function Modal({
   children,
   footer,
   headerActions,
+  leftAction,
+  rightAction,
+  initialFocus = "first",
   maxWidth = "md",
 }: ModalProps) {
   const startedOnBackdropRef = useRef(false)
@@ -45,7 +51,7 @@ export function Modal({
   useEffect(() => {
     onCloseRef.current = onClose
   })
-  useFocusTrap(dialogRef, isOpen)
+  useFocusTrap(dialogRef, isOpen, initialFocus)
   // Browser Back button (desktop and mobile) closes the modal.
   // On open: push a sentinel history entry (same URL, state={modal:true}).
   // On Back: popstate fires → close the modal; the pointer is already at the
@@ -103,32 +109,46 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className={`${maxWidthClass} w-full max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900`}
+        className={`${maxWidthClass} relative w-full max-h-[90vh]`}
         role="dialog"
         aria-labelledby={`${id}-modal-title`}
         aria-modal="true"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h2
-            id={`${id}-modal-title`}
-            className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-          >
-            {title}
-          </h2>
-          <div className="ml-4 flex items-center gap-2">
-            {headerActions}
-            <CloseButton onClick={onClose} label="Close dialog" />
+        {leftAction ? (
+          <div className="absolute left-2 top-1/2 z-10 -translate-y-1/2 lg:-left-14">
+            {leftAction}
           </div>
+        ) : null}
+
+        <div className="max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+            <h2
+              id={`${id}-modal-title`}
+              className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+            >
+              {title}
+            </h2>
+            <div className="ml-4 flex items-center gap-2">
+              {headerActions}
+              <CloseButton onClick={onClose} label="Close dialog" />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-4">{children}</div>
+
+          {/* Footer (optional) */}
+          {footer ? (
+            <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
+              {footer}
+            </div>
+          ) : null}
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-4">{children}</div>
-
-        {/* Footer (optional) */}
-        {footer ? (
-          <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            {footer}
+        {rightAction ? (
+          <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2 lg:-right-14">
+            {rightAction}
           </div>
         ) : null}
       </div>

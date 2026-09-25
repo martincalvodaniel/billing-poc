@@ -20,6 +20,34 @@ import { usePaymentForm } from "./usePaymentForm"
 
 const ignoreNavigation = () => {}
 
+function PaymentSideNavigationButton({
+  direction,
+  onClick,
+  disabled,
+}: {
+  direction: "previous" | "next"
+  onClick?: () => void
+  disabled: boolean
+}) {
+  const isPrevious = direction === "previous"
+  const label = isPrevious
+    ? "Previous displayed payment"
+    : "Next displayed payment"
+
+  return (
+    <button
+      type="button"
+      onClick={onClick ?? ignoreNavigation}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white/95 text-2xl font-medium text-zinc-700 shadow-lg backdrop-blur transition hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35 dark:border-zinc-700 dark:bg-zinc-900/95 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-offset-zinc-950"
+    >
+      <span aria-hidden="true">{isPrevious ? "←" : "→"}</span>
+    </button>
+  )
+}
+
 interface PaymentDetailModalProps {
   payment: Payment
   mode?: "edit" | "duplicate"
@@ -123,6 +151,25 @@ export default function PaymentDetailModal({
         onClose={onClose}
         title={isDuplicate ? "Duplicate Payment" : "Edit Payment"}
         maxWidth="xl"
+        initialFocus={navigation ? "container" : "first"}
+        leftAction={
+          !isDuplicate && navigation ? (
+            <PaymentSideNavigationButton
+              direction="previous"
+              onClick={navigation.onPrevious}
+              disabled={!navigation.onPrevious || isSaving || isDeleting}
+            />
+          ) : undefined
+        }
+        rightAction={
+          !isDuplicate && navigation ? (
+            <PaymentSideNavigationButton
+              direction="next"
+              onClick={navigation.onNext}
+              disabled={!navigation.onNext || isSaving || isDeleting}
+            />
+          ) : undefined
+        }
         headerActions={
           !isDuplicate ? (
             <div className="flex items-center gap-1">
