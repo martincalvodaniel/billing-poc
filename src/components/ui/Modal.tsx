@@ -16,6 +16,7 @@ interface ModalProps {
   rightAction?: React.ReactNode
   initialFocus?: "first" | "container"
   stickyHeader?: boolean
+  stickyFooter?: boolean
   maxWidth?: "sm" | "md" | "lg" | "xl"
 }
 export function Modal({
@@ -29,6 +30,7 @@ export function Modal({
   rightAction,
   initialFocus = "first",
   stickyHeader = false,
+  stickyFooter = false,
   maxWidth = "md",
 }: ModalProps) {
   const startedOnBackdropRef = useRef(false)
@@ -101,6 +103,26 @@ export function Modal({
     lg: "max-w-lg",
     xl: "max-w-2xl",
   }[maxWidth]
+  const modalHeader = (
+    <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <h2
+        id={`${id}-modal-title`}
+        className="text-base font-semibold text-zinc-900 sm:text-lg dark:text-zinc-50"
+      >
+        {title}
+      </h2>
+      <div className="ml-2 flex items-center gap-1 sm:ml-4 sm:gap-2">
+        {headerActions}
+        <CloseButton onClick={onClose} label="Close dialog" />
+      </div>
+    </div>
+  )
+  const modalFooter = footer ? (
+    <div className="border-t border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      {footer}
+    </div>
+  ) : null
+
   return createPortal(
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-close is a standard modal pattern
     <div
@@ -122,34 +144,16 @@ export function Modal({
           </div>
         ) : null}
 
-        <div className="max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900">
-          {/* Header */}
-          <div
-            className={`flex items-center justify-between border-b border-zinc-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 ${
-              stickyHeader ? "sticky top-0 z-20 bg-white dark:bg-zinc-900" : ""
-            }`}
-          >
-            <h2
-              id={`${id}-modal-title`}
-              className="text-base font-semibold text-zinc-900 sm:text-lg dark:text-zinc-50"
-            >
-              {title}
-            </h2>
-            <div className="ml-2 flex items-center gap-1 sm:ml-4 sm:gap-2">
-              {headerActions}
-              <CloseButton onClick={onClose} label="Close dialog" />
-            </div>
+        <div className="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+          {stickyHeader ? modalHeader : null}
+
+          <div className="min-h-0 overflow-y-auto">
+            {!stickyHeader ? modalHeader : null}
+            <div className="px-6 py-4">{children}</div>
+            {!stickyFooter ? modalFooter : null}
           </div>
 
-          {/* Content */}
-          <div className="px-6 py-4">{children}</div>
-
-          {/* Footer (optional) */}
-          {footer ? (
-            <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-              {footer}
-            </div>
-          ) : null}
+          {stickyFooter ? modalFooter : null}
         </div>
 
         {rightAction ? (

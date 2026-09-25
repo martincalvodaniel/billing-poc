@@ -153,6 +153,7 @@ export default function PaymentDetailModal({
         maxWidth="xl"
         initialFocus={navigation ? "container" : "first"}
         stickyHeader={!!navigation}
+        stickyFooter={!!navigation}
         leftAction={
           !isDuplicate && navigation ? (
             <PaymentSideNavigationButton
