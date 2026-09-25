@@ -172,48 +172,48 @@ export default function PaymentDetailModal({
             />
           ) : undefined
         }
-        headerActions={
-          !isDuplicate ? (
+        headerCenter={
+          navigation ? (
             <div className="flex items-center gap-1">
-              {navigation ? (
-                <>
-                  <span
-                    className="hidden min-w-12 text-center text-xs tabular-nums text-zinc-500 sm:inline-block dark:text-zinc-400"
-                    aria-hidden="true"
-                  >
-                    {navigation.currentPosition} / {navigation.total}
-                  </span>
-                  <span className="sr-only">
-                    Payment {navigation.currentPosition} of {navigation.total}
-                  </span>
-                  <IconButton
-                    ariaLabel="Previous displayed payment"
-                    title="Previous displayed payment"
-                    disabled={!navigation.onPrevious || isSaving || isDeleting}
-                    onClick={navigation.onPrevious ?? ignoreNavigation}
-                  >
-                    <span aria-hidden="true">←</span>
-                  </IconButton>
-                  <IconButton
-                    ariaLabel="Next displayed payment"
-                    title="Next displayed payment"
-                    disabled={!navigation.onNext || isSaving || isDeleting}
-                    onClick={navigation.onNext ?? ignoreNavigation}
-                  >
-                    <span aria-hidden="true">→</span>
-                  </IconButton>
-                </>
-              ) : null}
               <IconButton
-                variant="danger"
-                ariaLabel="Delete payment"
-                title="Delete payment"
-                disabled={isSaving || isDeleting}
-                onClick={handleDeleteErrorChange}
+                ariaLabel="Previous displayed payment"
+                title="Previous displayed payment"
+                disabled={!navigation.onPrevious || isSaving || isDeleting}
+                onClick={navigation.onPrevious ?? ignoreNavigation}
               >
-                <TrashIcon />
+                <span aria-hidden="true">←</span>
+              </IconButton>
+              <span
+                className="hidden min-w-12 text-center text-xs tabular-nums text-zinc-500 min-[400px]:inline-block dark:text-zinc-400"
+                aria-hidden="true"
+              >
+                {navigation.currentPosition} / {navigation.total}
+              </span>
+              <span className="sr-only">
+                Payment {navigation.currentPosition} of {navigation.total}
+              </span>
+              <IconButton
+                ariaLabel="Next displayed payment"
+                title="Next displayed payment"
+                disabled={!navigation.onNext || isSaving || isDeleting}
+                onClick={navigation.onNext ?? ignoreNavigation}
+              >
+                <span aria-hidden="true">→</span>
               </IconButton>
             </div>
+          ) : undefined
+        }
+        headerActions={
+          !isDuplicate ? (
+            <IconButton
+              variant="danger"
+              ariaLabel="Delete payment"
+              title="Delete payment"
+              disabled={isSaving || isDeleting}
+              onClick={handleDeleteErrorChange}
+            >
+              <TrashIcon />
+            </IconButton>
           ) : undefined
         }
         footer={

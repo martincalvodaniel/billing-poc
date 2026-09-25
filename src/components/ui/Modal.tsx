@@ -11,6 +11,7 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   footer?: React.ReactNode
+  headerCenter?: React.ReactNode
   headerActions?: React.ReactNode
   leftAction?: React.ReactNode
   rightAction?: React.ReactNode
@@ -25,6 +26,7 @@ export function Modal({
   title,
   children,
   footer,
+  headerCenter,
   headerActions,
   leftAction,
   rightAction,
@@ -104,14 +106,19 @@ export function Modal({
     xl: "max-w-2xl",
   }[maxWidth]
   const modalHeader = (
-    <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-zinc-200 bg-white px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 dark:bg-zinc-900">
       <h2
         id={`${id}-modal-title`}
-        className="text-base font-semibold text-zinc-900 sm:text-lg dark:text-zinc-50"
+        className="col-start-1 min-w-0 truncate text-base font-semibold text-zinc-900 sm:text-lg dark:text-zinc-50"
       >
         {title}
       </h2>
-      <div className="ml-2 flex items-center gap-1 sm:ml-4 sm:gap-2">
+      {headerCenter ? (
+        <div className="col-start-2 row-start-1 justify-self-center">
+          {headerCenter}
+        </div>
+      ) : null}
+      <div className="col-start-3 row-start-1 flex items-center justify-self-end gap-1 sm:gap-2">
         {headerActions}
         <CloseButton onClick={onClose} label="Close dialog" />
       </div>
