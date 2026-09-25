@@ -18,6 +18,7 @@ interface ModalProps {
   initialFocus?: "first" | "container"
   stickyHeader?: boolean
   stickyFooter?: boolean
+  stableHeight?: boolean
   maxWidth?: "sm" | "md" | "lg" | "xl"
 }
 export function Modal({
@@ -33,6 +34,7 @@ export function Modal({
   initialFocus = "first",
   stickyHeader = false,
   stickyFooter = false,
+  stableHeight = false,
   maxWidth = "md",
 }: ModalProps) {
   const startedOnBackdropRef = useRef(false)
@@ -105,6 +107,10 @@ export function Modal({
     lg: "max-w-lg",
     xl: "max-w-2xl",
   }[maxWidth]
+  const modalHeightClass = stableHeight
+    ? "h-[calc(100dvh-2rem)]"
+    : "max-h-[90vh]"
+  const panelHeightClass = stableHeight ? "h-full" : "max-h-[90vh]"
   const modalHeader = (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-zinc-200 bg-white px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 dark:bg-zinc-900">
       <h2
@@ -140,7 +146,7 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className={`${maxWidthClass} relative w-full max-h-[90vh]`}
+        className={`${maxWidthClass} ${modalHeightClass} relative w-full`}
         role="dialog"
         aria-labelledby={`${id}-modal-title`}
         aria-modal="true"
@@ -151,10 +157,12 @@ export function Modal({
           </div>
         ) : null}
 
-        <div className="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-zinc-900">
+        <div
+          className={`${panelHeightClass} flex w-full flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-zinc-900`}
+        >
           {stickyHeader ? modalHeader : null}
 
-          <div className="min-h-0 overflow-y-auto overscroll-contain">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {!stickyHeader ? modalHeader : null}
             <div className="px-6 py-4">{children}</div>
             {!stickyFooter ? modalFooter : null}
