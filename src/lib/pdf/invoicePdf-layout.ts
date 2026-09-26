@@ -1,11 +1,11 @@
 import "server-only"
 
 import { rgb } from "pdf-lib"
-import type { InvoiceType } from "@/lib/domain/entities/payment"
+import type { NumberedInvoiceSeries } from "@/lib/domain/entities/invoice"
 
 /** PDF rendering applies only to the four generated invoice types;
  *  `Receipt` is link-only and never renders here. */
-export type GeneratedInvoiceType = Exclude<InvoiceType, "Receipt">
+export type GeneratedInvoiceType = NumberedInvoiceSeries
 
 export const PAGE_WIDTH = 595
 export const PAGE_HEIGHT = 842

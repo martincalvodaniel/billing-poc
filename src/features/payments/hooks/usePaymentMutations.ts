@@ -2,13 +2,14 @@
 
 import { useSWRConfig } from "swr"
 import useSWRMutation from "swr/mutation"
+import { isInvoiceCountersKey } from "@/features/invoices/hooks/useInvoiceCounters"
 import { FetchError } from "@/lib/client/swr-fetcher"
 import type {
   PaymentConcept,
   PaymentMethod,
   PaymentType,
 } from "@/lib/domain/entities/payment"
-import { isPaymentsKey } from "./usePayments"
+import { isPaymentKey, isPaymentsKey } from "./usePayments"
 
 export interface CreatePaymentInput {
   type: PaymentType
@@ -126,7 +127,12 @@ interface MutationResult<TInput, TResponse> {
 
 function useInvalidatePayments() {
   const { mutate } = useSWRConfig()
-  return () => mutate(isPaymentsKey)
+  return () =>
+    Promise.all([
+      mutate(isPaymentsKey),
+      mutate(isPaymentKey),
+      mutate(isInvoiceCountersKey),
+    ])
 }
 
 export function useCreatePayment(): MutationResult<

@@ -94,7 +94,10 @@ describe("appendLinkInvoiceFetcher", () => {
       ]
     ).toBe("application/json")
     expect(capturedInit?.body).toBe('{"type":"Receipt","link":"https://x/y"}')
-    expect(result).toEqual({ ok: true })
+    expect(result.ok).toBe(true)
+    expect(result.invoice.type).toBe("Receipt")
+    expect(result.invoice.link).toBe("https://x/y")
+    expect(result.invoice.generatedAt).toBeInstanceOf(Date)
   })
 
   test("maps non-ok JSON responses to FetchError with status + message", async () => {

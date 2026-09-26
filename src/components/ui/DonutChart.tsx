@@ -2,6 +2,7 @@
 import { memo, useMemo, useState } from "react"
 import { useStableCallback } from "@/hooks/useStableCallback"
 import { computeDonutSegments } from "@/lib/utils/donut-geometry"
+import { formatCurrency } from "@/lib/utils/formatters"
 import DonutSortControls, {
   type DonutSortBy,
   type DonutSortOrder,
@@ -112,7 +113,7 @@ const DonutChart = memo(function DonutChart({
         </svg>
 
         <div
-          className="flex-1 space-y-2 overflow-y-auto"
+          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 gap-y-2 overflow-y-auto"
           style={{ maxHeight: "160px" }}
         >
           {sortedSegments.map((segment) => (
@@ -171,23 +172,26 @@ function DonutLegendItem({
       type="button"
       onClick={handleClick}
       aria-pressed={active}
-      className={`flex w-full items-center justify-between rounded px-1 py-0.5 text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+      className={`col-span-3 grid w-full grid-cols-subgrid items-center rounded px-1 py-0.5 text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 ${
         filtered && !active
           ? "opacity-50"
           : "opacity-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
       }`}
     >
-      <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
         <div
-          className="h-2 w-2 rounded-full flex-shrink-0"
+          className="h-2 w-2 flex-shrink-0 rounded-full"
           style={{ backgroundColor: segment.color }}
         />
         <span className="truncate text-zinc-700 dark:text-zinc-300">
           {segment.tag}
         </span>
       </div>
-      <span className="ml-2 flex-shrink-0 font-medium text-zinc-900 dark:text-zinc-100">
+      <span className="text-right font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
         {segment.percentage.toFixed(1)}%
+      </span>
+      <span className="text-right font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
+        ({formatCurrency(segment.value)})
       </span>
     </button>
   )

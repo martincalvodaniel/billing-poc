@@ -79,7 +79,7 @@ describe("removeLinkInvoiceFetcher", () => {
       ]
     ).toBe("application/json")
     expect(capturedInit?.body).toBe('{"link":"https://x/y"}')
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: true, link: "https://x/y" })
   })
 
   test("maps non-ok JSON responses to FetchError with status + message", async () => {

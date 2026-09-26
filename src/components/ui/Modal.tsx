@@ -5,13 +5,38 @@ import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { useStableCallback } from "@/hooks/useStableCallback"
 import CloseButton from "./CloseButton"
 
+let openModalCount = 0
+let previousBodyOverflow = ""
+
+function lockPageScroll(): () => void {
+  if (openModalCount === 0) {
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+  }
+  openModalCount += 1
+
+  return () => {
+    openModalCount = Math.max(0, openModalCount - 1)
+    if (openModalCount === 0) {
+      document.body.style.overflow = previousBodyOverflow
+    }
+  }
+}
+
 interface ModalProps {
   isOpen: boolean
   onClose: () => void
   title: string
   children: React.ReactNode
   footer?: React.ReactNode
+  headerCenter?: React.ReactNode
   headerActions?: React.ReactNode
+  leftAction?: React.ReactNode
+  rightAction?: React.ReactNode
+  initialFocus?: "first" | "container"
+  stickyHeader?: boolean
+  stickyFooter?: boolean
+  stableHeight?: boolean
   maxWidth?: "sm" | "md" | "lg" | "xl"
 }
 export function Modal({
@@ -20,7 +45,14 @@ export function Modal({
   title,
   children,
   footer,
+  headerCenter,
   headerActions,
+  leftAction,
+  rightAction,
+  initialFocus = "first",
+  stickyHeader = false,
+  stickyFooter = false,
+  stableHeight = false,
   maxWidth = "md",
 }: ModalProps) {
   const startedOnBackdropRef = useRef(false)
@@ -45,7 +77,11 @@ export function Modal({
   useEffect(() => {
     onCloseRef.current = onClose
   })
-  useFocusTrap(dialogRef, isOpen)
+  useFocusTrap(dialogRef, isOpen, initialFocus)
+  useEffect(() => {
+    if (!isOpen) return
+    return lockPageScroll()
+  }, [isOpen])
   // Browser Back button (desktop and mobile) closes the modal.
   // On open: push a sentinel history entry (same URL, state={modal:true}).
   // On Back: popstate fires → close the modal; the pointer is already at the
@@ -93,6 +129,35 @@ export function Modal({
     lg: "max-w-lg",
     xl: "max-w-2xl",
   }[maxWidth]
+  const modalHeightClass = stableHeight
+    ? "h-[calc(100dvh-2rem)]"
+    : "max-h-[90vh]"
+  const panelHeightClass = stableHeight ? "h-full" : "max-h-[90vh]"
+  const modalHeader = (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-zinc-200 bg-white px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <h2
+        id={`${id}-modal-title`}
+        className="col-start-1 min-w-0 truncate text-base font-semibold text-zinc-900 sm:text-lg dark:text-zinc-50"
+      >
+        {title}
+      </h2>
+      {headerCenter ? (
+        <div className="col-start-2 row-start-1 justify-self-center">
+          {headerCenter}
+        </div>
+      ) : null}
+      <div className="col-start-3 row-start-1 flex items-center justify-self-end gap-1 sm:gap-2">
+        {headerActions}
+        <CloseButton onClick={onClose} label="Close dialog" />
+      </div>
+    </div>
+  )
+  const modalFooter = footer ? (
+    <div className="border-t border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+      {footer}
+    </div>
+  ) : null
+
   return createPortal(
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-close is a standard modal pattern
     <div
@@ -103,32 +168,34 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className={`${maxWidthClass} w-full max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-lg dark:bg-zinc-900`}
+        className={`${maxWidthClass} ${modalHeightClass} relative w-full`}
         role="dialog"
         aria-labelledby={`${id}-modal-title`}
         aria-modal="true"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <h2
-            id={`${id}-modal-title`}
-            className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-          >
-            {title}
-          </h2>
-          <div className="ml-4 flex items-center gap-2">
-            {headerActions}
-            <CloseButton onClick={onClose} label="Close dialog" />
+        {leftAction ? (
+          <div className="absolute -left-14 top-1/2 z-10 hidden -translate-y-1/2 lg:block">
+            {leftAction}
           </div>
+        ) : null}
+
+        <div
+          className={`${panelHeightClass} flex w-full flex-col overflow-hidden rounded-lg bg-white shadow-lg dark:bg-zinc-900`}
+        >
+          {stickyHeader ? modalHeader : null}
+
+          <div className="min-h-0 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
+            {!stickyHeader ? modalHeader : null}
+            <div className="px-6 py-4">{children}</div>
+            {!stickyFooter ? modalFooter : null}
+          </div>
+
+          {stickyFooter ? modalFooter : null}
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-4">{children}</div>
-
-        {/* Footer (optional) */}
-        {footer ? (
-          <div className="border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            {footer}
+        {rightAction ? (
+          <div className="absolute -right-14 top-1/2 z-10 hidden -translate-y-1/2 lg:block">
+            {rightAction}
           </div>
         ) : null}
       </div>

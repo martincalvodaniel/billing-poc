@@ -28,7 +28,8 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 
 export function useFocusTrap(
   containerRef: RefObject<HTMLElement | null>,
-  enabled = true
+  enabled = true,
+  initialFocus: "first" | "container" = "first"
 ): void {
   useEffect(() => {
     if (!enabled) return
@@ -38,7 +39,10 @@ export function useFocusTrap(
     const previouslyFocused = document.activeElement as HTMLElement | null
 
     const focusables = getFocusableElements(container)
-    if (focusables.length > 0) {
+    if (initialFocus === "container") {
+      container.setAttribute("tabindex", "-1")
+      container.focus()
+    } else if (focusables.length > 0) {
       focusables[0].focus()
     } else {
       container.setAttribute("tabindex", "-1")
@@ -55,6 +59,13 @@ export function useFocusTrap(
       const first = current[0]
       const last = current[current.length - 1]
       const active = document.activeElement as HTMLElement | null
+
+      if (active === container) {
+        event.preventDefault()
+        const target = event.shiftKey ? last : first
+        target.focus()
+        return
+      }
 
       if (event.shiftKey) {
         if (active === first || !container.contains(active)) {
@@ -77,5 +88,5 @@ export function useFocusTrap(
         previouslyFocused.focus()
       }
     }
-  }, [containerRef, enabled])
+  }, [containerRef, enabled, initialFocus])
 }

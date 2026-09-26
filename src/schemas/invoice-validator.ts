@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { NUMBERED_INVOICE_SERIES } from "@/lib/domain/entities/invoice"
 import {
   type Payment as DomainPayment,
   getPaymentInvoices,
@@ -9,21 +10,23 @@ export type { InvoiceType }
 
 const objectIdPattern = /^[0-9a-fA-F]{24}$/
 
-/** The four generated-PDF invoice types. */
-const INVOICE_TYPE_VALUES = [
-  "Invoice",
-  "RectificativeInvoice",
-  "SimpleInvoice",
-  "RectificativeSimpleInvoice",
-] as const satisfies readonly InvoiceType[]
-
 export const generateInvoiceSchema = z.object({
   paymentId: z
     .string()
     .min(1, "paymentId is required")
     .regex(objectIdPattern, "paymentId must be a 24-character hex ObjectId"),
-  type: z.enum(INVOICE_TYPE_VALUES),
+  type: z.enum(NUMBERED_INVOICE_SERIES),
   persist: z.boolean().optional(),
+})
+
+export const invoiceCounterTargetSchema = z.object({
+  series: z.enum(NUMBERED_INVOICE_SERIES),
+  year: z.number().int().min(2000).max(9999),
+  newLastNumber: z.number().int().min(0),
+})
+
+export const invoiceCounterReductionSchema = invoiceCounterTargetSchema.extend({
+  expectedCurrentNumber: z.number().int().positive(),
 })
 
 const SIMPLE_TYPES: InvoiceType[] = [

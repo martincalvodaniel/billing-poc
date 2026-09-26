@@ -10,10 +10,7 @@ import { useGenerateInvoice } from "@/features/invoices/hooks/useInvoiceMutation
 import { useRemoveLinkInvoice } from "@/features/invoices/hooks/useRemoveLinkInvoice"
 import { FetchError } from "@/lib/client/swr-fetcher"
 import type { InvoiceType, Payment } from "@/lib/domain/entities/payment"
-import {
-  getPaymentInvoices,
-  type InvoiceMetadata,
-} from "@/lib/domain/entities/payment"
+import { getPaymentInvoices } from "@/lib/domain/entities/payment"
 import PaymentInvoiceLinkForm from "./PaymentInvoiceLinkForm"
 import PaymentInvoicesList from "./PaymentInvoicesList"
 import {
@@ -101,15 +98,11 @@ export default function PaymentInvoicesSection({
     const trimmed = linkUrl.trim()
     if (!trimmed) return
     try {
-      await appendLink({ type: linkType, link: trimmed })
-      const newEntry: InvoiceMetadata = {
-        type: linkType,
-        link: trimmed,
-        generatedAt: new Date(),
-      }
+      const result = await appendLink({ type: linkType, link: trimmed })
       onUpdate?.({
         ...payment,
-        invoices: [...(payment.invoices ?? []), newEntry],
+        invoice: undefined,
+        invoices: [...getPaymentInvoices(payment), result.invoice],
         updatedAt: new Date(),
       })
       setLinkUrl("")
@@ -126,11 +119,11 @@ export default function PaymentInvoicesSection({
     if (!paymentId || !pendingRemoveLink) return
     setRemoveError(null)
     try {
-      await removeLink({ link: pendingRemoveLink })
+      const result = await removeLink({ link: pendingRemoveLink })
       onUpdate?.({
         ...payment,
         invoices: (payment.invoices ?? []).filter(
-          (i) => !(i.link === pendingRemoveLink && !i.id)
+          (invoice) => !(invoice.link === result.link && !invoice.id)
         ),
         updatedAt: new Date(),
       })

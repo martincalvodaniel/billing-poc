@@ -1,12 +1,13 @@
 "use client"
 
-import { mutate } from "swr"
+import { useSWRConfig } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
-import {
-  isPaymentKey,
-  isPaymentsKey,
-} from "@/features/payments/hooks/usePayments"
 import { FetchError } from "@/lib/client/swr-fetcher"
+import {
+  getPaymentInvoices,
+  type InvoiceMetadata,
+} from "@/lib/domain/entities/payment"
+import { updateInvoicePaymentCaches } from "./invoice-payment-cache"
 
 export type AppendLinkInvoiceType = "Invoice" | "Receipt"
 
@@ -17,6 +18,7 @@ export interface AppendLinkInvoiceInput {
 
 export interface AppendLinkInvoiceResult {
   ok: true
+  invoice: InvoiceMetadata
 }
 
 export function buildAppendLinkInvoiceUrl(paymentId: string): string {
@@ -69,14 +71,15 @@ export async function appendLinkInvoiceFetcher(
   if (!response.ok) {
     await parseError(response, "Failed to append link invoice")
   }
-  return (await response.json()) as AppendLinkInvoiceResult
-}
-
-async function invalidatePayments(): Promise<void> {
-  await Promise.all([
-    mutate(isPaymentsKey, undefined, { revalidate: true }),
-    mutate(isPaymentKey, undefined, { revalidate: true }),
-  ])
+  const result = (await response.json()) as Pick<AppendLinkInvoiceResult, "ok">
+  return {
+    ...result,
+    invoice: {
+      type: arg.type,
+      link: arg.link,
+      generatedAt: new Date(),
+    },
+  }
 }
 
 export type UseAppendLinkInvoiceResult = SWRMutationResponse<
@@ -89,14 +92,21 @@ export type UseAppendLinkInvoiceResult = SWRMutationResponse<
 export function useAppendLinkInvoice(
   paymentId: string
 ): UseAppendLinkInvoiceResult {
+  const { mutate } = useSWRConfig()
+
   return useSWRMutation<
     AppendLinkInvoiceResult,
     Error,
     string,
     AppendLinkInvoiceInput
   >(buildAppendLinkInvoiceUrl(paymentId), appendLinkInvoiceFetcher, {
-    onSuccess: () => {
-      void invalidatePayments()
+    onSuccess: (result) => {
+      void updateInvoicePaymentCaches(mutate, paymentId, (payment) => ({
+        ...payment,
+        invoice: undefined,
+        invoices: [...getPaymentInvoices(payment), result.invoice],
+        updatedAt: new Date(),
+      }))
     },
   })
 }
