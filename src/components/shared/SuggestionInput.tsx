@@ -166,7 +166,7 @@ export default function SuggestionInput({
         />
 
         {showSuggestions && !disabled ? (
-          <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
             {filteredOptions.length > 0 ? (
               <ul className="max-h-60 overflow-y-auto py-1">
                 {filteredOptions.map((option) => (
