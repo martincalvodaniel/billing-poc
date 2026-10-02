@@ -54,7 +54,6 @@ describe("buildPaymentsExportRows", () => {
     expect(PAYMENTS_EXPORT_HEADERS).toEqual([
       "Date",
       "Type",
-      "Client",
       "Payment Method",
       "Concepts",
       "Concept Subtotal",
@@ -70,15 +69,11 @@ describe("buildPaymentsExportRows", () => {
   })
 
   test("maps a payment to a complete spreadsheet row", () => {
-    const [row] = buildPaymentsExportRows(
-      [payment],
-      new Map([["client-1", "Acme Ltd"]])
-    )
+    const [row] = buildPaymentsExportRows([payment])
 
     expect(row).toEqual({
       Date: "2026-09-14",
       Type: "Income",
-      Client: "Acme Ltd",
       "Payment Method": "Bank transfer",
       Concepts: "Workshop (2 x 120.00 EUR) | Materials (1 x 15.50 EUR)",
       "Concept Subtotal": 255.5,
@@ -110,19 +105,12 @@ describe("buildPaymentsExportRows", () => {
       paymentMethod: undefined,
     }
 
-    const [row] = buildPaymentsExportRows([minimalPayment], new Map())
+    const [row] = buildPaymentsExportRows([minimalPayment])
 
-    expect(row.Client).toBe("")
     expect(row["Surcharge Rate (%)"]).toBe(0)
     expect(row["Surcharge Amount"]).toBe(0)
     expect(row.Discount).toBe(0)
     expect(row.Invoices).toBe("")
-  })
-
-  test("identifies a missing client", () => {
-    const [row] = buildPaymentsExportRows([payment], new Map())
-
-    expect(row.Client).toBe("Unknown client")
   })
 
   test("excludes hidden income payments without an invoice", () => {
@@ -133,6 +121,6 @@ describe("buildPaymentsExportRows", () => {
       invoices: undefined,
     }
 
-    expect(buildPaymentsExportRows([hiddenPayment], new Map())).toEqual([])
+    expect(buildPaymentsExportRows([hiddenPayment])).toEqual([])
   })
 })

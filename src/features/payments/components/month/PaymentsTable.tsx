@@ -64,7 +64,6 @@ export default function PaymentsTable({
     try {
       await exportPaymentsToXlsx({
         payments,
-        clientNameById,
         year: selectedDate.getFullYear(),
         month: selectedDate.getMonth() + 1,
       })
