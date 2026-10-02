@@ -3,6 +3,7 @@
 import { useSWRConfig } from "swr"
 import useSWRMutation, { type SWRMutationResponse } from "swr/mutation"
 import { FetchError } from "@/lib/client/swr-fetcher"
+import { isPaymentHidden } from "@/lib/domain/entities/payment"
 import { updateInvoicePaymentCaches } from "./invoice-payment-cache"
 
 export interface RemoveLinkInvoiceInput {
@@ -86,13 +87,21 @@ export function useRemoveLinkInvoice(
     RemoveLinkInvoiceInput
   >(buildRemoveLinkInvoiceUrl(paymentId), removeLinkInvoiceFetcher, {
     onSuccess: (result) => {
-      void updateInvoicePaymentCaches(mutate, paymentId, (payment) => ({
-        ...payment,
-        invoices: (payment.invoices ?? []).filter(
+      void updateInvoicePaymentCaches(mutate, paymentId, (payment) => {
+        const invoices = (payment.invoices ?? []).filter(
           (invoice) => !(invoice.link === result.link && !invoice.id)
-        ),
-        updatedAt: new Date(),
-      }))
+        )
+        return {
+          ...payment,
+          hidden: isPaymentHidden({
+            type: payment.type,
+            invoice: payment.invoice,
+            invoices,
+          }),
+          invoices,
+          updatedAt: new Date(),
+        }
+      })
     },
   })
 }

@@ -1,4 +1,8 @@
-import type { InvoiceMetadata, Payment } from "../../domain/entities/payment"
+import type {
+  InvoiceMetadata,
+  NewPayment,
+  Payment,
+} from "../../domain/entities/payment"
 import type {
   PaymentFilter,
   PaymentRepository,
@@ -63,7 +67,7 @@ export class MongoPaymentRepository implements PaymentRepository {
     return doc ? toDomain(doc) : null
   }
 
-  async create(payment: Omit<Payment, "_id">): Promise<string> {
+  async create(payment: NewPayment): Promise<string> {
     const col = await this.collection()
     const tag = payment.tag?.trim() ? payment.tag.trim() : undefined
     const deliveryNoteRef = payment.deliveryNoteRef?.trim()

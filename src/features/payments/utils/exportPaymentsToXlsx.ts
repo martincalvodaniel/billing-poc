@@ -1,5 +1,6 @@
 import {
   getPaymentInvoices,
+  isPaymentHidden,
   PAYMENT_METHOD_LABELS,
   type Payment,
 } from "@/lib/domain/entities/payment"
@@ -8,7 +9,6 @@ import { calculateTotal } from "@/lib/domain/services/payment-calculator"
 export const PAYMENTS_EXPORT_HEADERS = [
   "Date",
   "Type",
-  "Client",
   "Payment Method",
   "Concepts",
   "Concept Subtotal",
@@ -31,7 +31,6 @@ export type PaymentExportRow = {
 const COLUMN_WIDTHS: Record<PaymentExportHeader, number> = {
   Date: 12,
   Type: 10,
-  Client: 24,
   "Payment Method": 18,
   Concepts: 48,
   "Concept Subtotal": 18,
@@ -80,46 +79,42 @@ export function buildPaymentsExportFilename(
 }
 
 export function buildPaymentsExportRows(
-  payments: Payment[],
-  clientNameById: ReadonlyMap<string, string>
+  payments: Payment[]
 ): PaymentExportRow[] {
-  return payments.map((payment) => ({
-    Date: payment.date,
-    Type: payment.type === "income" ? "Income" : "Outcome",
-    Client: payment.clientId
-      ? (clientNameById.get(payment.clientId) ?? "Unknown client")
-      : "",
-    "Payment Method": payment.paymentMethod
-      ? PAYMENT_METHOD_LABELS[payment.paymentMethod]
-      : "",
-    Concepts: formatConcepts(payment),
-    "Concept Subtotal": calculateTotal(payment.concepts),
-    Discount: payment.discount ?? 0,
-    "Net Amount": payment.netAmount,
-    "VAT Rate (%)": payment.vat,
-    "VAT Amount": payment.vatAmount,
-    "Surcharge Rate (%)": payment.surcharge ?? 0,
-    "Surcharge Amount": payment.surchargeAmount ?? 0,
-    Total: payment.total,
-    Invoices: formatInvoices(payment),
-  }))
+  return payments
+    .filter((payment) => !isPaymentHidden(payment))
+    .map((payment) => ({
+      Date: payment.date,
+      Type: payment.type === "income" ? "Income" : "Outcome",
+      "Payment Method": payment.paymentMethod
+        ? PAYMENT_METHOD_LABELS[payment.paymentMethod]
+        : "",
+      Concepts: formatConcepts(payment),
+      "Concept Subtotal": calculateTotal(payment.concepts),
+      Discount: payment.discount ?? 0,
+      "Net Amount": payment.netAmount,
+      "VAT Rate (%)": payment.vat,
+      "VAT Amount": payment.vatAmount,
+      "Surcharge Rate (%)": payment.surcharge ?? 0,
+      "Surcharge Amount": payment.surchargeAmount ?? 0,
+      Total: payment.total,
+      Invoices: formatInvoices(payment),
+    }))
 }
 
 interface ExportPaymentsToXlsxArgs {
   payments: Payment[]
-  clientNameById: ReadonlyMap<string, string>
   year: number
   month: number
 }
 
 export async function exportPaymentsToXlsx({
   payments,
-  clientNameById,
   year,
   month,
 }: ExportPaymentsToXlsxArgs): Promise<void> {
   const xlsx = await import("xlsx")
-  const rows = buildPaymentsExportRows(payments, clientNameById)
+  const rows = buildPaymentsExportRows(payments)
   const worksheet = xlsx.utils.json_to_sheet(rows, {
     header: [...PAYMENTS_EXPORT_HEADERS],
   })

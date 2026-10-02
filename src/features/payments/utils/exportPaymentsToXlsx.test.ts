@@ -9,6 +9,7 @@ import {
 const payment: Payment = {
   _id: "payment-1",
   type: "income",
+  hidden: false,
   date: "2026-09-14",
   tag: "Consulting",
   clientId: "client-1",
@@ -53,7 +54,6 @@ describe("buildPaymentsExportRows", () => {
     expect(PAYMENTS_EXPORT_HEADERS).toEqual([
       "Date",
       "Type",
-      "Client",
       "Payment Method",
       "Concepts",
       "Concept Subtotal",
@@ -69,15 +69,11 @@ describe("buildPaymentsExportRows", () => {
   })
 
   test("maps a payment to a complete spreadsheet row", () => {
-    const [row] = buildPaymentsExportRows(
-      [payment],
-      new Map([["client-1", "Acme Ltd"]])
-    )
+    const [row] = buildPaymentsExportRows([payment])
 
     expect(row).toEqual({
       Date: "2026-09-14",
       Type: "Income",
-      Client: "Acme Ltd",
       "Payment Method": "Bank transfer",
       Concepts: "Workshop (2 x 120.00 EUR) | Materials (1 x 15.50 EUR)",
       "Concept Subtotal": 255.5,
@@ -96,6 +92,8 @@ describe("buildPaymentsExportRows", () => {
     const minimalPayment: Payment = {
       ...payment,
       _id: undefined,
+      type: "outcome",
+      hidden: false,
       tag: undefined,
       clientId: undefined,
       surcharge: undefined,
@@ -107,18 +105,22 @@ describe("buildPaymentsExportRows", () => {
       paymentMethod: undefined,
     }
 
-    const [row] = buildPaymentsExportRows([minimalPayment], new Map())
+    const [row] = buildPaymentsExportRows([minimalPayment])
 
-    expect(row.Client).toBe("")
     expect(row["Surcharge Rate (%)"]).toBe(0)
     expect(row["Surcharge Amount"]).toBe(0)
     expect(row.Discount).toBe(0)
     expect(row.Invoices).toBe("")
   })
 
-  test("identifies a missing client", () => {
-    const [row] = buildPaymentsExportRows([payment], new Map())
+  test("excludes hidden income payments without an invoice", () => {
+    const hiddenPayment: Payment = {
+      ...payment,
+      hidden: true,
+      invoice: undefined,
+      invoices: undefined,
+    }
 
-    expect(row.Client).toBe("Unknown client")
+    expect(buildPaymentsExportRows([hiddenPayment])).toEqual([])
   })
 })

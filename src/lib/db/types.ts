@@ -21,7 +21,7 @@ import type { Payment } from "@/lib/domain/entities/payment"
 import type { PaymentTemplate } from "@/lib/domain/entities/payment-template"
 import type { Product } from "@/lib/domain/entities/product"
 
-export type MongoPayment = Omit<Payment, "_id" | "clientId"> & {
+export type MongoPayment = Omit<Payment, "_id" | "clientId" | "hidden"> & {
   _id?: ObjectId
   clientId?: ObjectId
 }

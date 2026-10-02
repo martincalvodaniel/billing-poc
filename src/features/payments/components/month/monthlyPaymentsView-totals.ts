@@ -1,4 +1,4 @@
-import type { Payment } from "@/lib/domain/entities/payment"
+import { isPaymentHidden, type Payment } from "@/lib/domain/entities/payment"
 
 export interface PaymentTotals {
   totalIncome: number
@@ -33,9 +33,10 @@ export function computePaymentTotals(payments: Payment[]): PaymentTotals {
   for (const p of payments) {
     const tag = p.tag || "Untagged"
     if (p.type === "income") {
+      const hidden = isPaymentHidden(p)
       income += p.total
-      vatIncome += p.vatAmount
-      netIncome += p.netAmount
+      vatIncome += hidden ? 0 : p.vatAmount
+      netIncome += hidden ? p.total : p.netAmount
       incByTag[tag] = (incByTag[tag] || 0) + p.total
       incCount++
     } else {

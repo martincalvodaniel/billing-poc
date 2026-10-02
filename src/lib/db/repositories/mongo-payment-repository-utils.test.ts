@@ -112,6 +112,29 @@ const baseDoc: MongoPayment = {
 }
 
 describe("mapPaymentDocToDomain", () => {
+  test("marks only income payments without invoices as hidden", () => {
+    const hiddenIncome = mapPaymentDocToDomain({
+      ...baseDoc,
+      type: "income",
+    })
+    const visibleOutcome = mapPaymentDocToDomain(baseDoc)
+    const visibleInvoicedIncome = mapPaymentDocToDomain({
+      ...baseDoc,
+      type: "income",
+      invoices: [
+        {
+          type: "Invoice",
+          id: "F26_001",
+          generatedAt: new Date("2026-01-01T00:00:00Z"),
+        },
+      ],
+    })
+
+    expect(hiddenIncome.hidden).toBe(true)
+    expect(visibleOutcome.hidden).toBe(false)
+    expect(visibleInvoicedIncome.hidden).toBe(false)
+  })
+
   test("migrates the legacy `invoice` single field and `invoices[]` entries", () => {
     const doc: MongoPayment = {
       ...baseDoc,

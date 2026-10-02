@@ -1,4 +1,8 @@
-import type { InvoiceMetadata, Payment } from "../../domain/entities/payment"
+import {
+  type InvoiceMetadata,
+  isPaymentHidden,
+  type Payment,
+} from "../../domain/entities/payment"
 import type { MongoPayment } from "../types"
 
 /**
@@ -118,6 +122,7 @@ export function mapPaymentDocToDomain(doc: MongoPayment): Payment {
   const out: Payment = {
     _id: doc._id?.toString(),
     type: doc.type,
+    hidden: isPaymentHidden({ type: doc.type, invoice, invoices }),
     date: doc.date,
     tag: doc.tag,
     clientId: doc.clientId?.toString(),
