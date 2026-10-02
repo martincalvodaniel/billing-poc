@@ -9,6 +9,7 @@ import {
 const payment: Payment = {
   _id: "payment-1",
   type: "income",
+  hidden: false,
   date: "2026-09-14",
   tag: "Consulting",
   clientId: "client-1",
@@ -96,6 +97,8 @@ describe("buildPaymentsExportRows", () => {
     const minimalPayment: Payment = {
       ...payment,
       _id: undefined,
+      type: "outcome",
+      hidden: false,
       tag: undefined,
       clientId: undefined,
       surcharge: undefined,
@@ -120,5 +123,16 @@ describe("buildPaymentsExportRows", () => {
     const [row] = buildPaymentsExportRows([payment], new Map())
 
     expect(row.Client).toBe("Unknown client")
+  })
+
+  test("excludes hidden income payments without an invoice", () => {
+    const hiddenPayment: Payment = {
+      ...payment,
+      hidden: true,
+      invoice: undefined,
+      invoices: undefined,
+    }
+
+    expect(buildPaymentsExportRows([hiddenPayment], new Map())).toEqual([])
   })
 })

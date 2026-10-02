@@ -118,6 +118,7 @@ export function useGenerateInvoice(): UseGenerateInvoiceResult {
       await Promise.all([
         updateInvoicePaymentCaches(mutate, result.paymentId, (payment) => ({
           ...payment,
+          hidden: false,
           invoice: undefined,
           invoices: result.invoices,
           updatedAt: new Date(),

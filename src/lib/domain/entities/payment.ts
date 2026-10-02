@@ -36,6 +36,7 @@ export interface InvoiceMetadata {
 export interface Payment {
   _id?: string
   type: PaymentType
+  hidden: boolean
   date: string
   tag?: string
   clientId?: string
@@ -54,6 +55,8 @@ export interface Payment {
   createdAt: Date
   updatedAt: Date
 }
+
+export type NewPayment = Omit<Payment, "_id" | "hidden">
 
 export interface PaymentFormData {
   type: PaymentType
@@ -80,4 +83,12 @@ export function getPaymentInvoices(payment: {
   const legacy = payment.invoice ? [payment.invoice] : []
   const arr = payment.invoices ?? []
   return [...legacy, ...arr]
+}
+
+export function isPaymentHidden(payment: {
+  type: PaymentType
+  invoice?: InvoiceMetadata
+  invoices?: InvoiceMetadata[]
+}): boolean {
+  return payment.type === "income" && getPaymentInvoices(payment).length === 0
 }

@@ -6,7 +6,11 @@ import {
   useDeletePayment,
   useUpdatePayment,
 } from "@/features/payments/hooks/usePaymentMutations"
-import type { Payment, PaymentFormData } from "@/lib/domain/entities/payment"
+import {
+  isPaymentHidden,
+  type Payment,
+  type PaymentFormData,
+} from "@/lib/domain/entities/payment"
 import { extractPaymentError } from "./paymentDetailModal-utils"
 import {
   validateConcepts,
@@ -159,6 +163,11 @@ export function usePaymentDetailSave({
         ...payment,
         date: formData.date,
         type: formData.type,
+        hidden: isPaymentHidden({
+          type: formData.type,
+          invoice: payment.invoice,
+          invoices: payment.invoices,
+        }),
         tag: formData.tag || undefined,
         concepts: formData.concepts,
         vat: responseData.vat ?? vatNumber,

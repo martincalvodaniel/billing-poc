@@ -103,6 +103,7 @@ export function useAppendLinkInvoice(
     onSuccess: (result) => {
       void updateInvoicePaymentCaches(mutate, paymentId, (payment) => ({
         ...payment,
+        hidden: false,
         invoice: undefined,
         invoices: [...getPaymentInvoices(payment), result.invoice],
         updatedAt: new Date(),
